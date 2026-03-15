@@ -1,6 +1,6 @@
+import { Button } from "@heroui/react";
 import { motion } from "motion/react";
 import logo from "../../assets/logo.svg";
-import { Button } from "@heroui/react";
 import { MapComponent } from "./MapPreview";
 import { TrustedByBar } from "./TrustedByBar";
 

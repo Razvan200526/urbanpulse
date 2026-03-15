@@ -2,11 +2,11 @@ import mapboxgl from "mapbox-gl";
 import { useEffect, useMemo, useRef } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
+import { PulseMarker } from "../../../components/PulseMarker";
 import {
 	type GeolocationCoords,
 	useGetGeolocation,
 } from "../../../hooks/useGetGeolocation";
-import { PulseMarker } from "../../../components/PulseMarker";
 
 function createNearbyCoords(
 	center: GeolocationCoords,

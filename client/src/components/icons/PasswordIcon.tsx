@@ -1,0 +1,144 @@
+import type { SVGProps } from "react";
+
+type IconProps = SVGProps<SVGSVGElement> & {
+	secondaryfill?: string;
+	strokewidth?: number;
+	title?: string;
+};
+
+export const PasswordIcon = ({ title = "badge 13", ...props }: IconProps) => {
+	return (
+		<svg
+			height="18"
+			width="18"
+			viewBox="0 0 18 18"
+			xmlns="http://www.w3.org/2000/svg"
+			{...props}
+		>
+			<title>{title}</title>
+			<g fill="currentColor">
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="15.25"
+					x2="15.25"
+					y1="3.75"
+					y2="14.25"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="2.259"
+					x2="4.25"
+					y1="8.197"
+					y2="8.844"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="3.019"
+					x2="4.25"
+					y1="10.537"
+					y2="8.844"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="5.481"
+					x2="4.25"
+					y1="10.537"
+					y2="8.844"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="6.241"
+					x2="4.25"
+					y1="8.197"
+					y2="8.844"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="4.25"
+					x2="4.25"
+					y1="6.75"
+					y2="8.844"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="8.509"
+					x2="10.5"
+					y1="8.197"
+					y2="8.844"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="9.269"
+					x2="10.5"
+					y1="10.537"
+					y2="8.844"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="11.731"
+					x2="10.5"
+					y1="10.537"
+					y2="8.844"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="12.491"
+					x2="10.5"
+					y1="8.197"
+					y2="8.844"
+				/>
+				<line
+					fill="none"
+					stroke="currentColor"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					strokeWidth="1.5"
+					x1="10.5"
+					x2="10.5"
+					y1="6.75"
+					y2="8.844"
+				/>
+			</g>
+		</svg>
+	);
+};

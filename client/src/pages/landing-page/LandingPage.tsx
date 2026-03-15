@@ -1,9 +1,9 @@
-import HeroSection from "../components/HeroSection";
-import { Navbar } from "../components/Navbar";
-import { FeaturesSection } from "../components/FeaturesSection";
-import { HowItWorksSection } from "../components/HowItWorksSection";
 import { CTASection } from "../components/CTASection";
+import { FeaturesSection } from "../components/FeaturesSection";
 import { FloatingOrbs } from "../components/FloatingOrbs";
+import HeroSection from "../components/HeroSection";
+import { HowItWorksSection } from "../components/HowItWorksSection";
+import { Navbar } from "../components/Navbar";
 import { ParticleField } from "../components/ParticleField";
 
 export const LandingPage = () => {

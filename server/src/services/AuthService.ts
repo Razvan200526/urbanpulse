@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { openAPI } from "better-auth/plugins";
-import { pe } from "..";
 import { Pool } from "pg";
+import { pe } from "..";
 export const authService = betterAuth({
 	logger: {
 		disableColors: false,

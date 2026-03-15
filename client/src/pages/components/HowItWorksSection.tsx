@@ -1,8 +1,8 @@
 import type { Easing } from "motion/react";
 import { motion } from "motion/react";
+import { HandRaisedIcon } from "../../components/icons/HandRaisedIcon";
 import { LocationIcon } from "../../components/icons/LocationIcon";
 import { SignalIcon } from "../../components/icons/SignalIcon";
-import { HandRaisedIcon } from "../../components/icons/HandRaisedIcon";
 import { H2 } from "../../components/typography";
 
 const steps = [

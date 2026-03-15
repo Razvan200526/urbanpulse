@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import logo from "../../assets/logo.svg";
 import { Button, CloseIcon } from "@heroui/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { MenuIcon } from "../../../components/icons/MenuIcon";
 import { MoonIcon } from "../../../components/icons/MoonIcon";
 import { SunIcon } from "../../../components/icons/SunIcon";
+import logo from "../../assets/logo.svg";
 
 const navLinks = [
 	{ label: "Features", href: "#features" },

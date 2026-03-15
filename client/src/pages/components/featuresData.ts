@@ -1,9 +1,9 @@
+import type { SVGProps } from "react";
 import { BellIcon } from "../../components/icons/BellIcon";
-import { MapIcon } from "../../components/icons/MapIcon";
 import { BoltIcon } from "../../components/icons/BoltIcon";
 import { LocationIcon } from "../../components/icons/LocationIcon";
+import { MapIcon } from "../../components/icons/MapIcon";
 import { SignalIcon } from "../../components/icons/SignalIcon";
-import type { SVGProps } from "react";
 
 export interface Feature {
 	icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement;

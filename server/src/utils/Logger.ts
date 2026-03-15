@@ -1,5 +1,5 @@
-import * as p from "picocolors";
 import { mainSymbols as f } from "figures";
+import * as p from "picocolors";
 import { pe } from "..";
 export class Logger {
 	public info(message: string) {

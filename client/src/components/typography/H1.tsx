@@ -12,7 +12,7 @@ export const H1 = ({
 	return (
 		<h1
 			className={cn(
-				"text-3xl/10 font-bold tracking-wide text-primary",
+				"text-3xl/10 font-bold tracking-wide text-accent",
 				className,
 			)}
 			{...props}

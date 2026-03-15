@@ -1,3 +1,4 @@
+import { logger } from "@server/utils/Logger";
 import {
 	DataSource,
 	type EntityManager,
@@ -6,7 +7,6 @@ import {
 	type Repository,
 } from "typeorm";
 import { PrimaryEntities } from "../entities/PrimaryEntities";
-import { logger } from "@server/utils/Logger";
 
 export class PrimaryDatabase {
 	private source: DataSource | null = null;

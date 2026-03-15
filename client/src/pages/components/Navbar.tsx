@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import logo from "../../assets/logo.svg";
-import { SunIcon } from "../../components/icons/SunIcon";
-import { MoonIcon } from "../../components/icons/MoonIcon";
-import { MenuIcon } from "../../components/icons/MenuIcon";
-import { CloseIcon } from "../../components/icons/CloseIcon";
-import { Button } from "@heroui/react";
+import { Button, Drawer } from "@heroui/react";
+import { motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import logo from "../../assets/logo.svg";
+import { MenuIcon } from "../../components/icons/MenuIcon";
+import { MoonIcon } from "../../components/icons/MoonIcon";
+import { SunIcon } from "../../components/icons/SunIcon";
 
 const navLinks = [
 	{ label: "Features", href: "#features" },
@@ -15,7 +14,6 @@ const navLinks = [
 
 export const Navbar = () => {
 	const [scrolled, setScrolled] = useState(false);
-	const [mobileOpen, setMobileOpen] = useState(false);
 	const navigate = useNavigate();
 	const [isDark, setIsDark] = useState(() => {
 		if (typeof window === "undefined") return false;
@@ -53,7 +51,6 @@ export const Navbar = () => {
 		>
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 				<div className="flex h-16 items-center justify-between">
-					{/* Logo */}
 					<a href="#hero" className="flex items-center gap-2 no-underline">
 						<img src={logo} alt="UrbanPulse" className="h-8 w-8" />
 						<span className="text-lg font-bold tracking-wide text-(--foreground)">
@@ -61,7 +58,6 @@ export const Navbar = () => {
 						</span>
 					</a>
 
-					{/* Desktop nav */}
 					<div className="hidden md:flex items-center gap-8">
 						{navLinks.map((link) => (
 							<a
@@ -85,7 +81,7 @@ export const Navbar = () => {
 							)}
 						</button>
 						<Button
-							className="rounded-full"
+							className="rounded"
 							variant="primary"
 							size="sm"
 							onClick={() => navigate("/signup")}
@@ -94,68 +90,67 @@ export const Navbar = () => {
 						</Button>
 					</div>
 
-					{/* Mobile buttons */}
 					<div className="flex md:hidden items-center gap-2">
-						<button
-							type="button"
+						<Button
+							variant="outline"
 							onClick={toggleTheme}
-							className="p-2 rounded-full hover:bg-default transition-colors cursor-pointer"
+							className="p-2 rounded-full cursor-pointer"
 							aria-label="Toggle theme"
+							isIconOnly
 						>
 							{isDark ? (
 								<SunIcon className="size-5 text-(--foreground)" />
 							) : (
 								<MoonIcon className="size-5 text-(--foreground)" />
 							)}
-						</button>
-						<button
-							type="button"
-							onClick={() => setMobileOpen(!mobileOpen)}
-							className="p-2 rounded-full hover:bg-default transition-colors cursor-pointer"
-							aria-label="Toggle menu"
-						>
-							{mobileOpen ? (
-								<CloseIcon className="size-5 text-(--foreground)" />
-							) : (
-								<MenuIcon className="size-5 text-(--foreground)" />
-							)}
-						</button>
+						</Button>
+
+						<Drawer>
+							<Button variant="ghost" isIconOnly className="rounded-full">
+								<MenuIcon className="size-6" />
+							</Button>
+
+							<Drawer.Backdrop>
+								<Drawer.Content placement="top" className="w-full">
+									<Drawer.Dialog className="bg-background border-b border-border">
+										<Drawer.Handle />
+										<Drawer.CloseTrigger />
+										<Drawer.Header>
+											<Drawer.Heading className="text-(--foreground)">
+												Menu
+											</Drawer.Heading>
+										</Drawer.Header>
+
+										<Drawer.Body>
+											<div className="flex flex-col gap-4 py-2">
+												{navLinks.map((link) => (
+													<a
+														key={link.href}
+														href={link.href}
+														className="text-base font-medium text-(--foreground) no-underline"
+													>
+														{link.label}
+													</a>
+												))}
+											</div>
+										</Drawer.Body>
+
+										<Drawer.Footer>
+											<Button
+												variant="primary"
+												className="w-full rounded"
+												onClick={() => navigate("/signup")}
+											>
+												Sign Up
+											</Button>
+										</Drawer.Footer>
+									</Drawer.Dialog>
+								</Drawer.Content>
+							</Drawer.Backdrop>
+						</Drawer>
 					</div>
 				</div>
 			</div>
-
-			{/* Mobile drawer */}
-			<AnimatePresence>
-				{mobileOpen && (
-					<motion.div
-						initial={{ height: 0, opacity: 0 }}
-						animate={{ height: "auto", opacity: 1 }}
-						exit={{ height: 0, opacity: 0 }}
-						transition={{ duration: 0.25 }}
-						className="md:hidden overflow-hidden bg-(--overlay)/95 backdrop-blur-xl border-b border-border"
-					>
-						<div className="flex flex-col gap-4 px-4 py-6">
-							{navLinks.map((link) => (
-								<a
-									key={link.href}
-									href={link.href}
-									onClick={() => setMobileOpen(false)}
-									className="text-base font-medium text-(--foreground) no-underline"
-								>
-									{link.label}
-								</a>
-							))}
-							<Button
-								className="rounded-full w-full"
-								variant="primary"
-								size="md"
-							>
-								Sign Up
-							</Button>
-						</div>
-					</motion.div>
-				)}
-			</AnimatePresence>
 		</motion.nav>
 	);
 };

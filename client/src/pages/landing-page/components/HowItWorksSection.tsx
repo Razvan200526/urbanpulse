@@ -1,9 +1,10 @@
+import { Chip } from "@heroui/react";
 import type { Easing } from "motion/react";
 import { motion } from "motion/react";
-import { Chip } from "@heroui/react";
 import { HandRaisedIcon } from "../../../components/icons/HandRaisedIcon";
 import { LocationIcon } from "../../../components/icons/LocationIcon";
 import { SignalIcon } from "../../../components/icons/SignalIcon";
+
 const steps = [
 	{
 		icon: LocationIcon,

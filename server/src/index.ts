@@ -1,8 +1,8 @@
+import { websocket } from "hono/bun";
 import PrettyError from "pretty-error";
 import app from "./app";
-import { websocket } from "hono/bun";
-import { logger } from "./utils/Logger";
 import { parseEnv } from "./env";
+import { logger } from "./utils/Logger";
 
 export const pe = new PrettyError();
 pe.start();

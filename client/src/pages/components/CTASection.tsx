@@ -1,5 +1,5 @@
-import { motion } from "motion/react";
 import { Button } from "@heroui/react";
+import { motion } from "motion/react";
 
 export const CTASection = () => {
 	return (
