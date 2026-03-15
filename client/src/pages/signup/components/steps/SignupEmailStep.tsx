@@ -1,5 +1,8 @@
 import { ChevronRightIcon } from "@client/components/icons/ChevronRight";
-import { InputEmail, type InputEmailRefType } from "@client/components/input/InputEmail";
+import {
+	InputEmail,
+	type InputEmailRefType,
+} from "@client/components/input/InputEmail";
 import { Link } from "@client/components/Link";
 import { Button, Separator } from "@heroui/react";
 import { useRef } from "react";
