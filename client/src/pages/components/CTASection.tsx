@@ -22,8 +22,8 @@ export const CTASection = () => {
 								Ready to feel the pulse?
 							</h2>
 							<p className="mt-6 text-lg text-muted max-w-lg mx-auto">
-								Join thousands of neighbours who already use UrbanPulse
-								to stay informed, stay safe, and stay connected.
+								Join thousands of neighbours who already use UrbanPulse to stay
+								informed, stay safe, and stay connected.
 							</p>
 							<div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
 								<Button
