@@ -93,8 +93,7 @@ export const ParticleField = () => {
 				p.y += p.vy;
 
 				p.opacity =
-					p.baseOpacity +
-					Math.sin(time * p.pulseSpeed + p.pulsePhase) * 0.15;
+					p.baseOpacity + Math.sin(time * p.pulseSpeed + p.pulsePhase) * 0.15;
 
 				if (p.x < 0) p.x = canvas.width;
 				if (p.x > canvas.width) p.x = 0;
@@ -125,8 +124,7 @@ export const ParticleField = () => {
 					const dist = Math.sqrt(dx * dx + dy * dy);
 
 					if (dist < CONNECTION_DISTANCE) {
-						const lineOpacity =
-							(1 - dist / CONNECTION_DISTANCE) * 0.15;
+						const lineOpacity = (1 - dist / CONNECTION_DISTANCE) * 0.15;
 						ctx.beginPath();
 						ctx.moveTo(particles[i].x, particles[i].y);
 						ctx.lineTo(particles[j].x, particles[j].y);
@@ -154,7 +152,6 @@ export const ParticleField = () => {
 		<canvas
 			ref={canvasRef}
 			className="absolute inset-0 w-full h-full pointer-events-auto z-0"
-			aria-hidden="true"
 		/>
 	);
 };

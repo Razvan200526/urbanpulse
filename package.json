@@ -22,7 +22,8 @@
     "type-check": "turbo type-check",
     "test": "turbo test",
     "postinstall": "turbo build --filter=shared --filter=server",
-    "format": "biome format . --write"
+    "format": "biome format . --write",
+    "prepare": "husky"
   },
   "keywords": [
     "bun",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.7",
     "bun-types": "latest",
+    "husky": "^9.1.7",
     "turbo": "^2.5.5"
   },
   "peerDependencies": {
