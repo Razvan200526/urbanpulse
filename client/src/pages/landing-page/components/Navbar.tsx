@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import logo from "../../assets/logo.svg";
-import { SunIcon } from "../../components/icons/SunIcon";
-import { MoonIcon } from "../../components/icons/MoonIcon";
-import { MenuIcon } from "../../components/icons/MenuIcon";
-import { CloseIcon } from "../../components/icons/CloseIcon";
-import { Button } from "@heroui/react";
-import { useNavigate } from "react-router";
+import { Button, CloseIcon } from "@heroui/react";
+import { MenuIcon } from "../../../components/icons/MenuIcon";
+import { MoonIcon } from "../../../components/icons/MoonIcon";
+import { SunIcon } from "../../../components/icons/SunIcon";
 
 const navLinks = [
 	{ label: "Features", href: "#features" },
@@ -16,7 +14,6 @@ const navLinks = [
 export const Navbar = () => {
 	const [scrolled, setScrolled] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
-	const navigate = useNavigate();
 	const [isDark, setIsDark] = useState(() => {
 		if (typeof window === "undefined") return false;
 		return document.documentElement.classList.contains("dark");
@@ -84,17 +81,11 @@ export const Navbar = () => {
 								<MoonIcon className="size-5 text-(--foreground)" />
 							)}
 						</button>
-						<Button
-							className="rounded-full"
-							variant="primary"
-							size="sm"
-							onClick={() => navigate("/signup")}
-						>
+						<Button className="rounded-full" variant="primary" size="sm">
 							Sign Up
 						</Button>
 					</div>
 
-					{/* Mobile buttons */}
 					<div className="flex md:hidden items-center gap-2">
 						<button
 							type="button"
@@ -124,7 +115,6 @@ export const Navbar = () => {
 				</div>
 			</div>
 
-			{/* Mobile drawer */}
 			<AnimatePresence>
 				{mobileOpen && (
 					<motion.div

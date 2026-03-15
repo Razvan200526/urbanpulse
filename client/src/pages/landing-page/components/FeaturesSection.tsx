@@ -129,7 +129,7 @@ export const FeaturesSection = () => {
 
 								{/* Border outline — transitions on hover */}
 								<div
-									className={`pointer-events-none absolute inset-0 rounded-lg outline  outline-border transition-all duration-300 group-hover:outline-primary/40 group-hover:outline-2 ${cardRounding[i]}`}
+									className={`pointer-events-none absolute inset-0 rounded-lg outline outline-border transition-all duration-300 group-hover:outline-primary/40 group-hover:outline-2 ${cardRounding[i]}`}
 								/>
 							</motion.div>
 						);

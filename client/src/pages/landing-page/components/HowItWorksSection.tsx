@@ -1,10 +1,9 @@
 import type { Easing } from "motion/react";
 import { motion } from "motion/react";
-import { LocationIcon } from "../../components/icons/LocationIcon";
-import { SignalIcon } from "../../components/icons/SignalIcon";
-import { HandRaisedIcon } from "../../components/icons/HandRaisedIcon";
-import { H2 } from "../../components/typography";
-
+import { Chip } from "@heroui/react";
+import { HandRaisedIcon } from "../../../components/icons/HandRaisedIcon";
+import { LocationIcon } from "../../../components/icons/LocationIcon";
+import { SignalIcon } from "../../../components/icons/SignalIcon";
 const steps = [
 	{
 		icon: LocationIcon,
@@ -77,14 +76,19 @@ export const HowItWorksSection = () => {
 					variants={fadeInUp}
 					className="flex flex-col gap-3 mb-20"
 				>
-					<H2 className="text-(--foreground) text-3xl md:text-5xl font-bold leading-tight tracking-tight max-w-xl">
+					<Chip variant="primary" color="accent" size="sm">
+						How It Works
+					</Chip>
+
+					<h2 className="text-(--foreground) text-3xl md:text-5xl font-bold leading-tight tracking-tight max-w-xl">
 						Get started in{" "}
 						<span className="text-transparent bg-clip-text bg-linear-to-r from-primary via-fuchsia-400 to-secondary">
 							three simple steps
 						</span>
-					</H2>
+					</h2>
 				</motion.div>
 
+				{/* Steps */}
 				<motion.div
 					variants={staggerContainer}
 					initial="hidden"
@@ -92,6 +96,7 @@ export const HowItWorksSection = () => {
 					viewport={{ once: true, margin: "-80px" }}
 					className="relative grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8"
 				>
+					{/* Connecting line (desktop only) */}
 					<div className="hidden md:block absolute top-12 left-[16.666%] right-[16.666%] h-px bg-linear-to-r from-(--accent)/40 via-border to-(--accent)/40" />
 
 					{steps.map((step) => (
@@ -100,6 +105,7 @@ export const HowItWorksSection = () => {
 							variants={stepVariants}
 							className="relative flex flex-col items-center text-center"
 						>
+							{/* Number + Icon circle */}
 							<div className="relative mb-8">
 								<div className="w-24 h-24 rounded-full bg-(--surface)/40 backdrop-blur-sm border-2 border-border flex items-center justify-center shadow-lg">
 									<step.icon className="size-10 text-(--accent)" />
@@ -109,6 +115,7 @@ export const HowItWorksSection = () => {
 								</span>
 							</div>
 
+							{/* Content */}
 							<h3 className="text-xl font-semibold text-(--foreground) mb-3">
 								{step.title}
 							</h3>

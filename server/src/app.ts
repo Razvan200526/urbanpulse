@@ -1,22 +1,22 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import type { ApiResponse } from "shared";
+import { authService } from "./services/AuthService";
+export const app = new Hono();
 
-export const app = new Hono()
+app.use(
+	"/api/auth/*",
+	cors({
+		origin: Bun.env.CLIENT_URL,
+		allowHeaders: ["Content-Type", "Authorization"],
+		allowMethods: ["POST", "GET", "OPTIONS"],
+		exposeHeaders: ["Content-Length"],
+		maxAge: 600,
+		credentials: true,
+	}),
+);
 
-  .use(cors())
-
-  .get("/", (c) => {
-    return c.text("Hello Hono!");
-  })
-
-  .get("/hello", async (c) => {
-    const data: ApiResponse = {
-      message: "Hello BHVR!",
-      success: true,
-    };
-
-    return c.json(data, { status: 200 });
-  });
+app.on(["POST", "GET"], "/api/auth/*", (c) => {
+	return authService.handler(c.req.raw);
+});
 
 export default app;

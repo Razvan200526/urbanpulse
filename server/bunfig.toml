@@ -1,0 +1,2 @@
+[build]
+define = { "Bun.env.DATABASE_URL" : string }
