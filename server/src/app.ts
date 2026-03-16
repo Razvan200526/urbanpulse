@@ -15,7 +15,7 @@ export const app = new Hono()
 		}),
 	)
 	.route("/api/auth", authController)
-	.route("/api/users", userController)
+	.route("/api/users", userController);
 
 export type AppType = typeof app;
 export default app;

@@ -17,7 +17,6 @@ export type SocketPayloadType<T = Record<string, any>> = {
 	data: T;
 };
 
-
 export type SocketResponseType<T = any> = {
 	id?: string;
 	key?: SocketPayloadKeyType;

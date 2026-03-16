@@ -12,22 +12,23 @@ import { useVerifyEmail } from "../hooks";
 export const SignupEmailStep = () => {
 	const emailRef = useRef<InputEmailRefType>(null);
 	const { data, setData, setStep } = useSignupStore();
-	const { mutateAsync : verifyEmail, isPending: verifyEmailLoading } = useVerifyEmail(data.email);
+	const { mutateAsync: verifyEmail, isPending: verifyEmailLoading } =
+		useVerifyEmail(data.email);
 
-  const handleNext = async () => {
+	const handleNext = async () => {
 		if (emailRef.current?.validate()) {
 			setData({
 				...data,
 				email: emailRef.current.getValue(),
 			});
-      setStep(1);
+			setStep(1);
 
-      const userExists = await verifyEmail();
-      if(userExists?.exists) {
-        Toast.toast.danger("Email already exists!");
-      }
-    }
-  };
+			const userExists = await verifyEmail();
+			if (userExists?.exists) {
+				Toast.toast.danger("Email already exists!");
+			}
+		}
+	};
 
 	return (
 		<div className="h-fit flex flex-col gap-4">
@@ -38,7 +39,7 @@ export const SignupEmailStep = () => {
 					size="sm"
 					className="rounded-sm"
 					variant="primary"
-          onClick={handleNext}
+					onClick={handleNext}
 				>
 					<p className="font-semibold">Next</p>
 					<ChevronRightIcon className="size-3.5" />

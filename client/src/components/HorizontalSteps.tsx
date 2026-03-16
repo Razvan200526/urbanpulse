@@ -22,7 +22,6 @@ export interface HorizontalStepsProps
 }
 
 function CheckIcon(props: ComponentProps<"svg">) {
-
 	return (
 		<svg
 			{...props}
