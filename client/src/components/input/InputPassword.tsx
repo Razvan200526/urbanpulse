@@ -6,11 +6,11 @@ import {
 	TextField,
 	type TextFieldProps,
 } from "@heroui/react";
-import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
-import { PasswordIcon } from "../icons/PasswordIcon";
+import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { EyeClosedIcon } from "../icons/EyeClosedIcon";
 import { EyeOpenIcon } from "../icons/EyeOpenIcon";
+import { PasswordIcon } from "../icons/PasswordIcon";
 
 export type InputPasswordRefType = {
 	getValue: () => string;

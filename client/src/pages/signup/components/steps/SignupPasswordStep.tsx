@@ -1,7 +1,7 @@
+import type { InputPasswordRefType } from "@client/components/input/InputPassword";
+import { InputPassword } from "@client/components/input/InputPassword";
 import { Button, Separator } from "@heroui/react";
 import { useRef } from "react";
-import { InputPassword } from "@client/components/input/InputPassword";
-import type { InputPasswordRefType } from "@client/components/input/InputPassword";
 import { useSignupStore } from "../../signUpStore";
 
 export const SignupPasswordStep = () => {

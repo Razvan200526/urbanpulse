@@ -1,7 +1,7 @@
+import { H1 } from "@client/components/typography";
 import { Button, Input, Separator } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { useSignupStore } from "../../signUpStore";
-import { H1 } from "@client/components/typography";
 
 export const SignupOTPVerificationStep = () => {
 	const { data, setStep, clear } = useSignupStore();

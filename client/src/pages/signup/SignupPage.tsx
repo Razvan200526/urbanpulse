@@ -3,10 +3,10 @@ import { HorizontalSteps } from "../../components/HorizontalSteps";
 import { Logo } from "../../components/icons/Logo";
 import { H1 } from "../../components/typography";
 import { SignupEmailStep } from "./components/steps/SignupEmailStep";
-import { useSignupStore } from "./signUpStore";
-import { SignupPasswordStep } from "./components/steps/SignupPasswordStep";
 import { SignupOTPVerificationStep } from "./components/steps/SignupOTPVerificationStep";
+import { SignupPasswordStep } from "./components/steps/SignupPasswordStep";
 import { SignupProfileStep } from "./components/steps/SignupProfileStep";
+import { useSignupStore } from "./signUpStore";
 
 export const SignUpPage = () => {
 	let content = <SignupEmailStep />;

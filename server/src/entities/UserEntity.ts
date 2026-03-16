@@ -14,6 +14,9 @@ export class UserEntity {
 	@Column({ type: "varchar", length: 30 })
 	lastName: string;
 
+	@Column({ type: "varchar", length: 20 })
+	email: string;
+
 	@Column({
 		type: "enum",
 		enum: UserRole,

@@ -13,6 +13,7 @@
 		"declaration": true,
 		"outDir": "dist",
 		"noEmit": false,
+		"strict": true,
 		"emitDecoratorMetadata": true,
 		"strictPropertyInitialization": false,
 		// Module resolution

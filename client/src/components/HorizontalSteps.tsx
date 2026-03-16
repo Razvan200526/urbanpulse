@@ -22,6 +22,7 @@ export interface HorizontalStepsProps
 }
 
 function CheckIcon(props: ComponentProps<"svg">) {
+
 	return (
 		<svg
 			{...props}
@@ -88,7 +89,7 @@ export const HorizontalSteps = React.forwardRef<
 									aria-current={status === "active" ? "step" : undefined}
 									onClick={() => setCurrentStep(stepIdx)}
 									className={cn(
-										"group flex w-full cursor-pointer flex-col items-center justify-center gap-y-2 rounded-(--radius) py-2.5",
+										"group flex w-full cursor-pointer flex-col items-center justify-center gap-y-2 rounded-lg py-2.5",
 										stepClassName,
 									)}
 									{...props}

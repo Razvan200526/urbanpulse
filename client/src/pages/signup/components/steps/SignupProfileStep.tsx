@@ -1,8 +1,8 @@
+import { H1 } from "@client/components/typography";
 import { Button, Input, Separator } from "@heroui/react";
+import { Icon } from "@iconify/react";
 import { useRef, useState } from "react";
 import { useSignupStore } from "../../signUpStore";
-import { Icon } from "@iconify/react";
-import { H1 } from "@client/components/typography";
 
 export const SignupProfileStep = () => {
 	const { data, setData, setStep } = useSignupStore();
