@@ -1,1 +1,1 @@
-bun format && bun lint
+bun fmt && bun lint

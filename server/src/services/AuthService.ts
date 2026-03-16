@@ -14,6 +14,51 @@ export const authService = betterAuth({
 	database: new Pool({
 		connectionString: Bun.env.DATABASE_URL,
 	}),
+	user: {
+		modelName: "user",
+		fields: {
+			email: "email",
+			image: "image",
+		},
+		additionalFields: {
+			name: {
+				type: "string",
+				required: true,
+			},
+			role: {
+				type: "string",
+				required: false,
+			},
+			bio: {
+				type: "string",
+				required: false,
+			},
+			trustScore: {
+				type: "number",
+				required: false,
+			},
+			successfulInteractions: {
+				type: "number",
+				required: false,
+			},
+			skills: {
+				type: "string",
+				required: false,
+			},
+			resources: {
+				type: "string",
+				required: false,
+			},
+			isVerified: {
+				type: "boolean",
+				required: false,
+			},
+			rememberMe: {
+				type: "boolean",
+				required: false,
+			},
+		},
+	},
 	advanced: {
 		defaultCookieAttributes: {
 			httpOnly: true,

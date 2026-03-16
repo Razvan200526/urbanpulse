@@ -1,21 +1,37 @@
 import { UserRole } from "@server/types";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryColumn } from "typeorm";
 
 @Entity({
 	name: "user",
+	synchronize: false,
 })
 export class UserEntity {
-	@PrimaryGeneratedColumn("uuid")
+	@PrimaryColumn("uuid")
 	id: string;
 
-	@Column({ type: "varchar", length: 30 })
+	@Column({ type: "varchar", length: 255 })
+	name: string;
+
+	@Column({ type: "varchar", length: 255, unique: true })
+	email: string;
+
+	@Column({ type: "boolean", default: false })
+	emailVerified: boolean;
+
+	@Column({ type: "varchar", nullable: true })
+	image: string | null;
+
+	@Column({ type: "timestamp" })
+	createdAt: Date;
+
+	@Column({ type: "timestamp" })
+	updatedAt: Date;
+
+	@Column({ type: "varchar", length: 30, nullable: true })
 	firstName: string;
 
-	@Column({ type: "varchar", length: 30 })
+	@Column({ type: "varchar", length: 30, nullable: true })
 	lastName: string;
-
-	@Column({ type: "varchar", length: 20 })
-	email: string;
 
 	@Column({
 		type: "enum",
@@ -24,10 +40,7 @@ export class UserEntity {
 	})
 	role: UserRole;
 
-	@Column()
-	image: string;
-
-	@Column({ type: "varchar", length: 100 })
+	@Column({ type: "varchar", length: 100, nullable: true })
 	bio: string;
 
 	@Column({ type: "decimal", precision: 3, scale: 2, default: 0 })
@@ -37,14 +50,14 @@ export class UserEntity {
 	successfulInteractions: number;
 
 	@Column({ type: "simple-array", nullable: true })
-	skills: string[]; // Tags: ['plumbing', 'lifting', 'nursing']
+	skills: string[];
 
 	@Column({ type: "simple-array", nullable: true })
 	resources: string[];
 
-	@Column({ type: "boolean" })
+	@Column({ type: "boolean", default: false })
 	isVerified: boolean;
 
-	@Column({ type: "boolean" })
+	@Column({ type: "boolean", default: false })
 	rememberMe: boolean;
 }

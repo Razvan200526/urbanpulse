@@ -1,8 +1,8 @@
+import { UserEntity } from "@server/entities/UserEntity";
 import type { PrimaryDatabase } from "@server/shared";
 import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { IRepository } from "./IRepository";
-import { UserEntity } from "@server/entities/UserEntity";
 import type { DeleteResult, Repository } from "typeorm";
+import type { IRepository } from "./IRepository";
 
 export class UserRepository implements IRepository<UserEntity> {
 	private database: PrimaryDatabase;
@@ -60,14 +60,14 @@ export class UserRepository implements IRepository<UserEntity> {
 		const repo = await this.open();
 		return await repo.findOne({ where: { email } });
 	}
-	// async getByOptions(options: Partial<UserEntity>): Promise<UserEntity[]> {
+	// async getByOptions(options: Partial<User>): Promise<User[]> {
 	// 	const repository = await this.open();
 
 	// 	// Build a clean where object by removing undefined/null values
-	// 	const where: Partial<Record<keyof UserEntity, any>> = {};
+	// 	const where: Partial<Record<keyof User, any>> = {};
 	// 	for (const [key, value] of Object.entries(options)) {
 	// 		if (value === undefined || value === null) continue;
-	// 		where[key as keyof UserEntity] = value as any;
+	// 		where[key as keyof User] = value as any;
 	// 	}
 
 	// 	// This performs exact matches on provided fields. If you need partial

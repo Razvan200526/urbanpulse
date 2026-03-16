@@ -1,5 +1,6 @@
-import { Hono } from "hono";
 import { userService } from "@server/services/UserService";
+import { handleError } from "@server/utils/handleError";
+import { Hono } from "hono";
 export const userController = new Hono().get("/verify-email", async (c) => {
 	try {
 		const email = c.req.query("email");
@@ -9,6 +10,7 @@ export const userController = new Hono().get("/verify-email", async (c) => {
 		}
 		return c.json({ exists: true }, 200);
 	} catch (e) {
+		handleError(e);
 		return c.json({ message: "Internal server error" }, 500);
 	}
 });

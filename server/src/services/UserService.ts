@@ -1,8 +1,9 @@
 import {
-	userRepository,
 	type UserRepository,
+	userRepository,
 } from "@server/repositories/UserRepository";
 import { isEmailValid } from "@shared/validators/isEmailValid";
+import type { User } from "better-auth";
 
 export class UserService {
 	private readonly userRepo: UserRepository;
@@ -16,7 +17,7 @@ export class UserService {
 		if (!isValid) {
 			return true;
 		}
-		const user = await this.userRepo.findByEmail(email);
+		const user = (await this.userRepo.findByEmail(email)) as User;
 		if (!user) {
 			return false;
 		} else {
