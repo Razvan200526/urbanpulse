@@ -60,9 +60,7 @@ export const SignupProfileStep = () => {
 			<Separator />
 
 			<div className="flex flex-col gap-4">
-				{/* Profile Image */}
 				<div className="flex flex-col gap-3">
-					<H1 className="text-accent font-semibold">Profile Picture</H1>
 					<div className="flex flex-col gap-3 items-center">
 						{imagePreview ? (
 							<img

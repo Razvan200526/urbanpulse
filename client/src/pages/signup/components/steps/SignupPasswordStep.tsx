@@ -17,8 +17,8 @@ export const SignupPasswordStep = () => {
 			return;
 		}
 
-		const password = passwordRef.current?.getValue() ?? "";
-		const confirmPassword = confirmPasswordRef.current?.getValue() ?? "";
+		const password = passwordRef.current?.getValue() || "";
+		const confirmPassword = confirmPasswordRef.current?.getValue() || "";
 
 		if (password !== confirmPassword) {
 			console.error("Passwords do not match");
@@ -34,6 +34,10 @@ export const SignupPasswordStep = () => {
 	};
 
 	const handleBack = () => {
+		setData({
+			...data,
+			password: "",
+		});
 		setStep(0);
 	};
 
