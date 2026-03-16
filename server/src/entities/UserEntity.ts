@@ -27,12 +27,6 @@ export class UserEntity {
 	@Column({ type: "timestamp" })
 	updatedAt: Date;
 
-	@Column({ type: "varchar", length: 30, nullable: true })
-	firstName: string;
-
-	@Column({ type: "varchar", length: 30, nullable: true })
-	lastName: string;
-
 	@Column({
 		type: "enum",
 		enum: UserRole,

@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { openAPI } from "better-auth/plugins";
 import { Pool } from "pg";
 import { pe } from "..";
-export const authService = betterAuth({
+export const auth = betterAuth({
 	logger: {
 		disableColors: false,
 		disabled: false,
@@ -19,12 +19,9 @@ export const authService = betterAuth({
 		fields: {
 			email: "email",
 			image: "image",
+			name: "name",
 		},
 		additionalFields: {
-			name: {
-				type: "string",
-				required: true,
-			},
 			role: {
 				type: "string",
 				required: false,
@@ -87,4 +84,4 @@ export const authService = betterAuth({
 	plugins: [openAPI()],
 });
 
-export default authService;
+export default auth;

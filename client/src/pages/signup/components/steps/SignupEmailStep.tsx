@@ -12,21 +12,28 @@ import { useVerifyEmail } from "../hooks";
 export const SignupEmailStep = () => {
 	const emailRef = useRef<InputEmailRefType>(null);
 	const { data, setData, setStep } = useSignupStore();
-	const { mutateAsync: verifyEmail, isPending } = useVerifyEmail(data.email);
+	const { mutateAsync: verifyEmail, isPending } = useVerifyEmail();
 
 	const handleNext = async () => {
-		if (emailRef.current?.validate()) {
+		const email = emailRef.current?.getValue();
+		if (email && emailRef.current?.validate()) {
 			setData({
 				...data,
-				email: emailRef.current.getValue(),
+				email,
 			});
 
-			const userExists = await verifyEmail();
-			if (userExists?.exists) {
-				Toast.toast.danger("Email already exists!");
-				return;
+			try {
+				const userExists = await verifyEmail(email);
+				if (userExists?.exists) {
+					Toast.toast.danger("Email already exists!");
+					return;
+				} else {
+					setStep(1);
+				}
+			} catch (error) {
+				Toast.toast.danger("Failed to verify email");
+				console.error(error);
 			}
-			setStep(1);
 		}
 	};
 

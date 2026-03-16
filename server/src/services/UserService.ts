@@ -2,6 +2,7 @@ import {
 	type UserRepository,
 	userRepository,
 } from "@server/repositories/UserRepository";
+import { logger } from "@server/utils/Logger";
 import { isEmailValid } from "@shared/validators/isEmailValid";
 import type { User } from "better-auth";
 
@@ -19,6 +20,7 @@ export class UserService {
 		}
 		const user = (await this.userRepo.findByEmail(email)) as User;
 		if (!user) {
+			logger.success(`User doesn't exist: ${email}`);
 			return false;
 		} else {
 			return true;
