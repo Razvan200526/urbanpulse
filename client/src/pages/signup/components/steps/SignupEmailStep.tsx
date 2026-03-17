@@ -44,7 +44,6 @@ export const SignupEmailStep = () => {
 			<div className="pt-4 flex items-center justify-end">
 				<Button
 					size="sm"
-					className="rounded-sm"
 					variant="primary"
 					onClick={handleNext}
 					isPending={isPending}

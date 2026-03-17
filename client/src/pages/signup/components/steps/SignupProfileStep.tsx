@@ -1,6 +1,7 @@
 import { Button, Separator } from "@heroui/react";
 import { useRef } from "react";
 import { useSignupStore } from "../../signUpStore";
+import { isSignUpInfoValid } from "@shared/validators/isSignUpInfoValid";
 import {
 	InputName,
 	type InputNameRefType,
@@ -15,19 +16,19 @@ export const SignupProfileStep = () => {
 	const bioRef = useRef<HTMLTextAreaElement>(null);
 
 	const handleNext = () => {
-		const name = nameRef.current?.getValue();
+		const name = nameRef.current?.getValue() || "";
 		const bio = bioRef.current?.value?.trim();
-
-		if (!name) {
-			console.error("Name is required");
-			return;
-		}
 
 		setData({
 			...data,
 			name,
 			bio: bio || "",
 		});
+
+		if (!isSignUpInfoValid(data)) {
+			console.error("Name is required");
+			return;
+		}
 
 		setStep(3);
 	};
@@ -73,7 +74,7 @@ export const SignupProfileStep = () => {
 					Back
 				</Button>
 				<Button className="flex rounded" variant="primary" onClick={handleNext}>
-					Next
+					Sign Up
 					<ChevronRightIcon />
 				</Button>
 			</div>

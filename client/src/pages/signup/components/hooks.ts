@@ -15,3 +15,5 @@ export const useVerifyEmail = () => {
 		},
 	});
 };
+
+export const useSignUp = () => {};

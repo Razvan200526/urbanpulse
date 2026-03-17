@@ -1,5 +1,6 @@
 import { UserRole } from "@server/types";
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
+import { PulseEntity } from "./PulseEntity";
 
 @Entity({
 	name: "user",
@@ -33,6 +34,12 @@ export class UserEntity {
 		default: UserRole.USER,
 	})
 	role: UserRole;
+
+	@OneToMany(
+		() => PulseEntity,
+		(pulse) => pulse.userId,
+	)
+	pulses: PulseEntity[];
 
 	@Column({ type: "varchar", length: 100, nullable: true })
 	bio: string;

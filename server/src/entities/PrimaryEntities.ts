@@ -1,3 +1,4 @@
 import { UserEntity } from "./UserEntity";
+import { PulseEntity } from "./PulseEntity";
 
-export const PrimaryEntities = [UserEntity];
+export const PrimaryEntities = [UserEntity, PulseEntity];
