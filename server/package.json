@@ -15,7 +15,10 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"dev": "bun --watch run src/index.ts & tsc --watch"
+		"dev": "bun --watch run src/index.ts & tsc --watch",
+		"db:seed": "bunx --bun typeorm-seeding seed -d ./src/shared/PrimaryDatabase.ts seeds/*.ts",
+		"db:migration:generate": "bunx --bun typeorm migration:generate ./migrations/Initial -d ./src/shared/PrimaryDatabase.ts",
+		"db:migration:run": "bunx --bun typeorm migration:run -d ./src/shared/PrimaryDatabase.ts"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.1009.0",
@@ -34,6 +37,7 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
+		"@jorgebodega/typeorm-seeding": "^7.1.0",
 		"@types/bun": "latest"
 	}
 }

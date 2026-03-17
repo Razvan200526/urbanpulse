@@ -1,7 +1,7 @@
+import { pe } from "@server/utils/PrettyError";
 import { betterAuth } from "better-auth";
 import { openAPI } from "better-auth/plugins";
 import { Pool } from "pg";
-import { pe } from "..";
 export const auth = betterAuth({
 	logger: {
 		disableColors: false,

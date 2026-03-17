@@ -52,7 +52,7 @@ export const TextArea = forwardRef<TextAreaRefType, TextAreaComponentProps>(
 		ref,
 	) => {
 		const [value, setValue] = useState<string>(initialValue);
-		const [focused, setFocused] = useState(false);
+		const [_focused, setFocused] = useState(false);
 		const [submitted, setSubmitted] = useState(false);
 
 		const errorMessage = useMemo(() => {

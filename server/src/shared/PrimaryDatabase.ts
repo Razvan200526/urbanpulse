@@ -1,4 +1,3 @@
-import { logger } from "@server/utils/Logger";
 import {
 	DataSource,
 	type EntityManager,
@@ -8,52 +7,40 @@ import {
 } from "typeorm";
 import { PrimaryEntities } from "../entities/PrimaryEntities";
 
-export class PrimaryDatabase {
-	private source: DataSource | null = null;
-	private readonly url: string;
+export const AppDataSource = new DataSource({
+	type: "postgres",
+	url: Bun.env.DATABASE_URL,
+	synchronize: false, // Set to false when using migrations
+	entities: PrimaryEntities,
+	ssl: Bun.env.NODE_ENV === "production",
+	migrations: ["./migrations/*.ts"],
+});
 
-	constructor() {
-		const dbUrl = Bun.env.DATABASE_URL;
-		this.url = dbUrl;
-	}
+export class PrimaryDatabase {
+	private source: DataSource = AppDataSource;
 
 	public getSource(): DataSource {
-		if (this.source) {
-			return this.source;
-		}
-
-		this.source = new DataSource({
-			type: "postgres",
-			url: this.url,
-			synchronize: true,
-			entities: PrimaryEntities,
-			ssl: Bun.env.NODE_ENV === "production",
-		});
-		logger.info("Database source initalized");
 		return this.source;
 	}
 
 	public async open<Entity extends ObjectLiteral>(
 		entity: EntityTarget<Entity>,
 	): Promise<Repository<Entity>> {
-		const source = this.getSource();
-
-		if (!source.isInitialized) {
-			await source.initialize();
+		if (!this.source.isInitialized) {
+			await this.source.initialize();
 		}
 
-		return source.getRepository(entity);
+		return this.source.getRepository(entity);
 	}
 
 	public async close(): Promise<void> {
-		const source = this.getSource();
-		if (source.isInitialized) {
-			await source.destroy();
+		if (this.source.isInitialized) {
+			await this.source.destroy();
 		}
 	}
 
 	public getEntityManager(): EntityManager {
-		return this.getSource().manager;
+		return this.source.manager;
 	}
 }
 

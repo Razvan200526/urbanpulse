@@ -1,6 +1,6 @@
 import { mainSymbols as f } from "figures";
 import * as p from "picocolors";
-import { pe } from "..";
+import { pe } from "./PrettyError";
 export class Logger {
 	public info(message: string) {
 		console.log(p.blue(`${f.info}: ${message}`));

@@ -1,12 +1,14 @@
+import { PulseEnum, UrgencyEnum } from "@shared/types/index";
 import {
 	Column,
 	Entity,
+	type Geometry,
 	Index,
+	JoinColumn,
 	ManyToOne,
 	PrimaryGeneratedColumn,
-	type Point,
+	RelationId,
 } from "typeorm";
-import { PulseEnum, UrgencyEnum } from "@shared/types/index";
 import { UserEntity } from "./UserEntity";
 @Entity({
 	name: "pulse",
@@ -25,7 +27,15 @@ export class PulseEntity {
 	@ManyToOne(
 		() => UserEntity,
 		(user) => user.pulses,
+		{
+			onDelete: "CASCADE",
+		},
 	)
+
+	@JoinColumn({ name: "userId" })
+	user: typeof UserEntity;
+
+	@RelationId((pulse: PulseEntity) => pulse.user)
 	userId: string;
 
 	@Column({
@@ -42,8 +52,8 @@ export class PulseEntity {
 	description: string;
 
 	@Index({ spatial: true })
-	@Column({ type: "geography", spatialFeatureType: "Point" })
-	position: Point;
+	@Column({ type: "point", spatialFeatureType: "Point", srid: 4326 })
+	position: Geometry;
 
 	@Column({ type: "boolean" })
 	isResolved: boolean;

@@ -1,4 +1,4 @@
-import { UserRole } from "@server/types";
+import type { UserRole } from "@server/types";
 import { Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
 import { PulseEntity } from "./PulseEntity";
 
@@ -7,58 +7,60 @@ import { PulseEntity } from "./PulseEntity";
 	synchronize: false,
 })
 export class UserEntity {
-	@PrimaryColumn("uuid")
+	constructor(partial?: Partial<UserEntity>) {
+		if (partial) Object.assign(this, partial);
+	}
+	@PrimaryColumn("text")
 	id: string;
 
-	@Column({ type: "varchar", length: 255 })
+	@Column({ type: "text" })
 	name: string;
 
-	@Column({ type: "varchar", length: 255, unique: true })
+	@Column({ type: "text", unique: true })
 	email: string;
 
-	@Column({ type: "boolean", default: false })
+	@Column({ type: "boolean" })
 	emailVerified: boolean;
 
-	@Column({ type: "varchar", nullable: true })
+	@Column({ type: "text", nullable: true })
 	image: string | null;
 
-	@Column({ type: "timestamp" })
+	@Column({ type: "timestamptz" })
 	createdAt: Date;
 
-	@Column({ type: "timestamp" })
+	@Column({ type: "timestamptz" })
 	updatedAt: Date;
 
 	@Column({
-		type: "enum",
-		enum: UserRole,
-		default: UserRole.USER,
+		type: "text",
+		nullable: true,
 	})
 	role: UserRole;
 
 	@OneToMany(
 		() => PulseEntity,
-		(pulse) => pulse.userId,
+		(pulse) => pulse.user,
 	)
 	pulses: PulseEntity[];
 
-	@Column({ type: "varchar", length: 100, nullable: true })
-	bio: string;
+	@Column({ type: "text", nullable: true })
+	bio: string | null;
 
-	@Column({ type: "decimal", precision: 3, scale: 2, default: 0 })
+	@Column({ type: "float", default: 0 })
 	trustScore: number;
 
 	@Column({ type: "int", default: 0 })
 	successfulInteractions: number;
 
-	@Column({ type: "simple-array", nullable: true })
+	@Column({ type: "text", nullable: true })
 	skills: string[];
 
-	@Column({ type: "simple-array", nullable: true })
+	@Column({ type: "text", nullable: true })
 	resources: string[];
 
-	@Column({ type: "boolean", default: false })
+	@Column({ type: "boolean", nullable: true })
 	isVerified: boolean;
 
-	@Column({ type: "boolean", default: false })
+	@Column({ type: "boolean", nullable: true })
 	rememberMe: boolean;
 }

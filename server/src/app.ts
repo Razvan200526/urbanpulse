@@ -2,8 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { authController } from "./controllers/AuthController";
-import { userController } from "./controllers/UserController";
 import { avatarController } from "./controllers/AvatarController";
+import { userController } from "./controllers/UserController";
 export const app = new Hono()
 	.use(logger())
 	.use(
