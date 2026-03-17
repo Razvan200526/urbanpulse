@@ -9,6 +9,12 @@ export const envSchema = z.object({
 	BETTER_AUTH_URL: z.string(),
 	SERVER_URL: z.string(),
 	CLIENT_URL: z.string(),
+	R2_ENDPOINT: z.string(),
+	R2_ACCESS_KEY: z.string(),
+	R2_SECRET_ACCESS_KEY: z.string(),
+	R2_TOKEN: z.string(),
+	R2_BUCKET_NAME: z.string(),
+	R2_DOMAIN: z.string(),
 });
 
 export function parseEnv() {

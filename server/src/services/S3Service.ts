@@ -1,30 +1,29 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
+/**
+ * Singleton service that allows read/write pipeline for files to Cloudflare R2 storage.
+ * These buckets are used to store user uploaded files and generate urls and storing them in the db
+ */
 export class StorageService {
-	constructor(
-		private readonly accessKey: string,
-		private readonly secretKey: string,
-		private readonly endpoint: string,
-		private bucketName: string,
-	) {}
+	private readonly accessKey: string;
+	private readonly secretKey: string;
+	private readonly endpoint: string;
+	private bucketName: string;
+	private readonly S3Client: S3Client;
 
-	private validateCredentials() {
-		if (!this.accessKey || !this.secretKey || !this.endpoint) {
-			throw new Error(
-				"Storage service not configured. Missing R2 credentials. Please set R2_ACCESS_KEY, R2_SECRET_ACCESS_KEY, and R2_ENDPOINT environment variables.",
-			);
-		}
-	}
-
-	public getS3Client() {
-		this.validateCredentials();
-		return new S3Client({
-			region: "EEUR",
+	constructor() {
+		this.accessKey = Bun.env.R2_ACCESS_KEY;
+		this.secretKey = Bun.env.R2_SECRET_ACCESS_KEY;
+		this.endpoint = Bun.env.R2_ENDPOINT;
+		this.bucketName = Bun.env.R2_BUCKET_NAME;
+		this.S3Client = new S3Client({
+			region: "auto",
 			endpoint: this.endpoint,
 			credentials: {
 				accessKeyId: this.accessKey,
 				secretAccessKey: this.secretKey,
 			},
+			forcePathStyle: true,
 		});
 	}
 
@@ -36,22 +35,24 @@ export class StorageService {
 		this.bucketName = bucket;
 	}
 
-	getResumeBucket() {
-		return "https://pub-6182cabd0dc4482a88462c9d6bd62c4f.r2.dev/";
-	}
-
 	getAvatarBucket() {
-		return "https://pub-6858952ca1f64c08a3e778080d6e2ee6.r2.dev/";
+		return Bun.env.R2_DOMAIN;
 	}
 
-	getCoverletterBucket() {
-		return "https://pub-90ee65adbb154d74ba77693fbb4f7a8f.r2.dev/";
+	getImageBucket() {
+		return Bun.env.R2_DOMAIN;
 	}
 
+	/**
+	 *
+	 * @param file
+	 * Method for uploading an avatar to the S3 bucket
+	 * The key is generated based on the current timestamp and the file name(also the folder it should go in inside the bucket)
+	 * @returns The url of the uploaded avatar
+	 */
 	async uploadAvatar(file: File): Promise<string> {
-		const s3 = this.getS3Client();
-		const key = `${Date.now()}-${file.name}`;
-		this.setBucket("avatars");
+		const key = `avatars/${Date.now()}-${file.name}`;
+		this.setBucket("urbanpulse");
 
 		const command = new PutObjectCommand({
 			Bucket: this.bucketName,
@@ -60,15 +61,21 @@ export class StorageService {
 			ContentType: file.type,
 		});
 
-		await s3.send(command);
+		await this.S3Client.send(command);
 		const bucketUrl = this.getAvatarBucket();
 		return `${bucketUrl}${key}`;
 	}
 
-	async uploadResume(file: File): Promise<string> {
-		const s3 = this.getS3Client();
-		const key = `${Date.now()}-${file.name}`;
-		this.setBucket("resumes");
+	/**
+	 *
+	 * @param file
+	 * Method for uploading an image to the S3 bucket
+	 * The key is generated based on the current timestamp and the file name(also the folder it should go in inside the bucket)
+	 * @returns The url of the uploaded image
+	 */
+	async uploadImage(file: File): Promise<string> {
+		const key = `images/${Date.now()}-${file.name}`;
+		this.setBucket("urbanpulse");
 
 		const command = new PutObjectCommand({
 			Bucket: this.bucketName,
@@ -77,25 +84,10 @@ export class StorageService {
 			ContentType: file.type,
 		});
 
-		await s3.send(command);
-		const bucketUrl = this.getResumeBucket();
-		return `${bucketUrl}${key}`;
-	}
-
-	async uploadCoverletter(file: File): Promise<string> {
-		const s3 = this.getS3Client();
-		const key = `${Date.now()}-${file.name}`;
-		this.setBucket("coverletters");
-
-		const command = new PutObjectCommand({
-			Bucket: this.bucketName,
-			Key: key,
-			Body: new Uint8Array(await file.arrayBuffer()),
-			ContentType: file.type,
-		});
-
-		await s3.send(command);
-		const bucketUrl = this.getCoverletterBucket();
+		await this.S3Client.send(command);
+		const bucketUrl = this.getImageBucket();
 		return `${bucketUrl}${key}`;
 	}
 }
+
+export const storageService = new StorageService();

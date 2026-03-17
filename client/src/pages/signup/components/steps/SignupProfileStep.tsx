@@ -1,6 +1,5 @@
 import { Button, Separator } from "@heroui/react";
-import { Icon } from "@iconify/react";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useSignupStore } from "../../signUpStore";
 import {
 	InputName,
@@ -14,19 +13,6 @@ export const SignupProfileStep = () => {
 	const { data, setData, setStep } = useSignupStore();
 	const nameRef = useRef<InputNameRefType>(null);
 	const bioRef = useRef<HTMLTextAreaElement>(null);
-	const [imagePreview, setImagePreview] = useState<string>(data.image);
-
-	const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		if (file) {
-			const reader = new FileReader();
-			reader.onloadend = () => {
-				const result = reader.result as string;
-				setImagePreview(result);
-			};
-			reader.readAsDataURL(file);
-		}
-	};
 
 	const handleNext = () => {
 		const name = nameRef.current?.getValue();
@@ -41,7 +27,6 @@ export const SignupProfileStep = () => {
 			...data,
 			name,
 			bio: bio || "",
-			image: imagePreview,
 		});
 
 		setStep(3);
@@ -64,7 +49,10 @@ export const SignupProfileStep = () => {
 
 			<div className="flex flex-col gap-4">
 				<div className="flex items-center justify-center">
-					<InputAvatar />
+					<InputAvatar
+						value={data.image}
+						onAvatarChange={(url) => setData({ ...data, image: url })}
+					/>
 				</div>
 				<InputName ref={nameRef} placeholder="John" />
 				<TextArea

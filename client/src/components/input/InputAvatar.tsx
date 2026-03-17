@@ -6,13 +6,11 @@ import { UserIcon } from "lucide-react";
 export type InputAvatarPropsType = {
 	value?: string;
 	onAvatarChange?: (url: string) => void;
-	size?: number;
 };
 
 export const InputAvatar = ({
 	value,
 	onAvatarChange,
-	size = 30,
 }: InputAvatarPropsType) => {
 	const id = useId();
 	const [avatarUrl, setAvatarUrl] = useState<string | undefined>(value);

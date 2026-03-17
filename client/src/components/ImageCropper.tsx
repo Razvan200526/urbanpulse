@@ -106,7 +106,7 @@ export const ImageCropper = ({
 			}
 
 			Toast.toast.success("Image uploaded successfully");
-			onSave(res.data.message);
+			onSave(res.data.url);
 			setIsOpen(false);
 		}
 	};
