@@ -279,22 +279,3 @@
 		animation: marquee 25s linear infinite;
 	}
 }
-
-/*@layer components {
-	.input {
-		@apply rounded border border-primary-300 px-4 py-2 text-sm shadow-sm transition-colors
-
-        &:hover,
-            &[data-hovered="true"] {
-		@apply bg-surface-secondary border-primary;
-	}
-	&:focus-visible,
-
-	&[data-focus-visible="true"] {
-		@apply border-primary ring-2 ring-primary/20;
-	}
-	&[data-invalid="true"] {
-		@apply border-danger bg-danger-50/10 text-danger;
-	}
-}
-}*/

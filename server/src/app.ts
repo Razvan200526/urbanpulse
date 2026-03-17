@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { authController } from "./controllers/AuthController";
 import { userController } from "./controllers/UserController";
+import { avatarController } from "./controllers/AvatarController";
 export const app = new Hono()
 	.use(logger())
 	.use(
@@ -17,7 +18,8 @@ export const app = new Hono()
 		}),
 	)
 	.route("/api/auth", authController)
-	.route("/api/users", userController);
+	.route("/api/users", userController)
+	.route("/api/avatar", avatarController);
 
 export type AppType = typeof app;
 export default app;

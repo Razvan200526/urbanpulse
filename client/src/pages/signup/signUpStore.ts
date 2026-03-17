@@ -3,8 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 export type SignUpDataType = {
 	email: string;
-	firstName: string;
-	lastName: string;
+	name: string;
 	image: string;
 	password: string;
 	bio: string;
@@ -21,8 +20,7 @@ type SignupStoreType = {
 const DEFAULT_DATA: SignUpDataType = {
 	email: "",
 	password: "",
-	firstName: "",
-	lastName: "",
+	name: "",
 	image: "",
 	bio: "",
 };

@@ -102,7 +102,7 @@ export const InputEmail = forwardRef<InputEmailRefType, InputEmailProps>(
 			>
 				{label && <Label className="text-accent font-semibold">{label}</Label>}
 
-				<InputGroup className="rounded border border-primary">
+				<InputGroup className="rounded border border-accent">
 					{showIcon && (
 						<InputGroup.Prefix>
 							<EmailIcon

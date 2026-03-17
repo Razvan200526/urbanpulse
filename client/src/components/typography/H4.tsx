@@ -11,10 +11,7 @@ export const H4 = ({
 } & ComponentProps<"h4">) => {
 	return (
 		<h4
-			className={cn(
-				"text-lg/7 font-bold tracking-wide text-primary",
-				className,
-			)}
+			className={cn("text-lg/7 font-bold tracking-wide text-accent", className)}
 			{...props}
 		>
 			{children}
