@@ -3,11 +3,14 @@ import { UserEntity } from "@server/entities/UserEntity";
 import { primaryDatabase } from "@server/shared/PrimaryDatabase";
 import { UserRole } from "@server/types";
 
+/**
+ * Use the db:seed script to run this,it will fill up the database with new users
+ */
 export class UserSeeder extends Seeder {
 	async run(): Promise<void> {
 		const users: UserEntity[] = [
 			new UserEntity({
-				id: "usr_001",
+				id: crypto.randomUUID(),
 				name: "Alice Johnson",
 				email: "alice.johnson@example.com",
 				emailVerified: true,
@@ -25,7 +28,7 @@ export class UserSeeder extends Seeder {
 				rememberMe: false,
 			}),
 			new UserEntity({
-				id: "usr_002",
+				id: crypto.randomUUID(),
 				name: "Bob Martinez",
 				email: "bob.martinez@example.com",
 				emailVerified: true,
@@ -43,7 +46,7 @@ export class UserSeeder extends Seeder {
 				rememberMe: true,
 			}),
 			new UserEntity({
-				id: "usr_003",
+				id: crypto.randomUUID(),
 				name: "Clara Nguyen",
 				email: "clara.nguyen@example.com",
 				emailVerified: false,
@@ -61,7 +64,7 @@ export class UserSeeder extends Seeder {
 				rememberMe: false,
 			}),
 			new UserEntity({
-				id: "usr_004",
+				id: crypto.randomUUID(),
 				name: "David Kim",
 				email: "david.kim@example.com",
 				emailVerified: true,
@@ -79,7 +82,7 @@ export class UserSeeder extends Seeder {
 				rememberMe: false,
 			}),
 			new UserEntity({
-				id: "usr_005",
+				id: crypto.randomUUID(),
 				name: "Eva Rossi",
 				email: "eva.rossi@example.com",
 				emailVerified: true,

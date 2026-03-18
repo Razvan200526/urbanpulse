@@ -1,6 +1,9 @@
 import { PrimaryEntities } from "@server/entities/PrimaryEntities";
 import { DataSource } from "typeorm";
 
+/**
+ * DO NOT TOUCH
+ */
 export const dataSource = new DataSource({
 	type: "postgres",
 	url: Bun.env.DATABASE_URL,

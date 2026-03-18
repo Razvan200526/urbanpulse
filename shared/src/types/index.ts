@@ -15,3 +15,8 @@ export enum UrgencyEnum {
 	Unknown = "",
 	Immediate = "Immediate",
 }
+
+export type ResourceAvailabilityType =
+	| "Available"
+	| "Unavailable"
+	| "Currently Unavailable";

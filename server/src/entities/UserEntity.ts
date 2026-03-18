@@ -1,6 +1,7 @@
 import type { UserRole } from "@server/types";
 import { Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
 import { PulseEntity } from "./PulseEntity";
+import { SkillEntity } from "./SkillEntity";
 
 @Entity({
 	name: "user",
@@ -52,8 +53,11 @@ export class UserEntity {
 	@Column({ type: "int", default: 0 })
 	successfulInteractions: number;
 
-	@Column({ type: "text", nullable: true })
-	skills: string[];
+	@OneToMany(
+		() => SkillEntity,
+		(skill) => skill.user,
+	)
+	skills: SkillEntity[];
 
 	@Column({ type: "text", nullable: true })
 	resources: string[];
