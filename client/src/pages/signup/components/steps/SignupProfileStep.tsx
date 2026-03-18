@@ -1,4 +1,4 @@
-import { Button, Separator } from "@heroui/react";
+import { Button, Separator, Toast } from "@heroui/react";
 import { useRef } from "react";
 import { useSignupStore } from "../../signUpStore";
 import { isSignUpInfoValid } from "@shared/validators/isSignUpInfoValid";
@@ -9,13 +9,15 @@ import {
 import { ChevronRightIcon } from "@client/components/icons/ChevronRight";
 import { TextArea } from "@client/components/TextArea";
 import { InputAvatar } from "@client/components/input/InputAvatar";
+import { useSignUp } from "../../hooks";
 
 export const SignupProfileStep = () => {
-	const { data, setData, setStep } = useSignupStore();
+  const { data, setData, setStep } = useSignupStore();
+  const { mutateAsync: signUp , isError , isPending} = useSignUp();
 	const nameRef = useRef<InputNameRefType>(null);
 	const bioRef = useRef<HTMLTextAreaElement>(null);
 
-	const handleNext = () => {
+	const handleNext = async () => {
 		const name = nameRef.current?.getValue() || "";
 		const bio = bioRef.current?.value?.trim();
 
@@ -29,6 +31,12 @@ export const SignupProfileStep = () => {
 			console.error("Name is required");
 			return;
 		}
+
+    const newUser = await signUp(data);
+    if (newUser.error || isError) {
+      Toast.toast.danger("Sign up failed,try again later")
+      return;
+    }
 
 		setStep(3);
 	};
@@ -73,7 +81,7 @@ export const SignupProfileStep = () => {
 				>
 					Back
 				</Button>
-				<Button className="flex rounded" variant="primary" onClick={handleNext}>
+				<Button className="flex rounded" variant="primary" onClick={handleNext} isPending={isPending} isDisabled={isPending}>
 					Sign Up
 					<ChevronRightIcon />
 				</Button>

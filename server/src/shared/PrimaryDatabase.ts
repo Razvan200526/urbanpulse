@@ -9,7 +9,7 @@ import {
 export const AppDataSource = new DataSource({
 	type: "postgres",
 	url: Bun.env.DATABASE_URL,
-	synchronize: false, // Set to false when using migrations
+	synchronize: false,
 	entities: ["./src/entities/*.ts"],
 	ssl: Bun.env.NODE_ENV === "production",
 	migrations: ["./migrations/*.ts"],

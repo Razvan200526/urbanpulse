@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryColumn } from "typeorm";
+import { Column, Entity, ManyToOne, PrimaryColumn, RelationId } from "typeorm";
 import { UserEntity } from "./UserEntity";
 import type { ResourceAvailabilityType } from "@shared/types";
 
@@ -29,4 +29,7 @@ export class ResourceEntity {
 
 	@Column({ type: "timestamp" })
 	createdAt: Date;
+
+	@RelationId((resource: ResourceEntity) => resource.user)
+	userId: string;
 }

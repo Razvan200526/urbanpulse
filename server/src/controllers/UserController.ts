@@ -15,6 +15,6 @@ export const userController = new Hono().get("/verify-email", async (c) => {
 	} catch (e) {
 		handleError(e);
 		console.error(e);
-		return c.json({ message: "Internal server errorasda" }, 500);
+		return c.json({ message: "Internal server error" }, 500);
 	}
 });

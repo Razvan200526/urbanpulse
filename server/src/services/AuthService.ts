@@ -1,7 +1,11 @@
+import { getMailer } from "@server/mailers/getMailer";
+import { OTPMail } from "@server/mailers/templates/OTPMail";
+import { logger } from "@server/utils/Logger";
 import { pe } from "@server/utils/PrettyError";
 import { betterAuth } from "better-auth";
-import { openAPI } from "better-auth/plugins";
+import { emailOTP, openAPI } from "better-auth/plugins";
 import { Pool } from "pg";
+
 export const auth = betterAuth({
 	logger: {
 		disableColors: false,
@@ -25,6 +29,8 @@ export const auth = betterAuth({
 			role: {
 				type: "string",
 				required: false,
+				defaultValue: "user",
+				input: false,
 			},
 			bio: {
 				type: "string",
@@ -33,26 +39,25 @@ export const auth = betterAuth({
 			trustScore: {
 				type: "number",
 				required: false,
+				defaultValue: 0,
+				input: false,
 			},
 			successfulInteractions: {
 				type: "number",
 				required: false,
-			},
-			skills: {
-				type: "string",
-				required: false,
-			},
-			resources: {
-				type: "string",
-				required: false,
+				defaultValue: 0,
+				input: false,
 			},
 			isVerified: {
 				type: "boolean",
 				required: false,
+				defaultValue: false,
+				input: false,
 			},
 			rememberMe: {
 				type: "boolean",
 				required: false,
+				defaultValue: false,
 			},
 		},
 	},
@@ -63,7 +68,7 @@ export const auth = betterAuth({
 		},
 	},
 	baseURL: Bun.env.BETTER_AUTH_URL,
-	trustedOrigins: [Bun.env.SERVER_URL],
+	trustedOrigins: [Bun.env.SERVER_URL, Bun.env.CLIENT_URL],
 	session: {
 		expiresIn: 60 * 60 * 24 * 30,
 		updateAge: 60 * 60 * 24,
@@ -81,7 +86,27 @@ export const auth = betterAuth({
 		max: 5,
 		window: 60 * 1000,
 	},
-	plugins: [openAPI()],
+	plugins: [
+		openAPI(),
+		emailOTP({
+			otpLength: 6,
+			expiresIn: 3600,
+			allowedAttempts: 5,
+			sendVerificationOnSignUp: true,
+			sendVerificationOTP: async ({ email, otp, type }) => {
+				if (type === "email-verification") {
+					const targetEmail = email.trim();
+					logger.info(`Sending verification OTP to ${targetEmail}: ${otp}`);
+					const mailer = getMailer();
+					await mailer.send({
+						to: targetEmail,
+						subject: "Verification OTP",
+						html: OTPMail({ otp }),
+					});
+				}
+			},
+		}),
+	],
 });
 
 export default auth;

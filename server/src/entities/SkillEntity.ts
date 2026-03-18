@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryColumn } from "typeorm";
+import { Column, Entity, ManyToOne, PrimaryColumn, RelationId } from "typeorm";
 import { UserEntity } from "./UserEntity";
 
 @Entity({
@@ -19,4 +19,7 @@ export class SkillEntity {
 		},
 	)
 	user: typeof UserEntity;
+
+	@RelationId((skill: SkillEntity) => skill.user)
+	userId: string;
 }

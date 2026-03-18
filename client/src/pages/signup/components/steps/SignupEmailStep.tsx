@@ -7,7 +7,7 @@ import { Link } from "@client/components/Link";
 import { Button, Separator, Toast } from "@heroui/react";
 import { useRef } from "react";
 import { useSignupStore } from "../../signUpStore";
-import { useVerifyEmail } from "../hooks";
+import { useVerifyEmail } from "../../hooks";
 
 export const SignupEmailStep = () => {
 	const emailRef = useRef<InputEmailRefType>(null);

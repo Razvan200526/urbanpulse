@@ -5,7 +5,7 @@ async function check() {
 	const extensions = await AppDataSource.query("SELECT * FROM pg_extension;");
 	console.log(
 		"Extensions:",
-		extensions.map((e) => e.extname),
+		extensions.map((e: any) => e.extname),
 	);
 
 	const searchPath = await AppDataSource.query("SHOW search_path;");

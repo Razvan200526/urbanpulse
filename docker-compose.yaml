@@ -3,7 +3,7 @@ services:
     image: maildev/maildev
     ports:
       - "1025:1025"
-      - "80:80"
+      - "80:1080"
 
   postgres:
     image: postgres:17
