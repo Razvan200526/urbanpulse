@@ -38,7 +38,10 @@ export class TransactionRepository implements IRepository<TransactionEntity> {
 		return await repository.save(data);
 	}
 
-	async update(id: string, data: Partial<TransactionEntity>): Promise<TransactionEntity> {
+	async update(
+		id: string,
+		data: Partial<TransactionEntity>,
+	): Promise<TransactionEntity> {
 		const repository = await this.open();
 		const entity = await repository.findOne({
 			where: {

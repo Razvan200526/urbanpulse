@@ -12,8 +12,8 @@ import { InputAvatar } from "@client/components/input/InputAvatar";
 import { useSignUp } from "../../hooks";
 
 export const SignupProfileStep = () => {
-  const { data, setData, setStep } = useSignupStore();
-  const { mutateAsync: signUp , isError , isPending} = useSignUp();
+	const { data, setData, setStep } = useSignupStore();
+	const { mutateAsync: signUp, isError, isPending } = useSignUp();
 	const nameRef = useRef<InputNameRefType>(null);
 	const bioRef = useRef<HTMLTextAreaElement>(null);
 
@@ -32,11 +32,11 @@ export const SignupProfileStep = () => {
 			return;
 		}
 
-    const newUser = await signUp(data);
-    if (newUser.error || isError) {
-      Toast.toast.danger("Sign up failed,try again later")
-      return;
-    }
+		const newUser = await signUp(data);
+		if (newUser.error || isError) {
+			Toast.toast.danger("Sign up failed,try again later");
+			return;
+		}
 
 		setStep(3);
 	};
@@ -81,7 +81,13 @@ export const SignupProfileStep = () => {
 				>
 					Back
 				</Button>
-				<Button className="flex rounded" variant="primary" onClick={handleNext} isPending={isPending} isDisabled={isPending}>
+				<Button
+					className="flex rounded"
+					variant="primary"
+					onClick={handleNext}
+					isPending={isPending}
+					isDisabled={isPending}
+				>
 					Sign Up
 					<ChevronRightIcon />
 				</Button>

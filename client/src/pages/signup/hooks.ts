@@ -18,11 +18,16 @@ export const useVerifyEmail = () => {
 };
 
 export const useSignUp = () => {
-  return useMutation({
-    mutationKey: ["signup"],
-    mutationFn: async (data: SignUpDataType) => {
-      const result = await authClient.signUp.email({email : data.email , password : data.password , image : data.image ,name : data.name})
-      return result;
-    }
-  })
+	return useMutation({
+		mutationKey: ["signup"],
+		mutationFn: async (data: SignUpDataType) => {
+			const result = await authClient.signUp.email({
+				email: data.email,
+				password: data.password,
+				image: data.image,
+				name: data.name,
+			});
+			return result;
+		},
+	});
 };

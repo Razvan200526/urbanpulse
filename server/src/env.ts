@@ -14,7 +14,7 @@ export const envSchema = z.object({
 	R2_SECRET_ACCESS_KEY: z.string(),
 	R2_TOKEN: z.string(),
 	R2_BUCKET_NAME: z.string(),
-  R2_DOMAIN: z.string(),
+	R2_DOMAIN: z.string(),
 	RESEND_API_KEY: z.string(),
 });
 

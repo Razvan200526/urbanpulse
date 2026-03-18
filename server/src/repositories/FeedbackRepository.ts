@@ -38,7 +38,10 @@ export class FeedbackRepository implements IRepository<FeedbackEntity> {
 		return await repository.save(data);
 	}
 
-	async update(id: string, data: Partial<FeedbackEntity>): Promise<FeedbackEntity> {
+	async update(
+		id: string,
+		data: Partial<FeedbackEntity>,
+	): Promise<FeedbackEntity> {
 		const repository = await this.open();
 		const entity = await repository.findOne({
 			where: {

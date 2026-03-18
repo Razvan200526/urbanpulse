@@ -38,7 +38,10 @@ export class ResponseRepository implements IRepository<ResponseEntity> {
 		return await repository.save(data);
 	}
 
-	async update(id: string, data: Partial<ResponseEntity>): Promise<ResponseEntity> {
+	async update(
+		id: string,
+		data: Partial<ResponseEntity>,
+	): Promise<ResponseEntity> {
 		const repository = await this.open();
 		const entity = await repository.findOne({
 			where: {

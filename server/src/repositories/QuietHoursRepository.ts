@@ -38,7 +38,10 @@ export class QuietHoursRepository implements IRepository<QuietHoursEntity> {
 		return await repository.save(data);
 	}
 
-	async update(id: string, data: Partial<QuietHoursEntity>): Promise<QuietHoursEntity> {
+	async update(
+		id: string,
+		data: Partial<QuietHoursEntity>,
+	): Promise<QuietHoursEntity> {
 		const repository = await this.open();
 		const entity = await repository.findOne({
 			where: {

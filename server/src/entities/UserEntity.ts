@@ -54,15 +54,27 @@ export class UserEntity {
 	@Column({ type: "boolean", nullable: true, default: false })
 	rememberMe: boolean;
 
-	@OneToMany(() => PulseEntity, (pulse) => pulse.user)
+	@OneToMany(
+		() => PulseEntity,
+		(pulse) => pulse.user,
+	)
 	pulses: PulseEntity[];
 
-	@OneToMany(() => SkillEntity, (skill) => skill.user)
+	@OneToMany(
+		() => SkillEntity,
+		(skill) => skill.user,
+	)
 	skills: SkillEntity[];
 
-	@OneToMany(() => ResourceEntity, (resource) => resource.user)
+	@OneToMany(
+		() => ResourceEntity,
+		(resource) => resource.user,
+	)
 	resources: ResourceEntity[];
 
-	@OneToMany(() => QuietHoursEntity, (quietHour) => quietHour.user)
+	@OneToMany(
+		() => QuietHoursEntity,
+		(quietHour) => quietHour.user,
+	)
 	quietHours: QuietHoursEntity[];
 }

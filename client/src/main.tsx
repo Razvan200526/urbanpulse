@@ -15,7 +15,7 @@ import { client } from "@server/client.ts";
 import { RouterProvider } from "react-router";
 import { RootProvider } from "./components/RootProvider.tsx";
 import { router } from "./router.tsx";
-import { createAuthClient } from 'better-auth/client';
+import { createAuthClient } from "better-auth/client";
 
 export const hono = client(import.meta.env.VITE_SERVER_URL, {
 	init: {
@@ -25,7 +25,6 @@ export const hono = client(import.meta.env.VITE_SERVER_URL, {
 
 export const authClient = createAuthClient({
 	baseURL: import.meta.env.VITE_SERVER_URL,
-
 });
 const queryClient = new QueryClient({
 	defaultOptions: {

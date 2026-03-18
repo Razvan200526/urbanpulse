@@ -38,7 +38,10 @@ export class PetAlertRepository implements IRepository<PetAlertEntity> {
 		return await repository.save(data);
 	}
 
-	async update(id: string, data: Partial<PetAlertEntity>): Promise<PetAlertEntity> {
+	async update(
+		id: string,
+		data: Partial<PetAlertEntity>,
+	): Promise<PetAlertEntity> {
 		const repository = await this.open();
 		const entity = await repository.findOne({
 			where: {

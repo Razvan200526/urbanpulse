@@ -15,11 +15,13 @@ async function diagnostic() {
 	console.table(tables);
 
 	// 2. Check row counts for auth-related tables
-	const authTables = ['user', 'session', 'account', 'verification'];
+	const authTables = ["user", "session", "account", "verification"];
 	console.log("\nRow counts:");
 	for (const table of authTables) {
 		try {
-			const result = await AppDataSource.query(`SELECT COUNT(*) as count FROM "${table}"`);
+			const result = await AppDataSource.query(
+				`SELECT COUNT(*) as count FROM "${table}"`,
+			);
 			console.log(`Table "${table}": ${result[0].count} rows`);
 		} catch (e: any) {
 			console.log(`Table "${table}": Error querying - ${e.message}`);
@@ -36,14 +38,22 @@ async function diagnostic() {
 
 	// 4. Verify foreign key data for the first account (if any)
 	try {
-		const accounts = await AppDataSource.query(`SELECT * FROM "account" LIMIT 1`);
+		const accounts = await AppDataSource.query(
+			`SELECT * FROM "account" LIMIT 1`,
+		);
 		if (accounts.length > 0) {
 			console.log("\nSample Account data (first record):");
 			console.log(JSON.stringify(accounts[0], null, 2));
-			
+
 			const userId = accounts[0].userId;
-			const user = await AppDataSource.query(`SELECT * FROM "user" WHERE id = $1`, [userId]);
-			console.log(`\nLinked User (id: ${userId}):`, user.length > 0 ? "FOUND" : "NOT FOUND");
+			const user = await AppDataSource.query(
+				`SELECT * FROM "user" WHERE id = $1`,
+				[userId],
+			);
+			console.log(
+				`\nLinked User (id: ${userId}):`,
+				user.length > 0 ? "FOUND" : "NOT FOUND",
+			);
 		}
 	} catch (e: any) {
 		console.log("\nError checking account-user link:", e.message);

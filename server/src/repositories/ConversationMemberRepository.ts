@@ -4,7 +4,9 @@ import { primaryDatabase } from "@server/shared/PrimaryDatabase";
 import type { DeleteResult, Repository } from "typeorm";
 import type { IRepository } from "./IRepository";
 
-export class ConversationMemberRepository implements IRepository<ConversationMemberEntity> {
+export class ConversationMemberRepository
+	implements IRepository<ConversationMemberEntity>
+{
 	private database: PrimaryDatabase;
 
 	constructor() {
@@ -33,12 +35,17 @@ export class ConversationMemberRepository implements IRepository<ConversationMem
 		return await repository.find();
 	}
 
-	async create(data: Partial<ConversationMemberEntity>): Promise<ConversationMemberEntity> {
+	async create(
+		data: Partial<ConversationMemberEntity>,
+	): Promise<ConversationMemberEntity> {
 		const repository = await this.open();
 		return await repository.save(data);
 	}
 
-	async update(id: string, data: Partial<ConversationMemberEntity>): Promise<ConversationMemberEntity> {
+	async update(
+		id: string,
+		data: Partial<ConversationMemberEntity>,
+	): Promise<ConversationMemberEntity> {
 		const repository = await this.open();
 		const entity = await repository.findOne({
 			where: {

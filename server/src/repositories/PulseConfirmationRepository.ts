@@ -4,7 +4,9 @@ import { primaryDatabase } from "@server/shared/PrimaryDatabase";
 import type { DeleteResult, Repository } from "typeorm";
 import type { IRepository } from "./IRepository";
 
-export class PulseConfirmationRepository implements IRepository<PulseConfirmationEntity> {
+export class PulseConfirmationRepository
+	implements IRepository<PulseConfirmationEntity>
+{
 	private database: PrimaryDatabase;
 
 	constructor() {
@@ -33,12 +35,17 @@ export class PulseConfirmationRepository implements IRepository<PulseConfirmatio
 		return await repository.find();
 	}
 
-	async create(data: Partial<PulseConfirmationEntity>): Promise<PulseConfirmationEntity> {
+	async create(
+		data: Partial<PulseConfirmationEntity>,
+	): Promise<PulseConfirmationEntity> {
 		const repository = await this.open();
 		return await repository.save(data);
 	}
 
-	async update(id: string, data: Partial<PulseConfirmationEntity>): Promise<PulseConfirmationEntity> {
+	async update(
+		id: string,
+		data: Partial<PulseConfirmationEntity>,
+	): Promise<PulseConfirmationEntity> {
 		const repository = await this.open();
 		const entity = await repository.findOne({
 			where: {

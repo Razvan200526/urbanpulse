@@ -38,7 +38,10 @@ export class MessageRepository implements IRepository<MessageEntity> {
 		return await repository.save(data);
 	}
 
-	async update(id: string, data: Partial<MessageEntity>): Promise<MessageEntity> {
+	async update(
+		id: string,
+		data: Partial<MessageEntity>,
+	): Promise<MessageEntity> {
 		const repository = await this.open();
 		const entity = await repository.findOne({
 			where: {

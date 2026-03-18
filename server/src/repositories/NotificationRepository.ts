@@ -38,7 +38,10 @@ export class NotificationRepository implements IRepository<NotificationEntity> {
 		return await repository.save(data);
 	}
 
-	async update(id: string, data: Partial<NotificationEntity>): Promise<NotificationEntity> {
+	async update(
+		id: string,
+		data: Partial<NotificationEntity>,
+	): Promise<NotificationEntity> {
 		const repository = await this.open();
 		const entity = await repository.findOne({
 			where: {
