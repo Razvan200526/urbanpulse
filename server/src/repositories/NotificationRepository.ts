@@ -1,62 +1,38 @@
-import { NotificationEntity } from "@server/entities/NotificationEntity";
-import type { PrimaryDatabase } from "@server/shared";
-import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { DeleteResult, Repository } from "typeorm";
+import { db } from "@server/db";
+import { notification, type NotificationType } from "@server/db/schema";
+import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
-export class NotificationRepository implements IRepository<NotificationEntity> {
-	private database: PrimaryDatabase;
-
-	constructor() {
-		this.database = primaryDatabase;
+export class NotificationRepository implements IRepository<NotificationType> {
+	async getOne(id: string): Promise<NotificationType | null> {
+		const [result] = await db.select().from(notification).where(eq(notification.id, id as any));
+		return result || null;
 	}
 
-	async open(): Promise<Repository<NotificationEntity>> {
-		return await this.database.open(NotificationEntity);
+	async getAll(): Promise<NotificationType[]> {
+		return await db.select().from(notification);
 	}
 
-	async close(): Promise<void> {
-		await this.database.close();
+	async create(data: Partial<NotificationType>): Promise<NotificationType | null> {
+		const [result] = await db.insert(notification).values(data as any).returning();
+		return result ?? null;
 	}
 
-	async getOne(id: string): Promise<NotificationEntity | null> {
-		const repository = await this.open();
-		return await repository.findOne({
-			where: {
-				id,
-			},
-		});
-	}
-
-	async getAll(): Promise<NotificationEntity[]> {
-		const repository = await this.open();
-		return await repository.find();
-	}
-
-	async create(data: Partial<NotificationEntity>): Promise<NotificationEntity> {
-		const repository = await this.open();
-		return await repository.save(data);
-	}
-
-	async update(
-		id: string,
-		data: Partial<NotificationEntity>,
-	): Promise<NotificationEntity> {
-		const repository = await this.open();
-		const entity = await repository.findOne({
-			where: {
-				id,
-			},
-		});
-		if (!entity) {
-			throw new Error(`Notification with id ${id} not found`);
+	async update(id: string, data: Partial<NotificationType>): Promise<NotificationType> {
+		const [result] = await db
+			.update(notification)
+			.set(data as any)
+			.where(eq(notification.id, id as any))
+			.returning();
+		if (!result) {
+			throw new Error(`NotificationRepository: Record with id ${id} not found`);
 		}
-		return await repository.save({ ...entity, ...data });
+		return result;
 	}
 
-	async delete(id: string): Promise<DeleteResult> {
-		const repo = await this.open();
-		return await repo.delete({ id });
+	async delete(id: string): Promise<any> {
+		await db.delete(notification).where(eq(notification.id, id as any));
+		return { affected: 1 };
 	}
 }
 

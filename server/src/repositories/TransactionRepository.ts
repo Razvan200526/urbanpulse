@@ -1,62 +1,38 @@
-import { TransactionEntity } from "@server/entities/TransactionEntity";
-import type { PrimaryDatabase } from "@server/shared";
-import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { DeleteResult, Repository } from "typeorm";
+import { db } from "@server/db";
+import { transaction, type TransactionType } from "@server/db/schema";
+import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
-export class TransactionRepository implements IRepository<TransactionEntity> {
-	private database: PrimaryDatabase;
-
-	constructor() {
-		this.database = primaryDatabase;
+export class TransactionRepository implements IRepository<TransactionType> {
+	async getOne(id: string): Promise<TransactionType | null> {
+		const [result] = await db.select().from(transaction).where(eq(transaction.id, id as any));
+		return result || null;
 	}
 
-	async open(): Promise<Repository<TransactionEntity>> {
-		return await this.database.open(TransactionEntity);
+	async getAll(): Promise<TransactionType[]> {
+		return await db.select().from(transaction);
 	}
 
-	async close(): Promise<void> {
-		await this.database.close();
+	async create(data: Partial<TransactionType>): Promise<TransactionType | null> {
+		const [result] = await db.insert(transaction).values(data as any).returning();
+		return result ?? null;
 	}
 
-	async getOne(id: string): Promise<TransactionEntity | null> {
-		const repository = await this.open();
-		return await repository.findOne({
-			where: {
-				id,
-			},
-		});
-	}
-
-	async getAll(): Promise<TransactionEntity[]> {
-		const repository = await this.open();
-		return await repository.find();
-	}
-
-	async create(data: Partial<TransactionEntity>): Promise<TransactionEntity> {
-		const repository = await this.open();
-		return await repository.save(data);
-	}
-
-	async update(
-		id: string,
-		data: Partial<TransactionEntity>,
-	): Promise<TransactionEntity> {
-		const repository = await this.open();
-		const entity = await repository.findOne({
-			where: {
-				id,
-			},
-		});
-		if (!entity) {
-			throw new Error(`Transaction with id ${id} not found`);
+	async update(id: string, data: Partial<TransactionType>): Promise<TransactionType> {
+		const [result] = await db
+			.update(transaction)
+			.set(data as any)
+			.where(eq(transaction.id, id as any))
+			.returning();
+		if (!result) {
+			throw new Error(`TransactionRepository: Record with id ${id} not found`);
 		}
-		return await repository.save({ ...entity, ...data });
+		return result;
 	}
 
-	async delete(id: string): Promise<DeleteResult> {
-		const repo = await this.open();
-		return await repo.delete({ id });
+	async delete(id: string): Promise<any> {
+		await db.delete(transaction).where(eq(transaction.id, id as any));
+		return { affected: 1 };
 	}
 }
 

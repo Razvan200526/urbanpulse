@@ -1,22 +1,19 @@
-import { AppDataSource } from "./src/shared/PrimaryDatabase";
+import { db } from "./src/db/index";
+import { user, account } from "./src/db/schema";
 
-async function check() {
-	await AppDataSource.initialize();
-	const extensions = await AppDataSource.query("SELECT * FROM pg_extension;");
-	console.log(
-		"Extensions:",
-		extensions.map((e: any) => e.extname),
-	);
+async function run() {
+	try {
+		console.log("Fetching all users...");
+		const users = await db.select().from(user);
+		console.log("Users in DB:", users);
 
-	const searchPath = await AppDataSource.query("SHOW search_path;");
-	console.log("Search Path:", searchPath);
-
-	const types = await AppDataSource.query(
-		"SELECT nspname, typname FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE typname = 'geography';",
-	);
-	console.log("Geography type info:", types);
-
-	await AppDataSource.destroy();
+		console.log("Fetching all accounts...");
+		const accounts = await db.select().from(account);
+		console.log("Accounts in DB:", accounts);
+	} catch (error) {
+		console.error("DB Query failed:", error);
+	}
+	process.exit(0);
 }
 
-check().catch(console.error);
+run();

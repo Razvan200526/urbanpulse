@@ -1,62 +1,38 @@
-import { ResourceEntity } from "@server/entities/ResourceEntity";
-import type { PrimaryDatabase } from "@server/shared";
-import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { DeleteResult, Repository } from "typeorm";
+import { db } from "@server/db";
+import { resource, type ResourceType } from "@server/db/schema";
+import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
-export class ResourceRepository implements IRepository<ResourceEntity> {
-	private database: PrimaryDatabase;
-
-	constructor() {
-		this.database = primaryDatabase;
+export class ResourceRepository implements IRepository<ResourceType> {
+	async getOne(id: string): Promise<ResourceType | null> {
+		const [result] = await db.select().from(resource).where(eq(resource.id, id as any));
+		return result || null;
 	}
 
-	async open(): Promise<Repository<ResourceEntity>> {
-		return await this.database.open(ResourceEntity);
+	async getAll(): Promise<ResourceType[]> {
+		return await db.select().from(resource);
 	}
 
-	async close(): Promise<void> {
-		await this.database.close();
+	async create(data: Partial<ResourceType>): Promise<ResourceType | null> {
+		const [result] = await db.insert(resource).values(data as any).returning();
+		return result ?? null;
 	}
 
-	async getOne(id: string): Promise<ResourceEntity | null> {
-		const repository = await this.open();
-		return await repository.findOne({
-			where: {
-				id,
-			},
-		});
-	}
-
-	async getAll(): Promise<ResourceEntity[]> {
-		const repository = await this.open();
-		return await repository.find();
-	}
-
-	async create(data: Partial<ResourceEntity>): Promise<ResourceEntity> {
-		const repository = await this.open();
-		return await repository.save(data);
-	}
-
-	async update(
-		id: string,
-		data: Partial<ResourceEntity>,
-	): Promise<ResourceEntity> {
-		const repository = await this.open();
-		const entity = await repository.findOne({
-			where: {
-				id,
-			},
-		});
-		if (!entity) {
-			throw new Error(`Resource with id ${id} not found`);
+	async update(id: string, data: Partial<ResourceType>): Promise<ResourceType> {
+		const [result] = await db
+			.update(resource)
+			.set(data as any)
+			.where(eq(resource.id, id as any))
+			.returning();
+		if (!result) {
+			throw new Error(`ResourceRepository: Record with id ${id} not found`);
 		}
-		return await repository.save({ ...entity, ...data });
+		return result;
 	}
 
-	async delete(id: string): Promise<DeleteResult> {
-		const repo = await this.open();
-		return await repo.delete({ id });
+	async delete(id: string): Promise<any> {
+		await db.delete(resource).where(eq(resource.id, id as any));
+		return { affected: 1 };
 	}
 }
 

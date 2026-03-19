@@ -1,62 +1,38 @@
-import { MessageEntity } from "@server/entities/MessageEntity";
-import type { PrimaryDatabase } from "@server/shared";
-import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { DeleteResult, Repository } from "typeorm";
+import { db } from "@server/db";
+import { message, type MessageType } from "@server/db/schema";
+import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
-export class MessageRepository implements IRepository<MessageEntity> {
-	private database: PrimaryDatabase;
-
-	constructor() {
-		this.database = primaryDatabase;
+export class MessageRepository implements IRepository<MessageType> {
+	async getOne(id: string): Promise<MessageType | null> {
+		const [result] = await db.select().from(message).where(eq(message.id, id as any));
+		return result || null;
 	}
 
-	async open(): Promise<Repository<MessageEntity>> {
-		return await this.database.open(MessageEntity);
+	async getAll(): Promise<MessageType[]> {
+		return await db.select().from(message);
 	}
 
-	async close(): Promise<void> {
-		await this.database.close();
+	async create(data: Partial<MessageType>): Promise<MessageType | null> {
+		const [result] = await db.insert(message).values(data as any).returning();
+		return result ?? null;
 	}
 
-	async getOne(id: string): Promise<MessageEntity | null> {
-		const repository = await this.open();
-		return await repository.findOne({
-			where: {
-				id,
-			},
-		});
-	}
-
-	async getAll(): Promise<MessageEntity[]> {
-		const repository = await this.open();
-		return await repository.find();
-	}
-
-	async create(data: Partial<MessageEntity>): Promise<MessageEntity> {
-		const repository = await this.open();
-		return await repository.save(data);
-	}
-
-	async update(
-		id: string,
-		data: Partial<MessageEntity>,
-	): Promise<MessageEntity> {
-		const repository = await this.open();
-		const entity = await repository.findOne({
-			where: {
-				id,
-			},
-		});
-		if (!entity) {
-			throw new Error(`Message with id ${id} not found`);
+	async update(id: string, data: Partial<MessageType>): Promise<MessageType> {
+		const [result] = await db
+			.update(message)
+			.set(data as any)
+			.where(eq(message.id, id as any))
+			.returning();
+		if (!result) {
+			throw new Error(`MessageRepository: Record with id ${id} not found`);
 		}
-		return await repository.save({ ...entity, ...data });
+		return result;
 	}
 
-	async delete(id: string): Promise<DeleteResult> {
-		const repo = await this.open();
-		return await repo.delete({ id });
+	async delete(id: string): Promise<any> {
+		await db.delete(message).where(eq(message.id, id as any));
+		return { affected: 1 };
 	}
 }
 

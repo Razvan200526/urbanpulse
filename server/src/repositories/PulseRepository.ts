@@ -1,59 +1,38 @@
-import { PulseEntity } from "@server/entities/PulseEntity";
-import type { PrimaryDatabase } from "@server/shared";
-import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { DeleteResult, Repository } from "typeorm";
+import { db } from "@server/db";
+import { pulse, type PulseType } from "@server/db/schema";
+import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
-export class PulseRepository implements IRepository<PulseEntity> {
-	private database: PrimaryDatabase;
-
-	constructor() {
-		this.database = primaryDatabase;
+export class PulseRepository implements IRepository<PulseType> {
+	async getOne(id: string): Promise<PulseType | null> {
+		const [result] = await db.select().from(pulse).where(eq(pulse.id, id as any));
+		return result || null;
 	}
 
-	async open(): Promise<Repository<PulseEntity>> {
-		return await this.database.open(PulseEntity);
+	async getAll(): Promise<PulseType[]> {
+		return await db.select().from(pulse);
 	}
 
-	async close(): Promise<void> {
-		await this.database.close();
+	async create(data: Partial<PulseType>): Promise<PulseType | null> {
+		const [result] = await db.insert(pulse).values(data as any).returning();
+		return result ?? null;
 	}
 
-	async getOne(id: string): Promise<PulseEntity | null> {
-		const repository = await this.open();
-		return await repository.findOne({
-			where: {
-				id,
-			},
-		});
-	}
-
-	async getAll(): Promise<PulseEntity[]> {
-		const repository = await this.open();
-		return await repository.find();
-	}
-
-	async create(data: Partial<PulseEntity>): Promise<PulseEntity> {
-		const repository = await this.open();
-		return await repository.save(data);
-	}
-
-	async update(id: string, data: Partial<PulseEntity>): Promise<PulseEntity> {
-		const repository = await this.open();
-		const entity = await repository.findOne({
-			where: {
-				id,
-			},
-		});
-		if (!entity) {
-			throw new Error(`Pulse with id ${id} not found`);
+	async update(id: string, data: Partial<PulseType>): Promise<PulseType> {
+		const [result] = await db
+			.update(pulse)
+			.set(data as any)
+			.where(eq(pulse.id, id as any))
+			.returning();
+		if (!result) {
+			throw new Error(`PulseRepository: Record with id ${id} not found`);
 		}
-		return await repository.save({ ...entity, ...data });
+		return result;
 	}
 
-	async delete(id: string): Promise<DeleteResult> {
-		const repo = await this.open();
-		return await repo.delete({ id });
+	async delete(id: string): Promise<any> {
+		await db.delete(pulse).where(eq(pulse.id, id as any));
+		return { affected: 1 };
 	}
 }
 

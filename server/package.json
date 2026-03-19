@@ -16,29 +16,32 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": "bun --watch run src/index.ts & tsc --watch",
-		"db:seed": "bunx --bun typeorm-seeding seed -d ./src/shared/PrimaryDatabase.ts seeds/*.ts",
-		"db:migration:generate": "bunx --bun typeorm migration:generate ./migrations/Initial -d ./src/shared/PrimaryDatabase.ts",
-		"db:migration:run": "bunx --bun typeorm migration:run -d ./src/shared/PrimaryDatabase.ts",
-		"db:migrate": "bun db:migration:generate && bun:migration:run "
+		"db:generate": "bunx --bun drizzle-kit generate",
+		"db:push": "bunx --bun drizzle-kit push",
+		"db:migrate": "bunx --bun drizzle-kit migrate"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.1009.0",
+		"@better-auth/drizzle-adapter": "^1.5.5",
 		"@hono/zod-validator": "^0.7.6",
 		"better-auth": "^1.5.5",
+		"drizzle-orm": "^0.45.1",
 		"figures": "^6.1.0",
 		"hono": "^4.12.8",
 		"nanoid": "^5.1.7",
 		"nodemailer": "^8.0.2",
 		"pg": "^8.20.0",
 		"picocolors": "^1.1.1",
+		"postgres": "^3.4.8",
 		"pretty-error": "^4.0.0",
 		"resend": "^6.9.3",
 		"shared": "workspace:*",
-		"typeorm": "^0.3.28",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
 		"@jorgebodega/typeorm-seeding": "^7.1.0",
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"@types/pg": "^8.18.0",
+		"drizzle-kit": "^0.31.10"
 	}
 }

@@ -1,62 +1,38 @@
-import { ResponseEntity } from "@server/entities/PulseResponseEntity";
-import type { PrimaryDatabase } from "@server/shared";
-import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { DeleteResult, Repository } from "typeorm";
+import { db } from "@server/db";
+import { pulseResponse, type PulseResponseType } from "@server/db/schema";
+import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
-export class ResponseRepository implements IRepository<ResponseEntity> {
-	private database: PrimaryDatabase;
-
-	constructor() {
-		this.database = primaryDatabase;
+export class ResponseRepository implements IRepository<PulseResponseType> {
+	async getOne(id: string): Promise<PulseResponseType | null> {
+		const [result] = await db.select().from(pulseResponse).where(eq(pulseResponse.id, id as any));
+		return result || null;
 	}
 
-	async open(): Promise<Repository<ResponseEntity>> {
-		return await this.database.open(ResponseEntity);
+	async getAll(): Promise<PulseResponseType[]> {
+		return await db.select().from(pulseResponse);
 	}
 
-	async close(): Promise<void> {
-		await this.database.close();
+	async create(data: Partial<PulseResponseType>): Promise<PulseResponseType | null> {
+		const [result] = await db.insert(pulseResponse).values(data as any).returning();
+		return result ?? null;
 	}
 
-	async getOne(id: string): Promise<ResponseEntity | null> {
-		const repository = await this.open();
-		return await repository.findOne({
-			where: {
-				id,
-			},
-		});
-	}
-
-	async getAll(): Promise<ResponseEntity[]> {
-		const repository = await this.open();
-		return await repository.find();
-	}
-
-	async create(data: Partial<ResponseEntity>): Promise<ResponseEntity> {
-		const repository = await this.open();
-		return await repository.save(data);
-	}
-
-	async update(
-		id: string,
-		data: Partial<ResponseEntity>,
-	): Promise<ResponseEntity> {
-		const repository = await this.open();
-		const entity = await repository.findOne({
-			where: {
-				id,
-			},
-		});
-		if (!entity) {
-			throw new Error(`Response with id ${id} not found`);
+	async update(id: string, data: Partial<PulseResponseType>): Promise<PulseResponseType> {
+		const [result] = await db
+			.update(pulseResponse)
+			.set(data as any)
+			.where(eq(pulseResponse.id, id as any))
+			.returning();
+		if (!result) {
+			throw new Error(`ResponseRepository: Record with id ${id} not found`);
 		}
-		return await repository.save({ ...entity, ...data });
+		return result;
 	}
 
-	async delete(id: string): Promise<DeleteResult> {
-		const repo = await this.open();
-		return await repo.delete({ id });
+	async delete(id: string): Promise<any> {
+		await db.delete(pulseResponse).where(eq(pulseResponse.id, id as any));
+		return { affected: 1 };
 	}
 }
 

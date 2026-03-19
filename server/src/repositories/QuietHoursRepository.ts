@@ -1,62 +1,38 @@
-import { QuietHoursEntity } from "@server/entities/QuietHoursEntity";
-import type { PrimaryDatabase } from "@server/shared";
-import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { DeleteResult, Repository } from "typeorm";
+import { db } from "@server/db";
+import { quietHours, type QuietHoursType } from "@server/db/schema";
+import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
-export class QuietHoursRepository implements IRepository<QuietHoursEntity> {
-	private database: PrimaryDatabase;
-
-	constructor() {
-		this.database = primaryDatabase;
+export class QuietHoursRepository implements IRepository<QuietHoursType> {
+	async getOne(id: string): Promise<QuietHoursType | null> {
+		const [result] = await db.select().from(quietHours).where(eq(quietHours.id, id as any));
+		return result || null;
 	}
 
-	async open(): Promise<Repository<QuietHoursEntity>> {
-		return await this.database.open(QuietHoursEntity);
+	async getAll(): Promise<QuietHoursType[]> {
+		return await db.select().from(quietHours);
 	}
 
-	async close(): Promise<void> {
-		await this.database.close();
+	async create(data: Partial<QuietHoursType>): Promise<QuietHoursType | null> {
+		const [result] = await db.insert(quietHours).values(data as any).returning();
+		return result ?? null;
 	}
 
-	async getOne(id: string): Promise<QuietHoursEntity | null> {
-		const repository = await this.open();
-		return await repository.findOne({
-			where: {
-				id,
-			},
-		});
-	}
-
-	async getAll(): Promise<QuietHoursEntity[]> {
-		const repository = await this.open();
-		return await repository.find();
-	}
-
-	async create(data: Partial<QuietHoursEntity>): Promise<QuietHoursEntity> {
-		const repository = await this.open();
-		return await repository.save(data);
-	}
-
-	async update(
-		id: string,
-		data: Partial<QuietHoursEntity>,
-	): Promise<QuietHoursEntity> {
-		const repository = await this.open();
-		const entity = await repository.findOne({
-			where: {
-				id,
-			},
-		});
-		if (!entity) {
-			throw new Error(`QuietHours with id ${id} not found`);
+	async update(id: string, data: Partial<QuietHoursType>): Promise<QuietHoursType> {
+		const [result] = await db
+			.update(quietHours)
+			.set(data as any)
+			.where(eq(quietHours.id, id as any))
+			.returning();
+		if (!result) {
+			throw new Error(`QuietHoursRepository: Record with id ${id} not found`);
 		}
-		return await repository.save({ ...entity, ...data });
+		return result;
 	}
 
-	async delete(id: string): Promise<DeleteResult> {
-		const repo = await this.open();
-		return await repo.delete({ id });
+	async delete(id: string): Promise<any> {
+		await db.delete(quietHours).where(eq(quietHours.id, id as any));
+		return { affected: 1 };
 	}
 }
 

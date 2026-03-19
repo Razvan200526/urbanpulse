@@ -4,9 +4,10 @@ import { logger } from "@server/utils/Logger";
 import { pe } from "@server/utils/PrettyError";
 import { betterAuth } from "better-auth";
 import { emailOTP, openAPI } from "better-auth/plugins";
-import { Pool } from "pg";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { signUpPlugin } from "./plugins/signUpPlugin";
 import bcrypt from "bcryptjs";
+import { db } from "../../db";
 
 export const auth = betterAuth({
 	logger: {
@@ -17,8 +18,8 @@ export const auth = betterAuth({
 			console.error(pe.render(`[${level}] ${message}`, ...args));
 		},
 	},
-	database: new Pool({
-		connectionString: Bun.env.DATABASE_URL,
+	database: drizzleAdapter(db, {
+		provider: "pg",
 	}),
 	user: {
 		modelName: "user",

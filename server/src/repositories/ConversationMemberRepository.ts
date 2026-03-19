@@ -1,66 +1,38 @@
-import { ConversationMemberEntity } from "@server/entities/ConversationMemberEntity";
-import type { PrimaryDatabase } from "@server/shared";
-import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { DeleteResult, Repository } from "typeorm";
+import { db } from "@server/db";
+import { conversationMember, type ConversationMemberType } from "@server/db/schema";
+import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
-export class ConversationMemberRepository
-	implements IRepository<ConversationMemberEntity>
-{
-	private database: PrimaryDatabase;
-
-	constructor() {
-		this.database = primaryDatabase;
+export class ConversationMemberRepository implements IRepository<ConversationMemberType> {
+	async getOne(id: string): Promise<ConversationMemberType | null> {
+		const [result] = await db.select().from(conversationMember).where(eq(conversationMember.id, id as any));
+		return result || null;
 	}
 
-	async open(): Promise<Repository<ConversationMemberEntity>> {
-		return await this.database.open(ConversationMemberEntity);
+	async getAll(): Promise<ConversationMemberType[]> {
+		return await db.select().from(conversationMember);
 	}
 
-	async close(): Promise<void> {
-		await this.database.close();
+	async create(data: Partial<ConversationMemberType>): Promise<ConversationMemberType | null> {
+		const [result] = await db.insert(conversationMember).values(data as any).returning();
+		return result ?? null;
 	}
 
-	async getOne(id: string): Promise<ConversationMemberEntity | null> {
-		const repository = await this.open();
-		return await repository.findOne({
-			where: {
-				id,
-			},
-		});
-	}
-
-	async getAll(): Promise<ConversationMemberEntity[]> {
-		const repository = await this.open();
-		return await repository.find();
-	}
-
-	async create(
-		data: Partial<ConversationMemberEntity>,
-	): Promise<ConversationMemberEntity> {
-		const repository = await this.open();
-		return await repository.save(data);
-	}
-
-	async update(
-		id: string,
-		data: Partial<ConversationMemberEntity>,
-	): Promise<ConversationMemberEntity> {
-		const repository = await this.open();
-		const entity = await repository.findOne({
-			where: {
-				id,
-			},
-		});
-		if (!entity) {
-			throw new Error(`ConversationMember with id ${id} not found`);
+	async update(id: string, data: Partial<ConversationMemberType>): Promise<ConversationMemberType> {
+		const [result] = await db
+			.update(conversationMember)
+			.set(data as any)
+			.where(eq(conversationMember.id, id as any))
+			.returning();
+		if (!result) {
+			throw new Error(`ConversationMemberRepository: Record with id ${id} not found`);
 		}
-		return await repository.save({ ...entity, ...data });
+		return result;
 	}
 
-	async delete(id: string): Promise<DeleteResult> {
-		const repo = await this.open();
-		return await repo.delete({ id });
+	async delete(id: string): Promise<any> {
+		await db.delete(conversationMember).where(eq(conversationMember.id, id as any));
+		return { affected: 1 };
 	}
 }
 

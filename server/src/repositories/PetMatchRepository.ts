@@ -1,62 +1,38 @@
-import { PetMatchEntity } from "@server/entities/PetMatchEntity";
-import type { PrimaryDatabase } from "@server/shared";
-import { primaryDatabase } from "@server/shared/PrimaryDatabase";
-import type { DeleteResult, Repository } from "typeorm";
+import { db } from "@server/db";
+import { petMatch, type PetMatchType } from "@server/db/schema";
+import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
-export class PetMatchRepository implements IRepository<PetMatchEntity> {
-	private database: PrimaryDatabase;
-
-	constructor() {
-		this.database = primaryDatabase;
+export class PetMatchRepository implements IRepository<PetMatchType> {
+	async getOne(id: string): Promise<PetMatchType | null> {
+		const [result] = await db.select().from(petMatch).where(eq(petMatch.id, id as any));
+		return result || null;
 	}
 
-	async open(): Promise<Repository<PetMatchEntity>> {
-		return await this.database.open(PetMatchEntity);
+	async getAll(): Promise<PetMatchType[]> {
+		return await db.select().from(petMatch);
 	}
 
-	async close(): Promise<void> {
-		await this.database.close();
+	async create(data: Partial<PetMatchType>): Promise<PetMatchType | null> {
+		const [result] = await db.insert(petMatch).values(data as any).returning();
+		return result ?? null;
 	}
 
-	async getOne(id: string): Promise<PetMatchEntity | null> {
-		const repository = await this.open();
-		return await repository.findOne({
-			where: {
-				id,
-			},
-		});
-	}
-
-	async getAll(): Promise<PetMatchEntity[]> {
-		const repository = await this.open();
-		return await repository.find();
-	}
-
-	async create(data: Partial<PetMatchEntity>): Promise<PetMatchEntity> {
-		const repository = await this.open();
-		return await repository.save(data);
-	}
-
-	async update(
-		id: string,
-		data: Partial<PetMatchEntity>,
-	): Promise<PetMatchEntity> {
-		const repository = await this.open();
-		const entity = await repository.findOne({
-			where: {
-				id,
-			},
-		});
-		if (!entity) {
-			throw new Error(`PetMatch with id ${id} not found`);
+	async update(id: string, data: Partial<PetMatchType>): Promise<PetMatchType> {
+		const [result] = await db
+			.update(petMatch)
+			.set(data as any)
+			.where(eq(petMatch.id, id as any))
+			.returning();
+		if (!result) {
+			throw new Error(`PetMatchRepository: Record with id ${id} not found`);
 		}
-		return await repository.save({ ...entity, ...data });
+		return result;
 	}
 
-	async delete(id: string): Promise<DeleteResult> {
-		const repo = await this.open();
-		return await repo.delete({ id });
+	async delete(id: string): Promise<any> {
+		await db.delete(petMatch).where(eq(petMatch.id, id as any));
+		return { affected: 1 };
 	}
 }
 
