@@ -32,7 +32,7 @@ export const SignInPage = () => {
 
 		const signInData = await signIn({ email, password });
 		if (!signInData) {
-			return; 
+			return;
 		}
 
 		Toast.toast.success("Signed in successfully");
