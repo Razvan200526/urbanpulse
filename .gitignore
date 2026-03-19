@@ -1,4 +1,7 @@
 # bhvr/.gitignore
+
+project.pdf
+
 # dependencies
 node_modules
 .pnp

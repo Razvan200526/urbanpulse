@@ -1,38 +1,39 @@
-import { Button, Separator, Toast } from "@heroui/react";
-import { useRef } from "react";
-import { useSignupStore } from "../../signUpStore";
-import { isSignUpInfoValid } from "@shared/validators/isSignUpInfoValid";
+import { ChevronRightIcon } from "@client/components/icons/ChevronRight";
+import { InputAvatar } from "@client/components/input/InputAvatar";
 import {
 	InputName,
 	type InputNameRefType,
 } from "@client/components/input/InputName";
-import { ChevronRightIcon } from "@client/components/icons/ChevronRight";
-import { TextArea } from "@client/components/TextArea";
-import { InputAvatar } from "@client/components/input/InputAvatar";
+import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
+import { Button, Separator, Toast } from "@heroui/react";
+import { isSignUpInfoValid } from "@shared/validators/isSignUpInfoValid";
+import { useRef } from "react";
 import { useSignUp } from "../../hooks";
+import { useSignupStore } from "../../signUpStore";
 
 export const SignupProfileStep = () => {
 	const { data, setData, setStep } = useSignupStore();
 	const { mutateAsync: signUp, isError, isPending } = useSignUp();
 	const nameRef = useRef<InputNameRefType>(null);
-	const bioRef = useRef<HTMLTextAreaElement>(null);
+	const bioRef = useRef<TextAreaRefType | null>(null);
 
 	const handleNext = async () => {
 		const name = nameRef.current?.getValue() || "";
-		const bio = bioRef.current?.value?.trim();
+		const bio = bioRef.current?.getValue() || "";
 
-		setData({
+		const updatedData = {
 			...data,
 			name,
-			bio: bio || "",
-		});
+			bio,
+		};
+		setData(updatedData);
 
-		if (!isSignUpInfoValid(data)) {
+		if (!isSignUpInfoValid(updatedData)) {
 			console.error("Name is required");
 			return;
 		}
 
-		const newUser = await signUp(data);
+		const newUser = await signUp(updatedData);
 		if (newUser.error || isError) {
 			Toast.toast.danger("Sign up failed,try again later");
 			return;
@@ -63,13 +64,25 @@ export const SignupProfileStep = () => {
 						onAvatarChange={(url) => setData({ ...data, image: url })}
 					/>
 				</div>
-				<InputName ref={nameRef} placeholder="John" />
+				<InputName
+					ref={nameRef}
+					onChange={(e) => {
+						nameRef.current?.setValue(e);
+						console.log(e);
+					}}
+					placeholder="John"
+				/>
 				<TextArea
 					inputWrapperClassname="h-32"
 					inputMode="text"
 					label="Bio"
 					placeholder="Bio..."
 					maxLength={100}
+					ref={bioRef}
+					onChange={(e) => {
+						bioRef.current?.setValue(e.target.value);
+						console.log(e.target.value);
+					}}
 				/>
 			</div>
 

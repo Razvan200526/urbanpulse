@@ -5,6 +5,8 @@ import { pe } from "@server/utils/PrettyError";
 import { betterAuth } from "better-auth";
 import { emailOTP, openAPI } from "better-auth/plugins";
 import { Pool } from "pg";
+import { signUpPlugin } from "./plugins/signUpPlugin";
+import bcrypt from "bcryptjs";
 
 export const auth = betterAuth({
 	logger: {
@@ -79,6 +81,14 @@ export const auth = betterAuth({
 	},
 	emailAndPassword: {
 		enabled: true,
+		password: {
+			hash: async (password: string) => {
+				return bcrypt.hash(password, 10);
+			},
+			verify: async ({ password, hash }) => {
+				return await bcrypt.compare(password, hash);
+			},
+		},
 		requireEmailVerification: false,
 		autoSignIn: true,
 	},
@@ -87,12 +97,14 @@ export const auth = betterAuth({
 		window: 60 * 1000,
 	},
 	plugins: [
+		signUpPlugin(),
 		openAPI(),
 		emailOTP({
 			otpLength: 6,
 			expiresIn: 3600,
 			allowedAttempts: 5,
 			sendVerificationOnSignUp: true,
+			// overrideDefaultEmailVerification: true,
 			sendVerificationOTP: async ({ email, otp, type }) => {
 				if (type === "email-verification") {
 					const targetEmail = email.trim();

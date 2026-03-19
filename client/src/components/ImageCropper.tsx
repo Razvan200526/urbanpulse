@@ -2,11 +2,11 @@ import { Button, Toast } from "@heroui/react";
 import { useRef, useState } from "react";
 import ReactCrop, { type Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import { Modal } from "./Modal";
+import { useUploadAvatar, useUploadImage } from "@client/hooks/uploadHooks";
 import { dataURLtoFile } from "@shared/utils/index";
 import { PlusSquareIcon } from "lucide-react";
+import { Modal } from "./Modal";
 import { H4 } from "./typography";
-import { useUploadAvatar, useUploadImage } from "@client/hooks/uploadHooks";
 
 export type ImageCropperPropsType = {
 	image: string;

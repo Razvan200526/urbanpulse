@@ -1,6 +1,7 @@
 import { authClient, hono } from "@client/main";
+import { Toast } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
-import { SignUpDataType } from "./signUpStore";
+import type { SignUpDataType } from "./signUpStore";
 
 export const useVerifyEmail = () => {
 	return useMutation({
@@ -26,8 +27,31 @@ export const useSignUp = () => {
 				password: data.password,
 				image: data.image,
 				name: data.name,
+				// @ts-expect-error - Custom field handled by our custom signUp plugin
+				bio: data.bio,
 			});
 			return result;
+		},
+	});
+};
+
+type VerifyOTPInput = {
+	email: string;
+	otp: string;
+};
+export const useVerifyOTP = () => {
+	return useMutation({
+		mutationKey: ["verifyOTP"],
+		mutationFn: async ({ email, otp }: VerifyOTPInput) => {
+			const { data } = await authClient.emailOtp.verifyEmail({
+				email,
+				otp,
+			});
+			if (data?.user) {
+				return data.user;
+			} else {
+				Toast.toast.danger("Could not verify OTP");
+			}
 		},
 	});
 };

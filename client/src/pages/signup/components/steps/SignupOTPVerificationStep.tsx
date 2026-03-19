@@ -1,23 +1,27 @@
-import { H1 } from "@client/components/typography";
-import { Button, Input, Separator } from "@heroui/react";
-import { useEffect, useState } from "react";
+import {
+	type InputOTPRefType,
+	InputOtp,
+} from "@client/components/input/InputOtp";
+import { Button, Separator } from "@heroui/react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
+import { useVerifyOTP } from "../../hooks";
 import { useSignupStore } from "../../signUpStore";
 
 export const SignupOTPVerificationStep = () => {
 	const { data, setStep, clear } = useSignupStore();
-	const [otp, setOtp] = useState<string>("");
-	const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes
-	const [isLoading, setIsLoading] = useState(false);
-	const [_error, setError] = useState<string>("");
+	const { mutateAsync: verifyOTP, isPending } = useVerifyOTP();
 
-	// Countdown timer
+	const otpRef = useRef<InputOTPRefType | null>(null);
+
+	const [timeLeft, setTimeLeft] = useState<number>(300);
+	const [otpLength, setOtpLength] = useState(0);
+
 	useEffect(() => {
 		if (timeLeft <= 0) return;
-
 		const timer = setTimeout(() => {
 			setTimeLeft(timeLeft - 1);
 		}, 1000);
-
 		return () => clearTimeout(timer);
 	}, [timeLeft]);
 
@@ -27,43 +31,30 @@ export const SignupOTPVerificationStep = () => {
 		return `${mins}:${secs.toString().padStart(2, "0")}`;
 	};
 
+	const navigate = useNavigate();
+
 	const handleVerifyOTP = async () => {
-		if (otp.length !== 6) {
-			setError("OTP must be 6 digits");
-			return;
-		}
+		const code = otpRef.current?.getValue();
+		if (!code || code.length !== 6) return;
 
-		setIsLoading(true);
-		setError("");
+		const res = await verifyOTP({
+			email: data.email,
+			otp: code,
+		});
 
-		try {
-			// Simulating API call
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-
+		if (res) {
 			clear();
-			setStep(0);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to verify OTP");
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	const handleResendOTP = async () => {
-		setIsLoading(true);
-		try {
-			setTimeLeft(300);
-			setOtp("");
-			setError("");
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to resend OTP");
-		} finally {
-			setIsLoading(false);
+			navigate("/home");
 		}
 	};
 
 	const handleBack = () => {
 		setStep(2);
+	};
+
+	const handleResend = () => {
+		setTimeLeft(300);
+		console.log("Resending OTP...");
 	};
 
 	return (
@@ -82,69 +73,42 @@ export const SignupOTPVerificationStep = () => {
 
 			<Separator />
 
-			<div className="flex flex-col gap-4">
-				{/* OTP Input */}
-				<div className="flex flex-col gap-2">
-					<H1 className="text-accent font-semibold">Verification Code</H1>
-					<Input
-						type="text"
-						placeholder="000000"
-						value={otp}
-						onChange={(e: any) => {
-							const val = e.target?.value || e;
-							const cleanVal =
-								typeof val === "string"
-									? val.replace(/\D/g, "").slice(0, 6)
-									: "";
-							setOtp(cleanVal);
-						}}
-						maxLength={6}
-					/>
-				</div>
+			<InputOtp
+				ref={otpRef}
+				onResend={handleResend}
+				onChange={(val) => setOtpLength(val.length)}
+				onComplete={handleVerifyOTP}
+			/>
 
-				{/* Timer */}
-				<div className="flex items-center justify-between p-3 bg-surface rounded-lg border border-border">
-					<span className="text-sm text-muted">Code expires in</span>
+			<div className="flex flex-col gap-4">
+				<div className="flex justify-between items-center px-1">
+					<span className="text-xs text-muted">Code expires in:</span>
 					<span
-						className={`text-base font-mono font-semibold ${
-							timeLeft < 60 ? "text-danger" : "text-accent"
-						}`}
+						className={`text-xs font-mono font-bold ${timeLeft < 60 ? "text-danger" : "text-accent"}`}
 					>
 						{formatTime(timeLeft)}
 					</span>
 				</div>
 
-				{/* Resend OTP */}
-				<div className="text-center text-sm text-muted">
-					Didn't receive the code?{" "}
-					<button
-						type="button"
-						onClick={handleResendOTP}
-						disabled={isLoading || timeLeft > 240}
-						className="text-accent font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+				<div className="flex justify-between gap-3">
+					<Button
+						variant="outline"
+						className="rounded-xl"
+						onClick={handleBack}
+						isDisabled={isPending}
 					>
-						Resend
-					</button>
+						Back
+					</Button>
+					<Button
+						className="rounded-xl"
+						variant="primary"
+						onClick={handleVerifyOTP}
+						isPending={isPending}
+						isDisabled={otpLength !== 6 || timeLeft === 0}
+					>
+						Verify
+					</Button>
 				</div>
-			</div>
-
-			<div className="flex gap-3 pt-4">
-				<Button
-					variant="primary"
-					className="flex-1"
-					onClick={handleBack}
-					isDisabled={isLoading}
-				>
-					Back
-				</Button>
-				<Button
-					className="flex-1 rounded"
-					variant="primary"
-					onClick={handleVerifyOTP}
-					isDisabled={otp.length !== 6}
-				>
-					{isLoading ? "Verifying..." : "Verify"}
-				</Button>
 			</div>
 		</div>
 	);

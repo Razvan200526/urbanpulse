@@ -8,8 +8,8 @@ import {
 	PrimaryGeneratedColumn,
 	RelationId,
 } from "typeorm";
-import { PulseEntity } from "./PulseEntity";
 import { PetMatchEntity } from "./PetMatchEntity";
+import { PulseEntity } from "./PulseEntity";
 
 @Entity({ name: "pet_alert" })
 export class PetAlertEntity {

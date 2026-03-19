@@ -6,8 +6,8 @@ import {
 	type TextFieldProps,
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { User2Icon } from "lucide-react";
+import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 
 export type InputNameRefType = {
 	getValue: () => string;

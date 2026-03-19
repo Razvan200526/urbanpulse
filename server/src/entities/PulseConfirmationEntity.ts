@@ -1,13 +1,13 @@
 import {
+	Column,
 	Entity,
 	JoinColumn,
 	ManyToOne,
 	PrimaryGeneratedColumn,
 	RelationId,
-	Column,
 } from "typeorm";
-import { UserEntity } from "./UserEntity";
 import { PulseEntity } from "./PulseEntity";
+import { UserEntity } from "./UserEntity";
 
 @Entity({ name: "pulse_confirmation" })
 export class PulseConfirmationEntity {

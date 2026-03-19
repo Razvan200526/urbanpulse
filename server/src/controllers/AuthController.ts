@@ -1,4 +1,4 @@
-import auth from "@server/services/AuthService";
+import auth from "@server/services/auth/AuthService";
 import { Hono } from "hono";
 
 export const authController = new Hono().on(["POST", "GET"], "/*", (c) => {

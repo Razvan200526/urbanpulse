@@ -1,14 +1,32 @@
-import { type MigrationInterface, type QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Initial1773823218500 implements MigrationInterface {
-	name = "Initial1773823218500";
+export class Initial1773940816951 implements MigrationInterface {
+	name = "Initial1773940816951";
 
 	public async up(queryRunner: QueryRunner): Promise<void> {
+		await queryRunner.query(
+			`CREATE TYPE "public"."pulse_type_enum" AS ENUM('Emergency', 'Skill', 'Item')`,
+		);
+		await queryRunner.query(
+			`CREATE TYPE "public"."pulse_urgency_enum" AS ENUM('Urgent', 'Not Urgent', '', 'Immediate')`,
+		);
+		await queryRunner.query(
+			`CREATE TABLE "pulse" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "type" "public"."pulse_type_enum" NOT NULL DEFAULT 'Emergency', "urgency" "public"."pulse_urgency_enum" NOT NULL DEFAULT '', "title" character varying(30) NOT NULL, "description" text, "position" point NOT NULL, "isResolved" boolean NOT NULL, "isVerified" boolean, "createdAt" TIMESTAMP NOT NULL, "userId" text, CONSTRAINT "PK_40e0b1d0fd89cc064f59ae5d96f" PRIMARY KEY ("id"))`,
+		);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_6dfc9efc1605b1425cc3eda983" ON "pulse" USING GiST ("position") `,
+		);
+		await queryRunner.query(
+			`CREATE TABLE "quiet_hours" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "startTime" TIME NOT NULL, "endTime" TIME NOT NULL, "days" text NOT NULL, "userId" text, CONSTRAINT "PK_631524fde77e06374930a8ac4d4" PRIMARY KEY ("id"))`,
+		);
 		await queryRunner.query(
 			`CREATE TYPE "public"."resources_availability_enum" AS ENUM('Available', 'Unavailable', 'Currently Unavailable')`,
 		);
 		await queryRunner.query(
 			`CREATE TABLE "resources" ("id" uuid NOT NULL, "name" text NOT NULL, "description" text, "availability" "public"."resources_availability_enum" NOT NULL, "createdAt" TIMESTAMP NOT NULL, "userId" text, CONSTRAINT "PK_632484ab9dff41bba94f9b7c85e" PRIMARY KEY ("id"))`,
+		);
+		await queryRunner.query(
+			`CREATE TABLE "skill" ("id" uuid NOT NULL, "tag" text NOT NULL, "userId" text, CONSTRAINT "PK_a0d33334424e64fb78dc3ce7196" PRIMARY KEY ("id"))`,
 		);
 		await queryRunner.query(
 			`CREATE TYPE "public"."notification_type_enum" AS ENUM('HERO_ALERT', 'PULSE_CONFIRMED', 'MESSAGE', 'TRANSACTION', 'FEEDBACK')`,
@@ -32,22 +50,16 @@ export class Initial1773823218500 implements MigrationInterface {
 			`CREATE TABLE "report" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "reason" text NOT NULL, "status" "public"."report_status_enum" NOT NULL DEFAULT 'PENDING', "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "reporterId" text, "targetUserId" text, "targetPulseId" uuid, CONSTRAINT "PK_99e4d0bea58cba73c57f935a546" PRIMARY KEY ("id"))`,
 		);
 		await queryRunner.query(
+			`CREATE TABLE "pulse_confirmation" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "confirmedAt" TIMESTAMP WITH TIME ZONE NOT NULL, "pulseId" uuid, "userId" text, CONSTRAINT "PK_80f673f6df4bd3746d25c41a4f5" PRIMARY KEY ("id"))`,
+		);
+		await queryRunner.query(
 			`CREATE TABLE "pet_alert" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "petType" text NOT NULL, "color" text NOT NULL, "breed" text, "imageUrl" text, "aiDescriptor" text, "pulseId" uuid, CONSTRAINT "REL_238a0c916ba64f996e6dfb1df2" UNIQUE ("pulseId"), CONSTRAINT "PK_2e13a7cf1ddafdf6695346d35e6" PRIMARY KEY ("id"))`,
 		);
 		await queryRunner.query(
 			`CREATE TABLE "pet_match" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "confidenceScore" double precision NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "lostAlertId" uuid, "foundAlertId" uuid, CONSTRAINT "PK_ff08dd22124ddb8af5598322c79" PRIMARY KEY ("id"))`,
 		);
 		await queryRunner.query(
-			`CREATE TABLE "pulse_confirmation" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "confirmedAt" TIMESTAMP WITH TIME ZONE NOT NULL, "pulseId" uuid, "userId" text, CONSTRAINT "PK_80f673f6df4bd3746d25c41a4f5" PRIMARY KEY ("id"))`,
-		);
-		await queryRunner.query(
-			`CREATE TABLE "quiet_hours" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "startTime" TIME NOT NULL, "endTime" TIME NOT NULL, "days" text NOT NULL, "userId" text, CONSTRAINT "PK_631524fde77e06374930a8ac4d4" PRIMARY KEY ("id"))`,
-		);
-		await queryRunner.query(
 			`CREATE TABLE "message" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "content" text NOT NULL, "sentAt" TIMESTAMP WITH TIME ZONE NOT NULL, "conversationId" uuid, "senderId" text, CONSTRAINT "PK_ba01f0a3e0123651915008bc578" PRIMARY KEY ("id"))`,
-		);
-		await queryRunner.query(
-			`CREATE TABLE "conversation_member" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "conversationId" uuid, "userId" text, CONSTRAINT "PK_ed07d3bc360f4e68836841b8358" PRIMARY KEY ("id"))`,
 		);
 		await queryRunner.query(
 			`CREATE TYPE "public"."conversation_type_enum" AS ENUM('DIRECT', 'GROUP', 'PULSE')`,
@@ -56,16 +68,25 @@ export class Initial1773823218500 implements MigrationInterface {
 			`CREATE TABLE "conversation" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "type" "public"."conversation_type_enum" NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "pulseId" uuid, CONSTRAINT "PK_864528ec4274360a40f66c29845" PRIMARY KEY ("id"))`,
 		);
 		await queryRunner.query(
+			`CREATE TABLE "conversation_member" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "conversationId" uuid, "userId" text, CONSTRAINT "PK_ed07d3bc360f4e68836841b8358" PRIMARY KEY ("id"))`,
+		);
+		await queryRunner.query(
 			`CREATE TYPE "public"."response_status_enum" AS ENUM('PENDING', 'ACCEPTED', 'DECLINED', 'COMPLETED')`,
 		);
 		await queryRunner.query(
 			`CREATE TABLE "response" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "status" "public"."response_status_enum" NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "pulseId" uuid, "responderId" text, CONSTRAINT "PK_f64544baf2b4dc48ba623ce768f" PRIMARY KEY ("id"))`,
 		);
 		await queryRunner.query(
-			`ALTER TABLE "pulse" ALTER COLUMN "position" TYPE point`,
+			`ALTER TABLE "pulse" ADD CONSTRAINT "FK_1ab07b3c629739af0c9d7fe7d75" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+		);
+		await queryRunner.query(
+			`ALTER TABLE "quiet_hours" ADD CONSTRAINT "FK_69eacbc9bee7b4582889f1b67f1" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
 		);
 		await queryRunner.query(
 			`ALTER TABLE "resources" ADD CONSTRAINT "FK_50a0b3ca64c877ed82ceb871830" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+		);
+		await queryRunner.query(
+			`ALTER TABLE "skill" ADD CONSTRAINT "FK_c08612011a88745a32784544b28" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
 		);
 		await queryRunner.query(
 			`ALTER TABLE "notification" ADD CONSTRAINT "FK_1ced25315eb974b73391fb1c81b" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
@@ -98,6 +119,12 @@ export class Initial1773823218500 implements MigrationInterface {
 			`ALTER TABLE "report" ADD CONSTRAINT "FK_aa21545feeabd7f77661b59ead9" FOREIGN KEY ("targetPulseId") REFERENCES "pulse"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
 		);
 		await queryRunner.query(
+			`ALTER TABLE "pulse_confirmation" ADD CONSTRAINT "FK_7710af1cca20cb322c3c43c740b" FOREIGN KEY ("pulseId") REFERENCES "pulse"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+		);
+		await queryRunner.query(
+			`ALTER TABLE "pulse_confirmation" ADD CONSTRAINT "FK_fb74034168b3c5ef4d22721555f" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+		);
+		await queryRunner.query(
 			`ALTER TABLE "pet_alert" ADD CONSTRAINT "FK_238a0c916ba64f996e6dfb1df26" FOREIGN KEY ("pulseId") REFERENCES "pulse"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
 		);
 		await queryRunner.query(
@@ -107,28 +134,19 @@ export class Initial1773823218500 implements MigrationInterface {
 			`ALTER TABLE "pet_match" ADD CONSTRAINT "FK_083344851eac6290d1d787e763f" FOREIGN KEY ("foundAlertId") REFERENCES "pet_alert"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
 		);
 		await queryRunner.query(
-			`ALTER TABLE "pulse_confirmation" ADD CONSTRAINT "FK_7710af1cca20cb322c3c43c740b" FOREIGN KEY ("pulseId") REFERENCES "pulse"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
-		);
-		await queryRunner.query(
-			`ALTER TABLE "pulse_confirmation" ADD CONSTRAINT "FK_fb74034168b3c5ef4d22721555f" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
-		);
-		await queryRunner.query(
-			`ALTER TABLE "quiet_hours" ADD CONSTRAINT "FK_69eacbc9bee7b4582889f1b67f1" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
-		);
-		await queryRunner.query(
 			`ALTER TABLE "message" ADD CONSTRAINT "FK_7cf4a4df1f2627f72bf6231635f" FOREIGN KEY ("conversationId") REFERENCES "conversation"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
 		);
 		await queryRunner.query(
 			`ALTER TABLE "message" ADD CONSTRAINT "FK_bc096b4e18b1f9508197cd98066" FOREIGN KEY ("senderId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
 		);
 		await queryRunner.query(
+			`ALTER TABLE "conversation" ADD CONSTRAINT "FK_b32425a7db52eb57835e1ba7938" FOREIGN KEY ("pulseId") REFERENCES "pulse"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
+		);
+		await queryRunner.query(
 			`ALTER TABLE "conversation_member" ADD CONSTRAINT "FK_b15b0ed425fb8a2928f16db6fc8" FOREIGN KEY ("conversationId") REFERENCES "conversation"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
 		);
 		await queryRunner.query(
 			`ALTER TABLE "conversation_member" ADD CONSTRAINT "FK_dd563b686e428caa50c69ca5e1e" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
-		);
-		await queryRunner.query(
-			`ALTER TABLE "conversation" ADD CONSTRAINT "FK_b32425a7db52eb57835e1ba7938" FOREIGN KEY ("pulseId") REFERENCES "pulse"("id") ON DELETE SET NULL ON UPDATE NO ACTION`,
 		);
 		await queryRunner.query(
 			`ALTER TABLE "response" ADD CONSTRAINT "FK_e88741c690cf5cce540153168ba" FOREIGN KEY ("pulseId") REFERENCES "pulse"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
@@ -146,28 +164,19 @@ export class Initial1773823218500 implements MigrationInterface {
 			`ALTER TABLE "response" DROP CONSTRAINT "FK_e88741c690cf5cce540153168ba"`,
 		);
 		await queryRunner.query(
-			`ALTER TABLE "conversation" DROP CONSTRAINT "FK_b32425a7db52eb57835e1ba7938"`,
-		);
-		await queryRunner.query(
 			`ALTER TABLE "conversation_member" DROP CONSTRAINT "FK_dd563b686e428caa50c69ca5e1e"`,
 		);
 		await queryRunner.query(
 			`ALTER TABLE "conversation_member" DROP CONSTRAINT "FK_b15b0ed425fb8a2928f16db6fc8"`,
 		);
 		await queryRunner.query(
+			`ALTER TABLE "conversation" DROP CONSTRAINT "FK_b32425a7db52eb57835e1ba7938"`,
+		);
+		await queryRunner.query(
 			`ALTER TABLE "message" DROP CONSTRAINT "FK_bc096b4e18b1f9508197cd98066"`,
 		);
 		await queryRunner.query(
 			`ALTER TABLE "message" DROP CONSTRAINT "FK_7cf4a4df1f2627f72bf6231635f"`,
-		);
-		await queryRunner.query(
-			`ALTER TABLE "quiet_hours" DROP CONSTRAINT "FK_69eacbc9bee7b4582889f1b67f1"`,
-		);
-		await queryRunner.query(
-			`ALTER TABLE "pulse_confirmation" DROP CONSTRAINT "FK_fb74034168b3c5ef4d22721555f"`,
-		);
-		await queryRunner.query(
-			`ALTER TABLE "pulse_confirmation" DROP CONSTRAINT "FK_7710af1cca20cb322c3c43c740b"`,
 		);
 		await queryRunner.query(
 			`ALTER TABLE "pet_match" DROP CONSTRAINT "FK_083344851eac6290d1d787e763f"`,
@@ -177,6 +186,12 @@ export class Initial1773823218500 implements MigrationInterface {
 		);
 		await queryRunner.query(
 			`ALTER TABLE "pet_alert" DROP CONSTRAINT "FK_238a0c916ba64f996e6dfb1df26"`,
+		);
+		await queryRunner.query(
+			`ALTER TABLE "pulse_confirmation" DROP CONSTRAINT "FK_fb74034168b3c5ef4d22721555f"`,
+		);
+		await queryRunner.query(
+			`ALTER TABLE "pulse_confirmation" DROP CONSTRAINT "FK_7710af1cca20cb322c3c43c740b"`,
 		);
 		await queryRunner.query(
 			`ALTER TABLE "report" DROP CONSTRAINT "FK_aa21545feeabd7f77661b59ead9"`,
@@ -209,21 +224,26 @@ export class Initial1773823218500 implements MigrationInterface {
 			`ALTER TABLE "notification" DROP CONSTRAINT "FK_1ced25315eb974b73391fb1c81b"`,
 		);
 		await queryRunner.query(
+			`ALTER TABLE "skill" DROP CONSTRAINT "FK_c08612011a88745a32784544b28"`,
+		);
+		await queryRunner.query(
 			`ALTER TABLE "resources" DROP CONSTRAINT "FK_50a0b3ca64c877ed82ceb871830"`,
 		);
 		await queryRunner.query(
-			`ALTER TABLE "pulse" ALTER COLUMN "position" TYPE point`,
+			`ALTER TABLE "quiet_hours" DROP CONSTRAINT "FK_69eacbc9bee7b4582889f1b67f1"`,
+		);
+		await queryRunner.query(
+			`ALTER TABLE "pulse" DROP CONSTRAINT "FK_1ab07b3c629739af0c9d7fe7d75"`,
 		);
 		await queryRunner.query(`DROP TABLE "response"`);
 		await queryRunner.query(`DROP TYPE "public"."response_status_enum"`);
+		await queryRunner.query(`DROP TABLE "conversation_member"`);
 		await queryRunner.query(`DROP TABLE "conversation"`);
 		await queryRunner.query(`DROP TYPE "public"."conversation_type_enum"`);
-		await queryRunner.query(`DROP TABLE "conversation_member"`);
 		await queryRunner.query(`DROP TABLE "message"`);
-		await queryRunner.query(`DROP TABLE "quiet_hours"`);
-		await queryRunner.query(`DROP TABLE "pulse_confirmation"`);
 		await queryRunner.query(`DROP TABLE "pet_match"`);
 		await queryRunner.query(`DROP TABLE "pet_alert"`);
+		await queryRunner.query(`DROP TABLE "pulse_confirmation"`);
 		await queryRunner.query(`DROP TABLE "report"`);
 		await queryRunner.query(`DROP TYPE "public"."report_status_enum"`);
 		await queryRunner.query(`DROP TABLE "feedback"`);
@@ -231,7 +251,15 @@ export class Initial1773823218500 implements MigrationInterface {
 		await queryRunner.query(`DROP TYPE "public"."transaction_status_enum"`);
 		await queryRunner.query(`DROP TABLE "notification"`);
 		await queryRunner.query(`DROP TYPE "public"."notification_type_enum"`);
+		await queryRunner.query(`DROP TABLE "skill"`);
 		await queryRunner.query(`DROP TABLE "resources"`);
 		await queryRunner.query(`DROP TYPE "public"."resources_availability_enum"`);
+		await queryRunner.query(`DROP TABLE "quiet_hours"`);
+		await queryRunner.query(
+			`DROP INDEX "public"."IDX_6dfc9efc1605b1425cc3eda983"`,
+		);
+		await queryRunner.query(`DROP TABLE "pulse"`);
+		await queryRunner.query(`DROP TYPE "public"."pulse_urgency_enum"`);
+		await queryRunner.query(`DROP TYPE "public"."pulse_type_enum"`);
 	}
 }

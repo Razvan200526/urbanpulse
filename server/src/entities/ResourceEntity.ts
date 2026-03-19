@@ -1,6 +1,6 @@
+import type { ResourceAvailabilityType } from "@shared/types";
 import { Column, Entity, ManyToOne, PrimaryColumn, RelationId } from "typeorm";
 import { UserEntity } from "./UserEntity";
-import type { ResourceAvailabilityType } from "@shared/types";
 
 @Entity({
 	name: "resources",

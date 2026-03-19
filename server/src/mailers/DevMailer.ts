@@ -1,6 +1,6 @@
+import { logger } from "@server/utils/Logger";
 import nodemailer from "nodemailer";
 import type { Mailer, SendMailParams } from "./Mailer";
-import { logger } from "@server/utils/Logger";
 
 export class DevMailer implements Mailer {
 	private transporter = nodemailer.createTransport("smtp://localhost:1025");

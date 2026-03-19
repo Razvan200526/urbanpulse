@@ -1,7 +1,7 @@
 import { Avatar } from "@heroui/react";
+import { UserIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { ImageCropper } from "../ImageCropper";
-import { UserIcon } from "lucide-react";
 
 export type InputAvatarPropsType = {
 	value?: string;

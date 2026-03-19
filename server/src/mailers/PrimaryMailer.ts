@@ -1,7 +1,7 @@
-import { logger } from "@server/utils/Logger";
-import type { Mailer, SendMailParams } from "./Mailer";
-import { Resend } from "resend";
 import { handleError } from "@server/utils/handleError";
+import { logger } from "@server/utils/Logger";
+import { Resend } from "resend";
+import type { Mailer, SendMailParams } from "./Mailer";
 export class PrimaryMailer implements Mailer {
 	private resend: Resend;
 

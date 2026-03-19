@@ -1,7 +1,7 @@
 import { Seeder } from "@jorgebodega/typeorm-seeding";
-import type { DataSource } from "typeorm";
 import { UserEntity } from "@server/entities/UserEntity";
 import { UserRole } from "@server/types";
+import type { DataSource } from "typeorm";
 
 export class UserSeeder extends Seeder {
 	async run(dataSource: DataSource): Promise<void> {

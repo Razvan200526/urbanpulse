@@ -8,8 +8,8 @@ import {
 	PrimaryGeneratedColumn,
 	RelationId,
 } from "typeorm";
-import { MessageEntity } from "./MessageEntity";
 import { ConversationMemberEntity } from "./ConversationMemberEntity";
+import { MessageEntity } from "./MessageEntity";
 import { PulseEntity } from "./PulseEntity";
 
 @Entity({ name: "conversation" })
