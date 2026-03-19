@@ -5,7 +5,10 @@ import type { IRepository } from "./IRepository";
 
 export class TransactionRepository implements IRepository<TransactionType> {
 	async getOne(id: string): Promise<TransactionType | null> {
-		const [result] = await db.select().from(transaction).where(eq(transaction.id, id as any));
+		const [result] = await db
+			.select()
+			.from(transaction)
+			.where(eq(transaction.id, id as any));
 		return result || null;
 	}
 
@@ -13,12 +16,20 @@ export class TransactionRepository implements IRepository<TransactionType> {
 		return await db.select().from(transaction);
 	}
 
-	async create(data: Partial<TransactionType>): Promise<TransactionType | null> {
-		const [result] = await db.insert(transaction).values(data as any).returning();
+	async create(
+		data: Partial<TransactionType>,
+	): Promise<TransactionType | null> {
+		const [result] = await db
+			.insert(transaction)
+			.values(data as any)
+			.returning();
 		return result ?? null;
 	}
 
-	async update(id: string, data: Partial<TransactionType>): Promise<TransactionType> {
+	async update(
+		id: string,
+		data: Partial<TransactionType>,
+	): Promise<TransactionType> {
 		const [result] = await db
 			.update(transaction)
 			.set(data as any)

@@ -5,7 +5,10 @@ import type { IRepository } from "./IRepository";
 
 export class ReportRepository implements IRepository<ReportType> {
 	async getOne(id: string): Promise<ReportType | null> {
-		const [result] = await db.select().from(report).where(eq(report.id, id as any));
+		const [result] = await db
+			.select()
+			.from(report)
+			.where(eq(report.id, id as any));
 		return result || null;
 	}
 
@@ -14,7 +17,10 @@ export class ReportRepository implements IRepository<ReportType> {
 	}
 
 	async create(data: Partial<ReportType>): Promise<ReportType | null> {
-		const [result] = await db.insert(report).values(data as any).returning();
+		const [result] = await db
+			.insert(report)
+			.values(data as any)
+			.returning();
 		return result ?? null;
 	}
 

@@ -3,12 +3,10 @@ import { auth } from "./src/services/auth/AuthService";
 async function run() {
 	try {
 		console.log("Checking adapter directly:");
-        // Using the raw adapter passed into Better Auth
+		// Using the raw adapter passed into Better Auth
 		const dbAdapter = (auth as any).options.database;
 		if (dbAdapter) {
-			console.log(
-				"Looking up user by email asdlknadslksa@gmail.com:",
-			);
+			console.log("Looking up user by email asdlknadslksa@gmail.com:");
 			const user = await dbAdapter.findOne({
 				model: "user",
 				where: [{ field: "email", value: "asdlknadslksa@gmail.com" }],

@@ -5,7 +5,10 @@ import type { IRepository } from "./IRepository";
 
 export class MessageRepository implements IRepository<MessageType> {
 	async getOne(id: string): Promise<MessageType | null> {
-		const [result] = await db.select().from(message).where(eq(message.id, id as any));
+		const [result] = await db
+			.select()
+			.from(message)
+			.where(eq(message.id, id as any));
 		return result || null;
 	}
 
@@ -14,7 +17,10 @@ export class MessageRepository implements IRepository<MessageType> {
 	}
 
 	async create(data: Partial<MessageType>): Promise<MessageType | null> {
-		const [result] = await db.insert(message).values(data as any).returning();
+		const [result] = await db
+			.insert(message)
+			.values(data as any)
+			.returning();
 		return result ?? null;
 	}
 

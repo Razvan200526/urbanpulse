@@ -5,7 +5,10 @@ import type { IRepository } from "./IRepository";
 
 export class QuietHoursRepository implements IRepository<QuietHoursType> {
 	async getOne(id: string): Promise<QuietHoursType | null> {
-		const [result] = await db.select().from(quietHours).where(eq(quietHours.id, id as any));
+		const [result] = await db
+			.select()
+			.from(quietHours)
+			.where(eq(quietHours.id, id as any));
 		return result || null;
 	}
 
@@ -14,11 +17,17 @@ export class QuietHoursRepository implements IRepository<QuietHoursType> {
 	}
 
 	async create(data: Partial<QuietHoursType>): Promise<QuietHoursType | null> {
-		const [result] = await db.insert(quietHours).values(data as any).returning();
+		const [result] = await db
+			.insert(quietHours)
+			.values(data as any)
+			.returning();
 		return result ?? null;
 	}
 
-	async update(id: string, data: Partial<QuietHoursType>): Promise<QuietHoursType> {
+	async update(
+		id: string,
+		data: Partial<QuietHoursType>,
+	): Promise<QuietHoursType> {
 		const [result] = await db
 			.update(quietHours)
 			.set(data as any)

@@ -5,7 +5,10 @@ import type { IRepository } from "./IRepository";
 
 export class PetAlertRepository implements IRepository<PetAlertType> {
 	async getOne(id: string): Promise<PetAlertType | null> {
-		const [result] = await db.select().from(petAlert).where(eq(petAlert.id, id as any));
+		const [result] = await db
+			.select()
+			.from(petAlert)
+			.where(eq(petAlert.id, id as any));
 		return result || null;
 	}
 
@@ -14,7 +17,10 @@ export class PetAlertRepository implements IRepository<PetAlertType> {
 	}
 
 	async create(data: Partial<PetAlertType>): Promise<PetAlertType | null> {
-		const [result] = await db.insert(petAlert).values(data as any).returning();
+		const [result] = await db
+			.insert(petAlert)
+			.values(data as any)
+			.returning();
 		return result ?? null;
 	}
 

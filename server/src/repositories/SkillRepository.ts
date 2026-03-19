@@ -5,7 +5,10 @@ import type { IRepository } from "./IRepository";
 
 export class SkillRepository implements IRepository<SkillType> {
 	async getOne(id: string): Promise<SkillType | null> {
-		const [result] = await db.select().from(skill).where(eq(skill.id, id as any));
+		const [result] = await db
+			.select()
+			.from(skill)
+			.where(eq(skill.id, id as any));
 		return result || null;
 	}
 
@@ -14,7 +17,10 @@ export class SkillRepository implements IRepository<SkillType> {
 	}
 
 	async create(data: Partial<SkillType>): Promise<SkillType | null> {
-		const [result] = await db.insert(skill).values(data as any).returning();
+		const [result] = await db
+			.insert(skill)
+			.values(data as any)
+			.returning();
 		return result ?? null;
 	}
 

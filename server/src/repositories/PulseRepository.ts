@@ -5,7 +5,10 @@ import type { IRepository } from "./IRepository";
 
 export class PulseRepository implements IRepository<PulseType> {
 	async getOne(id: string): Promise<PulseType | null> {
-		const [result] = await db.select().from(pulse).where(eq(pulse.id, id as any));
+		const [result] = await db
+			.select()
+			.from(pulse)
+			.where(eq(pulse.id, id as any));
 		return result || null;
 	}
 
@@ -14,7 +17,10 @@ export class PulseRepository implements IRepository<PulseType> {
 	}
 
 	async create(data: Partial<PulseType>): Promise<PulseType | null> {
-		const [result] = await db.insert(pulse).values(data as any).returning();
+		const [result] = await db
+			.insert(pulse)
+			.values(data as any)
+			.returning();
 		return result ?? null;
 	}
 

@@ -5,7 +5,10 @@ import type { IRepository } from "./IRepository";
 
 export class NotificationRepository implements IRepository<NotificationType> {
 	async getOne(id: string): Promise<NotificationType | null> {
-		const [result] = await db.select().from(notification).where(eq(notification.id, id as any));
+		const [result] = await db
+			.select()
+			.from(notification)
+			.where(eq(notification.id, id as any));
 		return result || null;
 	}
 
@@ -13,12 +16,20 @@ export class NotificationRepository implements IRepository<NotificationType> {
 		return await db.select().from(notification);
 	}
 
-	async create(data: Partial<NotificationType>): Promise<NotificationType | null> {
-		const [result] = await db.insert(notification).values(data as any).returning();
+	async create(
+		data: Partial<NotificationType>,
+	): Promise<NotificationType | null> {
+		const [result] = await db
+			.insert(notification)
+			.values(data as any)
+			.returning();
 		return result ?? null;
 	}
 
-	async update(id: string, data: Partial<NotificationType>): Promise<NotificationType> {
+	async update(
+		id: string,
+		data: Partial<NotificationType>,
+	): Promise<NotificationType> {
 		const [result] = await db
 			.update(notification)
 			.set(data as any)

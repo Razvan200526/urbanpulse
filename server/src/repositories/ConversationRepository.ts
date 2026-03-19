@@ -5,7 +5,10 @@ import type { IRepository } from "./IRepository";
 
 export class ConversationRepository implements IRepository<ConversationType> {
 	async getOne(id: string): Promise<ConversationType | null> {
-		const [result] = await db.select().from(conversation).where(eq(conversation.id, id as any));
+		const [result] = await db
+			.select()
+			.from(conversation)
+			.where(eq(conversation.id, id as any));
 		return result || null;
 	}
 
@@ -13,12 +16,20 @@ export class ConversationRepository implements IRepository<ConversationType> {
 		return await db.select().from(conversation);
 	}
 
-	async create(data: Partial<ConversationType>): Promise<ConversationType | null> {
-		const [result] = await db.insert(conversation).values(data as any).returning();
+	async create(
+		data: Partial<ConversationType>,
+	): Promise<ConversationType | null> {
+		const [result] = await db
+			.insert(conversation)
+			.values(data as any)
+			.returning();
 		return result ?? null;
 	}
 
-	async update(id: string, data: Partial<ConversationType>): Promise<ConversationType> {
+	async update(
+		id: string,
+		data: Partial<ConversationType>,
+	): Promise<ConversationType> {
 		const [result] = await db
 			.update(conversation)
 			.set(data as any)
