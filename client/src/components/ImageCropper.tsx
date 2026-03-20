@@ -100,8 +100,8 @@ export const ImageCropper = ({
 			setIsLoading(false);
 
 			const res = await response.json();
-			if (!res.data.success) {
-				Toast.toast.danger(res.data.message);
+			if (!res.data.success || !res.data.url) {
+				Toast.toast.danger(res.data.message || "Upload failed");
 				return;
 			}
 

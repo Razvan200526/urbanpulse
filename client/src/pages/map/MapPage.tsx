@@ -5,7 +5,7 @@ import { Loader } from "@client/components/Loader";
 import { Map } from "@client/components/map/Map";
 import { PulseMarker } from "@client/components/PulseMarker";
 
-export const HomePage = () => {
+export const MapPage = () => {
 	const { coords, isError, isLoading } = useGetGeolocation();
 
 	if (isError) {

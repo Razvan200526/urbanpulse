@@ -44,7 +44,7 @@ export const SignupOTPVerificationStep = () => {
 
 		if (res) {
 			clear();
-			navigate("/home");
+			navigate("/map");
 		}
 	};
 

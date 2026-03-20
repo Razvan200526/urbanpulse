@@ -8,5 +8,7 @@ export const useAuth = () => {
 			const { data } = await authClient.getSession();
 			return data;
 		},
+		staleTime: 60_000,
+		retry: false,
 	});
 };

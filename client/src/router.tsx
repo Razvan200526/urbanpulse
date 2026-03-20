@@ -4,6 +4,14 @@ import { LandingPage } from "./pages/landing-page/LandingPage";
 import { SignUpPage } from "./pages/signup/SignupPage";
 import { HomePage } from "./pages/home/HomePage";
 import { SignInPage } from "./pages/signin/SigninPage";
+import { DashboardPage } from "./pages/dashboard/DashboardPage";
+import { MapPage } from "./pages/map/MapPage";
+import { ResourcesPage } from "./pages/resources/ResourcesPage";
+import { AlertsPage } from "./pages/alerts/AlertsPage";
+import { MessagesPage } from "./pages/messages/MessagesPage";
+import { AdminPage } from "./pages/admin/AdminPage";
+import { SettingsPage } from "./pages/settings/SettingsPage";
+import { ProfilePage } from "./pages/profile/ProfilePage";
 
 export const router = createBrowserRouter([
 	{
@@ -22,8 +30,36 @@ export const router = createBrowserRouter([
 		element: <AuthLayout />,
 		children: [
 			{
-				path: "/home",
-				element: <HomePage />,
+				path: "/dashboard",
+				element: <DashboardPage />,
+			},
+			{
+				path: "/map",
+				element: <MapPage />,
+			},
+			{
+				path: "/resources",
+				element: <ResourcesPage />,
+			},
+			{
+				path: "/alerts",
+				element: <AlertsPage />,
+			},
+			{
+				path: "/messages",
+				element: <MessagesPage />,
+			},
+			{
+				path: "/admin",
+				element: <AdminPage />,
+			},
+			{
+				path: "/settings",
+				element: <SettingsPage />,
+			},
+			{
+				path: "/profile",
+				element: <ProfilePage />,
 			},
 		],
 	},

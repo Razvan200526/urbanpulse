@@ -36,7 +36,7 @@ export const SignInPage = () => {
 		}
 
 		Toast.toast.success("Signed in successfully");
-		navigate("/home");
+		navigate("/map");
 	};
 
 	return (

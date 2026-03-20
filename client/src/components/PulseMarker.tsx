@@ -1,6 +1,7 @@
-import mapboxgl, { type Map as MapboxMap } from "mapbox-gl";
+import mapboxgl from "mapbox-gl";
 import { useEffect, useRef } from "react";
 import type { GeolocationCoords } from "../hooks/useGetGeolocation";
+import { useMap } from "./map/MapContext";
 
 const colorClasses = {
 	emergency: {
@@ -23,17 +24,16 @@ const colorClasses = {
 export const PulseMarker = ({
 	coords,
 	type = "emergency",
-	mapRef,
 }: {
 	coords: GeolocationCoords;
 	type?: "emergency" | "warning" | "item";
-	mapRef: React.RefObject<MapboxMap | null>;
 }) => {
+	const map = useMap();
 	const markerHostRef = useRef<HTMLDivElement | null>(null);
 	const markerInstanceRef = useRef<mapboxgl.Marker | null>(null);
 
 	useEffect(() => {
-		if (!mapRef.current || !markerHostRef.current) return;
+		if (!map || !markerHostRef.current) return;
 
 		const c = colorClasses[type];
 		const markerEl = markerHostRef.current;
@@ -52,7 +52,7 @@ export const PulseMarker = ({
 				draggable: false,
 			})
 				.setLngLat([coords.long, coords.lat])
-				.addTo(mapRef.current);
+				.addTo(map);
 		} else {
 			markerInstanceRef.current.setLngLat([coords.long, coords.lat]);
 		}
@@ -61,7 +61,7 @@ export const PulseMarker = ({
 			markerInstanceRef.current?.remove();
 			markerInstanceRef.current = null;
 		};
-	}, [coords.long, coords.lat, type, mapRef]);
+	}, [coords.long, coords.lat, type, map]);
 
 	return <div ref={markerHostRef} />;
 };
