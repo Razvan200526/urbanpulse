@@ -21,7 +21,7 @@ export const Map = ({
 }: MapProps) => {
 	const mapContainerRef = useRef<HTMLDivElement>(null);
 	const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
-    const hasInitialized = useRef(false);
+	const hasInitialized = useRef(false);
 
 	useEffect(() => {
 		const token = import.meta.env.VITE_MAPBOX_GL_ACCESS_TOKEN as
@@ -34,7 +34,7 @@ export const Map = ({
 		}
 
 		if (!mapContainerRef.current || hasInitialized.current) return;
-        hasInitialized.current = true;
+		hasInitialized.current = true;
 
 		mapboxgl.accessToken = token;
 
@@ -56,22 +56,22 @@ export const Map = ({
 
 		return () => {
 			map.remove();
-            hasInitialized.current = false;
+			hasInitialized.current = false;
 		};
-	}, [center, zoom]); 
+	}, [center, zoom]);
 
 	const centerLng = center[0];
 	const centerLat = center[1];
 
-    useEffect(() => {
-        if (!mapInstance) return;
-        
-        mapInstance.flyTo({
-            center: [centerLng, centerLat],
-            zoom,
-            essential: true
-        });
-    }, [centerLng, centerLat, zoom, mapInstance]);
+	useEffect(() => {
+		if (!mapInstance) return;
+
+		mapInstance.flyTo({
+			center: [centerLng, centerLat],
+			zoom,
+			essential: true,
+		});
+	}, [centerLng, centerLat, zoom, mapInstance]);
 
 	return (
 		<div ref={mapContainerRef} className={className} style={style}>
