@@ -4,12 +4,14 @@ import { logger } from "@server/utils/Logger";
 import { pe } from "@server/utils/PrettyError";
 import { betterAuth } from "better-auth";
 import { emailOTP, openAPI } from "better-auth/plugins";
+import { dash } from "@better-auth/infra";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { signUpPlugin } from "./plugins/signUpPlugin";
 import bcrypt from "bcryptjs";
 import { db } from "../../db";
 
 export const auth = betterAuth({
+	appName: "UrbanPulse",
 	logger: {
 		disableColors: false,
 		disabled: false,
@@ -21,6 +23,9 @@ export const auth = betterAuth({
 	database: drizzleAdapter(db, {
 		provider: "pg",
 	}),
+	experimental: {
+		joins: true,
+	},
 	user: {
 		modelName: "user",
 		fields: {
@@ -80,6 +85,16 @@ export const auth = betterAuth({
 			maxAge: 5 * 60,
 		},
 	},
+	socialProviders: {
+		github: {
+			clientId: Bun.env.GITHUB_CLIENT_ID,
+			clientSecret: Bun.env.GITHUB_CLIENT_SECRET,
+		},
+		google: {
+			clientId: Bun.env.GOOGLE_CLIENT_ID,
+			clientSecret: Bun.env.GOOGLE_CLIENT_SECRET,
+		},
+	},
 	emailAndPassword: {
 		enabled: true,
 		password: {
@@ -93,16 +108,22 @@ export const auth = betterAuth({
 		requireEmailVerification: false,
 		autoSignIn: true,
 	},
+	cookieCache: {
+		enabled: true,
+		strategy: "jwe",
+	},
 	rateLimit: {
 		max: 5,
 		window: 60 * 1000,
 	},
 	plugins: [
+		dash(),
 		signUpPlugin(),
 		openAPI(),
 		emailOTP({
+			storeOTP: "hashed",
 			otpLength: 6,
-			expiresIn: 3600,
+			expiresIn: 300,
 			allowedAttempts: 5,
 			sendVerificationOnSignUp: true,
 			// overrideDefaultEmailVerification: true,
@@ -114,6 +135,16 @@ export const auth = betterAuth({
 					await mailer.send({
 						to: targetEmail,
 						subject: "Verification OTP",
+						html: OTPMail({ otp }),
+					});
+				}
+				if (type === "forget-password") {
+					const targetMail = email.trim();
+					logger.info(`Sending forget password OTP to ${targetMail}: ${otp}`);
+					const mailer = getMailer();
+					await mailer.send({
+						to: targetMail,
+						subject: "Forget Password OTP",
 						html: OTPMail({ otp }),
 					});
 				}

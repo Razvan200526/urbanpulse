@@ -11,10 +11,7 @@ export const H6 = ({
 } & ComponentProps<"h6">) => {
 	return (
 		<h6
-			className={cn(
-				"text-sm/5 font-bold tracking-wide text-primary",
-				className,
-			)}
+			className={cn("text-sm/5 font-bold tracking-wide text-accent", className)}
 			{...props}
 		>
 			{children}

@@ -12,6 +12,7 @@ import { MessagesPage } from "./pages/messages/MessagesPage";
 import { AdminPage } from "./pages/admin/AdminPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { ProfilePage } from "./pages/profile/ProfilePage";
+import { ForgotPasswordPage } from "./pages/forgot-password/ForgotPasswordPage";
 
 export const router = createBrowserRouter([
 	{
@@ -25,6 +26,10 @@ export const router = createBrowserRouter([
 	{
 		path: "/signin",
 		element: <SignInPage />,
+	},
+	{
+		path: "/forgot-password",
+		element: <ForgotPasswordPage />,
 	},
 	{
 		element: <AuthLayout />,

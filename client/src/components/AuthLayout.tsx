@@ -5,10 +5,16 @@ import { Loader } from "./Loader";
 import { useAppSidebarStore } from "./sidebar/sidebarStore";
 import { SidebarDrawer } from "./sidebar/SidebarDrawer";
 import { Sidebar } from "./sidebar/Sidebar";
+import { useThemeStore } from "./sidebar/store";
+import { useEffect } from "react";
 
 export const AuthLayout = () => {
 	const { data: user, isError, isPending } = useAuth();
+	const { theme } = useThemeStore();
 	const { isOpen } = useAppSidebarStore();
+	useEffect(() => {
+		document.body.setAttribute("data-theme", theme);
+	});
 	if (isPending) {
 		return <Loader />;
 	}
@@ -29,12 +35,7 @@ export const AuthLayout = () => {
 			>
 				<Sidebar />
 			</div>
-			<div
-				className={cn(
-					"flex-1 min-h-dvh font-normal overflow-auto",
-					isOpen ? "pl-54" : "",
-				)}
-			>
+			<div className={cn("flex-1 min-h-dvh font-normal overflow-auto")}>
 				<Outlet />
 			</div>
 		</div>

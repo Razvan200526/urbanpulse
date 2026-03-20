@@ -16,6 +16,11 @@ export const envSchema = z.object({
 	R2_BUCKET_NAME: z.string(),
 	R2_DOMAIN: z.string(),
 	RESEND_API_KEY: z.string(),
+	BETTER_AUTH_API_KEY: z.string(),
+	GITHUB_CLIENT_ID: z.string(),
+	GITHUB_CLIENT_SECRET: z.string(),
+	GOOGLE_CLIENT_ID: z.string(),
+	GOOGLE_CLIENT_SECRET: z.string(),
 });
 
 export function parseEnv() {

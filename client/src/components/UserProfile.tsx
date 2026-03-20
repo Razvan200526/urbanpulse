@@ -41,10 +41,7 @@ export const UserProfile = () => {
 			placement="top end"
 			className="border border-border"
 			trigger={
-				<Button
-					className="h-20 w-full items-center justify-between px-4"
-					variant="ghost"
-				>
+				<div className="h-20 w-full flex items-center justify-between px-4">
 					<div className="flex items-center gap-3">
 						<Avatar className="size-8 border border-accent">
 							<Avatar.Image src={data?.user.image ?? ""} />
@@ -62,7 +59,7 @@ export const UserProfile = () => {
 						</div>
 					</div>
 					<Icon className="size-4 text-muted" icon="mi:select" />
-				</Button>
+				</div>
 			}
 			items={items}
 		/>

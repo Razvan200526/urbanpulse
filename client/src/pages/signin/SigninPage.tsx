@@ -10,15 +10,18 @@ import {
 	InputPassword,
 	type InputPasswordRefType,
 } from "../../components/input/InputPassword";
-import { H1 } from "../../components/typography";
-import { useSignIn } from "./hooks";
+import { H1, H2 } from "../../components/typography";
+import { useSignIn, useSignInSocial } from "./hooks";
 import { useNavigate } from "react-router";
 import { isSignInInfoValid } from "@shared/validators/isSignInInfoValid";
+import { Icon } from "@iconify/react";
 
 export const SignInPage = () => {
 	const emailRef = useRef<InputEmailRefType>(null);
 	const passwordRef = useRef<InputPasswordRefType>(null);
 	const { mutateAsync: signIn, isPending } = useSignIn();
+	const { mutateAsync: signInSocial, isPending: isPendingSocial } =
+		useSignInSocial();
 	const navigate = useNavigate();
 
 	const handleSignIn = async () => {
@@ -49,9 +52,7 @@ export const SignInPage = () => {
 
 				<Card className="flex w-full flex-col gap-6 p-8 border border-accent bg-surface">
 					<div className="flex flex-col gap-2">
-						<h2 className="text-2xl font-bold text-(--foreground)">
-							Welcome Back
-						</h2>
+						<H2>Welcome Back</H2>
 						<p className="text-sm text-muted">
 							Sign in to your UrbanPulse account
 						</p>
@@ -86,13 +87,39 @@ export const SignInPage = () => {
 
 					<Separator />
 
-					<div className="pb-2 flex items-center justify-center gap-2">
-						<p className="text-sm font-semibold text-foreground">
-							Don't have an account?
-						</p>
-						<Link to="/signup" className="text-sm">
-							Sign Up
+					<div className="flex-row items-center justify-center space-y-4">
+						<Button
+							className="w-full"
+							variant="outline"
+							onPress={() => signInSocial("google")}
+							isPending={isPendingSocial}
+						>
+							<Icon icon="devicon:google" />
+							Sign in with Google
+						</Button>
+						<Button
+							className="w-full"
+							variant="outline"
+							onPress={() => signInSocial("github")}
+							isPending={isPendingSocial}
+						>
+							<Icon icon="ion:logo-github" />
+							Sign in with GitHub
+						</Button>
+					</div>
+					<Separator />
+					<div className="pb-2 flex items-center justify-between gap-2">
+						<Link to="/forgot-password" className="text-sm">
+							Forgot password?
 						</Link>
+						<div className="flex items-center justify-center gap-2">
+							<p className="text-sm font-semibold text-foreground">
+								Don't have an account?
+							</p>
+							<Link to="/signup" className="text-sm">
+								Sign Up
+							</Link>
+						</div>
 					</div>
 				</Card>
 			</div>

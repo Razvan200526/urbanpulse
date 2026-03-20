@@ -18,3 +18,21 @@ export const useSignIn = () => {
 		},
 	});
 };
+
+export type SocialProviderType = "github" | "google";
+
+export const useSignInSocial = () => {
+	return useMutation({
+		mutationKey: ["sign-in-social"],
+		mutationFn: async (provider: SocialProviderType) => {
+			const { data, error } = await authClient.signIn.social({
+				provider: provider,
+				callbackURL: `${import.meta.env.VITE_APP_URL}/map`,
+			});
+			if (error?.message) {
+				Toast.toast.danger(error.message);
+			}
+			return data;
+		},
+	});
+};

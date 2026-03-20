@@ -4,10 +4,14 @@ import { H4 } from "../typography";
 import { ChevronRightIcon } from "../icons/ChevronRight";
 import { ChevronLeftIcon } from "lucide-react";
 import { BellIcon } from "../icons/BellIcon";
+import { MoonIcon } from "../icons/MoonIcon";
+import { SunIcon } from "../icons/SunIcon";
 import { useAppSidebarStore } from "./sidebarStore";
+import { useThemeStore } from "./store";
 
 export const Header = () => {
 	const { close: closeSidebar, isOpen } = useAppSidebarStore();
+	const { theme, toggleTheme } = useThemeStore();
 
 	return (
 		<div className="flex items-center justify-between pt-4 pr-2">
@@ -18,6 +22,24 @@ export const Header = () => {
 				</div>
 			</div>
 			<div className="flex items-center justify-end gap-1.5">
+				<Tooltip delay={0}>
+					<Button
+						className="rounded-full"
+						size="sm"
+						variant="ghost"
+						onPress={toggleTheme}
+					>
+						{theme === "dark" ? (
+							<SunIcon className="size-4 text-accent" />
+						) : (
+							<MoonIcon className="size-4 text-accent" />
+						)}
+					</Button>
+					<Tooltip.Content className="rounded-full">
+						<p className="text-accent">Toggle theme</p>
+					</Tooltip.Content>
+				</Tooltip>
+
 				{isOpen ? (
 					<Tooltip delay={0}>
 						<Button

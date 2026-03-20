@@ -12,7 +12,7 @@ export const H2 = ({
 	return (
 		<h2
 			className={cn(
-				"text-2xl/9 font-bold tracking-wide text-primary",
+				"text-2xl/9 font-bold tracking-wide text-accent",
 				className,
 			)}
 			{...props}
