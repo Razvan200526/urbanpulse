@@ -39,7 +39,6 @@
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {
-		"@jorgebodega/typeorm-seeding": "^7.1.0",
 		"@types/bun": "latest",
 		"@types/pg": "^8.18.0",
 		"drizzle-kit": "^0.31.10"

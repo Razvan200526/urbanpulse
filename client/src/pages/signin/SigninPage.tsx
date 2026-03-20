@@ -90,10 +90,7 @@ export const SignInPage = () => {
 						<p className="text-sm font-semibold text-foreground">
 							Don't have an account?
 						</p>
-						<Link
-							to="/signup"
-							className="text-sm font-semibold text-(--primary)"
-						>
+						<Link to="/signup" className="text-sm">
 							Sign Up
 						</Link>
 					</div>
