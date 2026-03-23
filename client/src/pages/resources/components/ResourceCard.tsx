@@ -1,7 +1,7 @@
 import { Button } from "@client/components/Button/Button";
 import { H6 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
-import { Card, Separator, Chip } from "@heroui/react";
+import { Card, Chip, Separator } from "@heroui/react";
 import type { ResourceType } from "@server/db/schema";
 import { MoreVertical, Star } from "lucide-react";
 

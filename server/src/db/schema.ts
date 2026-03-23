@@ -1,12 +1,12 @@
-import type {
-	ConversationTypeEnum,
+import {
+	type ConversationTypeEnum,
 	PulseEnum,
-	ReportStatusEnum,
-	ResourceAvailabilityType,
-	ResponseStatusEnum,
-	NotificationType as SharedNotificationType,
-	TransactionStatusEnum,
-	UrgencyEnum,
+	type ReportStatusEnum,
+	type ResourceAvailabilityType,
+	type ResponseStatusEnum,
+	type NotificationType as SharedNotificationType,
+	type TransactionStatusEnum,
+	type UrgencyEnum,
 } from "@shared/types";
 import { type InferSelectModel, relations } from "drizzle-orm";
 import {
@@ -85,7 +85,7 @@ export const verification = pgTable("verification", {
 
 export const pulse = pgTable("pulse", {
 	id: uuid("id").defaultRandom().primaryKey(),
-	type: text("type").$type<PulseEnum>().notNull(), // default: PulseEnum.Emergency
+	type: text("type").$type<PulseEnum>().notNull().default(PulseEnum.Emergency), // default: PulseEnum.Emergency
 	userId: text("userId")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),

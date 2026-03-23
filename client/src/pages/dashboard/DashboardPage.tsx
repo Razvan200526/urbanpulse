@@ -1,17 +1,12 @@
+import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
-import {  Card, Separator } from "@heroui/react";
-import {
-	Activity,
-	AlertTriangle,
-	TrendingUp,
-} from "lucide-react";
+import { RefreshIcon } from "@client/components/icons/RefreshIcon";
+import { Avatar } from "@client/components/user/Avatar";
+import { Card, Separator } from "@heroui/react";
+import { AlertTriangle, TrendingUp } from "lucide-react";
+import { Chart } from "./components/Chart";
 import { fakeStats } from "./components/fakeStats";
 import { StatsCard } from "./components/StatsCard";
-import { Button } from "@client/components/Button/Button";
-import { RefreshIcon } from "@client/components/icons/RefreshIcon";
-import { Chart } from "./components/Chart";
-import { Avatar } from "@client/components/user/Avatar";
-
 
 const RECENT_ACTIVITY_FAKE = [
 	{
@@ -49,7 +44,7 @@ export const DashboardPages = () => {
 			<div className="p-6 space-y-8">
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 					{fakeStats.map((stat) => (
-						<StatsCard key={stat.title} stat={stat}/>
+						<StatsCard key={stat.title} stat={stat} />
 					))}
 				</div>
 
@@ -63,13 +58,17 @@ export const DashboardPages = () => {
 								</Card.Description>
 							</div>
 							<div className="flex gap-2">
-								<Button size="sm" variant="primary" startContent={<RefreshIcon className="size-4"/>}>
+								<Button
+									size="sm"
+									variant="primary"
+									startContent={<RefreshIcon className="size-4" />}
+								>
 									Refresh
 								</Button>
 							</div>
 						</Card.Header>
 						<Card.Content className="h-75 flex items-center justify-center border-t border-border/10">
-							<Chart/>
+							<Chart />
 						</Card.Content>
 						<Separator />
 					</Card>
@@ -85,13 +84,13 @@ export const DashboardPages = () => {
 							<Card.Content className="space-y-4">
 								{RECENT_ACTIVITY_FAKE.map((activity) => (
 									<div key={activity.id} className="flex items-start gap-3">
-										<Avatar/>
+										<Avatar />
 										<div className="flex flex-col">
 											<p className="text-sm leading-tight">
-                        <span className="font-semibold text-accent">{activity.user}</span>
-												{' '}
-                        {activity.action}
-												{' '}
+												<span className="font-semibold text-accent">
+													{activity.user}
+												</span>{" "}
+												{activity.action}{" "}
 												<span className="text-muted font-medium">
 													{activity.target}
 												</span>

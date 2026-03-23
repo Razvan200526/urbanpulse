@@ -1,13 +1,13 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
+import { ShareIcon } from "@client/components/icons/ShareIcon";
 import { InputSearch } from "@client/components/input/InputSearch";
 import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
+import { H4 } from "@client/components/typography";
 import { Card, ScrollShadow, Separator } from "@heroui/react";
 import { Filter, Globe, PlusSquareIcon } from "lucide-react";
-import { ResourceCard } from "./components/ResourceCard";
 import { fakeResources } from "./components/fakeData";
-import { H4 } from "@client/components/typography";
-import { ShareIcon } from "@client/components/icons/ShareIcon";
+import { ResourceCard } from "./components/ResourceCard";
 
 const tabItems: TabItemType[] = [
 	{

@@ -1,7 +1,7 @@
+import { glass } from "@dicebear/collection";
+import { createAvatar } from "@dicebear/core";
 import { Avatar as HeroAvatar } from "@heroui/react";
 import type { UserType } from "@server/db/schema";
-import { createAvatar } from "@dicebear/core";
-import { glass } from "@dicebear/collection";
 
 export const Avatar = ({ user }: { user?: UserType }) => {
 	let avatar: string = "";
