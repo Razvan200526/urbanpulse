@@ -1,3 +1,5 @@
+/** @jsxImportSource hono/jsx */
+import type { FC } from "hono/jsx";
 import { renderToString } from "hono/jsx/dom/server";
 
 export interface OTPMailProps {
@@ -22,7 +24,7 @@ const LOGO_SVG = `data:image/svg+xml;utf8,${encodeURIComponent(`<svg width="100%
 const FONT_STACK =
 	"'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 
-export function OTPMailTemplate({ otp, userName }: OTPMailProps) {
+export const OTPMailTemplate: FC<OTPMailProps> = ({ otp, userName }) => {
 	const otpDigits = otp.replace(/\s/g, "").split("");
 
 	return (
@@ -226,7 +228,7 @@ export function OTPMailTemplate({ otp, userName }: OTPMailProps) {
 			</body>
 		</html>
 	);
-}
+};
 
 export function OTPMail(props: OTPMailProps): string {
 	const mail = <OTPMailTemplate {...props} />;

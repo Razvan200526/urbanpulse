@@ -2,7 +2,6 @@ import { createBrowserRouter } from "react-router";
 import { AuthLayout } from "./components/AuthLayout";
 import { LandingPage } from "./pages/landing-page/LandingPage";
 import { SignUpPage } from "./pages/signup/SignupPage";
-import { HomePage } from "./pages/home/HomePage";
 import { SignInPage } from "./pages/signin/SigninPage";
 import { DashboardPage } from "./pages/dashboard/DashboardPage";
 import { MapPage } from "./pages/map/MapPage";

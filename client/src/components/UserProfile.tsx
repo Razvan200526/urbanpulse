@@ -1,5 +1,5 @@
 import { useAuth } from "@client/hooks/useAuth";
-import { Avatar, Button, Toast } from "@heroui/react";
+import { Avatar, Toast } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { LogOutIcon, UserIcon } from "lucide-react";
 import { useNavigate } from "react-router";

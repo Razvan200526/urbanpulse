@@ -8,8 +8,6 @@ import { Button, Separator, Toast } from "@heroui/react";
 import { useRef } from "react";
 import { useVerifyEmail } from "../../hooks";
 import { useSignupStore } from "../../signUpStore";
-import { Logo } from "@client/components/icons/Logo";
-import { H1 } from "@client/components/typography";
 
 export const SignupEmailStep = () => {
 	const emailRef = useRef<InputEmailRefType>(null);
