@@ -15,7 +15,7 @@ export type HeaderProps = {
  */
 export const Header = ({ title, tabs, dropdown }: HeaderProps) => {
 	return (
-		<div className="px-8 py-4 border-b border-border flex items-center justify-between bg-surface">
+		<div className="sticky z-50 top-0 left-0 right-0 px-8 py-4 border-b border-border flex items-center justify-between bg-surface">
 			<div className="flex items-center justify-start gap-2">
 				<H3>{title}</H3>
 				{tabs}

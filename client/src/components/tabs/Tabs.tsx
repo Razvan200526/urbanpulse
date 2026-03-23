@@ -33,7 +33,7 @@ export const Tabs = ({ pannelItems, items, ...props }: TabsProps) => {
 			<HeroUITabs.ListContainer className="">
 				<HeroUITabs.List
 					aria-label="Options"
-					className="bg-transparent border border-border rounded *:data-[selected=true]:text-accent-foreground *:data-[hovered=true]:bg-accent-soft-hover w-fit *:h-8 *:w-fit *:px-3 *:text-sm *:font-normal"
+					className="bg-transparent rounded *:data-[selected=true]:text-accent-foreground *:data-[hovered=true]:bg-accent-soft-hover w-fit *:h-8 *:w-fit *:px-3 *:text-sm *:font-normal"
 				>
 					{items.map((item) => (
 						<HeroUITabs.Tab

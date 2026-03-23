@@ -9,6 +9,8 @@
 		"preview": "bunx --bun vite preview"
 	},
 	"dependencies": {
+		"@dicebear/collection": "^9.4.2",
+		"@dicebear/core": "^9.4.2",
 		"@fontsource/montserrat": "^5.2.8",
 		"@heroui/react": "^3.0.0-rc.1",
 		"@heroui/styles": "^3.0.0-rc.1",
@@ -24,6 +26,7 @@
 		"react-image-crop": "^11.0.10",
 		"react-router": "^7.13.1",
 		"react-router-dom": "^7.13.1",
+		"recharts": "^3.8.0",
 		"server": "workspace:*",
 		"shared": "workspace:*",
 		"tailwindcss": "^4.2.1",
