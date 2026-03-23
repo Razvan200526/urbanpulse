@@ -14,6 +14,7 @@ export const SignupPasswordStep = () => {
 		const isConfirmValid = confirmPasswordRef.current?.validate();
 
 		if (!isPasswordValid || !isConfirmValid) {
+			console.log("aksdjnaskdjnasdkjans");
 			return;
 		}
 

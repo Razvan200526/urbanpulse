@@ -6,7 +6,6 @@ import {
 } from "@client/components/input/InputName";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import { Button, Separator, Toast } from "@heroui/react";
-import { isSignUpInfoValid } from "@shared/validators/isSignUpInfoValid";
 import { useRef } from "react";
 import { useSignUp } from "../../hooks";
 import { useSignupStore } from "../../signUpStore";
@@ -14,26 +13,20 @@ import { useSignupStore } from "../../signUpStore";
 export const SignupProfileStep = () => {
 	const { data, setData, setStep } = useSignupStore();
 	const { mutateAsync: signUp, isError, isPending } = useSignUp();
-	const nameRef = useRef<InputNameRefType>(null);
+	const nameRef = useRef<InputNameRefType | null>(null);
 	const bioRef = useRef<TextAreaRefType | null>(null);
 
 	const handleNext = async () => {
-		const name = nameRef.current?.getValue() || "";
-		const bio = bioRef.current?.getValue() || "";
+		const name = nameRef.current?.getValue() || "testname";
+		const bio = bioRef.current?.getValue() || "testbio";
 
-		const updatedData = {
+		setData({
 			...data,
 			name,
 			bio,
-		};
-		setData(updatedData);
+		});
 
-		if (!isSignUpInfoValid(updatedData)) {
-			console.error("Name is required");
-			return;
-		}
-
-		const newUser = await signUp(updatedData);
+		const newUser = await signUp(data);
 		if (newUser.error || isError) {
 			Toast.toast.danger("Sign up failed,try again later");
 			return;

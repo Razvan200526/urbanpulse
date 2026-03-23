@@ -18,7 +18,7 @@
 		"dev": "bun --watch run src/index.ts & tsc --watch",
 		"db:generate": "bunx --bun drizzle-kit generate",
 		"db:push": "bunx --bun drizzle-kit push",
-		"db:migrate": "bunx --bun drizzle-kit migrate"
+		"db:migrate": "bunx --bun drizzle-kit migrate --config=./drizzle.config.ts"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.1009.0",

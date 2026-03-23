@@ -1,7 +1,6 @@
 import { getMailer } from "@server/mailers/getMailer";
 import { OTPMail } from "@server/mailers/templates/OTPMail";
 import { logger } from "@server/utils/Logger";
-import { pe } from "@server/utils/PrettyError";
 import { betterAuth } from "better-auth";
 import { emailOTP, openAPI } from "better-auth/plugins";
 import { dash } from "@better-auth/infra";
@@ -9,19 +8,33 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { signUpPlugin } from "./plugins/signUpPlugin";
 import bcrypt from "bcryptjs";
 import { db } from "../../db";
+import { user, session, account, verification } from "../../db/schema";
 
 export const auth = betterAuth({
 	appName: "UrbanPulse",
 	logger: {
 		disableColors: false,
 		disabled: false,
-		level: "error",
+		level: "debug",
 		log: (level, message, ...args) => {
-			console.error(pe.render(`[${level}] ${message}`, ...args));
+			if (level === "error") {
+				console.error(
+					`[AUTH_ERROR] ${message}`,
+					args.length ? JSON.stringify(args, null, 2) : "",
+				);
+			} else {
+				console.log(`[AUTH_${level.toUpperCase()}] ${message}`);
+			}
 		},
 	},
 	database: drizzleAdapter(db, {
 		provider: "pg",
+		schema: {
+			user,
+			session,
+			account,
+			verification,
+		},
 	}),
 	user: {
 		modelName: "user",

@@ -6,6 +6,7 @@ import logo from "../../assets/logo.svg";
 import { MenuIcon } from "../../components/icons/MenuIcon";
 import { MoonIcon } from "../../components/icons/MoonIcon";
 import { SunIcon } from "../../components/icons/SunIcon";
+import { Link } from "@client/components/Link";
 
 const navLinks = [
 	{ label: "Features", href: "#features" },
@@ -60,13 +61,13 @@ export const Navbar = () => {
 
 					<div className="hidden md:flex items-center gap-8">
 						{navLinks.map((link) => (
-							<a
+							<Link
+								className="text-foreground text-sm"
 								key={link.href}
-								href={link.href}
-								className="text-sm font-medium text-muted hover:text-(--foreground) transition-colors no-underline"
+								to={link.href}
 							>
 								{link.label}
-							</a>
+							</Link>
 						))}
 						<button
 							type="button"

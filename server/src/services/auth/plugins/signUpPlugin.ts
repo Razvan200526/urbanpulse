@@ -21,10 +21,11 @@ export const signUpPlugin = () => {
 				},
 				async (ctx) => {
 					const { email, name, bio, image, password: userPassword } = ctx.body;
-					const { adapter, password } = ctx.context;
+					logger.info(`Signing up user: ${email} (Name: ${name})`);
+					const { adapter, password, internalAdapter, authCookies, secret } =
+						ctx.context;
 
 					const hashedPassword = await password.hash(userPassword);
-					const id = crypto.randomUUID();
 
 					const existingUser = await adapter.findOne({
 						model: "user",
@@ -36,10 +37,10 @@ export const signUpPlugin = () => {
 							message: "User already exists",
 						});
 					}
+
 					const user = await adapter.create({
 						model: "user",
 						data: {
-							id,
 							email,
 							name,
 							bio,
@@ -50,10 +51,9 @@ export const signUpPlugin = () => {
 						},
 					});
 
-					const userAccount = await adapter.create({
+					await adapter.create({
 						model: "account",
 						data: {
-							id: crypto.randomUUID(),
 							userId: user.id,
 							accountId: user.id,
 							providerId: "credential",
@@ -62,11 +62,24 @@ export const signUpPlugin = () => {
 							updatedAt: new Date(),
 						},
 					});
-					logger.info(`User account created : ${JSON.stringify(userAccount)}`);
+
+					const session = await internalAdapter.createSession(user.id, true);
+
+					await ctx.setSignedCookie(
+						authCookies.sessionToken.name,
+						session.token,
+						secret,
+						{
+							...authCookies.sessionToken.attributes,
+							expires: session.expiresAt,
+						},
+					);
+
+					logger.info(`User account created successfully for ID: ${user.id}`);
 
 					return ctx.json({
 						user,
-						token: null,
+						token: session.token,
 					});
 				},
 			),

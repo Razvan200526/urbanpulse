@@ -11,7 +11,7 @@ export const SidebarDrawer = () => {
 		<>
 			<div
 				className={cn(
-					"flex-col items-center gap-4 border-r border-accent p-2 bg-surface shrink-0",
+					"flex-col items-center gap-4 border-r border-border p-2 bg-surface shrink-0",
 					!isOpen ? "flex" : "flex 2xl:hidden",
 				)}
 			>
@@ -37,7 +37,7 @@ export const SidebarDrawer = () => {
 			<Drawer isOpen={isOpen} onOpenChange={onOpenChange}>
 				<Drawer.Backdrop variant="transparent">
 					<Drawer.Content className="w-72" placement="left">
-						<Drawer.Dialog className="bg-surface rounded-none h-full flex flex-col gap-8 p-2 border-r border-accent">
+						<Drawer.Dialog className="bg-surface rounded-none h-full flex flex-col gap-8 p-2 border-r border-border">
 							<Sidebar />
 						</Drawer.Dialog>
 					</Drawer.Content>

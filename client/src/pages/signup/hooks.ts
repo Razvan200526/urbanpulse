@@ -22,6 +22,7 @@ export const useSignUp = () => {
 	return useMutation({
 		mutationKey: ["signup"],
 		mutationFn: async (data: SignUpDataType) => {
+			console.log(data);
 			const result = await authClient.signUp.email({
 				email: data.email,
 				password: data.password,

@@ -254,13 +254,34 @@ export const transaction = pgTable("transaction", {
 // --- Relations ---
 
 export const usersRelations = relations(user, ({ many }) => ({
+	sessions: many(session),
+	accounts: many(account),
 	pulses: many(pulse),
 	skills: many(skill),
 	resources: many(resource),
 	quietHours: many(quietHours),
 	conversations: many(conversationMember),
 	messages: many(message),
+	notifications: many(notification),
+	pulseConfirmations: many(pulseConfirmation),
+	responses: many(pulseResponse),
+	reportsSent: many(report, { relationName: "reportsSent" }),
+	reportsReceived: many(report, { relationName: "reportsReceived" }),
+	borrowedTransactions: many(transaction, {
+		relationName: "borrowedTransactions",
+	}),
+	lentTransactions: many(transaction, { relationName: "lentTransactions" }),
 }));
+
+export const sessionRelations = relations(session, ({ one }) => ({
+	user: one(user, { fields: [session.userId], references: [user.id] }),
+}));
+
+export const accountRelations = relations(account, ({ one }) => ({
+	user: one(user, { fields: [account.userId], references: [user.id] }),
+}));
+
+export const verificationRelations = relations(verification, () => ({}));
 
 export const pulseRelations = relations(pulse, ({ one, many }) => ({
 	user: one(user, { fields: [pulse.userId], references: [user.id] }),
@@ -268,6 +289,7 @@ export const pulseRelations = relations(pulse, ({ one, many }) => ({
 	alerts: many(petAlert),
 	confirmations: many(pulseConfirmation),
 	responses: many(pulseResponse),
+	reports: many(report),
 }));
 
 export const conversationRelations = relations(
@@ -302,6 +324,10 @@ export const messageRelations = relations(message, ({ one }) => ({
 		references: [conversation.id],
 	}),
 	sender: one(user, { fields: [message.senderId], references: [user.id] }),
+}));
+
+export const notificationRelations = relations(notification, ({ one }) => ({
+	user: one(user, { fields: [notification.userId], references: [user.id] }),
 }));
 
 export const petAlertRelations = relations(petAlert, ({ one, many }) => ({
@@ -342,17 +368,26 @@ export const pulseResponseRelations = relations(pulseResponse, ({ one }) => ({
 		fields: [pulseResponse.pulseId],
 		references: [pulse.id],
 	}),
-	responder: one(user, {
+	user: one(user, {
 		fields: [pulseResponse.responderId],
 		references: [user.id],
 	}),
 }));
 
+export const quietHoursRelations = relations(quietHours, ({ one }) => ({
+	user: one(user, { fields: [quietHours.userId], references: [user.id] }),
+}));
+
 export const reportRelations = relations(report, ({ one }) => ({
-	reporter: one(user, { fields: [report.reporterId], references: [user.id] }),
+	reporter: one(user, {
+		fields: [report.reporterId],
+		references: [user.id],
+		relationName: "reportsSent",
+	}),
 	targetUser: one(user, {
 		fields: [report.targetUserId],
 		references: [user.id],
+		relationName: "reportsReceived",
 	}),
 	targetPulse: one(pulse, {
 		fields: [report.targetPulseId],
@@ -363,6 +398,10 @@ export const reportRelations = relations(report, ({ one }) => ({
 export const resourceRelations = relations(resource, ({ one, many }) => ({
 	user: one(user, { fields: [resource.userId], references: [user.id] }),
 	transactions: many(transaction),
+}));
+
+export const skillRelations = relations(skill, ({ one }) => ({
+	user: one(user, { fields: [skill.userId], references: [user.id] }),
 }));
 
 export const transactionRelations = relations(transaction, ({ one }) => ({
