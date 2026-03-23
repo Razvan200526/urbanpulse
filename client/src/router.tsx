@@ -1,17 +1,17 @@
 import { createBrowserRouter } from "react-router";
 import { AuthLayout } from "./components/AuthLayout";
-import { LandingPage } from "./pages/landing-page/LandingPage";
-import { SignUpPage } from "./pages/signup/SignupPage";
-import { SignInPage } from "./pages/signin/SigninPage";
-import { DashboardPage } from "./pages/dashboard/DashboardPage";
-import { MapPage } from "./pages/map/MapPage";
-import { ResourcesPage } from "./pages/resources/ResourcesPage";
-import { AlertsPage } from "./pages/alerts/AlertsPage";
-import { MessagesPage } from "./pages/messages/MessagesPage";
 import { AdminPage } from "./pages/admin/AdminPage";
-import { SettingsPage } from "./pages/settings/SettingsPage";
-import { ProfilePage } from "./pages/profile/ProfilePage";
+import { AlertsPage } from "./pages/alerts/AlertsPage";
+import { DashboardPages } from "./pages/dashboard/DashboardPage";
 import { ForgotPasswordPage } from "./pages/forgot-password/ForgotPasswordPage";
+import { LandingPage } from "./pages/landing-page/LandingPage";
+import { MapPage } from "./pages/map/MapPage";
+import { MessagesPage } from "./pages/messages/MessagesPage";
+import { ProfilePage } from "./pages/profile/ProfilePage";
+import { ResourcesPage } from "./pages/resources/ResourcesPage";
+import { SettingsPage } from "./pages/settings/SettingsPage";
+import { SignInPage } from "./pages/signin/SigninPage";
+import { SignUpPage } from "./pages/signup/SignupPage";
 
 export const router = createBrowserRouter([
 	{
@@ -35,7 +35,7 @@ export const router = createBrowserRouter([
 		children: [
 			{
 				path: "/dashboard",
-				element: <DashboardPage />,
+				element: <DashboardPages />,
 			},
 			{
 				path: "/map",

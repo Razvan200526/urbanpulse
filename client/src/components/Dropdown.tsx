@@ -1,4 +1,4 @@
-import { Description, Dropdown, Kbd, Label, cn } from "@heroui/react";
+import { cn, Description, Dropdown, Kbd, Label } from "@heroui/react";
 import type { Key, ReactNode } from "react";
 
 export type DropdownItemDataType = {

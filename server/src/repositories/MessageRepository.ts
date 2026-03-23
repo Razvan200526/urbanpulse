@@ -1,5 +1,5 @@
 import { db } from "@server/db";
-import { message, type MessageType } from "@server/db/schema";
+import { type MessageType, message } from "@server/db/schema";
 import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 

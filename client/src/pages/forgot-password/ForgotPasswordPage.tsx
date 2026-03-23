@@ -1,11 +1,11 @@
+import { Card } from "@heroui/react";
 import { HorizontalSteps } from "../../components/HorizontalSteps";
 import { Logo } from "../../components/icons/Logo";
 import { H1 } from "../../components/typography";
-import { Card } from "@heroui/react";
-import { useForgotPasswordStore } from "./forgotPasswordStore";
 import { ForgotPasswordEmailStep } from "./components/steps/ForgotPasswordEmailStep";
-import { ForgotPasswordOTPVerificationStep } from "./components/steps/ForgotPasswordOTPVerificationStep";
 import { ForgotPasswordNewPasswordStep } from "./components/steps/ForgotPasswordNewPasswordStep";
+import { ForgotPasswordOTPVerificationStep } from "./components/steps/ForgotPasswordOTPVerificationStep";
+import { useForgotPasswordStore } from "./forgotPasswordStore";
 
 export const ForgotPasswordPage = () => {
 	const { step } = useForgotPasswordStore();

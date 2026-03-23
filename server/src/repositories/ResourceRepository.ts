@@ -1,5 +1,5 @@
 import { db } from "@server/db";
-import { resource, type ResourceType } from "@server/db/schema";
+import { type ResourceType, resource } from "@server/db/schema";
 import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 

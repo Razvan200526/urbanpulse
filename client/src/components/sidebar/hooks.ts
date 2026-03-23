@@ -1,13 +1,13 @@
 import { authClient } from "@client/main";
 import { useMutation } from "@tanstack/react-query";
 import {
+	Bell,
 	LayoutDashboard,
 	Map as MapIcon,
-	Wrench,
 	MessageSquare,
-	Bell,
 	Settings,
 	ShieldAlert,
+	Wrench,
 } from "lucide-react";
 
 export const useSideBarItems = () => {

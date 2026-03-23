@@ -1,7 +1,7 @@
 import { db } from "@server/db";
 import {
-	pulseConfirmation,
 	type PulseConfirmationType,
+	pulseConfirmation,
 } from "@server/db/schema";
 import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";

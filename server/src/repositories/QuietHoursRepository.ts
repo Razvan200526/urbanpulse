@@ -1,5 +1,5 @@
 import { db } from "@server/db";
-import { quietHours, type QuietHoursType } from "@server/db/schema";
+import { type QuietHoursType, quietHours } from "@server/db/schema";
 import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 

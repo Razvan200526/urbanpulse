@@ -1,3 +1,4 @@
+import { Link } from "@client/components/Link";
 import { Button, Drawer } from "@heroui/react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -6,7 +7,6 @@ import logo from "../../assets/logo.svg";
 import { MenuIcon } from "../../components/icons/MenuIcon";
 import { MoonIcon } from "../../components/icons/MoonIcon";
 import { SunIcon } from "../../components/icons/SunIcon";
-import { Link } from "@client/components/Link";
 
 const navLinks = [
 	{ label: "Features", href: "#features" },

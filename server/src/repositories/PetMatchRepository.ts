@@ -1,5 +1,5 @@
 import { db } from "@server/db";
-import { petMatch, type PetMatchType } from "@server/db/schema";
+import { type PetMatchType, petMatch } from "@server/db/schema";
 import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 

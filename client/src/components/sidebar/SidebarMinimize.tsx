@@ -1,5 +1,5 @@
-import { Avatar } from "@heroui/react";
 import { useAuth } from "@client/hooks/useAuth";
+import { Avatar } from "@heroui/react";
 import { HeaderMinimize } from "./HeaderMinimize";
 import { NavMenu } from "./NavMenu";
 

@@ -1,8 +1,8 @@
 import { Button, cn, Drawer, Tooltip } from "@heroui/react";
+import { MenuIcon } from "../icons/MenuIcon";
 import { Sidebar } from "./Sidebar";
 import { SidebarMinimize } from "./SidebarMinimize";
 import { useAppSidebarStore } from "./sidebarStore";
-import { MenuIcon } from "../icons/MenuIcon";
 
 export const SidebarDrawer = () => {
 	const { isOpen, open, onOpenChange } = useAppSidebarStore();

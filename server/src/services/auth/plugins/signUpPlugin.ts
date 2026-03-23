@@ -14,7 +14,7 @@ export const signUpPlugin = () => {
 					body: z.object({
 						email: z.email(),
 						password: z.string().min(8),
-						name: z.string(),
+						name: z.string().min(5),
 						bio: z.string().optional(),
 						image: z.string().optional(),
 					}),

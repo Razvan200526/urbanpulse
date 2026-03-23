@@ -1,14 +1,14 @@
+import { dash } from "@better-auth/infra";
 import { getMailer } from "@server/mailers/getMailer";
 import { OTPMail } from "@server/mailers/templates/OTPMail";
 import { logger } from "@server/utils/Logger";
-import { betterAuth } from "better-auth";
-import { emailOTP, openAPI } from "better-auth/plugins";
-import { dash } from "@better-auth/infra";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { signUpPlugin } from "./plugins/signUpPlugin";
 import bcrypt from "bcryptjs";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { emailOTP, openAPI } from "better-auth/plugins";
 import { db } from "../../db";
-import { user, session, account, verification } from "../../db/schema";
+import { account, session, user, verification } from "../../db/schema";
+import { signUpPlugin } from "./plugins/signUpPlugin";
 
 export const auth = betterAuth({
 	appName: "UrbanPulse",

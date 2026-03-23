@@ -1,6 +1,9 @@
-import { Button, Card, Separator, Toast } from "@heroui/react";
-import { useRef } from "react";
 import { Link } from "@client/components/Link";
+import { Button, Card, Separator, Toast } from "@heroui/react";
+import { Icon } from "@iconify/react";
+import { isSignInInfoValid } from "@shared/validators/isSignInInfoValid";
+import { useRef } from "react";
+import { useNavigate } from "react-router";
 import { Logo } from "../../components/icons/Logo";
 import {
 	InputEmail,
@@ -12,9 +15,6 @@ import {
 } from "../../components/input/InputPassword";
 import { H1, H2 } from "../../components/typography";
 import { useSignIn, useSignInSocial } from "./hooks";
-import { useNavigate } from "react-router";
-import { isSignInInfoValid } from "@shared/validators/isSignInInfoValid";
-import { Icon } from "@iconify/react";
 
 export const SignInPage = () => {
 	const emailRef = useRef<InputEmailRefType>(null);

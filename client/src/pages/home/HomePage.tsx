@@ -1,9 +1,9 @@
-import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
-import { Toast } from "@heroui/react";
 import { Loader } from "@client/components/Loader";
 // biome-ignore lint/suspicious/noShadowRestrictedNames: Component is named Map
 import { Map } from "@client/components/map/Map";
 import { PulseMarker } from "@client/components/PulseMarker";
+import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
+import { Toast } from "@heroui/react";
 
 export const HomePage = () => {
 	const { coords, isError, isLoading } = useGetGeolocation();

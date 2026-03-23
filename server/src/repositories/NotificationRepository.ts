@@ -1,5 +1,5 @@
 import { db } from "@server/db";
-import { notification, type NotificationType } from "@server/db/schema";
+import { type NotificationType, notification } from "@server/db/schema";
 import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 

@@ -1,27 +1,27 @@
+import type {
+	ConversationTypeEnum,
+	PulseEnum,
+	ReportStatusEnum,
+	ResourceAvailabilityType,
+	ResponseStatusEnum,
+	NotificationType as SharedNotificationType,
+	TransactionStatusEnum,
+	UrgencyEnum,
+} from "@shared/types";
+import { type InferSelectModel, relations } from "drizzle-orm";
 import {
-	pgTable,
-	text,
-	timestamp,
 	boolean,
 	doublePrecision,
 	integer,
 	jsonb,
-	uuid,
-	time,
-	varchar,
+	pgTable,
 	point,
+	text,
+	time,
+	timestamp,
+	uuid,
+	varchar,
 } from "drizzle-orm/pg-core";
-import { relations, type InferSelectModel } from "drizzle-orm";
-import type {
-	PulseEnum,
-	UrgencyEnum,
-	ConversationTypeEnum,
-	NotificationType as SharedNotificationType,
-	ResponseStatusEnum,
-	ReportStatusEnum,
-	ResourceAvailabilityType,
-	TransactionStatusEnum,
-} from "@shared/types";
 
 // --- Better Auth Core Tables ---
 

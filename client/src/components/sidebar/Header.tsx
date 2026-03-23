@@ -1,11 +1,11 @@
 import { Button, Tooltip } from "@heroui/react";
-import { Logo } from "../icons/Logo";
-import { H4 } from "../typography";
-import { ChevronRightIcon } from "../icons/ChevronRight";
 import { ChevronLeftIcon } from "lucide-react";
 import { BellIcon } from "../icons/BellIcon";
+import { ChevronRightIcon } from "../icons/ChevronRight";
+import { Logo } from "../icons/Logo";
 import { MoonIcon } from "../icons/MoonIcon";
 import { SunIcon } from "../icons/SunIcon";
+import { H4 } from "../typography";
 import { useAppSidebarStore } from "./sidebarStore";
 import { useThemeStore } from "./store";
 

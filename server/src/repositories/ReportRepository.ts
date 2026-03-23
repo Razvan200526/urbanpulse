@@ -1,5 +1,5 @@
 import { db } from "@server/db";
-import { report, type ReportType } from "@server/db/schema";
+import { type ReportType, report } from "@server/db/schema";
 import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 

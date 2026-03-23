@@ -1,5 +1,5 @@
 import { db } from "@server/db";
-import { pulseResponse, type PulseResponseType } from "@server/db/schema";
+import { type PulseResponseType, pulseResponse } from "@server/db/schema";
 import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 

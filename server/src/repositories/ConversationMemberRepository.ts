@@ -1,7 +1,7 @@
 import { db } from "@server/db";
 import {
-	conversationMember,
 	type ConversationMemberType,
+	conversationMember,
 } from "@server/db/schema";
 import { eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
