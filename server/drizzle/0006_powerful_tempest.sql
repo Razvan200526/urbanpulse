@@ -1,0 +1,1 @@
+ALTER TABLE "pulse" ADD COLUMN "pulseUploadState" text DEFAULT 'pending' NOT NULL;

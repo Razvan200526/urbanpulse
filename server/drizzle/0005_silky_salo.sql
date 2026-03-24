@@ -1,0 +1,1 @@
+ALTER TABLE "pulse" ADD COLUMN "status" text DEFAULT 'ACTIVE' NOT NULL;

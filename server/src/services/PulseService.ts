@@ -3,34 +3,58 @@ import {
 	type PulseRepository,
 	pulseRepository,
 } from "@server/repositories/PulseRepository";
+import {
+	userRepository,
+	type UserRepository,
+} from "@server/repositories/UserRepository";
+import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
-import { isPulseRequestValid } from "@shared/validators/isPulseRequestValid";
 export class PulseService {
 	private pulseRepository: PulseRepository;
+	private userRepository: UserRepository;
 
 	constructor() {
 		this.pulseRepository = pulseRepository;
+		this.userRepository = userRepository;
 	}
 
 	async createPulse(data: Partial<PulseType>) {
 		try {
-			const { error } = isPulseRequestValid(data);
-			if (error) {
-				logger.exception(error);
+			const newPulse = await this.pulseRepository.create(data);
+			logger.info(`${newPulse}`);
+			return newPulse;
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
+	async getPulses({
+		userId,
+		coords,
+	}: {
+		userId: string;
+		coords: { lat: number; lng: number };
+	}) {
+		try {
+			const user = await userRepository.getOne(userId);
+			if (!user) {
+				logger.error("No user found!");
 				return null;
 			}
 
-			const newPulse = await this.pulseRepository.create(data);
-			if (!newPulse) {
-				return null;
-			}
-			return newPulse;
+			const pulsesInRange = await this.pulseRepository.getByOptions({
+				lat: coords.lat,
+				lng: coords.lng,
+				radius: 500,
+			});
+
+			return pulsesInRange;
 		} catch (error) {
-			if (error instanceof Error) {
-				logger.exception(error);
-			}
-			logger.error("Could not create pulse");
+			handleError(error);
 			return null;
 		}
 	}
 }
+
+export const pulseService = new PulseService();

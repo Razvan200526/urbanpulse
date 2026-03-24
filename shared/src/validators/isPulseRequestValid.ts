@@ -13,6 +13,10 @@ export const pulseRequestSchema = z.object({
 });
 
 export const isPulseRequestValid = (data: unknown) => {
-	const { error, success } = pulseRequestSchema.safeParse(data);
-	return { error, success };
+	const {
+		error,
+		success,
+		data: pulseData,
+	} = pulseRequestSchema.safeParse(data);
+	return { error, success, pulseData };
 };
