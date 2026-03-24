@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-// biome-ignore lint/suspicious/noShadowRestrictedNames: Component is named Map
-import { Map } from "../../../components/map/Map";
+import { MapComponent } from "../../../components/map/MapComponent";
 import { PulseMarker } from "../../../components/PulseMarker";
 import {
 	type GeolocationCoords,
@@ -29,7 +28,7 @@ function createNearbyCoords(
 		};
 	});
 }
-export const MapComponent = () => {
+export const MapPreview = () => {
 	const { coords } = useGetGeolocation();
 
 	const nearbyCoords = useMemo(() => {
@@ -38,20 +37,25 @@ export const MapComponent = () => {
 	}, [coords]);
 
 	return (
-		<Map
+		<MapComponent
 			center={coords ? [coords.long, coords.lat] : [26.1025, 44.4268]}
 			zoom={14}
 			className="rounded"
 			style={{ width: "100%", height: "400px", minHeight: "400px" }}
 		>
-			{coords && <PulseMarker coords={coords} type="emergency" />}
+			{coords && (
+				<PulseMarker
+					position={{ x: coords.long, y: coords.lat }}
+					type="emergency"
+				/>
+			)}
 			{nearbyCoords.map((point, idx) => (
 				<PulseMarker
 					key={`${point.lat}-${point.long}`}
-					coords={point}
+					position={{ x: point.long, y: point.lat }}
 					type={idx % 2 === 0 ? "warning" : "item"}
 				/>
 			))}
-		</Map>
+		</MapComponent>
 	);
 };

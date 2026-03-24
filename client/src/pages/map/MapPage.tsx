@@ -1,93 +1,81 @@
-import { Button } from "@client/components/Button/Button";
-import { Loader } from "@client/components/Loader";
-// biome-ignore lint/suspicious/noShadowRestrictedNames: Component is named Map
-import { Map } from "@client/components/map/Map";
-import { PulseMarker } from "@client/components/PulseMarker";
+import { PulseEnum, UrgencyEnum } from "@shared/types";
+import { PlusSquare } from "lucide-react";
+import { useRetrievePulses, useCreatePulse } from "./hooks";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { useAuth } from "@client/hooks/useAuth";
-import { PulseEnum, UrgencyEnum } from "@shared/types";
-import { Socket } from "client/sdk/Socket";
 import { Toast } from "@heroui/react";
-import { PlusSquare } from "lucide-react";
-import { useRef } from "react";
-// import { useGetPulses } from "./hooks";
+import { Button } from "@client/components/Button/Button";
+import { RefreshIcon } from "@client/components/icons/RefreshIcon";
+import { MapComponent } from "@client/components/map/MapComponent";
+import { PageLoader } from "@client/components/PageLoader";
+import { useNavigate } from "react-router";
+import { PulseType } from "@server/db/schema";
+import { PulseMarker } from "@client/components/PulseMarker";
 
 export const MapPage = () => {
 	const {
 		coords,
 		isError: isGeolocationError,
-		isLoading,
+		isLoading: isGeolocationLoading,
 	} = useGetGeolocation();
 	const { data: user } = useAuth();
+	const navigate = useNavigate();
+	const { mutateAsync: createPulse } = useCreatePulse();
 
-	// const { pulses } = useGetPulses(user?.user.id, {
-	// 	lat: coords?.lat || 0,
-	// 	lng: coords?.long || 0,
-	// });
-
-	const wsRef = useRef<Socket | null>(null);
-
-	if (!wsRef.current) {
-		wsRef.current = new Socket(
-			`${import.meta.env.VITE_SERVER_URL}/api/pulse/ws`,
-		);
-
-		wsRef.current.on("message", (response: any) => {
-			if (response.success && response.message === "Pulse created") {
-				Toast.toast.success("Pulse created successfully");
-			}
-		});
-	}
-
-	const handleClick = () => {
-		if (!coords || !user?.user.id) return;
-
-		wsRef.current?.send({
-			id: crypto.randomUUID(),
-			key: "create:pulse",
-			channelName: "create:pulse",
-			data: {
-				type: PulseEnum.Emergency,
-				title: "new pulse",
-				userId: user.user.id,
-				urgency: UrgencyEnum.Immediate,
-				position: { lat: coords.lat, lng: coords.long },
-				isResolved: false,
-			},
-		});
+	const { data: pulses, refetch } = useRetrievePulses({
+		userId: user?.user.id || "",
+		position: { x: coords?.lat || 0, y: coords?.long || 0 },
+	});
+	const pulseData = {
+		type: PulseEnum.Emergency,
+		title: "new pulse",
+		userId: user?.user.id || "",
+		urgency: UrgencyEnum.Immediate,
+		position: { x: coords?.lat || 0, y: coords?.long || 0 },
+		isResolved: false,
 	};
 
+	if (isGeolocationLoading) {
+		return (
+			<div className="w-full h-full">
+				<PageLoader />
+			</div>
+		);
+	}
+	console.log(pulses?.data);
 	if (isGeolocationError) {
-		Toast.toast.danger("Failed to get geolocation");
+		Toast.toast.danger(
+			"Failed to fetch location.Make sure you allow the browser to access your location.",
+		);
+		navigate("/dashboard", { replace: true });
 	}
-
-	if (isLoading || !coords) {
-		return <Loader />;
-	}
-
 	return (
 		<div className="relative w-full h-screen">
-			<Map center={[coords.long, coords.lat]} zoom={14}>
-				<PulseMarker coords={coords} type="emergency" />
-				{/*{pulses.map((p) => {
-					const position = p.position as any;
-					return (
-						<PulseMarker
-							key={p.id}
-							coords={{ lat: position.y, long: position.x }}
-							type={p.type === PulseEnum.Emergency ? "emergency" : "warning"}
-						/>
-					);
-				})}*/}
-			</Map>
-			<Button
-				className="absolute top-4 right-4 z-10"
-				variant="secondary"
-				startContent={<PlusSquare className="size-4" />}
-				onPress={handleClick}
-			>
-				Create pulse
-			</Button>
+			<MapComponent center={[coords?.long || 0, coords?.lat || 0]} zoom={14}>
+				{pulses?.data?.map((pulse: PulseType) => (
+					<PulseMarker
+						key={pulse.id}
+						position={pulse.position}
+						type="emergency"
+					/>
+				))}
+			</MapComponent>
+			<div className="absolute top-4 right-4 z-10 flex items-center justify-end gap-4">
+				<Button
+					variant="secondary"
+					startContent={<PlusSquare className="size-4" />}
+					onPress={() => createPulse(pulseData)}
+				>
+					Create pulse
+				</Button>
+				<Button
+					variant="primary"
+					startContent={<RefreshIcon className="size-4" />}
+					onPress={() => refetch()}
+				>
+					Refresh
+				</Button>
+			</div>
 		</div>
 	);
 };

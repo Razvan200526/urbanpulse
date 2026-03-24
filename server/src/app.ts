@@ -38,7 +38,7 @@ export const app = new Hono()
 	.route("/auth", authController)
 	.route("/users", userController)
 	.route("/avatar", avatarController)
-	.route("/", pulseController);
+	.route("/pulse", pulseController);
 
 export type AppType = typeof app;
 export default app;

@@ -1,6 +1,6 @@
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef } from "react";
-import type { GeolocationCoords } from "../hooks/useGetGeolocation";
+import { createPortal } from "react-dom";
 import { useMap } from "./map/MapContext";
 
 const colorClasses = {
@@ -22,46 +22,51 @@ const colorClasses = {
 };
 
 export const PulseMarker = ({
-	coords,
+	position,
 	type = "emergency",
 }: {
-	coords: GeolocationCoords;
+	position: { x: number; y: number };
 	type?: "emergency" | "warning" | "item";
 }) => {
 	const map = useMap();
-	const markerHostRef = useRef<HTMLDivElement | null>(null);
-	const markerInstanceRef = useRef<mapboxgl.Marker | null>(null);
+	const markerRef = useRef<mapboxgl.Marker | null>(null);
+	const markerElementRef = useRef(document.createElement("div"));
 
 	useEffect(() => {
-		if (!map || !markerHostRef.current) return;
+		if (!map) return;
 
-		const c = colorClasses[type];
-		const markerEl = markerHostRef.current;
+		// Initialize the marker when the component mounts
+		// position.y = longitude, position.x = latitude
+		markerRef.current = new mapboxgl.Marker({
+			element: markerElementRef.current,
+		})
+			.setLngLat([position.y, position.x])
+			.addTo(map);
 
-		markerEl.className = "relative w-8 h-8";
-		markerEl.innerHTML = `
-			<span class="absolute inset-0 rounded-full ${c.glow} blur-sm"></span>
-			<span class="absolute inset-0 rounded-full border-2 ${c.ripple} animate-ping"></span>
-			<span class="absolute inset-0 rounded-full border-2 ${c.ripple} animate-marker-ripple"></span>
-			<span class="absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${c.core} ring-2 ring-white shadow-md"></span>
-		`;
-
-		if (!markerInstanceRef.current) {
-			markerInstanceRef.current = new mapboxgl.Marker({
-				element: markerEl,
-				draggable: false,
-			})
-				.setLngLat([coords.long, coords.lat])
-				.addTo(map);
-		} else {
-			markerInstanceRef.current.setLngLat([coords.long, coords.lat]);
-		}
-
+		// Remove the marker when the component unmounts
 		return () => {
-			markerInstanceRef.current?.remove();
-			markerInstanceRef.current = null;
+			if (markerRef.current) {
+				markerRef.current.remove();
+			}
 		};
-	}, [coords.long, coords.lat, type, map]);
+	}, [map, position.x, position.y]);
 
-	return <div ref={markerHostRef} />;
+	const c = colorClasses[type];
+
+	// Use createPortal to render JSX content into the marker element
+	return createPortal(
+		<div className="relative w-8 h-8">
+			<span className={`absolute inset-0 rounded-full ${c.glow} blur-sm`} />
+			<span
+				className={`absolute inset-0 rounded-full border-2 ${c.ripple} animate-ping`}
+			/>
+			<span
+				className={`absolute inset-0 rounded-full border-2 ${c.ripple} animate-marker-ripple`}
+			/>
+			<span
+				className={`absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${c.core} ring-2 ring-white shadow-md`}
+			/>
+		</div>,
+		markerElementRef.current,
+	);
 };

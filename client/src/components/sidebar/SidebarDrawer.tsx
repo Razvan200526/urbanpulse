@@ -6,7 +6,6 @@ import { useAppSidebarStore } from "./sidebarStore";
 
 export const SidebarDrawer = () => {
 	const { isOpen, open, onOpenChange } = useAppSidebarStore();
-
 	return (
 		<>
 			<div

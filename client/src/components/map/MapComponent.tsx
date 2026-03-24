@@ -9,13 +9,14 @@ export interface MapProps {
 	zoom?: number;
 	className?: string;
 	style?: React.CSSProperties;
+	positions?: { x: number; y: number }[];
 }
 
-// biome-ignore lint/suspicious/noShadowRestrictedNames: Requested by user to be named Map
-export const Map = ({
+export const MapComponent = ({
 	children,
 	center = [0, 0],
 	zoom = 9,
+	positions,
 	className = "w-full h-full relative",
 	style,
 }: MapProps) => {
@@ -62,6 +63,16 @@ export const Map = ({
 
 	const centerLng = center[0];
 	const centerLat = center[1];
+
+	useEffect(() => {
+		if (!mapInstance) return;
+
+		mapInstance.flyTo({
+			center: [centerLng, centerLat],
+			zoom,
+			essential: true,
+		});
+	}, [centerLng, centerLat, zoom, mapInstance]);
 
 	useEffect(() => {
 		if (!mapInstance) return;
