@@ -9,10 +9,8 @@ import { Toast } from "@heroui/react";
 import type { PulseType } from "@server/db/schema";
 import { useRetrievePulses } from "./hooks";
 import { CreatePulseModal } from "./components/CreatePulseModal";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
-import { type ModalRefType } from "@client/components/Modal";
-import { PlusSquareIcon } from "lucide-react";
 
 export const MapPage = () => {
 	const {
