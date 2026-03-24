@@ -9,8 +9,10 @@ import { Toast } from "@heroui/react";
 import type { PulseType } from "@server/db/schema";
 import { PulseEnum, UrgencyEnum } from "@shared/types";
 import { PlusSquare } from "lucide-react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useCreatePulse, useRetrievePulses } from "./hooks";
+import { CreatePulseModal } from "./components/CreatePulseModal";
 
 export const MapPage = () => {
 	const {
@@ -21,6 +23,11 @@ export const MapPage = () => {
 	const { data: user } = useAuth();
 	const navigate = useNavigate();
 	const { mutateAsync: createPulse } = useCreatePulse();
+
+	const mapCenter = useMemo<[number, number]>(
+		() => [coords?.long || 0, coords?.lat || 0],
+		[coords?.long, coords?.lat],
+	);
 
 	const { data: pulses, refetch } = useRetrievePulses({
 		userId: user?.user.id || "",
@@ -50,8 +57,8 @@ export const MapPage = () => {
 		navigate("/dashboard", { replace: true });
 	}
 	return (
-		<div className="relative w-full h-screen">
-			<MapComponent center={[coords?.long || 0, coords?.lat || 0]} zoom={14}>
+		<div className="relative w-full h-full">
+			<MapComponent center={mapCenter} zoom={17}>
 				{pulses?.data?.map((pulse: PulseType) => (
 					<PulseMarker
 						key={pulse.id}
@@ -60,14 +67,8 @@ export const MapPage = () => {
 					/>
 				))}
 			</MapComponent>
-			<div className="absolute top-4 right-4 z-10 flex items-center justify-end gap-4">
-				<Button
-					variant="secondary"
-					startContent={<PlusSquare className="size-4" />}
-					onPress={() => createPulse(pulseData)}
-				>
-					Create pulse
-				</Button>
+			<div className="absolute top-4 right-4 z-50 flex items-center justify-end gap-4">
+				<CreatePulseModal />
 				<Button
 					variant="primary"
 					startContent={<RefreshIcon className="size-4" />}

@@ -29,7 +29,7 @@ export const AuthLayout = () => {
 			<SidebarDrawer />
 			<div
 				className={cn(
-					"flex-1 border-r border-border relative w-64 shrink-0 flex-col gap-8 p-2 transition-all duration-300 ease-in-out",
+					"border-r border-border relative w-64 shrink-0 flex-col gap-8 p-2 transition-all duration-300 ease-in-out",
 					!isOpen ? "hidden" : "hidden 2xl:flex",
 				)}
 			>

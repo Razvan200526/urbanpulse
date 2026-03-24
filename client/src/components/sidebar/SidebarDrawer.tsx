@@ -33,15 +33,18 @@ export const SidebarDrawer = () => {
 					<SidebarMinimize onOpen={open} />
 				</div>
 			</div>
-			<Drawer isOpen={isOpen} onOpenChange={onOpenChange}>
-				<Drawer.Backdrop variant="transparent">
-					<Drawer.Content className="w-72" placement="left">
-						<Drawer.Dialog className="bg-surface rounded-none h-full flex flex-col gap-8 p-2 border-r border-border">
-							<Sidebar />
-						</Drawer.Dialog>
-					</Drawer.Content>
-				</Drawer.Backdrop>
-			</Drawer>
+			{/* Only render Drawer if it could actually be visible (non-2xl screens) */}
+			<div className="2xl:hidden">
+				<Drawer isOpen={isOpen} onOpenChange={onOpenChange}>
+					<Drawer.Backdrop variant="transparent">
+						<Drawer.Content className="w-72" placement="left">
+							<Drawer.Dialog className="bg-surface rounded-none h-full flex flex-col gap-8 p-2 border-r border-border">
+								<Sidebar />
+							</Drawer.Dialog>
+						</Drawer.Content>
+					</Drawer.Backdrop>
+				</Drawer>
+			</div>
 		</>
 	);
 };

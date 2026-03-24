@@ -55,22 +55,13 @@ export const MapComponent = ({
 
 		return () => {
 			map.remove();
+			setMapInstance(null);
 			hasInitialized.current = false;
 		};
 	}, [center, zoom]);
 
 	const centerLng = center[0];
 	const centerLat = center[1];
-
-	useEffect(() => {
-		if (!mapInstance) return;
-
-		mapInstance.flyTo({
-			center: [centerLng, centerLat],
-			zoom,
-			essential: true,
-		});
-	}, [centerLng, centerLat, zoom, mapInstance]);
 
 	useEffect(() => {
 		if (!mapInstance) return;

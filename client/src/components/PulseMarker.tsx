@@ -30,20 +30,17 @@ export const PulseMarker = ({
 }) => {
 	const map = useMap();
 	const markerRef = useRef<mapboxgl.Marker | null>(null);
-	const markerElementRef = useRef(document.createElement("div"));
+	const el = useRef(document.createElement("div"));
 
 	useEffect(() => {
 		if (!map) return;
 
-		// Initialize the marker when the component mounts
-		// position.y = longitude, position.x = latitude
 		markerRef.current = new mapboxgl.Marker({
-			element: markerElementRef.current,
+			element: el.current,
 		})
 			.setLngLat([position.y, position.x])
 			.addTo(map);
 
-		// Remove the marker when the component unmounts
 		return () => {
 			if (markerRef.current) {
 				markerRef.current.remove();
@@ -53,7 +50,6 @@ export const PulseMarker = ({
 
 	const c = colorClasses[type];
 
-	// Use createPortal to render JSX content into the marker element
 	return createPortal(
 		<div className="relative w-8 h-8">
 			<span className={`absolute inset-0 rounded-full ${c.glow} blur-sm`} />
@@ -67,6 +63,6 @@ export const PulseMarker = ({
 				className={`absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${c.core} ring-2 ring-white shadow-md`}
 			/>
 		</div>,
-		markerElementRef.current,
+		el.current,
 	);
 };
