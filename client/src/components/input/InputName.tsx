@@ -108,7 +108,7 @@ export const InputName = forwardRef<InputNameRefType, InputNameProps>(
 					)}
 
 					<InputGroup.Input
-						className="text-primary-400"
+						className="text-primary-400 placeholder:italic"
 						placeholder={placeholder}
 					/>
 

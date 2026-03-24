@@ -7,12 +7,12 @@ import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { Toast } from "@heroui/react";
 import type { PulseType } from "@server/db/schema";
-import { PulseEnum, UrgencyEnum } from "@shared/types";
-import { PlusSquare } from "lucide-react";
-import { useMemo } from "react";
-import { useNavigate } from "react-router";
-import { useCreatePulse, useRetrievePulses } from "./hooks";
+import { useRetrievePulses } from "./hooks";
 import { CreatePulseModal } from "./components/CreatePulseModal";
+import { useMemo, useRef } from "react";
+import { useNavigate } from "react-router";
+import { type ModalRefType } from "@client/components/Modal";
+import { PlusSquareIcon } from "lucide-react";
 
 export const MapPage = () => {
 	const {
@@ -22,8 +22,6 @@ export const MapPage = () => {
 	} = useGetGeolocation();
 	const { data: user } = useAuth();
 	const navigate = useNavigate();
-	const { mutateAsync: createPulse } = useCreatePulse();
-
 	const mapCenter = useMemo<[number, number]>(
 		() => [coords?.long || 0, coords?.lat || 0],
 		[coords?.long, coords?.lat],
@@ -33,14 +31,6 @@ export const MapPage = () => {
 		userId: user?.user.id || "",
 		position: { x: coords?.lat || 0, y: coords?.long || 0 },
 	});
-	const pulseData = {
-		type: PulseEnum.Emergency,
-		title: "new pulse",
-		userId: user?.user.id || "",
-		urgency: UrgencyEnum.Immediate,
-		position: { x: coords?.lat || 0, y: coords?.long || 0 },
-		isResolved: false,
-	};
 
 	if (isGeolocationLoading) {
 		return (
@@ -49,7 +39,6 @@ export const MapPage = () => {
 			</div>
 		);
 	}
-	console.log(pulses?.data);
 	if (isGeolocationError) {
 		Toast.toast.danger(
 			"Failed to fetch location.Make sure you allow the browser to access your location.",
