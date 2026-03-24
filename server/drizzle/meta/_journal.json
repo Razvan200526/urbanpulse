@@ -36,6 +36,20 @@
 			"when": 1774340523914,
 			"tag": "0004_ordinary_whiplash",
 			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1774346645646,
+			"tag": "0005_silky_salo",
+			"breakpoints": true
+		},
+		{
+			"idx": 6,
+			"version": "7",
+			"when": 1774347190292,
+			"tag": "0006_powerful_tempest",
+			"breakpoints": true
 		}
 	]
 }

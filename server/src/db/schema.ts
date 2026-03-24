@@ -1,6 +1,8 @@
 import {
 	type ConversationTypeEnum,
 	PulseEnum,
+	PulseStatusEnum,
+	PulseUploadStateEnum,
 	type ReportStatusEnum,
 	type ResourceAvailabilityType,
 	type ResponseStatusEnum,
@@ -104,6 +106,14 @@ export const pulse = pgTable(
 			mode: "xy",
 			srid: 4326,
 		}).notNull(),
+		status: text("status")
+			.$type<PulseStatusEnum>()
+			.notNull()
+			.default(PulseStatusEnum.Active),
+		pulseUploadState: text("pulseUploadState")
+			.$type<PulseUploadStateEnum>()
+			.notNull()
+			.default(PulseUploadStateEnum.Pending),
 		isResolved: boolean("isResolved").notNull().default(false),
 		isVerified: boolean("isVerified"),
 		createdAt: timestamp("createdAt").notNull().defaultNow(),

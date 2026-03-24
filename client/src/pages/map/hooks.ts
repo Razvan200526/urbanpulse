@@ -1,19 +1,53 @@
-// import { hono } from "@client/main";
-// import type { PulseType } from "@server/db/schema";
-// import { useMutation } from "@tanstack/react-query";
-// import { useEffect, useRef, useState } from "react";
-// import { Socket } from "client/sdk/Socket";
+import { hono, queryClient } from "@client/main";
+import type { PulseType } from "@server/db/schema";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { Socket } from "client/sdk/Socket";
+import { backend } from "client/sdk/backend";
+import { PulseStatusEnum } from "@shared/types";
+import { Toast } from "@heroui/react";
 
-// export const useCreatePulse = (userId: string) => {
-// 	return useMutation({
-// 		mutationKey: ["pulse", userId],
-// 		mutationFn: async (data: Partial<PulseType>) => {
-// 			const socket = hono.api.pulse.ws.$ws({ query: data });
-// 			return socket;
-// 		},
-// 	});
-// };
+export const useCreatePulse = (userId: string) => {
+	return useMutation({
+		mutationKey: ["pulse", userId],
+		mutationFn: async (data: Partial<PulseType>) => {
+			const socket = hono.api.ws.$ws({ query: data });
+			return socket;
+		},
+	});
+};
 
+export const useRetrievePulsesMutation = (
+	userId: string,
+	coords: { lat: number; lng: number },
+) => {
+	return useQuery({
+		queryKey: ["pulses", "retrieve"],
+		queryFn: async () => {
+			backend.socket.on<{ pulses: PulseType[] }>("message", (response) => {
+				queryClient.invalidateQueries();
+
+				const isReady = response.data.pulses.reduce(
+					(acc, pulse) => acc || pulse.status === PulseStatusEnum.Active,
+					false,
+				);
+
+				if (!isReady) {
+					backend.socket.close();
+				}
+
+				backend.socket.send({
+					channelName: "pulses:retrieve",
+					data: {
+						userId,
+						coords,
+					},
+				});
+			});
+			return backend.socket;
+		},
+	});
+};
 // export const useGetPulses = (
 // 	userId: string | undefined,
 // 	coords: { lat: number; lng: number } | null,
