@@ -5,5 +5,6 @@ export const handleError = (e: unknown) => {
 		logger.exception(e);
 	} else {
 		logger.error(`An error occured ${e}`);
+		console.error(e);
 	}
 };

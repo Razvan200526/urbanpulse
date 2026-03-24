@@ -12,6 +12,8 @@ import { type InferSelectModel, relations } from "drizzle-orm";
 import {
 	boolean,
 	doublePrecision,
+	geometry,
+	index,
 	integer,
 	jsonb,
 	pgTable,
@@ -83,20 +85,31 @@ export const verification = pgTable("verification", {
 
 // --- Application Tables ---
 
-export const pulse = pgTable("pulse", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	type: text("type").$type<PulseEnum>().notNull().default(PulseEnum.Emergency), // default: PulseEnum.Emergency
-	userId: text("userId")
-		.notNull()
-		.references(() => user.id, { onDelete: "cascade" }),
-	urgency: text("urgency").$type<UrgencyEnum>().notNull(), // default: UrgencyEnum.Unknown
-	title: varchar("title", { length: 30 }).notNull(),
-	description: text("description"),
-	position: point("position").notNull(),
-	isResolved: boolean("isResolved").notNull().default(false),
-	isVerified: boolean("isVerified"),
-	createdAt: timestamp("createdAt").notNull().defaultNow(),
-});
+export const pulse = pgTable(
+	"pulse",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		type: text("type")
+			.$type<PulseEnum>()
+			.notNull()
+			.default(PulseEnum.Emergency), // default: PulseEnum.Emergency
+		userId: text("userId")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		urgency: text("urgency").$type<UrgencyEnum>().notNull(), // default: UrgencyEnum.Unknown
+		title: varchar("title", { length: 30 }).notNull(),
+		description: text("description"),
+		position: geometry("location", {
+			type: "point",
+			mode: "xy",
+			srid: 4326,
+		}).notNull(),
+		isResolved: boolean("isResolved").notNull().default(false),
+		isVerified: boolean("isVerified"),
+		createdAt: timestamp("createdAt").notNull().defaultNow(),
+	},
+	(t) => [index("spatial_index").using("gist", t.position)],
+);
 
 export const conversation = pgTable("conversation", {
 	id: uuid("id").defaultRandom().primaryKey(),

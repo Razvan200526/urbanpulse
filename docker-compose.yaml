@@ -6,7 +6,7 @@ services:
       - "80:1080"
 
   postgres:
-    image: postgres:17
+    image: postgis/postgis:17-3.4
     environment:
       POSTGRES_USER: urbanpulse
       POSTGRES_PASSWORD: urbanpulse
