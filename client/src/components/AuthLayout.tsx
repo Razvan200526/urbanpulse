@@ -2,11 +2,11 @@ import { useAuth } from "@client/hooks/useAuth";
 import { cn, Toast } from "@heroui/react";
 import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
+import { PageLoader } from "./PageLoader";
 import { Sidebar } from "./sidebar/Sidebar";
 import { SidebarDrawer } from "./sidebar/SidebarDrawer";
 import { useAppSidebarStore } from "./sidebar/sidebarStore";
 import { useThemeStore } from "./sidebar/store";
-import { PageLoader } from "./PageLoader";
 
 export const AuthLayout = () => {
 	const { data: user, isError, isPending } = useAuth();

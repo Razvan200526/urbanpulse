@@ -9,14 +9,12 @@ export interface MapProps {
 	zoom?: number;
 	className?: string;
 	style?: React.CSSProperties;
-	positions?: { x: number; y: number }[];
 }
 
 export const MapComponent = ({
 	children,
 	center = [0, 0],
 	zoom = 9,
-	positions,
 	className = "w-full h-full relative",
 	style,
 }: MapProps) => {

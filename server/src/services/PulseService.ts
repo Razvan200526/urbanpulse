@@ -3,10 +3,7 @@ import {
 	type PulseRepository,
 	pulseRepository,
 } from "@server/repositories/PulseRepository";
-import {
-	type UserRepository,
-	userRepository,
-} from "@server/repositories/UserRepository";
+import { userRepository } from "@server/repositories/UserRepository";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
 export class PulseService {

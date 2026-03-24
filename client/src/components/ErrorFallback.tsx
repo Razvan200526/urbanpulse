@@ -1,8 +1,8 @@
 import { Card } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useState } from "react";
-import { H3, H6 } from "./typography";
 import { Button } from "./Button/Button";
+import { H3, H6 } from "./typography";
 
 export const ErrorFallback = ({ error }: { error: unknown }) => {
 	const [showDetails, setShowDetails] = useState(false);

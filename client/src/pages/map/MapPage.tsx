@@ -1,16 +1,16 @@
-import { PulseEnum, UrgencyEnum } from "@shared/types";
-import { PlusSquare } from "lucide-react";
-import { useRetrievePulses, useCreatePulse } from "./hooks";
-import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
-import { useAuth } from "@client/hooks/useAuth";
-import { Toast } from "@heroui/react";
 import { Button } from "@client/components/Button/Button";
 import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { MapComponent } from "@client/components/map/MapComponent";
 import { PageLoader } from "@client/components/PageLoader";
-import { useNavigate } from "react-router";
-import { PulseType } from "@server/db/schema";
 import { PulseMarker } from "@client/components/PulseMarker";
+import { useAuth } from "@client/hooks/useAuth";
+import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
+import { Toast } from "@heroui/react";
+import type { PulseType } from "@server/db/schema";
+import { PulseEnum, UrgencyEnum } from "@shared/types";
+import { PlusSquare } from "lucide-react";
+import { useNavigate } from "react-router";
+import { useCreatePulse, useRetrievePulses } from "./hooks";
 
 export const MapPage = () => {
 	const {

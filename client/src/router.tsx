@@ -1,5 +1,7 @@
+import { ErrorBoundary } from "react-error-boundary";
 import { createBrowserRouter, Outlet } from "react-router";
 import { AuthLayout } from "./components/AuthLayout";
+import { ErrorFallback } from "./components/ErrorFallback";
 import { AdminPage } from "./pages/admin/AdminPage";
 import { AlertsPage } from "./pages/alerts/AlertsPage";
 import { DashboardPages } from "./pages/dashboard/DashboardPage";
@@ -12,8 +14,6 @@ import { ResourcesPage } from "./pages/resources/ResourcesPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { SignInPage } from "./pages/signin/SigninPage";
 import { SignUpPage } from "./pages/signup/SignupPage";
-import { ErrorBoundary } from "react-error-boundary";
-import { ErrorFallback } from "./components/ErrorFallback";
 
 export const ErrorBoundaryLayout = () => (
 	<ErrorBoundary FallbackComponent={ErrorFallback}>

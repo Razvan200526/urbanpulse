@@ -17,9 +17,8 @@ export const useCreatePulse = () => {
 				const onMessage = (event: MessageEvent) => {
 					try {
 						const parsed = JSON.parse(event.data);
-						socket.close(); // Close connection after receiving data
+						socket.close();
 
-						// Invalidate queries so the map updates
 						queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
 						resolve(parsed);
 					} catch (e) {
@@ -42,7 +41,7 @@ export const useCreatePulse = () => {
 
 export const useRetrievePulses = (data: PulseRetrievePayloadType) => {
 	return useQuery<{ data: PulseType[] }>({
-		queryKey: ["pulse", "retrieve", data], // Consistent key naming
+		queryKey: ["pulse", "retrieve", data],
 		queryFn: () => {
 			return new Promise((resolve, reject) => {
 				const socket = hono.api.pulse.retrieve.$ws();
@@ -54,7 +53,7 @@ export const useRetrievePulses = (data: PulseRetrievePayloadType) => {
 				const onMessage = (event: MessageEvent) => {
 					try {
 						const parsed = JSON.parse(event.data);
-						socket.close(); // Close connection after receiving data
+						socket.close();
 						resolve(parsed);
 					} catch (e) {
 						reject(e);
