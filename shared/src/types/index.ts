@@ -50,3 +50,4 @@ export enum ReportStatusEnum {
 	Resolved = "RESOLVED",
 	Dismissed = "DISMISSED",
 }
+
