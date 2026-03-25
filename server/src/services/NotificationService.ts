@@ -1,11 +1,11 @@
-import {
-	notificationRepository,
-	type NotificationRepository,
-} from "@server/repositories/NotificationRepository";
 import type { NotificationType } from "@server/db/schema";
-import { notificationCreateSchema } from "@shared/validators/notifications/isValidCreateNotification";
-import { logger } from "@server/utils/Logger";
+import {
+	type NotificationRepository,
+	notificationRepository,
+} from "@server/repositories/NotificationRepository";
 import { socketManager } from "@server/services/SocketManager";
+import { logger } from "@server/utils/Logger";
+import { notificationCreateSchema } from "@shared/validators/notifications/isValidCreateNotification";
 
 /**
  * Service for managing user notifications and real-time broadcasting.

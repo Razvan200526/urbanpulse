@@ -1,4 +1,4 @@
-import { Chip, cn, ProgressCircle, type ChipProps } from "@heroui/react";
+import { Chip, type ChipProps, cn, ProgressCircle } from "@heroui/react";
 import { PulseUploadStateEnum } from "@shared/types";
 
 export type ProgressChipProps = Omit<ChipProps, "children"> & {

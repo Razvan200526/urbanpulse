@@ -30,6 +30,7 @@ function createNearbyCoords(
 export const MapPreview = () => {
 	const { coords } = useGetGeolocation();
 
+	// biome-ignore lint/correctness/noUnusedVariables: <just for now>
 	const nearbyCoords = useMemo(() => {
 		if (!coords) return [];
 		return createNearbyCoords(coords, 10, 900);

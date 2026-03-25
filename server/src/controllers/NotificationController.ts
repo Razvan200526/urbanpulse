@@ -1,9 +1,9 @@
 import auth from "@server/services/auth/AuthService";
-import { socketManager } from "@server/services/SocketManager";
 import { notificationService } from "@server/services/NotificationService";
+import { socketManager } from "@server/services/SocketManager";
+import { logger } from "@server/utils/Logger";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
-import { logger } from "@server/utils/Logger";
 
 export const notificationController = new Hono()
 	.get("/", async (c) => {
@@ -38,7 +38,7 @@ export const notificationController = new Hono()
 			if (!session) {
 				logger.error("Notification WS: Unauthorized - No session found");
 				return {
-					onOpen: (event, ws) => {
+					onOpen: (_event, ws) => {
 						ws.send(
 							JSON.stringify({ success: false, message: "Unauthorized" }),
 						);
@@ -48,7 +48,7 @@ export const notificationController = new Hono()
 			}
 
 			return {
-				onOpen: (event, ws) => {
+				onOpen: (_event, ws) => {
 					logger.info(
 						`Notification WS: Connection opened for User[${session.user.id}]`,
 					);
@@ -63,11 +63,11 @@ export const notificationController = new Hono()
 							);
 							socketManager.updateLocation(ws, data.location);
 						}
-					} catch (e) {
+					} catch (_e) {
 						logger.error("Notification WS: Failed to parse message");
 					}
 				},
-				onClose: (event, ws) => {
+				onClose: (_event, ws) => {
 					logger.info(
 						`Notification WS: Connection closed for User[${session.user.id}]`,
 					);

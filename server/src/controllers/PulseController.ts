@@ -1,5 +1,5 @@
-import { pulseService } from "@server/services/PulseService";
 import { notificationService } from "@server/services/NotificationService";
+import { pulseService } from "@server/services/PulseService";
 import { handleError } from "@server/utils/handleError";
 import { PulseUploadStateEnum } from "@shared/types";
 import { pulseRequestSchema } from "@shared/validators/pulses/isPulseRequestValid";

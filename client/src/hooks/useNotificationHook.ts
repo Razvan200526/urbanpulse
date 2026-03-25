@@ -2,8 +2,8 @@ import { hono, queryClient } from "@client/main";
 import { Toast } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
-import { useGetGeolocation } from "./useGetGeolocation";
 import type { GeolocationCoords } from "./useGetGeolocation";
+import { useGetGeolocation } from "./useGetGeolocation";
 
 export const useNotificationHook = (userId: string | undefined) => {
 	const geoOptions = useMemo(() => ({ enableHighAccuracy: true }), []);

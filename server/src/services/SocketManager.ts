@@ -1,5 +1,5 @@
-import type { WSContext } from "hono/ws";
 import { logger } from "@server/utils/Logger";
+import type { WSContext } from "hono/ws";
 
 /**
  * Represents a single active user connection via WebSocket.
@@ -65,7 +65,9 @@ export class SocketManager {
 
 		return allConns.filter((conn) => {
 			if (!conn.location) {
-				logger.info(`SocketManager: Skipping User[${conn.userId}] - Location never synced.`);
+				logger.info(
+					`SocketManager: Skipping User[${conn.userId}] - Location never synced.`,
+				);
 				return false;
 			}
 
@@ -90,7 +92,7 @@ export class SocketManager {
 		p2: { x: number; y: number },
 	): number {
 		const R = 6371e3; // Earth radius in metres
-		
+
 		// Map x/y correctly: y is Latitude, x is Longitude
 		const lat1 = (p1.y * Math.PI) / 180;
 		const lat2 = (p2.y * Math.PI) / 180;
