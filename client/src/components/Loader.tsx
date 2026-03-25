@@ -10,7 +10,6 @@ export const Loader = () => {
 					UrbanPulse
 				</h1>
 			</div>
-			{/* Load Bar */}
 			<div className="w-64 h-1 bg-default rounded-full overflow-hidden">
 				<motion.div
 					className="h-full bg-primary"

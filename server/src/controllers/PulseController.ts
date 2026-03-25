@@ -1,5 +1,6 @@
 import { pulseService } from "@server/services/PulseService";
 import { handleError } from "@server/utils/handleError";
+import { PulseUploadStateEnum } from "@shared/types";
 import { pulseRequestSchema } from "@shared/validators/pulses/isPulseRequestValid";
 import { retrievePulsePayloadSchema } from "@shared/validators/pulses/isPulseRetrieveValid";
 import { Hono } from "hono";
@@ -39,12 +40,15 @@ export const pulseController = new Hono()
 							);
 							return;
 						}
-						console.log(newPulse);
+						const uploadedPulse = await pulseService.updatePulse(newPulse.id, {
+							pulseUploadState: PulseUploadStateEnum.Uploaded,
+						});
+
 						ws.send(
 							JSON.stringify({
 								success: true,
 								message: "Pulse received",
-								data: newPulse,
+								data: uploadedPulse,
 							}),
 						);
 					} catch (e) {

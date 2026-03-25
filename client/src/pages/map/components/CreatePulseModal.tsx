@@ -3,30 +3,35 @@ import {
 	InputName,
 	type InputNameRefType,
 } from "@client/components/input/InputName";
-import { Modal } from "@client/components/Modal";
+import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
+import { Tabs } from "@client/components/tabs/Tabs";
 import { H3, Label } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
-import { Separator, Tooltip, Toast, useOverlayState } from "@heroui/react";
-import { Tabs } from "@client/components/tabs/Tabs";
+import { Separator, Toast, Tooltip } from "@heroui/react";
 import { PulseEnum, UrgencyEnum } from "@shared/types";
-import { MicIcon, PaperclipIcon, PlusSquare } from "lucide-react";
+import { MicIcon, PaperclipIcon } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useCreatePulse } from "../hooks";
 
-export const CreatePulseModal = () => {
+export const CreatePulseModal = ({
+	modalRef,
+}: {
+	modalRef: React.RefObject<ModalRefType | null>;
+}) => {
 	const { data: user } = useAuth();
-	const { coords } = useGetGeolocation();
+	const { coords } = useGetGeolocation({
+		enableHighAccuracy: true,
+		timeout: 5000,
+	});
 	const { mutateAsync: createPulse, isPending } = useCreatePulse();
 
 	const titleRef = useRef<InputNameRefType>(null);
 	const descriptionRef = useRef<TextAreaRefType>(null);
 	const [pulseType, setPulseType] = useState<PulseEnum>(PulseEnum.Emergency);
 	const [urgency, setUrgency] = useState<UrgencyEnum>(UrgencyEnum.Immediate);
-	const state = useOverlayState({
-		defaultOpen: false,
-	});
+
 	const pulseTypeItems = useMemo(
 		() => [
 			{ label: "Emergency", key: PulseEnum.Emergency },
@@ -72,7 +77,7 @@ export const CreatePulseModal = () => {
 				isResolved: false,
 			});
 			Toast.toast.success("Pulse created successfully!");
-			state.close();
+			modalRef.current?.close();
 		} catch (error) {
 			console.error(error);
 			Toast.toast.danger("Failed to create pulse. Please try again.");
@@ -81,14 +86,7 @@ export const CreatePulseModal = () => {
 
 	return (
 		<Modal
-			trigger={
-				<Button
-					variant="primary"
-					startContent={<PlusSquare className="size-4" />}
-				>
-					Create pulse
-				</Button>
-			}
+			modalRef={modalRef}
 			header={
 				<header className="flex flex-col items-start justify-start">
 					<H3>Create pulse</H3>
@@ -100,7 +98,7 @@ export const CreatePulseModal = () => {
 					<Button
 						variant="danger"
 						size="sm"
-						onPress={() => open()}
+						onPress={() => modalRef.current?.close()}
 						isDisabled={isPending}
 					>
 						Cancel

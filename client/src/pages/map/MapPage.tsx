@@ -1,5 +1,6 @@
 import { Button } from "@client/components/Button/Button";
-import { RefreshIcon } from "@client/components/icons/RefreshIcon";
+import { SignalIcon } from "@client/components/icons/SignalIcon";
+import type { ModalRefType } from "@client/components/Modal";
 import { MapComponent } from "@client/components/map/MapComponent";
 import { PageLoader } from "@client/components/PageLoader";
 import { PulseMarker } from "@client/components/PulseMarker";
@@ -7,10 +8,11 @@ import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { Toast } from "@heroui/react";
 import type { PulseType } from "@server/db/schema";
-import { useRetrievePulses } from "./hooks";
-import { CreatePulseModal } from "./components/CreatePulseModal";
-import { useMemo } from "react";
+import { PlusSquare } from "lucide-react";
+import { useMemo, useRef } from "react";
 import { useNavigate } from "react-router";
+import { CreatePulseModal } from "./components/CreatePulseModal";
+import { useRetrievePulses } from "./hooks";
 
 export const MapPage = () => {
 	const {
@@ -20,15 +22,20 @@ export const MapPage = () => {
 	} = useGetGeolocation();
 	const { data: user } = useAuth();
 	const navigate = useNavigate();
+	const modalRef = useRef<ModalRefType>(null);
+
 	const mapCenter = useMemo<[number, number]>(
 		() => [coords?.long || 0, coords?.lat || 0],
 		[coords?.long, coords?.lat],
 	);
 
-	const { data: pulses, refetch } = useRetrievePulses({
-		userId: user?.user.id || "",
-		position: { x: coords?.lat || 0, y: coords?.long || 0 },
-	});
+	const { data: pulses } = useRetrievePulses(
+		{
+			userId: user?.user.id || "",
+			position: { x: coords?.lat ?? 0, y: coords?.long ?? 0 },
+		},
+		!!coords?.lat && !!coords?.long && !!user,
+	);
 
 	if (isGeolocationLoading) {
 		return (
@@ -47,21 +54,24 @@ export const MapPage = () => {
 		<div className="relative w-full h-full">
 			<MapComponent center={mapCenter} zoom={17}>
 				{pulses?.data?.map((pulse: PulseType) => (
-					<PulseMarker
-						key={pulse.id}
-						position={pulse.position}
-						type="emergency"
-					/>
+					<PulseMarker key={pulse.id} pulse={pulse} />
 				))}
 			</MapComponent>
 			<div className="absolute top-4 right-4 z-50 flex items-center justify-end gap-4">
-				<CreatePulseModal />
 				<Button
 					variant="primary"
-					startContent={<RefreshIcon className="size-4" />}
-					onPress={() => refetch()}
+					startContent={<PlusSquare className="size-4" />}
+					onPress={() => modalRef.current?.open()}
 				>
-					Refresh
+					Create pulse
+				</Button>
+				<CreatePulseModal modalRef={modalRef} />
+				<Button
+					variant="danger"
+					startContent={<SignalIcon className="size-4" />}
+					onPress={() => {}} //implement this
+				>
+					Emergency
 				</Button>
 			</div>
 		</div>

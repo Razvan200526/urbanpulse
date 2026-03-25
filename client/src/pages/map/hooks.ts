@@ -39,9 +39,13 @@ export const useCreatePulse = () => {
 	});
 };
 
-export const useRetrievePulses = (data: PulseRetrievePayloadType) => {
+export const useRetrievePulses = (
+	data: PulseRetrievePayloadType,
+	enabled = true,
+) => {
 	return useQuery<{ data: PulseType[] }>({
 		queryKey: ["pulse", "retrieve", data],
+		enabled,
 		queryFn: () => {
 			return new Promise((resolve, reject) => {
 				const socket = hono.api.pulse.retrieve.$ws();

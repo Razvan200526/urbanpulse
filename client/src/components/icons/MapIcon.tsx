@@ -3,16 +3,20 @@ import type { SVGProps } from "react";
 export const MapIcon = (props: SVGProps<SVGSVGElement>) => (
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
-		fill="none"
+		width={24}
+		height={24}
 		viewBox="0 0 24 24"
-		strokeWidth={1.5}
-		stroke="currentColor"
 		{...props}
 	>
-		<path
+		<g
+			fill="none"
+			stroke="currentColor"
 			strokeLinecap="round"
 			strokeLinejoin="round"
-			d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z"
-		/>
+			strokeWidth={2}
+		>
+			<path d="M12 13a3 3 0 1 0 0-6a3 3 0 0 0 0 6"></path>
+			<path d="M17.8 13.938h-.011a7 7 0 1 0-11.464.144h-.016l.14.171q.15.19.3.371L12 21l5.13-6.248q.291-.314.54-.659z"></path>
+		</g>
 	</svg>
 );

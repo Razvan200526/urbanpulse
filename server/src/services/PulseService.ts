@@ -24,6 +24,16 @@ export class PulseService {
 		}
 	}
 
+	async updatePulse(pulseId: string, data: Partial<PulseType>) {
+		try {
+			const updatedPulse = await this.pulseRepository.update(pulseId, data);
+			return updatedPulse;
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
 	async getPulses({
 		userId,
 		position,

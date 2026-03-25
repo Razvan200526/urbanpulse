@@ -279,4 +279,17 @@
 	.animate-marquee {
 		animation: marquee 25s linear infinite;
 	}
+
+	/* Mapbox Popup Overrides */
+	.mapboxgl-popup-content {
+		background: transparent !important;
+		padding: 0 !important;
+		box-shadow: none !important;
+		border-radius: var(--field-radius) !important;
+	}
+
+	.mapboxgl-popup-tip {
+		border-top-color: var(--surface) !important;
+		border-bottom-color: var(--surface) !important;
+	}
 }

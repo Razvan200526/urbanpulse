@@ -59,7 +59,7 @@ export enum PulseStatusEnum {
 
 export enum PulseUploadStateEnum {
 	Pending = "pending",
-	Uploading = "uploading",
+	Uploaded = "uploaded",
 	Completed = "completed",
 	Failed = "failed",
 }
