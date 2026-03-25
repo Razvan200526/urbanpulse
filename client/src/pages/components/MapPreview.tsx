@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { MapComponent } from "../../components/map/MapComponent";
-import { PulseMarker } from "../../components/PulseMarker";
 import {
 	type GeolocationCoords,
 	useGetGeolocation,
@@ -43,7 +42,7 @@ export const MapPreview = () => {
 			className="rounded"
 			style={{ width: "100%", height: "400px", minHeight: "400px" }}
 		>
-			{coords && (
+			{/*{coords && (
 				<PulseMarker
 					position={{ x: coords.lat, y: coords.long }}
 					type="emergency"
@@ -55,7 +54,7 @@ export const MapPreview = () => {
 					position={{ x: point.lat, y: point.long }}
 					type={idx % 2 === 0 ? "warning" : "item"}
 				/>
-			))}
+			))}*/}
 		</MapComponent>
 	);
 };

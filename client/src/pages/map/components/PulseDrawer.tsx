@@ -19,6 +19,7 @@ import { ProgressChip } from "@client/components/chips/ProgressChip";
 import { SignalIcon } from "@client/components/icons/SignalIcon";
 import { Button } from "@client/components/Button/Button";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
+import { useAuth } from "@client/hooks/useAuth";
 
 const PULSE_TYPE_CONFIG: Record<
 	PulseEnum,
@@ -81,6 +82,8 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 	const statusCfg = STATUS_CONFIG[pulse.status];
 	const TypeIcon = typeCfg.icon;
 	const StatusIcon = statusCfg.icon;
+
+	const { data: user } = useAuth();
 
 	return (
 		<Drawer isOpen={isOpen} onOpenChange={onOpenChange} key="right">
@@ -196,12 +199,14 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 							<Button variant="danger-soft" onPress={() => onOpenChange(false)}>
 								Close
 							</Button>
-							<Button
-								variant="primary"
-								startContent={<HelpIcon className="size-4" />}
-							>
-								Offer Help
-							</Button>
+							{user?.user.id !== pulse.userId && (
+								<Button
+									variant="primary"
+									startContent={<HelpIcon className="size-4" />}
+								>
+									Offer Help
+								</Button>
+							)}
 						</div>
 					</Drawer.Dialog>
 				</Drawer.Content>

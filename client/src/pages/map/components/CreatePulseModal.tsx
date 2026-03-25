@@ -23,7 +23,6 @@ export const CreatePulseModal = ({
 	const { data: user } = useAuth();
 	const { coords } = useGetGeolocation({
 		enableHighAccuracy: true,
-		timeout: 5000,
 	});
 	const { mutateAsync: createPulse, isPending } = useCreatePulse();
 
@@ -73,7 +72,7 @@ export const CreatePulseModal = ({
 				type: pulseType,
 				urgency: urgency,
 				userId: user.user.id,
-				position: { x: coords.lat, y: coords.long },
+				position: { x: coords.long, y: coords.lat },
 				isResolved: false,
 			});
 			Toast.toast.success("Pulse created successfully!");

@@ -1,4 +1,5 @@
 import { useAuth } from "@client/hooks/useAuth";
+import { useNotificationHook } from "@client/hooks/useNotificationHook";
 import { cn, Toast } from "@heroui/react";
 import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
@@ -12,9 +13,13 @@ export const AuthLayout = () => {
 	const { data: user, isError, isPending } = useAuth();
 	const { theme } = useThemeStore();
 	const { isOpen } = useAppSidebarStore();
+
+	useNotificationHook(user?.user.id);
+
 	useEffect(() => {
 		document.body.setAttribute("data-theme", theme);
 	});
+
 	if (isPending) {
 		return <PageLoader />;
 	}

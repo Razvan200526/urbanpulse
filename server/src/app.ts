@@ -4,6 +4,7 @@ import { logger } from "hono/logger";
 import { rateLimiter } from "hono-rate-limiter";
 import { authController } from "./controllers/AuthController";
 import { avatarController } from "./controllers/AvatarController";
+import { notificationController } from "./controllers/NotificationController";
 import { pulseController } from "./controllers/PulseController";
 import { userController } from "./controllers/UserController";
 export const app = new Hono()
@@ -38,7 +39,8 @@ export const app = new Hono()
 	.route("/auth", authController)
 	.route("/users", userController)
 	.route("/avatar", avatarController)
-	.route("/pulse", pulseController);
+	.route("/pulse", pulseController)
+	.route("/notifications", notificationController);
 
 export type AppType = typeof app;
 export default app;

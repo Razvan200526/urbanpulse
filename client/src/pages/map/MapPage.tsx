@@ -32,7 +32,7 @@ export const MapPage = () => {
 	const { data: pulses } = useRetrievePulses(
 		{
 			userId: user?.user.id || "",
-			position: { x: coords?.lat ?? 0, y: coords?.long ?? 0 },
+			position: { x: coords?.long ?? 0, y: coords?.lat ?? 0 },
 		},
 		!!coords?.lat && !!coords?.long && !!user,
 	);

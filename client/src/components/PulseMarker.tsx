@@ -61,7 +61,7 @@ export const PulseMarker = ({ pulse }: { pulse: PulseType }) => {
 						</div>`,
 				),
 			)
-			.setLngLat([pulse.position.y, pulse.position.x])
+			.setLngLat([pulse.position.x, pulse.position.y])
 			.addTo(map);
 
 		return () => {

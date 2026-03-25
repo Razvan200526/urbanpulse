@@ -1,4 +1,5 @@
 import { pulseService } from "@server/services/PulseService";
+import { notificationService } from "@server/services/NotificationService";
 import { handleError } from "@server/utils/handleError";
 import { PulseUploadStateEnum } from "@shared/types";
 import { pulseRequestSchema } from "@shared/validators/pulses/isPulseRequestValid";
@@ -28,7 +29,6 @@ export const pulseController = new Hono()
 							);
 							return;
 						}
-						console.log("Valid pulse request recieved", result.data);
 						const newPulse = await pulseService.createPulse(result.data);
 						if (!newPulse) {
 							ws.send(
@@ -51,6 +51,10 @@ export const pulseController = new Hono()
 								data: uploadedPulse,
 							}),
 						);
+
+						if (uploadedPulse) {
+							await notificationService.broadcastToNearbyUsers(uploadedPulse);
+						}
 					} catch (e) {
 						handleError(e);
 					}
@@ -61,6 +65,7 @@ export const pulseController = new Hono()
 			};
 		}),
 	)
+
 	.get(
 		"/retrieve",
 		upgradeWebSocket(async () => {
@@ -70,7 +75,6 @@ export const pulseController = new Hono()
 				},
 				onMessage: async (event, ws) => {
 					const data = JSON.parse(event.data.toString());
-					console.log(data);
 					const result = retrievePulsePayloadSchema.safeParse(data);
 					if (!result.success) {
 						ws.send(

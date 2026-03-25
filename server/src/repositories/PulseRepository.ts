@@ -37,7 +37,7 @@ export class PulseRepository implements IRepository<PulseType> {
 
 			for (const [key, value] of Object.entries(rest)) {
 				if (value !== undefined) {
-					filters.push(eq(pulse[key as keyof typeof pulse], value));
+					filters.push(eq(pulse[key], value));
 				}
 			}
 
