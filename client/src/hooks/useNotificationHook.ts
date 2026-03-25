@@ -43,11 +43,7 @@ export const useNotificationHook = (userId: string | undefined) => {
 			}
 		};
 
-		if (socket.readyState === WebSocket.OPEN) {
-			handleOpen();
-		} else {
-			socket.addEventListener("open", handleOpen);
-		}
+		socket.addEventListener("open", handleOpen);
 
 		socket.onmessage = (event) => {
 			try {

@@ -87,6 +87,13 @@ export class SocketManager {
 		});
 	}
 
+	/**
+	 * Returns all active connections, regardless of location sync status.
+	 */
+	public getAllConnections() {
+		return Array.from(this.connections.values());
+	}
+
 	private calculateDistance(
 		p1: { x: number; y: number },
 		p2: { x: number; y: number },

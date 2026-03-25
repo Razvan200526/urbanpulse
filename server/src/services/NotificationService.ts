@@ -78,12 +78,20 @@ export class NotificationService {
 
 		// 1. Find connected users in range (500m)
 		// We use the singleton instance to get active connections
-		const nearbyConnections = socketManager.getConnectionsInRange(
-			position,
-			500,
-		);
+		let recipients = socketManager.getConnectionsInRange(position, 500);
 
-		logger.info(`Found ${nearbyConnections.length} active users in range`);
+		// Fallback: if no users have synced their location yet, broadcast to all
+		if (recipients.length === 0) {
+			const allConnections = socketManager.getAllConnections();
+			if (allConnections.length > 0) {
+				logger.info(
+					`No users found in range — falling back to all ${allConnections.length} connected user(s).`,
+				);
+				recipients = allConnections;
+			}
+		}
+
+		logger.info(`Broadcasting to ${recipients.length} user(s)`);
 
 		const broadcastData = {
 			success: true,
@@ -101,7 +109,7 @@ export class NotificationService {
 		};
 
 		// 2. Send to each user and persist to their history
-		for (const conn of nearbyConnections) {
+		for (const conn of recipients) {
 			logger.info(`Sending alert to User ${conn.userId}`);
 			conn.ws.send(JSON.stringify(broadcastData));
 
