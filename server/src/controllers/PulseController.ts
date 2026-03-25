@@ -1,107 +1,101 @@
-import { logger } from "@server/utils/Logger";
-import { Hono } from "hono";
-import { upgradeWebSocket } from "hono/bun";
 import { pulseService } from "@server/services/PulseService";
 import { handleError } from "@server/utils/handleError";
+import { PulseUploadStateEnum } from "@shared/types";
+import { pulseRequestSchema } from "@shared/validators/pulses/isPulseRequestValid";
+import { retrievePulsePayloadSchema } from "@shared/validators/pulses/isPulseRetrieveValid";
+import { Hono } from "hono";
+import { upgradeWebSocket } from "hono/bun";
 
 export const pulseController = new Hono()
-	.basePath("/ws")
 	.get(
 		"/",
-		upgradeWebSocket(async (_c) => {
+		upgradeWebSocket(async () => {
 			return {
+				onOpen: () => {
+					console.log("WebSocket opened");
+				},
 				onMessage: async (event, ws) => {
 					try {
-						const reqData = JSON.parse(event.data.toString());
-						const pulseData = reqData?.data;
-
-						if (!pulseData) {
+						const data = JSON.parse(event.data.toString());
+						const result = pulseRequestSchema.safeParse(data);
+						if (!result.success) {
 							ws.send(
 								JSON.stringify({
 									success: false,
-									message: "Invalid pulse data",
+									messaage: "Invalid request",
+									data: null,
 								}),
 							);
 							return;
 						}
-
-						logger.info("Creating pulse");
-						const { lat, lng } = pulseData.position;
-						logger.info(`lat : ${lat} , long : ${lng}`);
-						const newPulse = await pulseService.createPulse({
-							urgency: pulseData.urgency,
-							title: pulseData.title,
-							description: pulseData.description,
-							position: { x: lng, y: lat }, // x: longitude, y: latitude
-							type: pulseData.type,
-							userId: pulseData.userId,
-							isResolved: false,
-						});
-
+						console.log("Valid pulse request recieved", result.data);
+						const newPulse = await pulseService.createPulse(result.data);
 						if (!newPulse) {
 							ws.send(
 								JSON.stringify({
 									success: false,
 									message: "Failed to create pulse",
+									data: null,
 								}),
 							);
 							return;
 						}
-
-						ws.send(
-							JSON.stringify({
-								success: true,
-								message: "Pulse created",
-								data: newPulse,
-							}),
-						);
-					} catch (err) {
-						logger.error("Failed to parse WebSocket message or create pulse");
-						ws.send(
-							JSON.stringify({ success: false, message: "Invalid request" }),
-						);
-					}
-				},
-				onClose: () => {
-					logger.info("WebSocket closed");
-				},
-			};
-		}),
-	)
-	.get(
-		"/:userId",
-		upgradeWebSocket((c) => {
-			const userId = c.req.param("userId");
-			return {
-				onMessage: async (event, ws) => {
-					try {
-						const reqData = JSON.parse(event.data.toString());
-						const coords = reqData?.data?.coords;
-
-						if (!coords) {
-							ws.send(
-								JSON.stringify({
-									success: false,
-									message: "Invalid coordinates provided",
-								}),
-							);
-							return;
-						}
-
-						const pulses = await pulseService.getPulses({
-							userId: userId || "",
-							coords: { lat: coords.lat, lng: coords.lng },
+						const uploadedPulse = await pulseService.updatePulse(newPulse.id, {
+							pulseUploadState: PulseUploadStateEnum.Uploaded,
 						});
 
 						ws.send(
 							JSON.stringify({
 								success: true,
-								data: pulses,
+								message: "Pulse received",
+								data: uploadedPulse,
 							}),
 						);
-					} catch (error) {
-						handleError(error);
+					} catch (e) {
+						handleError(e);
 					}
+				},
+				onClose: () => {
+					console.log("WebSocket closed");
+				},
+			};
+		}),
+	)
+	.get(
+		"/retrieve",
+		upgradeWebSocket(async () => {
+			return {
+				onOpen: () => {
+					console.log("Retrieve WebSocket opened");
+				},
+				onMessage: async (event, ws) => {
+					const data = JSON.parse(event.data.toString());
+					console.log(data);
+					const result = retrievePulsePayloadSchema.safeParse(data);
+					if (!result.success) {
+						ws.send(
+							JSON.stringify({
+								success: false,
+								message: "Invalid request",
+								data: null,
+							}),
+						);
+						return;
+					}
+					const pulses = await pulseService.getPulses({
+						userId: result.data.userId,
+						position: result.data.position,
+					});
+					ws.send(
+						JSON.stringify({
+							success: true,
+							message: "Pulses retrieved",
+							data: pulses,
+						}),
+					);
+				},
+				onClose: () => {
+					console.log("Retrieve WebSocket closed");
 				},
 			};
 		}),

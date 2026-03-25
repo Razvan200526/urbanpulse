@@ -19,7 +19,6 @@ import {
 	integer,
 	jsonb,
 	pgTable,
-	point,
 	text,
 	time,
 	timestamp,

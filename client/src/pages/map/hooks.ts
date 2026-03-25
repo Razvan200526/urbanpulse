@@ -1,97 +1,85 @@
 import { hono, queryClient } from "@client/main";
 import type { PulseType } from "@server/db/schema";
+import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { Socket } from "client/sdk/Socket";
-import { backend } from "client/sdk/backend";
-import { PulseStatusEnum } from "@shared/types";
-import { Toast } from "@heroui/react";
 
-export const useCreatePulse = (userId: string) => {
+export const useCreatePulse = () => {
 	return useMutation({
-		mutationKey: ["pulse", userId],
-		mutationFn: async (data: Partial<PulseType>) => {
-			const socket = hono.api.ws.$ws({ query: data });
-			return socket;
-		},
-	});
-};
+		mutationKey: ["pulse", "create"],
+		mutationFn: (pulseData: any) => {
+			return new Promise((resolve, reject) => {
+				const socket = hono.api.pulse.$ws();
 
-export const useRetrievePulsesMutation = (
-	userId: string,
-	coords: { lat: number; lng: number },
-) => {
-	return useQuery({
-		queryKey: ["pulses", "retrieve"],
-		queryFn: async () => {
-			backend.socket.on<{ pulses: PulseType[] }>("message", (response) => {
-				queryClient.invalidateQueries();
+				const onOpen = () => {
+					socket.send(JSON.stringify(pulseData));
+				};
 
-				const isReady = response.data.pulses.reduce(
-					(acc, pulse) => acc || pulse.status === PulseStatusEnum.Active,
-					false,
-				);
+				const onMessage = (event: MessageEvent) => {
+					try {
+						const parsed = JSON.parse(event.data);
+						socket.close();
 
-				if (!isReady) {
-					backend.socket.close();
-				}
+						queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+						resolve(parsed);
+					} catch (e) {
+						reject(e);
+					}
+				};
 
-				backend.socket.send({
-					channelName: "pulses:retrieve",
-					data: {
-						userId,
-						coords,
-					},
-				});
+				const onError = () => {
+					socket.close();
+					reject(new Error("WebSocket error"));
+				};
+
+				socket.addEventListener("open", onOpen);
+				socket.addEventListener("message", onMessage);
+				socket.addEventListener("error", onError);
 			});
-			return backend.socket;
 		},
 	});
 };
-// export const useGetPulses = (
-// 	userId: string | undefined,
-// 	coords: { lat: number; lng: number } | null,
-// ) => {
-// 	const [pulses, setPulses] = useState<PulseType[]>([]);
-// 	const socketRef = useRef<Socket | null>(null);
 
-// 	useEffect(() => {
-// 		if (!userId || !coords) return;
+export const useRetrievePulses = (
+	data: PulseRetrievePayloadType,
+	enabled = true,
+) => {
+	return useQuery<{ data: PulseType[] }>({
+		queryKey: ["pulse", "retrieve", data],
+		enabled,
+		queryFn: () => {
+			return new Promise((resolve, reject) => {
+				const socket = hono.api.pulse.retrieve.$ws();
 
-// 		if (!socketRef.current) {
-// 			const wsUrl = `${import.meta.env.VITE_SERVER_URL}/api/pulse/ws/${userId}`;
-// 			socketRef.current = new Socket(wsUrl);
+				const onOpen = () => {
+					socket.send(JSON.stringify(data));
+				};
 
-// 			socketRef.current.on("message", (response: any) => {
-// 				if (response.success && Array.isArray(response.data)) {
-// 					setPulses(response.data);
-// 				}
-// 			});
-// 		}
+				const onMessage = (event: MessageEvent) => {
+					try {
+						const parsed = JSON.parse(event.data);
+						socket.close();
+						resolve(parsed);
+					} catch (e) {
+						reject(e);
+					}
+				};
 
-// 		// Send coordinates to get nearby pulses
-// 		socketRef.current.send({
-// 			channelName: "get:pulses",
-// 			data: {
-// 				coords: {
-// 					lat: coords.lat,
-// 					lng: coords.lng,
-// 				},
-// 			},
-// 		});
+				const onError = () => {
+					socket.close();
+					reject(new Error("WebSocket error"));
+				};
 
-// 		return () => {
-// 			// We might not want to close it every time coords change if it's too frequent,
-// 			// but for now let's keep it simple or only close on unmount.
-// 		};
-// 	}, [userId]);
+				socket.addEventListener("open", onOpen);
+				socket.addEventListener("message", onMessage);
+				socket.addEventListener("error", onError);
 
-// 	useEffect(() => {
-// 		return () => {
-// 			socketRef.current?.close();
-// 			socketRef.current = null;
-// 		};
-// 	}, []);
-
-// 	return { pulses };
-// };
+				return () => {
+					socket.removeEventListener("open", onOpen);
+					socket.removeEventListener("message", onMessage);
+					socket.removeEventListener("error", onError);
+					socket.close();
+				};
+			});
+		},
+	});
+};

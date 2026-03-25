@@ -3,19 +3,14 @@ import {
 	type PulseRepository,
 	pulseRepository,
 } from "@server/repositories/PulseRepository";
-import {
-	userRepository,
-	type UserRepository,
-} from "@server/repositories/UserRepository";
+import { userRepository } from "@server/repositories/UserRepository";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
 export class PulseService {
 	private pulseRepository: PulseRepository;
-	private userRepository: UserRepository;
 
 	constructor() {
 		this.pulseRepository = pulseRepository;
-		this.userRepository = userRepository;
 	}
 
 	async createPulse(data: Partial<PulseType>) {
@@ -29,12 +24,22 @@ export class PulseService {
 		}
 	}
 
+	async updatePulse(pulseId: string, data: Partial<PulseType>) {
+		try {
+			const updatedPulse = await this.pulseRepository.update(pulseId, data);
+			return updatedPulse;
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
 	async getPulses({
 		userId,
-		coords,
+		position,
 	}: {
 		userId: string;
-		coords: { lat: number; lng: number };
+		position: { x: number; y: number };
 	}) {
 		try {
 			const user = await userRepository.getOne(userId);
@@ -44,8 +49,8 @@ export class PulseService {
 			}
 
 			const pulsesInRange = await this.pulseRepository.getByOptions({
-				lat: coords.lat,
-				lng: coords.lng,
+				x: position.x,
+				y: position.y,
 				radius: 500,
 			});
 

@@ -51,3 +51,15 @@ export enum ReportStatusEnum {
 	Dismissed = "DISMISSED",
 }
 
+export enum PulseStatusEnum {
+	Active = "ACTIVE",
+	Resolved = "RESOLVED",
+	Dismissed = "DISMISSED",
+}
+
+export enum PulseUploadStateEnum {
+	Pending = "pending",
+	Uploaded = "uploaded",
+	Completed = "completed",
+	Failed = "failed",
+}

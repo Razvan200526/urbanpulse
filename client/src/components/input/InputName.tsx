@@ -82,7 +82,7 @@ export const InputName = forwardRef<InputNameRefType, InputNameProps>(
 				value={value}
 				isRequired={required}
 				isInvalid={isInvalid}
-				className={className}
+				className={cn(className)}
 				onFocus={(e) => {
 					setFocused(true);
 					onFocus?.(e);
@@ -98,7 +98,7 @@ export const InputName = forwardRef<InputNameRefType, InputNameProps>(
 			>
 				{label && <Label className="text-accent font-semibold">{label}</Label>}
 
-				<InputGroup className="rounded border border-accent">
+				<InputGroup className="rounded border border-accent focus-within:bg-surface">
 					{showIcon && (
 						<InputGroup.Prefix>
 							<User2Icon
@@ -108,7 +108,7 @@ export const InputName = forwardRef<InputNameRefType, InputNameProps>(
 					)}
 
 					<InputGroup.Input
-						className="text-primary-400"
+						className="text-primary-400 placeholder:italic"
 						placeholder={placeholder}
 					/>
 

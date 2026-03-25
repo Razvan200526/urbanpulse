@@ -1,7 +1,7 @@
 import { Button } from "@heroui/react";
 import { motion } from "motion/react";
 import logo from "../../assets/logo.svg";
-import { MapComponent } from "./MapPreview";
+import { MapPreview } from "./MapPreview";
 import { TrustedByBar } from "./TrustedByBar";
 
 export default function HeroSection() {
@@ -131,7 +131,7 @@ export default function HeroSection() {
 									Live Map — Your Area
 								</span>
 							</div>
-							<MapComponent />
+							<MapPreview />
 						</div>
 					</motion.div>
 				</div>

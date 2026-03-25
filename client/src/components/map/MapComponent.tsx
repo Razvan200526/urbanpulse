@@ -11,8 +11,7 @@ export interface MapProps {
 	style?: React.CSSProperties;
 }
 
-// biome-ignore lint/suspicious/noShadowRestrictedNames: Requested by user to be named Map
-export const Map = ({
+export const MapComponent = ({
 	children,
 	center = [0, 0],
 	zoom = 9,
@@ -56,6 +55,7 @@ export const Map = ({
 
 		return () => {
 			map.remove();
+			setMapInstance(null);
 			hasInitialized.current = false;
 		};
 	}, [center, zoom]);

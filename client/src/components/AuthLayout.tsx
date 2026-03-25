@@ -2,7 +2,7 @@ import { useAuth } from "@client/hooks/useAuth";
 import { cn, Toast } from "@heroui/react";
 import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
-import { Loader } from "./Loader";
+import { PageLoader } from "./PageLoader";
 import { Sidebar } from "./sidebar/Sidebar";
 import { SidebarDrawer } from "./sidebar/SidebarDrawer";
 import { useAppSidebarStore } from "./sidebar/sidebarStore";
@@ -16,7 +16,7 @@ export const AuthLayout = () => {
 		document.body.setAttribute("data-theme", theme);
 	});
 	if (isPending) {
-		return <Loader />;
+		return <PageLoader />;
 	}
 
 	if (isError || (!isPending && !user)) {
@@ -29,18 +29,13 @@ export const AuthLayout = () => {
 			<SidebarDrawer />
 			<div
 				className={cn(
-					"flex-1 border-r border-border relative w-64 shrink-0 flex-col gap-8 p-2 transition-all duration-300 ease-in-out",
+					"border-r border-border relative w-64 shrink-0 flex-col gap-8 p-2 transition-all duration-300 ease-in-out",
 					!isOpen ? "hidden" : "hidden 2xl:flex",
 				)}
 			>
 				<Sidebar />
 			</div>
-			<div
-				className={cn(
-					"flex-1 min-h-dvh font-normal overflow-auto",
-					isOpen && "ml-56",
-				)}
-			>
+			<div className={cn("flex-1 min-h-dvh font-normal overflow-auto")}>
 				<Outlet />
 			</div>
 		</div>

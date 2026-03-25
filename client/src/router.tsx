@@ -1,5 +1,7 @@
-import { createBrowserRouter } from "react-router";
+import { ErrorBoundary } from "react-error-boundary";
+import { createBrowserRouter, Outlet } from "react-router";
 import { AuthLayout } from "./components/AuthLayout";
+import { ErrorFallback } from "./components/ErrorFallback";
 import { AdminPage } from "./pages/admin/AdminPage";
 import { AlertsPage } from "./pages/alerts/AlertsPage";
 import { DashboardPages } from "./pages/dashboard/DashboardPage";
@@ -13,57 +15,67 @@ import { SettingsPage } from "./pages/settings/SettingsPage";
 import { SignInPage } from "./pages/signin/SigninPage";
 import { SignUpPage } from "./pages/signup/SignupPage";
 
+export const ErrorBoundaryLayout = () => (
+	<ErrorBoundary FallbackComponent={ErrorFallback}>
+		<Outlet />
+	</ErrorBoundary>
+);
 export const router = createBrowserRouter([
 	{
-		path: "/",
-		element: <LandingPage />,
-	},
-	{
-		path: "/signup",
-		element: <SignUpPage />,
-	},
-	{
-		path: "/signin",
-		element: <SignInPage />,
-	},
-	{
-		path: "/forgot-password",
-		element: <ForgotPasswordPage />,
-	},
-	{
-		element: <AuthLayout />,
+		element: <ErrorBoundaryLayout />,
 		children: [
 			{
-				path: "/dashboard",
-				element: <DashboardPages />,
+				path: "/",
+				element: <LandingPage />,
 			},
 			{
-				path: "/map",
-				element: <MapPage />,
+				path: "/signup",
+				element: <SignUpPage />,
 			},
 			{
-				path: "/resources",
-				element: <ResourcesPage />,
+				path: "/signin",
+				element: <SignInPage />,
 			},
 			{
-				path: "/alerts",
-				element: <AlertsPage />,
+				path: "/forgot-password",
+				element: <ForgotPasswordPage />,
 			},
 			{
-				path: "/messages",
-				element: <MessagesPage />,
-			},
-			{
-				path: "/admin",
-				element: <AdminPage />,
-			},
-			{
-				path: "/settings",
-				element: <SettingsPage />,
-			},
-			{
-				path: "/profile",
-				element: <ProfilePage />,
+				element: <AuthLayout />,
+				children: [
+					{
+						path: "/dashboard",
+						element: <DashboardPages />,
+					},
+					{
+						path: "/map",
+						element: <MapPage />,
+					},
+					{
+						path: "/resources",
+						element: <ResourcesPage />,
+					},
+					{
+						path: "/alerts",
+						element: <AlertsPage />,
+					},
+					{
+						path: "/messages",
+						element: <MessagesPage />,
+					},
+					{
+						path: "/admin",
+						element: <AdminPage />,
+					},
+					{
+						path: "/settings",
+						element: <SettingsPage />,
+					},
+					{
+						path: "/profile",
+						element: <ProfilePage />,
+					},
+				],
 			},
 		],
 	},
