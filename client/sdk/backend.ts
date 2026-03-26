@@ -1,9 +1,12 @@
 import { Socket } from "./Socket";
 
 export class Backend {
-	public readonly socket: Socket;
+	public readonly notifications: Socket;
+
 	constructor() {
-		this.socket = new Socket(`${import.meta.env.VITE_SERVER_URL}/api/ws/`);
+		this.notifications = new Socket(
+			`${import.meta.env.VITE_SERVER_URL}/api/notifications/ws`,
+		);
 	}
 }
 

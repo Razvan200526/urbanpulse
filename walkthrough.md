@@ -1,14 +1,17 @@
 # Walkthrough: Fix Real-Time Notifications
 
 ## Problem
+
 Notifications didn't appear when a user uploaded a pulse — only visible after page refresh.
 
 ## Root Cause
+
 Race condition: `SocketManager.getConnectionsInRange()` filters out users without synced locations. Since geolocation resolves asynchronously, users often hadn't synced their location before the first pulse broadcast, causing 0 recipients.
 
 ## Changes Made
 
 ### [SocketManager.ts](file:///Volumes/Projects/urbanpulse/server/src/services/SocketManager.ts)
+
 ```diff:SocketManager.ts
 import { logger } from "@server/utils/Logger";
 import type { WSContext } from "hono/ws";
@@ -267,6 +270,7 @@ Added [getAllConnections()](file:///Volumes/Projects/urbanpulse/server/src/servi
 ---
 
 ### [NotificationService.ts](file:///Volumes/Projects/urbanpulse/server/src/services/NotificationService.ts)
+
 ```diff:NotificationService.ts
 import type { NotificationType } from "@server/db/schema";
 import {
@@ -532,6 +536,7 @@ Added fallback: when [getConnectionsInRange()](file:///Volumes/Projects/urbanpul
 ---
 
 ### [useNotificationHook.ts](file:///Volumes/Projects/urbanpulse/client/src/hooks/useNotificationHook.ts)
+
 ```diff:useNotificationHook.ts
 import { hono, queryClient } from "@client/main";
 import { Toast } from "@heroui/react";
@@ -737,6 +742,7 @@ export const useNotificationHook = (userId: string | undefined) => {
 Simplified socket open handling — always uses `addEventListener("open", ...)` instead of checking `readyState` first, preventing a missed-event edge case.
 
 ## Verification
+
 - Check server logs for `"Broadcasting to X user(s)"` after creating a pulse
 - Confirm toast notification appears on other browser tabs when a pulse is created
 - Look for `"falling back to all X connected user(s)"` in logs during initial testing (expected until locations sync)

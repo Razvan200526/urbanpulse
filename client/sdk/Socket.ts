@@ -19,13 +19,25 @@ export type SocketResponseType<T = any> = {
 	success: boolean;
 };
 
+type MessageHandler<T = any> = (response: SocketResponseType<T>) => void;
+
 export class Socket {
 	private ws: WebSocket;
-	private messageHandler: ((response: SocketResponseType<any>) => void) | null =
-		null;
+	private messageHandlers: Set<MessageHandler> = new Set();
+	private openHandlers: Set<() => void> = new Set();
+	private _isOpen = false;
 
 	constructor(readonly url: string) {
 		this.ws = new WebSocket(this.buildURL(url));
+
+		this.ws.onopen = () => {
+			this._isOpen = true;
+			for (const handler of this.openHandlers) handler();
+		};
+
+		this.ws.onclose = () => {
+			this._isOpen = false;
+		};
 
 		this.ws.onmessage = (event) => {
 			try {
@@ -34,23 +46,44 @@ export class Socket {
 					console.error(response);
 					Toast.toast.danger(response.message || "An error occurred");
 				}
-				this.messageHandler?.(response);
+				for (const handler of this.messageHandlers) handler(response);
 			} catch (err) {
 				console.error("Failed to parse WebSocket message", err);
 			}
 		};
 	}
 
+	/** Whether the underlying WebSocket connection is open. */
+	public get isOpen(): boolean {
+		return this._isOpen;
+	}
+
+	/**
+	 * Register a listener for socket events.
+	 * Returns an unsubscribe function for easy cleanup.
+	 */
 	public on<T>(
 		event: "message",
 		callback: (response: SocketResponseType<T>) => void,
-	): void {
+	): () => void;
+	public on(event: "open", callback: () => void): () => void;
+	public on(event: "message" | "open", callback: (...args: any[]) => void) {
 		if (event === "message") {
-			this.messageHandler = callback;
+			this.messageHandlers.add(callback);
+			return () => this.messageHandlers.delete(callback);
 		}
+		if (event === "open") {
+			this.openHandlers.add(callback);
+			// If already open, fire immediately
+			if (this._isOpen) callback();
+			return () => this.openHandlers.delete(callback);
+		}
+		return () => {};
 	}
 
-	public send(payload: SocketPayloadType): void {
+	public send(payload: SocketPayloadType): void;
+	public send(raw: Record<string, unknown>): void;
+	public send(payload: SocketPayloadType | Record<string, unknown>): void {
 		const doSend = () => this.ws.send(JSON.stringify(payload));
 
 		if (this.ws.readyState === WebSocket.OPEN) {

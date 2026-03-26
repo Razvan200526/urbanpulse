@@ -1,13 +1,15 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
-import { ShareIcon } from "@client/components/icons/ShareIcon";
 import { InputSearch } from "@client/components/input/InputSearch";
 import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
-import { H4 } from "@client/components/typography";
-import { Card, ScrollShadow, Separator } from "@heroui/react";
-import { Filter, Globe, PlusSquareIcon } from "lucide-react";
-import { fakeResources } from "./components/fakeData";
-import { ResourceCard } from "./components/ResourceCard";
+import { ScrollShadow, Separator } from "@heroui/react";
+import { Filter, PlusSquareIcon, Wrench } from "lucide-react";
+// import { ResourceCard } from "./components/ResourceCard";
+import { UploadResourceModal } from "./components/UploadResourceModal";
+import type { ModalRefType } from "@client/components/Modal";
+import { useRef } from "react";
+// import { useRetrieveResources } from "./hooks";
+// import { useAuth } from "@client/hooks/useAuth";
 
 const tabItems: TabItemType[] = [
 	{
@@ -20,6 +22,10 @@ const tabItems: TabItemType[] = [
 ];
 
 export const ResourcesPage = () => {
+	// const { data: user } = useAuth();
+	// const { data: resources } = useRetrieveResources(user?.user.id || "");
+	const uploadModalRef = useRef<ModalRefType>(null);
+
 	return (
 		<div className="flex flex-col h-[calc(100dvh)] bg-background overflow-y-scroll">
 			<Header
@@ -27,14 +33,23 @@ export const ResourcesPage = () => {
 				tabs={<Tabs items={tabItems} className="max-w-md ml-2" />}
 				dropdown={
 					<Button
-						size="sm"
+						size="md"
 						variant="primary"
 						startContent={<PlusSquareIcon className="size-4" />}
 					>
-						Request Resource
+						Request
 					</Button>
 				}
-			/>
+			>
+				<Button
+					size="md"
+					variant="primary"
+					startContent={<Wrench className="size-4" />}
+					onPress={() => uploadModalRef.current?.open()}
+				>
+					Upload
+				</Button>
+			</Header>
 			<Separator />
 
 			<ScrollShadow className="p-6 space-y-6" size={10}>
@@ -48,41 +63,13 @@ export const ResourcesPage = () => {
 					</div>
 				</div>
 
-				{/* Abstract Grid Layout */}
 				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-					{fakeResources.map((resource) => (
+					{/*{resources?.map((resource) => (
 						<ResourceCard key={resource.id} resource={resource} />
-					))}
+					))}*/}
 				</div>
-
-				<Card className="border border-border shadow-none p-6">
-					<div className="flex flex-col md:flex-row items-center justify-between gap-6">
-						<div className="flex items-center gap-4 text-center md:text-left">
-							<div className="p-4 bg-surface-secondary rounded-full text-primary-foreground hidden md:block">
-								<Globe className="h-8 w-8 text-accent" />
-							</div>
-							<div>
-								<H4 className="text-xl font-bold">
-									Community Resource Exchange
-								</H4>
-								<p className="text-sm text-muted max-w-md mt-1">
-									You have contributed 4 resources and helped 12 community
-									members this month. Your reputation score is 98/100.
-								</p>
-							</div>
-						</div>
-						<div className="flex gap-3">
-							<Button
-								variant="primary"
-								startContent={<ShareIcon className="size-4" />}
-							>
-								Share Resource
-							</Button>
-							<Button variant="outline">View Achievements</Button>
-						</div>
-					</div>
-				</Card>
 			</ScrollShadow>
+			<UploadResourceModal modalRef={uploadModalRef} />
 		</div>
 	);
 };

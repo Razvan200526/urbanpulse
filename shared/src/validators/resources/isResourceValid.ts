@@ -1,15 +1,14 @@
 import * as z from "zod";
 
 export const resourceSchema = z.object({
-	userId: z.uuid(),
+	userId: z.string(),
 	name: z.string(),
 	description: z.string(),
-	availibility: z.enum(["Available", "Unavailable", "Currently Unavailable"]),
-	createdAt: z.coerce.date(),
+	availability: z.enum(["Available", "Unavailable", "Currently Unavailable"]),
 });
 
 export type ResourceType = z.infer<typeof resourceSchema>;
 
-export const isResourceValid = (resorceInfo: unknown) => {
+export const isCreateResourceReqValid = (resorceInfo: unknown) => {
 	return resourceSchema.safeParse(resorceInfo);
 };

@@ -4,7 +4,7 @@ import {
 	resourceRepository,
 } from "@server/repositories/ResourceRepository";
 import { handleError } from "@server/utils/handleError";
-import { isResponseRequestValid } from "@shared/validators/isResponseValid";
+import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
 
 export class ResourceService {
 	private resourceRepo: ResourceRepository;
@@ -14,20 +14,17 @@ export class ResourceService {
 	}
 
 	async createResource(data: Partial<ResourceType>) {
-		const result = isResponseRequestValid(data);
+		const result = isCreateResourceReqValid(data);
 
-		try {
-			if (result.error) {
-				handleError(result.error);
-				return null;
-			}
-			if (!result.success) return null;
-		} catch (error) {
-			handleError(error);
+		if (result.error) {
+			handleError(result.error);
 		}
-
-		if (result.data == null) return null;
-		this.resourceRepo.create(result.data);
+		if (!result.data) {
+			return null;
+		}
+		const newResource = await this.resourceRepo.create(result.data);
+		console.info(newResource);
+		return newResource;
 	}
 
 	async getResourceById(id: string): Promise<ResourceType | null> {
@@ -41,7 +38,8 @@ export class ResourceService {
 
 	async getAllResource() {
 		try {
-			return await this.resourceRepo.getAll();
+			const res = await this.resourceRepo.getAll();
+			return res;
 		} catch (error) {
 			handleError(error);
 			return null;

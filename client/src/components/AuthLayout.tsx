@@ -1,5 +1,6 @@
 import { useAuth } from "@client/hooks/useAuth";
-import { useNotificationHook } from "@client/hooks/useNotificationHook";
+import { useLocationSync } from "@client/hooks/useLocationSync";
+import { useNotifications } from "@client/hooks/useNotifications";
 import { cn, Toast } from "@heroui/react";
 import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
@@ -14,7 +15,8 @@ export const AuthLayout = () => {
 	const { theme } = useThemeStore();
 	const { isOpen } = useAppSidebarStore();
 
-	useNotificationHook(user?.user.id);
+	useNotifications(user?.user.id);
+	useLocationSync();
 
 	useEffect(() => {
 		document.body.setAttribute("data-theme", theme);

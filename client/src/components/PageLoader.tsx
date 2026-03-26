@@ -4,7 +4,7 @@ import { H1 } from "./typography";
 
 export const PageLoader = () => {
 	return (
-		<div className="flex flex-col items-center justify-center h-[calc(100dvh-3.9rem)] w-full">
+		<div className="bg-surface flex flex-col items-center justify-center h-full w-full">
 			<div className="flex flex-col items-center justify-center gap-4 w-full max-w-xs h-full">
 				<div className="flex items-center justify-center gap-3">
 					<Logo className="size-12" />
@@ -15,7 +15,12 @@ export const PageLoader = () => {
 					color="accent"
 					aria-label="Loading..."
 					size="lg"
-				/>
+				>
+					<ProgressBar.Output />
+					<ProgressBar.Track className="rounded h-4">
+						<ProgressBar.Fill />
+					</ProgressBar.Track>
+				</ProgressBar>
 			</div>
 		</div>
 	);

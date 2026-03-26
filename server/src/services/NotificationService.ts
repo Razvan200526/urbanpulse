@@ -22,7 +22,9 @@ export class NotificationService {
 	 * @param {Partial<NotificationType>} data - The notification data to persist.
 	 * @returns {Promise<NotificationType | null>} The created notification or null on failure.
 	 */
-	async createNotification(data: Partial<NotificationType>) {
+	async createNotification(
+		data: Partial<NotificationType>,
+	): Promise<NotificationType | null> {
 		try {
 			const {
 				data: notificationReq,
@@ -51,7 +53,7 @@ export class NotificationService {
 	 * @param {string} userId - ID of the user.
 	 * @returns {Promise<NotificationType[]>} Array of notifications.
 	 */
-	async getNotifications(userId: string) {
+	async getNotifications(userId: string): Promise<NotificationType[]> {
 		try {
 			const notifications = await this.notificationRepo.getByUserId(userId);
 			return notifications;
@@ -126,7 +128,7 @@ export class NotificationService {
 	 * Generic broadcast method for system-wide notifications.
 	 * @param {NotificationType} data - The notification to broadcast.
 	 */
-	async broadcastNotification(data: NotificationType) {}
+	// async broadcastNotification(data: NotificationType) {}
 }
 
 export const notificationService = new NotificationService();

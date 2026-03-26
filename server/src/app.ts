@@ -7,6 +7,7 @@ import { avatarController } from "./controllers/AvatarController";
 import { notificationController } from "./controllers/NotificationController";
 import { pulseController } from "./controllers/PulseController";
 import { userController } from "./controllers/UserController";
+import { resourceController } from "./controllers/ResourceController";
 export const app = new Hono()
 	.use(
 		rateLimiter({
@@ -40,7 +41,8 @@ export const app = new Hono()
 	.route("/users", userController)
 	.route("/avatar", avatarController)
 	.route("/pulse", pulseController)
-	.route("/notifications", notificationController);
+	.route("/notifications", notificationController)
+	.route("/resources", resourceController);
 
 export type AppType = typeof app;
 export default app;
