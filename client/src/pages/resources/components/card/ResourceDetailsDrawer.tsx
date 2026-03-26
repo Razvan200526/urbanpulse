@@ -25,7 +25,9 @@ export function ResourceDetailsDrawer({
 }: ResourceDetailsDrawerProps) {
 	const { resource, recentUsers } = item;
 	const { data: user } = useAuth();
-	const { mutate: requestBorrow, isPending } = useRequestBorrow(user?.user.id || "");
+	const { mutate: requestBorrow, isPending } = useRequestBorrow(
+		user?.user.id || "",
+	);
 
 	const handleRequestBorrow = () => {
 		if (!user?.user.id) return;
@@ -110,8 +112,8 @@ export function ResourceDetailsDrawer({
 								Close
 							</Button>
 							{resource.userId !== user?.user.id && (
-								<Button 
-									variant="primary" 
+								<Button
+									variant="primary"
 									onPress={handleRequestBorrow}
 									isDisabled={isPending}
 								>

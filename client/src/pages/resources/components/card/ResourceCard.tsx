@@ -30,7 +30,7 @@ export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {
 			<Card.Content className="space-y-3">
 				<div className="flex items-center justify-start gap-4">
 					<Avatar user={author} />
-				<p className="text-sm text-muted"> {author?.name}</p>
+					<p className="text-sm text-muted"> {author?.name}</p>
 				</div>
 
 				<div className="flex flex-wrap gap-2 items-center">

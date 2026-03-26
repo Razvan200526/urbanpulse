@@ -87,7 +87,9 @@ export const useGetPendingRequests = (userId: string) => {
 			});
 			const res = await response.json();
 			if (!res.success || !res.data) {
-				Toast.toast.danger((res as any).error || "Failed to get pending requests");
+				Toast.toast.danger(
+					(res as any).error || "Failed to get pending requests",
+				);
 				return [];
 			}
 			return res.data;
@@ -99,8 +101,16 @@ export const useGetPendingRequests = (userId: string) => {
 export const useRespondToRequest = (userId: string) => {
 	return useMutation({
 		mutationKey: ["respond", "request", userId],
-		mutationFn: async ({ transactionId, accept }: { transactionId: string; accept: boolean }) => {
-			const response = await hono.api.resources.transaction[":transactionId"].respond.$post({
+		mutationFn: async ({
+			transactionId,
+			accept,
+		}: {
+			transactionId: string;
+			accept: boolean;
+		}) => {
+			const response = await hono.api.resources.transaction[
+				":transactionId"
+			].respond.$post({
 				param: {
 					transactionId,
 				},
@@ -110,7 +120,9 @@ export const useRespondToRequest = (userId: string) => {
 			});
 			const res = await response.json();
 			if (!res.success || !res.data) {
-				Toast.toast.danger((res as any).error || "Failed to respond to request");
+				Toast.toast.danger(
+					(res as any).error || "Failed to respond to request",
+				);
 				throw new Error("Failed to respond");
 			}
 			return res;
@@ -130,18 +142,22 @@ export const useRequestBorrow = (userId: string) => {
 		mutationFn: async (payload: { borrowerId: string; resourceId: string }) => {
 			return new Promise((resolve, reject) => {
 				const ws = hono.api.resources.transaction.ws.$ws(0);
-				
+
 				ws.addEventListener("open", () => {
 					ws.send(JSON.stringify(payload));
 				});
-				
+
 				ws.addEventListener("message", (event) => {
 					try {
 						const data = JSON.parse(event.data);
 						if (data.success) {
 							resolve(data);
 						} else {
-							reject(new Error(data.error || data.message || "Failed to request borrow"));
+							reject(
+								new Error(
+									data.error || data.message || "Failed to request borrow",
+								),
+							);
 						}
 					} catch {
 						reject(new Error("Failed to parse response"));
@@ -149,7 +165,7 @@ export const useRequestBorrow = (userId: string) => {
 						ws.close();
 					}
 				});
-				
+
 				ws.addEventListener("error", () => {
 					reject(new Error("WebSocket error occurred"));
 				});

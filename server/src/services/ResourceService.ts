@@ -120,7 +120,7 @@ export class ResourceService {
 			if (!resource) {
 				return { success: false as const, error: "Resource not found" };
 			}
-			
+
 			const newTransaction = await this.transactionRepo.create({
 				status: TransactionStatusEnum.Pending,
 				borrowerId: requestData.borrowerId,
@@ -130,7 +130,10 @@ export class ResourceService {
 			});
 
 			if (!newTransaction) {
-				return { success: false as const, error: "Failed to create transaction record" };
+				return {
+					success: false as const,
+					error: "Failed to create transaction record",
+				};
 			}
 
 			const allConnections = socketManager.getAllConnections();
@@ -149,8 +152,7 @@ export class ResourceService {
 						data: {
 							type: "TRANSACTION",
 							payload: {
-								transactionId: newTransaction?.id 
-							,
+								transactionId: newTransaction?.id,
 								resourceId: resource.id,
 								resourceName: resource.name,
 								borrowerId: requestData.borrowerId,
@@ -170,8 +172,9 @@ export class ResourceService {
 
 	async getPendingRequests(userId: string) {
 		try {
-			const pendingTransactions = await this.transactionRepo.getPendingByLenderId(userId);
-			
+			const pendingTransactions =
+				await this.transactionRepo.getPendingByLenderId(userId);
+
 			const populated = await Promise.all(
 				pendingTransactions.map(async (t) => {
 					const resource = await this.resourceRepo.getOne(t.resourceId);
@@ -181,23 +184,31 @@ export class ResourceService {
 						resource,
 						borrower,
 					};
-				})
+				}),
 			);
 
 			return { success: true as const, data: populated };
 		} catch (error) {
 			handleError(error);
-			return { success: false as const, error: "Failed to fetch pending requests" };
+			return {
+				success: false as const,
+				error: "Failed to fetch pending requests",
+			};
 		}
 	}
 
 	async respondToRequest(transactionId: string, accept: boolean) {
 		try {
 			const t = await this.transactionRepo.getOne(transactionId);
-			if (!t) return { success: false as const, error: "Transaction not found" };
+			if (!t)
+				return { success: false as const, error: "Transaction not found" };
 
-			const newStatus = accept ? TransactionStatusEnum.Active : TransactionStatusEnum.Cancelled;
-			const updated = await this.transactionRepo.update(transactionId, { status: newStatus });
+			const newStatus = accept
+				? TransactionStatusEnum.Active
+				: TransactionStatusEnum.Cancelled;
+			const updated = await this.transactionRepo.update(transactionId, {
+				status: newStatus,
+			});
 
 			return { success: true as const, data: updated };
 		} catch (error) {

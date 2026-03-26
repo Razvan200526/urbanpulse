@@ -24,8 +24,8 @@ export class TransactionRepository implements IRepository<TransactionType> {
 			.where(
 				and(
 					eq(transaction.lenderId, lenderId as any),
-					eq(transaction.status, TransactionStatusEnum.Pending as any)
-				)
+					eq(transaction.status, TransactionStatusEnum.Pending as any),
+				),
 			);
 	}
 

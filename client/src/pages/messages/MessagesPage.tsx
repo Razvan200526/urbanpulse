@@ -1,10 +1,7 @@
 import { H3 } from "../../components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetPendingRequests, useRespondToRequest } from "../resources/hooks";
-import {
-	Table,
-	Spinner,
-} from "@heroui/react";
+import { Table, Spinner } from "@heroui/react";
 import { Avatar } from "../../components/user/Avatar";
 import { Button } from "../../components/Button/Button";
 import { formatDate } from "@shared/utils/formatDate";
@@ -12,8 +9,12 @@ import { CheckIcon, XIcon } from "lucide-react";
 
 export const MessagesPage = () => {
 	const { data: user } = useAuth();
-	const { data: requests, isLoading } = useGetPendingRequests(user?.user.id || "");
-	const { mutate: respond, isPending: isResponding } = useRespondToRequest(user?.user.id || "");
+	const { data: requests, isLoading } = useGetPendingRequests(
+		user?.user.id || "",
+	);
+	const { mutate: respond, isPending: isResponding } = useRespondToRequest(
+		user?.user.id || "",
+	);
 
 	const handleAccept = (transactionId: string) => {
 		respond({ transactionId, accept: true });
@@ -49,12 +50,16 @@ export const MessagesPage = () => {
 								{requests?.map((item: any) => (
 									<Table.Row key={item.transaction.id}>
 										<Table.Cell>
-											<div className="font-medium">{item.resource?.name || "Unknown Resource"}</div>
+											<div className="font-medium">
+												{item.resource?.name || "Unknown Resource"}
+											</div>
 										</Table.Cell>
 										<Table.Cell>
 											<div className="flex items-center gap-2">
 												<Avatar user={item.borrower} />
-												<span className="text-sm">{item.borrower?.name || "Unknown"}</span>
+												<span className="text-sm">
+													{item.borrower?.name || "Unknown"}
+												</span>
 											</div>
 										</Table.Cell>
 										<Table.Cell>

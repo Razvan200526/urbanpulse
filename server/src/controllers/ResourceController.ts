@@ -94,7 +94,7 @@ export const resourceController = new Hono()
 		if (!userId) {
 			return c.json({ success: false, error: "Missing userId" }, 400);
 		}
-		
+
 		const result = await resourceService.getPendingRequests(userId);
 		return c.json(result, result.success ? 200 : 500);
 	})

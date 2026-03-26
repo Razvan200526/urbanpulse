@@ -15,7 +15,9 @@ export const MySkillsTab = ({
 		user?.user.id || "",
 	);
 
-	const myResources = resources?.filter((r) => r.resource.userId === user?.user.id);
+	const myResources = resources?.filter(
+		(r) => r.resource.userId === user?.user.id,
+	);
 
 	return (
 		<div className="space-y-6">
