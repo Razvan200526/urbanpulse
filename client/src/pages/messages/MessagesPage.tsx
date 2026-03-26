@@ -1,10 +1,7 @@
 import { H3 } from "../../components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetPendingRequests } from "../resources/hooks";
-import {
-	Table,
-	Spinner,
-} from "@heroui/react";
+import { Table, Spinner } from "@heroui/react";
 import { Avatar } from "../../components/user/Avatar";
 import { Button } from "../../components/Button/Button";
 import { formatDate } from "@shared/utils/formatDate";
@@ -18,9 +15,12 @@ export const MessagesPage = () => {
 	const { data: requests, isLoading } = useGetPendingRequests(
 		user?.user.id || "",
 	);
-	
+
 	const modalRef = useRef<ModalRefType>(null);
-	const [selectedAction, setSelectedAction] = useState<{ id: string; action: "accept" | "reject" } | null>(null);
+	const [selectedAction, setSelectedAction] = useState<{
+		id: string;
+		action: "accept" | "reject";
+	} | null>(null);
 
 	const handleActionClick = (id: string, action: "accept" | "reject") => {
 		setSelectedAction({ id, action });
@@ -75,7 +75,9 @@ export const MessagesPage = () => {
 												<Button
 													size="sm"
 													variant="danger-soft"
-													onPress={() => handleActionClick(item.transaction.id, "reject")}
+													onPress={() =>
+														handleActionClick(item.transaction.id, "reject")
+													}
 													startContent={<XIcon className="size-4" />}
 												>
 													Reject
@@ -83,7 +85,9 @@ export const MessagesPage = () => {
 												<Button
 													size="sm"
 													variant="primary"
-													onPress={() => handleActionClick(item.transaction.id, "accept")}
+													onPress={() =>
+														handleActionClick(item.transaction.id, "accept")
+													}
 													startContent={<CheckIcon className="size-4" />}
 												>
 													Accept

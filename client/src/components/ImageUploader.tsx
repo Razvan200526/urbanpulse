@@ -10,10 +10,7 @@ export type ImageUploaderPropsType = {
 	trigger?: (open: () => void) => React.ReactNode;
 };
 
-export const ImageUploader = ({
-	onSave,
-	trigger,
-}: ImageUploaderPropsType) => {
+export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 	const { mutateAsync: uploadImage } = useUploadImage();
 	const [isOpen, setIsOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +19,12 @@ export const ImageUploader = ({
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const handleFileSelect = (file: File) => {
-		const allowedFormats = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+		const allowedFormats = [
+			"image/jpeg",
+			"image/jpg",
+			"image/png",
+			"image/webp",
+		];
 		if (!allowedFormats.includes(file.type)) {
 			Toast.toast.danger("Unsupported file format.");
 			return;
@@ -79,10 +81,19 @@ export const ImageUploader = ({
 
 	const footer = (
 		<>
-			<Button variant="danger-soft" onPress={handleClose} isDisabled={isLoading}>
+			<Button
+				variant="danger-soft"
+				onPress={handleClose}
+				isDisabled={isLoading}
+			>
 				Cancel
 			</Button>
-			<Button variant="primary" onPress={onUploadSave} isPending={isLoading} isDisabled={!selectedFile}>
+			<Button
+				variant="primary"
+				onPress={onUploadSave}
+				isPending={isLoading}
+				isDisabled={!selectedFile}
+			>
 				Upload
 			</Button>
 		</>
@@ -102,7 +113,9 @@ export const ImageUploader = ({
 				</div>
 			}
 			trigger={
-				trigger ? trigger(() => setIsOpen(true)) : (
+				trigger ? (
+					trigger(() => setIsOpen(true))
+				) : (
 					<Button onPress={() => setIsOpen(true)}>
 						<PlusSquareIcon className="size-4" />
 						<p>Upload photo</p>
@@ -125,7 +138,11 @@ export const ImageUploader = ({
 				>
 					{previewUrl ? (
 						<>
-							<img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
+							<img
+								src={previewUrl}
+								alt="Preview"
+								className="w-full h-full object-contain"
+							/>
 							<Button
 								isIconOnly
 								variant="danger"
@@ -144,7 +161,9 @@ export const ImageUploader = ({
 					) : (
 						<div className="flex flex-col items-center gap-2 text-muted">
 							<UploadCloud className="size-8 text-accent" />
-							<p className="text-sm font-medium">Drag & drop or click to upload</p>
+							<p className="text-sm font-medium">
+								Drag & drop or click to upload
+							</p>
 							<p className="text-xs">Supports JPG, PNG, WEBP</p>
 						</div>
 					)}

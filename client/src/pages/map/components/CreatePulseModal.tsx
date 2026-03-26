@@ -157,14 +157,23 @@ export const CreatePulseModal = ({
 				{imageUrls.length > 0 && (
 					<div className="flex gap-2 items-center flex-wrap">
 						{imageUrls.map((url) => (
-							<div key={url} className="relative w-16 h-16 rounded overflow-hidden border border-border mt-2">
-								<img src={url} alt={`upload-${url}`} className="w-full h-full object-cover" />
-								<Button 
-									isIconOnly 
-									size="sm" 
-									variant="danger" 
+							<div
+								key={url}
+								className="relative w-16 h-16 rounded overflow-hidden border border-border mt-2"
+							>
+								<img
+									src={url}
+									alt={`upload-${url}`}
+									className="w-full h-full object-cover"
+								/>
+								<Button
+									isIconOnly
+									size="sm"
+									variant="danger"
 									className="absolute top-1 right-1 h-5 w-5 min-w-0 min-h-0 rounded-full bg-danger/80"
-									onPress={() => setImageUrls(p => p.filter(u => u !== url))}
+									onPress={() =>
+										setImageUrls((p) => p.filter((u) => u !== url))
+									}
 								>
 									<XIcon className="size-3" />
 								</Button>
@@ -174,7 +183,7 @@ export const CreatePulseModal = ({
 				)}
 
 				<div className="flex items-center justify-end gap-2 mt-2">
-					<ImageUploader 
+					<ImageUploader
 						onSave={(url) => setImageUrls((prev) => [...prev, url])}
 						trigger={(open) => (
 							<Tooltip delay={0}>
@@ -182,7 +191,9 @@ export const CreatePulseModal = ({
 									variant="outline"
 									isIconOnly
 									radius="full"
-									startContent={<PaperclipIcon className="size-4 text-accent" />}
+									startContent={
+										<PaperclipIcon className="size-4 text-accent" />
+									}
 									onPress={open}
 								/>
 								<Tooltip.Content className="border border-accent rounded-full bg-surface text-accent">

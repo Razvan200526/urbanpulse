@@ -44,8 +44,8 @@ export const RespondRequestModal = ({
 				<header className="flex flex-col items-start justify-start">
 					<H3>{action === "accept" ? "Accept Request" : "Reject Request"}</H3>
 					<p className="text-muted text-sm">
-						{action === "accept" 
-							? "Allow user to borrow your resource" 
+						{action === "accept"
+							? "Allow user to borrow your resource"
 							: "Decline the borrow request"}
 					</p>
 				</header>
@@ -73,7 +73,8 @@ export const RespondRequestModal = ({
 		>
 			<div className="p-4 flex flex-col space-y-5">
 				<p>
-					Are you sure you want to {action} this borrow request from your resource?
+					Are you sure you want to {action} this borrow request from your
+					resource?
 				</p>
 			</div>
 		</Modal>
