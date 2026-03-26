@@ -127,9 +127,9 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 									)}
 								</div>
 
-								<H4 className="text-foreground leading-snug tracking-tight">
+								<p className="text-foreground leading-snug tracking-tight">
 									{pulse.title}
-								</H4>
+								</p>
 
 								<div className="flex items-center gap-4 text-xs text-muted">
 									<span className="flex items-center gap-1">

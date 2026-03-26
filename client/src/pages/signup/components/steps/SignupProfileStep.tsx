@@ -1,24 +1,33 @@
-import { ChevronRightIcon } from "@client/components/icons/ChevronRight";
 import { InputAvatar } from "@client/components/input/InputAvatar";
 import {
 	InputName,
 	type InputNameRefType,
 } from "@client/components/input/InputName";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
-import { Button, Separator, Toast } from "@heroui/react";
+import { Separator, Toast } from "@heroui/react";
 import { useRef } from "react";
 import { useSignUp } from "../../hooks";
 import { useSignupStore } from "../../signUpStore";
+import { H2 } from "@client/components/typography";
+import { Button } from "@client/components/Button/Button";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { isNameValid } from "@shared/validators/isNameValid";
+import { isBioValid } from "@shared/validators/isBioValid";
 
 export const SignupProfileStep = () => {
 	const { data, setData, setStep } = useSignupStore();
-	const { mutateAsync: signUp, isError, isPending } = useSignUp();
+	const { mutateAsync: signUp, isPending } = useSignUp();
 	const nameRef = useRef<InputNameRefType | null>(null);
 	const bioRef = useRef<TextAreaRefType | null>(null);
 
 	const handleNext = async () => {
-		const name = nameRef.current?.getValue() || "testname";
-		const bio = bioRef.current?.getValue() || "testbio";
+		const name = nameRef.current?.getValue() || "";
+		const bio = bioRef.current?.getValue() || "";
+
+		if (!isNameValid(name) || !isBioValid(bio)) {
+			Toast.toast.danger("Invalid name or bio");
+			return;
+		}
 
 		setData({
 			...data,
@@ -26,11 +35,7 @@ export const SignupProfileStep = () => {
 			bio,
 		});
 
-		const newUser = await signUp(data);
-		if (newUser.error || isError) {
-			Toast.toast.danger("Sign up failed,try again later");
-			return;
-		}
+		await signUp(data);
 
 		setStep(3);
 	};
@@ -40,11 +45,9 @@ export const SignupProfileStep = () => {
 	};
 
 	return (
-		<div className="w-full max-w-md mx-auto flex flex-col gap-6">
-			<div className="flex flex-col gap-2">
-				<h2 className="text-2xl font-bold text-(--foreground)">
-					Complete Your Profile
-				</h2>
+		<div className="w-full max-w-md mx-auto flex flex-col gap-4">
+			<div className="flex flex-col">
+				<H2>Complete Your Profile</H2>
 				<p className="text-sm text-muted">Tell us a bit about yourself</p>
 			</div>
 
@@ -81,21 +84,17 @@ export const SignupProfileStep = () => {
 
 			<div className="flex gap-3 pt-4 justify-between">
 				<Button
-					variant="primary"
-					className="flex justify-start"
-					onClick={handleBack}
+					startContent={<ChevronLeftIcon className="size-4" />}
+					onPress={() => handleBack()}
 				>
 					Back
 				</Button>
 				<Button
-					className="flex rounded"
-					variant="primary"
+					endContent={<ChevronRightIcon className="size-4" />}
 					onClick={handleNext}
 					isPending={isPending}
-					isDisabled={isPending}
 				>
-					Sign Up
-					<ChevronRightIcon />
+					Create Account
 				</Button>
 			</div>
 		</div>

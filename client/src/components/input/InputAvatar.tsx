@@ -1,7 +1,7 @@
 import { Avatar } from "@heroui/react";
-import { UserIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { ImageCropper } from "../ImageCropper";
+import { UserIcon } from "../icons/UserIcon";
 
 export type InputAvatarPropsType = {
 	value?: string;
@@ -45,12 +45,12 @@ export const InputAvatar = ({
 				className="flex h-30 w-30 items-center justify-center"
 			>
 				<Avatar
-					className="w-full h-full hover:border-2 hover:border-accent transition-colors duration-150 ease-in cursor-pointer"
+					className="w-full h-full group hover:border-2 hover:border-accent transition-colors duration-150 ease-in cursor-pointer"
 					variant="soft"
 				>
 					{!imageToCrop && (
 						<Avatar.Fallback>
-							<UserIcon className="size-12 text-accent" />
+							<UserIcon className="size-12 text-muted group-hover:text-accent transition-colors duration-150 ease-in" />
 						</Avatar.Fallback>
 					)}
 					<Avatar.Image src={avatarUrl} />

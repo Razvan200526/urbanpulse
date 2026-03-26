@@ -4,10 +4,12 @@ import {
 	type InputEmailRefType,
 } from "@client/components/input/InputEmail";
 import { Link } from "@client/components/Link";
-import { Button, Separator, Toast } from "@heroui/react";
+import { Separator } from "@heroui/react";
 import { useRef } from "react";
 import { useVerifyEmail } from "../../hooks";
 import { useSignupStore } from "../../signUpStore";
+import { isEmailValid } from "@shared/validators/isEmailValid";
+import { Button } from "@client/components/Button/Button";
 
 export const SignupEmailStep = () => {
 	const emailRef = useRef<InputEmailRefType>(null);
@@ -15,41 +17,36 @@ export const SignupEmailStep = () => {
 	const { mutateAsync: verifyEmail, isPending } = useVerifyEmail();
 
 	const handleNext = async () => {
-		const email = emailRef.current?.getValue();
-		if (email && emailRef.current?.validate()) {
+		const email = emailRef.current?.getValue() || "";
+		if (isEmailValid(email)) {
 			setData({
 				...data,
 				email,
 			});
 
-			try {
-				const userExists = await verifyEmail(email);
-				if (userExists?.exists) {
-					Toast.toast.danger("Email already exists!");
-					return;
-				} else {
-					setStep(1);
-				}
-			} catch (error) {
-				Toast.toast.danger("Failed to verify email");
-				console.error(error);
+			const isNewUser = await verifyEmail(email);
+			if (isNewUser) {
+				setStep(1);
 			}
 		}
 	};
 
 	return (
 		<div className="h-fit flex flex-col gap-4">
-			<InputEmail ref={emailRef} initialValue={data.email} />
+			<InputEmail
+				ref={emailRef}
+				initialValue={data.email}
+				placeholder="example@gmail.com"
+			/>
 
-			<div className="pt-4 flex items-center justify-end">
+			<div className="pt-2 flex items-center justify-end">
 				<Button
-					size="sm"
 					variant="primary"
-					onClick={handleNext}
+					onPress={() => handleNext()}
 					isPending={isPending}
+					endContent={<ChevronRightIcon className="size-4" />}
 				>
-					<p className="font-semibold">Next</p>
-					<ChevronRightIcon className="size-3.5" />
+					Next
 				</Button>
 			</div>
 

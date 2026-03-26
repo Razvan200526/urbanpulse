@@ -2,12 +2,15 @@ import {
 	type InputOTPRefType,
 	InputOtp,
 } from "@client/components/input/InputOtp";
-import { Button, Separator } from "@heroui/react";
+import { Separator, Toast } from "@heroui/react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useVerifyOTP } from "../../hooks";
 import { useSignupStore } from "../../signUpStore";
-
+import { isOTPValid } from "@shared/validators/isOTPValid";
+import { H2 } from "@client/components/typography";
+import { Button } from "@client/components/Button/Button";
+import { ChevronLeftIcon } from "lucide-react";
 export const SignupOTPVerificationStep = () => {
 	const { data, setStep, clear } = useSignupStore();
 	const { mutateAsync: verifyOTP, isPending } = useVerifyOTP();
@@ -34,8 +37,12 @@ export const SignupOTPVerificationStep = () => {
 	const navigate = useNavigate();
 
 	const handleVerifyOTP = async () => {
-		const code = otpRef.current?.getValue();
-		if (!code || code.length !== 6) return;
+		const code = otpRef.current?.getValue() || "";
+
+		if (!isOTPValid(code)) {
+			Toast.toast.danger("Invalid OTP");
+			return;
+		}
 
 		const res = await verifyOTP({
 			email: data.email,
@@ -55,19 +62,15 @@ export const SignupOTPVerificationStep = () => {
 	const handleResend = () => {
 		setTimeLeft(300);
 		console.log("Resending OTP...");
-	};
+	}; //handle resending otp logic
 
 	return (
 		<div className="w-full max-w-md mx-auto flex flex-col gap-6">
 			<div className="flex flex-col gap-2">
-				<h2 className="text-2xl font-bold text-(--foreground)">
-					Verify Your Email
-				</h2>
+				<H2 className="text-2xl font-bold text-accent">Verify Your Email</H2>
 				<p className="text-sm text-muted">
 					We've sent a verification code to{" "}
-					<span className="font-semibold text-(--foreground)">
-						{data.email}
-					</span>
+					<span className="font-semibold text-accent">{data.email}</span>
 				</p>
 			</div>
 
@@ -81,7 +84,7 @@ export const SignupOTPVerificationStep = () => {
 			/>
 
 			<div className="flex flex-col gap-4">
-				<div className="flex justify-between items-center px-1">
+				<div className="flex justify-center items-center gap-2 px-1">
 					<span className="text-xs text-muted">Code expires in:</span>
 					<span
 						className={`text-xs font-mono font-bold ${timeLeft < 60 ? "text-danger" : "text-accent"}`}
@@ -92,16 +95,13 @@ export const SignupOTPVerificationStep = () => {
 
 				<div className="flex justify-between gap-3">
 					<Button
-						variant="outline"
-						className="rounded-xl"
+						startContent={<ChevronLeftIcon className="size-4" />}
 						onClick={handleBack}
 						isDisabled={isPending}
 					>
 						Back
 					</Button>
 					<Button
-						className="rounded-xl"
-						variant="primary"
 						onClick={handleVerifyOTP}
 						isPending={isPending}
 						isDisabled={otpLength !== 6 || timeLeft === 0}

@@ -1,28 +1,30 @@
 import type { InputPasswordRefType } from "@client/components/input/InputPassword";
 import { InputPassword } from "@client/components/input/InputPassword";
-import { Button, Separator } from "@heroui/react";
+import { Separator, Toast } from "@heroui/react";
 import { useRef } from "react";
 import { useSignupStore } from "../../signUpStore";
-
+import { isPasswordValid } from "@shared/validators/isPasswordValid";
+import { Button } from "@client/components/Button/Button";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { H2 } from "@client/components/typography";
 export const SignupPasswordStep = () => {
 	const passwordRef = useRef<InputPasswordRefType>(null);
 	const confirmPasswordRef = useRef<InputPasswordRefType>(null);
 	const { data, setData, setStep } = useSignupStore();
 
 	const handleNext = () => {
-		const isPasswordValid = passwordRef.current?.validate();
-		const isConfirmValid = confirmPasswordRef.current?.validate();
-
-		if (!isPasswordValid || !isConfirmValid) {
-			console.log("aksdjnaskdjnasdkjans");
-			return;
-		}
-
 		const password = passwordRef.current?.getValue() || "";
 		const confirmPassword = confirmPasswordRef.current?.getValue() || "";
 
+		if (!isPasswordValid(password) || !isPasswordValid(confirmPassword)) {
+			Toast.toast.danger(
+				"Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+			);
+			return;
+		}
+
 		if (password !== confirmPassword) {
-			console.error("Passwords do not match");
+			Toast.toast.danger("Passwords do not match");
 			return;
 		}
 
@@ -45,9 +47,7 @@ export const SignupPasswordStep = () => {
 	return (
 		<div className="w-full max-w-md mx-auto flex flex-col gap-6">
 			<div className="flex flex-col gap-2">
-				<h2 className="text-2xl font-bold text-(--foreground)">
-					Secure Your Account
-				</h2>
+				<H2>Secure Your Account</H2>
 				<p className="text-sm text-muted">
 					Create a strong password to protect your account
 				</p>
@@ -63,7 +63,7 @@ export const SignupPasswordStep = () => {
 					name="password"
 					initialValue={data.password}
 					required
-					minLength={8}
+					minLength={6}
 				/>
 
 				<InputPassword
@@ -73,17 +73,19 @@ export const SignupPasswordStep = () => {
 					name="confirmPassword"
 					initialValue=""
 					required
-					minLength={8}
+					minLength={6}
 				/>
 			</div>
 
-			<div className="flex gap-3 pt-4">
-				<Button variant="primary" className="flex-1" onClick={handleBack}>
+			<div className="flex items-center justify-between pt-4">
+				<Button
+					startContent={<ChevronLeftIcon className="size-4" />}
+					onClick={handleBack}
+				>
 					Back
 				</Button>
 				<Button
-					className="flex-1 rounded"
-					variant="primary"
+					endContent={<ChevronRightIcon className="size-4" />}
 					onClick={handleNext}
 				>
 					Next

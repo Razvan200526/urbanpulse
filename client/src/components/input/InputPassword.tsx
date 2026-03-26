@@ -1,16 +1,15 @@
 import {
-	Button,
 	cn,
 	InputGroup,
 	Label,
 	TextField,
 	type TextFieldProps,
 } from "@heroui/react";
-import { Icon } from "@iconify/react";
 import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { EyeClosedIcon } from "../icons/EyeClosedIcon";
 import { EyeOpenIcon } from "../icons/EyeOpenIcon";
 import { PasswordIcon } from "../icons/PasswordIcon";
+import { Button } from "../Button/Button";
 
 export type InputPasswordRefType = {
 	getValue: () => string;
@@ -73,7 +72,6 @@ export const InputPassword = forwardRef<
 		}, [value, minLength]);
 
 		const isInvalid = submitted && !!errorMessage;
-		const isValid = submitted && !errorMessage && value.trim() !== "";
 
 		useImperativeHandle(
 			ref,
@@ -142,21 +140,9 @@ export const InputPassword = forwardRef<
 								<EyeClosedIcon className="size-3.5" />
 							)}
 						</Button>
-
-						{isValid && (
-							<Icon icon="gravity-ui:check" className="text-success text-lg" />
-						)}
-						{isInvalid && (
-							<Icon
-								icon="gravity-ui:circle-xmark"
-								className="text-danger text-lg"
-							/>
-						)}
 					</InputGroup.Suffix>
 				</InputGroup>
 			</TextField>
 		);
 	},
 );
-
-InputPassword.displayName = "InputPassword";

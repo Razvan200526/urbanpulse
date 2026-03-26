@@ -112,7 +112,7 @@ export const InputEmail = forwardRef<InputEmailRefType, InputEmailProps>(
 					)}
 
 					<InputGroup.Input
-						className="text-primary-400"
+						className="text-primary-400 placeholder:italic"
 						placeholder={placeholder}
 					/>
 

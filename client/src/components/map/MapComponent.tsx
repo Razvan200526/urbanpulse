@@ -23,9 +23,7 @@ export const MapComponent = ({
 	const hasInitialized = useRef(false);
 
 	useEffect(() => {
-		const token = import.meta.env.VITE_MAPBOX_GL_ACCESS_TOKEN as
-			| string
-			| undefined;
+		const token = import.meta.env.VITE_MAPBOX_GL_ACCESS_TOKEN as string;
 
 		if (!token) {
 			console.error("Missing VITE_MAPBOX_GL_ACCESS_TOKEN");

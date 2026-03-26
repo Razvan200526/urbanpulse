@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-const emailSchema = z.object({
+export const emailSchema = z.object({
 	email: z.email(),
 });
 

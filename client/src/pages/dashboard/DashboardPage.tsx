@@ -37,7 +37,7 @@ const RECENT_ACTIVITY_FAKE = [
 
 export const DashboardPages = () => {
 	return (
-		<div className="flex flex-col h-full bg-background overflow-auto">
+		<div className="flex flex-col h-full bg-surface overflow-auto">
 			<Header title="Dashboard" />
 			<Separator />
 

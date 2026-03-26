@@ -10,10 +10,12 @@ export const useVerifyEmail = () => {
 			const data = await hono.api.users[`verify-email`].$get({
 				query: { email },
 			});
-			if (!data.ok) {
-				throw new Error("Failed to verify email");
+			const res = await data.json();
+			if (!res.success || res.exists) {
+				Toast.toast.danger(res.message);
+				return;
 			}
-			return data.json();
+			return res;
 		},
 	});
 };
@@ -22,7 +24,6 @@ export const useSignUp = () => {
 	return useMutation({
 		mutationKey: ["signup"],
 		mutationFn: async (data: SignUpDataType) => {
-			console.log(data);
 			const result = await authClient.signUp.email({
 				email: data.email,
 				password: data.password,
@@ -31,6 +32,11 @@ export const useSignUp = () => {
 				// @ts-expect-error - Custom field handled by our custom signUp plugin
 				bio: data.bio,
 			});
+			if (!result.data?.user || result.error) {
+				Toast.toast.danger(
+					result.error?.message || "Sign up failed,try again later",
+				);
+			}
 			return result;
 		},
 	});
@@ -48,11 +54,11 @@ export const useVerifyOTP = () => {
 				email,
 				otp,
 			});
-			if (data?.user) {
-				return data.user;
-			} else {
+			if (!data?.user) {
 				Toast.toast.danger("Could not verify OTP");
+				return;
 			}
+			return data.user;
 		},
 	});
 };

@@ -1,4 +1,5 @@
 import { hono, queryClient } from "@client/main";
+import { Toast } from "@heroui/react";
 import type { PulseType } from "@server/db/schema";
 import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -6,7 +7,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 export const useCreatePulse = () => {
 	return useMutation({
 		mutationKey: ["pulse", "create"],
-		mutationFn: (pulseData: any) => {
+		mutationFn: (pulseData: Partial<PulseType>) => {
 			return new Promise((resolve, reject) => {
 				const socket = hono.api.pulse.$ws();
 
@@ -20,8 +21,10 @@ export const useCreatePulse = () => {
 						socket.close();
 
 						queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+						Toast.toast.success("Pulse created successfully!");
 						resolve(parsed);
 					} catch (e) {
+						Toast.toast.danger("Failed to create pulse. Try again later.");
 						reject(e);
 					}
 				};

@@ -31,7 +31,7 @@ export const SignUpPage = () => {
 		<div className="flex h-[calc(100dvh)] items-center justify-center bg-background">
 			<div className="flex flex-col items-center justify-center gap-8 px-4 pt-8 sm:px-6">
 				<div className="flex items-center justify-center">
-					<Logo className="h-16 w-16" />
+					<Logo className="size-16" />
 					<H1>UrbanPulse</H1>
 				</div>
 				<HorizontalSteps
@@ -53,7 +53,7 @@ export const SignUpPage = () => {
 						},
 					]}
 				/>
-				<Card className="flex w-full max-w-xl flex-col gap-8 p-8 border border-accent bg-surface">
+				<Card className="flex w-full max-w-3xl flex-col gap-8 p-8 border border-accent bg-surface">
 					{content}
 				</Card>
 			</div>

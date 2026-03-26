@@ -1,6 +1,5 @@
 import { cn } from "@heroui/react";
 import { UrgencyEnum } from "@shared/types";
-import { useId } from "react";
 
 const URGENCY_CONFIG: Record<
 	UrgencyEnum,
@@ -43,7 +42,6 @@ const URGENCY_CONFIG: Record<
 };
 export const UrgencyMeter = ({ urgency }: { urgency: UrgencyEnum }) => {
 	const cfg = URGENCY_CONFIG[urgency];
-	const id = useId();
 
 	if (urgency === UrgencyEnum.Unknown) {
 		return <span className="text-sm text-muted italic">Unknown</span>;
@@ -53,7 +51,8 @@ export const UrgencyMeter = ({ urgency }: { urgency: UrgencyEnum }) => {
 			<div className="flex items-end gap-0.75 h-5">
 				{Array.from({ length: 4 }).map((_, i) => (
 					<div
-						key={id}
+						// biome-ignore lint/suspicious/noArrayIndexKey: <these never change>
+						key={i}
 						className={cn(
 							"w-1.25 rounded-full",
 							i < cfg.bars
