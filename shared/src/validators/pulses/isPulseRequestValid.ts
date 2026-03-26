@@ -11,6 +11,7 @@ export const pulseRequestSchema = z.object({
 		x: z.number().min(-180).max(180),
 		y: z.number().min(-90).max(90),
 	}),
+	imageUrls: z.array(z.string()).optional().default([]),
 });
 
 export const isPulseRequestValid = (data: unknown) => {

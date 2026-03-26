@@ -1,4 +1,4 @@
-import { ClientUserType } from "@client/utils/types";
+import type { ClientUserType } from "@client/utils/types";
 import { glass } from "@dicebear/collection";
 import { createAvatar } from "@dicebear/core";
 import { Avatar as HeroAvatar } from "@heroui/react";

@@ -5,6 +5,7 @@ export const resourceSchema = z.object({
 	name: z.string(),
 	description: z.string(),
 	availability: z.enum(["Available", "Unavailable", "Currently Unavailable"]),
+	imageUrls: z.array(z.string()).optional().default([]),
 });
 
 export type ResourceType = z.infer<typeof resourceSchema>;

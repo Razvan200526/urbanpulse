@@ -108,7 +108,7 @@ export const resourceController = new Hono()
 		),
 		async (c) => {
 			const { transactionId } = c.req.param();
-			const body = await c.req.valid("json");
+			const body = c.req.valid("json");
 
 			const result = await resourceService.respondToRequest(
 				transactionId,

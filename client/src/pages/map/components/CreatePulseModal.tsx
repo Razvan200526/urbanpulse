@@ -11,9 +11,10 @@ import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { Separator, Toast, Tooltip } from "@heroui/react";
 import { PulseEnum, UrgencyEnum } from "@shared/types";
-import { MicIcon, PaperclipIcon } from "lucide-react";
+import { MicIcon, PaperclipIcon, XIcon } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useCreatePulse } from "../hooks";
+import { ImageUploader } from "@client/components/ImageUploader";
 
 export const CreatePulseModal = ({
 	modalRef,
@@ -30,6 +31,7 @@ export const CreatePulseModal = ({
 	const descriptionRef = useRef<TextAreaRefType>(null);
 	const [pulseType, setPulseType] = useState<PulseEnum>(PulseEnum.Emergency);
 	const [urgency, setUrgency] = useState<UrgencyEnum>(UrgencyEnum.Immediate);
+	const [imageUrls, setImageUrls] = useState<string[]>([]);
 
 	const pulseTypeItems = useMemo(
 		() => [
@@ -73,6 +75,7 @@ export const CreatePulseModal = ({
 				urgency: urgency,
 				userId: user.user.id,
 				position: { x: coords.long, y: coords.lat },
+				imageUrls,
 				isResolved: false,
 			});
 			Toast.toast.success("Pulse created successfully!");
@@ -151,18 +154,43 @@ export const CreatePulseModal = ({
 					maxLength={500}
 				/>
 
-				<div className="flex items-center justify-end gap-2">
-					<Tooltip delay={0}>
-						<Button
-							variant="outline"
-							isIconOnly
-							radius="full"
-							startContent={<PaperclipIcon className="size-4 text-accent" />}
-						/>
-						<Tooltip.Content className="border border-accent rounded-full bg-surface text-accent">
-							Upload photo
-						</Tooltip.Content>
-					</Tooltip>
+				{imageUrls.length > 0 && (
+					<div className="flex gap-2 items-center flex-wrap">
+						{imageUrls.map((url) => (
+							<div key={url} className="relative w-16 h-16 rounded overflow-hidden border border-border mt-2">
+								<img src={url} alt={`upload-${url}`} className="w-full h-full object-cover" />
+								<Button 
+									isIconOnly 
+									size="sm" 
+									variant="danger" 
+									className="absolute top-1 right-1 h-5 w-5 min-w-0 min-h-0 rounded-full bg-danger/80"
+									onPress={() => setImageUrls(p => p.filter(u => u !== url))}
+								>
+									<XIcon className="size-3" />
+								</Button>
+							</div>
+						))}
+					</div>
+				)}
+
+				<div className="flex items-center justify-end gap-2 mt-2">
+					<ImageUploader 
+						onSave={(url) => setImageUrls((prev) => [...prev, url])}
+						trigger={(open) => (
+							<Tooltip delay={0}>
+								<Button
+									variant="outline"
+									isIconOnly
+									radius="full"
+									startContent={<PaperclipIcon className="size-4 text-accent" />}
+									onPress={open}
+								/>
+								<Tooltip.Content className="border border-accent rounded-full bg-surface text-accent">
+									Upload photo
+								</Tooltip.Content>
+							</Tooltip>
+						)}
+					/>
 					<Tooltip delay={0}>
 						<Button
 							variant="outline"

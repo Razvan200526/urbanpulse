@@ -20,6 +20,7 @@ import {
 } from "@server/repositories/TransactionRepository";
 import { socketManager } from "@server/services/SocketManager";
 import { TransactionStatusEnum } from "@shared/types";
+import type { ResourceAvailabilityType } from "@shared/types";
 
 export class ResourceService {
 	private resourceRepo: ResourceRepository;
@@ -206,6 +207,15 @@ export class ResourceService {
 			const newStatus = accept
 				? TransactionStatusEnum.Active
 				: TransactionStatusEnum.Cancelled;
+			const resource = await this.resourceRepo.getOne(t.resourceId);
+			if (!resource)
+				return { success: false as const, error: "Resource not found" };
+
+			if (accept) {
+				await this.resourceRepo.update(resource.id, {
+					availability: "Currently Unavailable",
+				});
+			}
 			const updated = await this.transactionRepo.update(transactionId, {
 				status: newStatus,
 			});

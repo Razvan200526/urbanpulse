@@ -1,27 +1,30 @@
 import { H3 } from "../../components/typography";
 import { useAuth } from "@client/hooks/useAuth";
-import { useGetPendingRequests, useRespondToRequest } from "../resources/hooks";
-import { Table, Spinner } from "@heroui/react";
+import { useGetPendingRequests } from "../resources/hooks";
+import {
+	Table,
+	Spinner,
+} from "@heroui/react";
 import { Avatar } from "../../components/user/Avatar";
 import { Button } from "../../components/Button/Button";
 import { formatDate } from "@shared/utils/formatDate";
 import { CheckIcon, XIcon } from "lucide-react";
+import type { ModalRefType } from "../../components/Modal";
+import { useRef, useState } from "react";
+import { RespondRequestModal } from "./components/RespondRequestModal";
 
 export const MessagesPage = () => {
 	const { data: user } = useAuth();
 	const { data: requests, isLoading } = useGetPendingRequests(
 		user?.user.id || "",
 	);
-	const { mutate: respond, isPending: isResponding } = useRespondToRequest(
-		user?.user.id || "",
-	);
+	
+	const modalRef = useRef<ModalRefType>(null);
+	const [selectedAction, setSelectedAction] = useState<{ id: string; action: "accept" | "reject" } | null>(null);
 
-	const handleAccept = (transactionId: string) => {
-		respond({ transactionId, accept: true });
-	};
-
-	const handleReject = (transactionId: string) => {
-		respond({ transactionId, accept: false });
+	const handleActionClick = (id: string, action: "accept" | "reject") => {
+		setSelectedAction({ id, action });
+		modalRef.current?.open();
 	};
 
 	return (
@@ -72,8 +75,7 @@ export const MessagesPage = () => {
 												<Button
 													size="sm"
 													variant="danger-soft"
-													onPress={() => handleReject(item.transaction.id)}
-													isDisabled={isResponding}
+													onPress={() => handleActionClick(item.transaction.id, "reject")}
 													startContent={<XIcon className="size-4" />}
 												>
 													Reject
@@ -81,8 +83,7 @@ export const MessagesPage = () => {
 												<Button
 													size="sm"
 													variant="primary"
-													onPress={() => handleAccept(item.transaction.id)}
-													isDisabled={isResponding}
+													onPress={() => handleActionClick(item.transaction.id, "accept")}
 													startContent={<CheckIcon className="size-4" />}
 												>
 													Accept
@@ -96,6 +97,12 @@ export const MessagesPage = () => {
 					</Table.ScrollContainer>
 				</Table>
 			)}
+			<RespondRequestModal
+				modalRef={modalRef}
+				transactionId={selectedAction?.id || null}
+				action={selectedAction?.action || null}
+				onSettled={() => setSelectedAction(null)}
+			/>
 		</div>
 	);
 };

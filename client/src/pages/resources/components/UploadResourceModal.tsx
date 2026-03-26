@@ -13,6 +13,8 @@ import { useMemo, useRef, useState } from "react";
 import { useUploadResource } from "../hooks";
 import { useAuth } from "@client/hooks/useAuth";
 import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
+import { ImageUploader } from "@client/components/ImageUploader";
+import { XIcon } from "lucide-react";
 
 export const UploadResourceModal = ({
 	modalRef,
@@ -27,6 +29,7 @@ export const UploadResourceModal = ({
 	);
 	const [resourceType, setResourceType] = useState<string>("Skill");
 	const [availability, setAvailability] = useState<string>("Available");
+	const [imageUrls, setImageUrls] = useState<string[]>([]);
 
 	const resourceTypeItems = useMemo(
 		() => [
@@ -51,6 +54,7 @@ export const UploadResourceModal = ({
 			name: nameRef.current?.getValue(),
 			description: descriptionRef.current?.getValue(),
 			availability,
+			imageUrls,
 		});
 		if (error) {
 			Toast.toast.danger("Invalid resource data");
@@ -129,18 +133,43 @@ export const UploadResourceModal = ({
 					maxLength={500}
 				/>
 
-				<div className="flex items-center justify-end gap-2">
-					<Tooltip delay={0}>
-						<Button
-							variant="outline"
-							isIconOnly
-							radius="full"
-							startContent={<PaperclipIcon className="size-4 text-accent" />}
-						/>
-						<Tooltip.Content className="border border-accent rounded-full bg-surface text-accent">
-							Upload photo
-						</Tooltip.Content>
-					</Tooltip>
+				{imageUrls.length > 0 && (
+					<div className="flex gap-2 items-center flex-wrap">
+						{imageUrls.map((url) => (
+							<div key={url} className="relative w-16 h-16 rounded overflow-hidden border border-border mt-2">
+								<img src={url} alt={`upload-${url}`} className="w-full h-full object-cover" />
+								<Button 
+									isIconOnly 
+									size="sm" 
+									variant="danger" 
+									className="absolute top-1 right-1 h-5 w-5 min-w-0 min-h-0 rounded-full bg-danger/80"
+									onPress={() => setImageUrls(p => p.filter(u => u !== url))}
+								>
+									<XIcon className="size-3" />
+								</Button>
+							</div>
+						))}
+					</div>
+				)}
+
+				<div className="flex items-center justify-end gap-2 mt-2">
+					<ImageUploader 
+						onSave={(url) => setImageUrls((prev) => [...prev, url])}
+						trigger={(open) => (
+							<Tooltip delay={0}>
+								<Button
+									variant="outline"
+									isIconOnly
+									radius="full"
+									startContent={<PaperclipIcon className="size-4 text-accent" />}
+									onPress={open}
+								/>
+								<Tooltip.Content className="border border-accent rounded-full bg-surface text-accent">
+									Upload photo
+								</Tooltip.Content>
+							</Tooltip>
+						)}
+					/>
 					<Tooltip delay={0}>
 						<Button
 							variant="outline"
