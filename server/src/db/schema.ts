@@ -10,7 +10,7 @@ import {
 	type TransactionStatusEnum,
 	type UrgencyEnum,
 } from "@shared/types";
-import { type InferSelectModel, relations } from "drizzle-orm";
+import { type InferSelectModel, relations, sql } from "drizzle-orm";
 import {
 	boolean,
 	doublePrecision,
@@ -84,8 +84,6 @@ export const verification = pgTable("verification", {
 	updatedAt: timestamp("updatedAt"),
 });
 
-// --- Application Tables ---
-
 export const pulse = pgTable(
 	"pulse",
 	{
@@ -93,11 +91,11 @@ export const pulse = pgTable(
 		type: text("type")
 			.$type<PulseEnum>()
 			.notNull()
-			.default(PulseEnum.Emergency), // default: PulseEnum.Emergency
+			.default(PulseEnum.Emergency),
 		userId: text("userId")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
-		urgency: text("urgency").$type<UrgencyEnum>().notNull(), // default: UrgencyEnum.Unknown
+		urgency: text("urgency").$type<UrgencyEnum>().notNull(),
 		title: varchar("title", { length: 30 }).notNull(),
 		description: text("description"),
 		position: geometry("location", {
@@ -113,6 +111,7 @@ export const pulse = pgTable(
 			.$type<PulseUploadStateEnum>()
 			.notNull()
 			.default(PulseUploadStateEnum.Pending),
+		imageUrls: text("imageUrls").array().notNull().default(sql`'{}'::text[]`),
 		isResolved: boolean("isResolved").notNull().default(false),
 		isVerified: boolean("isVerified"),
 		createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -246,6 +245,7 @@ export const resource = pgTable("resources", {
 	availability: text("availability")
 		.$type<ResourceAvailabilityType>()
 		.notNull(),
+	imageUrls: text("imageUrls").array().notNull().default(sql`'{}'::text[]`),
 	createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 

@@ -41,6 +41,14 @@ export const useNotifications = (userId: string | undefined) => {
 						return old ? [newNotif, ...old] : [newNotif];
 					});
 					Toast.toast.success(`${response.message}`);
+				} else if (
+					response.success &&
+					response.channelName === "notifications:transaction"
+				) {
+					queryClient.invalidateQueries({
+						queryKey: ["pending", "requests", userId],
+					});
+					Toast.toast.success(response.message || "New borrow request!");
 				}
 			},
 		);

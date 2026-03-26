@@ -3,7 +3,7 @@ import logo from "../assets/logo.svg";
 
 export const Loader = () => {
 	return (
-		<div className="flex flex-col items-center justify-center min-h-screen bg-(--background)">
+		<div className="flex flex-col items-center justify-center h-full bg-surface">
 			<div className="flex items-center gap-3 mb-8">
 				<img src={logo} alt="UrbanPulse" className="h-12 w-12" />
 				<h1 className="text-2xl font-bold tracking-wide text-(--foreground)">

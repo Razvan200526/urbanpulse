@@ -15,6 +15,7 @@ import { client } from "@server/client.ts";
 import { createAuthClient } from "better-auth/client";
 import { emailOTPClient } from "better-auth/client/plugins";
 import { RouterProvider } from "react-router";
+import { NuqsAdapter } from "nuqs/adapters/react-router";
 import { RootProvider } from "./components/RootProvider.tsx";
 import { router } from "./router.tsx";
 
@@ -47,7 +48,9 @@ const render = () => {
 		<StrictMode>
 			<QueryClientProvider client={queryClient}>
 				<RootProvider>
-					<RouterProvider router={router} />
+					<NuqsAdapter>
+						<RouterProvider router={router} />
+					</NuqsAdapter>
 				</RootProvider>
 			</QueryClientProvider>
 		</StrictMode>,

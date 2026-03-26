@@ -12,8 +12,25 @@ export class ResourceRepository implements IRepository<ResourceType> {
 		return result || null;
 	}
 
-	async getAll(): Promise<ResourceType[]> {
-		return await db.select().from(resource);
+	async getAll() {
+		return await db.query.resource.findMany({
+			with: {
+				transactions: {
+					orderBy: (transactions, { desc }) => [desc(transactions.startAt)],
+					limit: 3,
+					with: {
+						borrower: {
+							columns: {
+								id: true,
+								name: true,
+								image: true,
+							},
+						},
+					},
+				},
+			},
+			orderBy: (resources, { desc }) => [desc(resources.createdAt)],
+		});
 	}
 
 	async create(data: Partial<ResourceType>): Promise<ResourceType | null> {

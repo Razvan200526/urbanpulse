@@ -1,9 +1,9 @@
+import { ClientUserType } from "@client/utils/types";
 import { glass } from "@dicebear/collection";
 import { createAvatar } from "@dicebear/core";
 import { Avatar as HeroAvatar } from "@heroui/react";
-import type { UserType } from "@server/db/schema";
 
-export const Avatar = ({ user }: { user?: UserType }) => {
+export const Avatar = ({ user }: { user?: ClientUserType }) => {
 	let avatar: string = "";
 	if (!user?.image) {
 		avatar = createAvatar(glass, {

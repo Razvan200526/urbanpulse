@@ -1,7 +1,8 @@
 import { db } from "@server/db";
 import { type TransactionType, transaction } from "@server/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
+import { TransactionStatusEnum } from "@shared/types";
 
 export class TransactionRepository implements IRepository<TransactionType> {
 	async getOne(id: string): Promise<TransactionType | null> {
@@ -14,6 +15,18 @@ export class TransactionRepository implements IRepository<TransactionType> {
 
 	async getAll(): Promise<TransactionType[]> {
 		return await db.select().from(transaction);
+	}
+
+	async getPendingByLenderId(lenderId: string): Promise<TransactionType[]> {
+		return await db
+			.select()
+			.from(transaction)
+			.where(
+				and(
+					eq(transaction.lenderId, lenderId as any),
+					eq(transaction.status, TransactionStatusEnum.Pending as any)
+				)
+			);
 	}
 
 	async create(

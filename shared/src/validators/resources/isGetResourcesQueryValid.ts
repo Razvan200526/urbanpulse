@@ -9,3 +9,7 @@ export const getResourcesSchema = z.object({
 export const isGetResourcesQueryValid = (query: unknown) => {
 	return getResourcesSchema.safeParse(query);
 };
+
+export const getOneResourceSchema = z.object({
+	resourceId: z.string(),
+});
