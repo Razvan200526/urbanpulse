@@ -6,39 +6,39 @@ import { useGetGeolocation } from "./useGetGeolocation";
 const THROTTLE_MS = 30_000;
 
 export const useLocationSync = () => {
-  const { coords } = useGetGeolocation(
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-    true,
-  );
-  const latestCoordsRef = useRef<GeolocationCoords | null>(null);
-  const lastSyncRef = useRef<number>(0);
+	const { coords } = useGetGeolocation(
+		{ enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+		true,
+	);
+	const latestCoordsRef = useRef<GeolocationCoords | null>(null);
+	const lastSyncRef = useRef<number>(0);
 
-  useEffect(() => {
-    latestCoordsRef.current = coords ?? null;
+	useEffect(() => {
+		latestCoordsRef.current = coords ?? null;
 
-    if (!backend.notifications.isOpen || !coords) return;
+		if (!backend.notifications.isOpen || !coords) return;
 
-    const now = Date.now();
-    const elapsed = now - lastSyncRef.current;
+		const now = Date.now();
+		const elapsed = now - lastSyncRef.current;
 
-    const sendLocation = () => {
-      if (!backend.notifications.isOpen || !latestCoordsRef.current) return;
-      lastSyncRef.current = Date.now();
-      backend.notifications.send({
-        type: "UPDATE_LOCATION",
-        location: {
-          x: latestCoordsRef.current.long,
-          y: latestCoordsRef.current.lat,
-        },
-      });
-    };
+		const sendLocation = () => {
+			if (!backend.notifications.isOpen || !latestCoordsRef.current) return;
+			lastSyncRef.current = Date.now();
+			backend.notifications.send({
+				type: "UPDATE_LOCATION",
+				location: {
+					x: latestCoordsRef.current.long,
+					y: latestCoordsRef.current.lat,
+				},
+			});
+		};
 
-    if (elapsed >= THROTTLE_MS) {
-      sendLocation();
-      return;
-    }
+		if (elapsed >= THROTTLE_MS) {
+			sendLocation();
+			return;
+		}
 
-    const timerId = setTimeout(sendLocation, THROTTLE_MS - elapsed);
-    return () => clearTimeout(timerId);
-  }, [coords]);
+		const timerId = setTimeout(sendLocation, THROTTLE_MS - elapsed);
+		return () => clearTimeout(timerId);
+	}, [coords]);
 };
