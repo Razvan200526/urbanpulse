@@ -1,14 +1,14 @@
 import { zValidator } from "@hono/zod-validator";
 import { resourceService } from "@server/services/ResourceService";
-import { Hono } from "hono";
-import { z } from "zod";
+import { logger } from "@server/utils/Logger";
 import {
 	getOneResourceSchema,
 	getResourcesSchema,
 } from "@shared/validators/resources/isGetResourcesQueryValid";
-import { upgradeWebSocket } from "hono/bun";
-import { logger } from "@server/utils/Logger";
 import { transactionRequestSchema } from "@shared/validators/transactions/isTransactionRequestValid";
+import { Hono } from "hono";
+import { upgradeWebSocket } from "hono/bun";
+import { z } from "zod";
 
 export const resourceController = new Hono()
 	.get("/", zValidator("query", getResourcesSchema), async (c) => {

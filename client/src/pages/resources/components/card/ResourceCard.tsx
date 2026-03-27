@@ -4,10 +4,10 @@ import { H6 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
 import type { ClientUserType } from "@client/utils/types";
 import { Card, Separator } from "@heroui/react";
-import { MoreVertical, Star } from "lucide-react";
-import { useGetResourceAuthor, type ResourceWithUsersType } from "../../hooks";
 import { formatDate } from "@shared/utils/formatDate";
+import { MoreVertical, Star } from "lucide-react";
 import { useState } from "react";
+import { type ResourceWithUsersType, useGetResourceAuthor } from "../../hooks";
 import { ResourceDetailsDrawer } from "./ResourceDetailsDrawer";
 
 export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {

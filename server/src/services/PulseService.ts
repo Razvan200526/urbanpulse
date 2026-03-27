@@ -22,7 +22,7 @@ export class PulseService {
 	 * @param {Partial<PulseType>} data - The pulse data.
 	 * @returns {Promise<PulseType | null>} The created pulse.
 	 */
-	async createPulse(data: Partial<PulseType>) {
+	async createPulse(data: Partial<PulseType>): Promise<PulseType | null> {
 		try {
 			const newPulse = await this.pulseRepository.create(data);
 			if (newPulse) {
@@ -41,7 +41,10 @@ export class PulseService {
 	 * @param {Partial<PulseType>} data - Fields to update.
 	 * @returns {Promise<PulseType | null>} The updated pulse.
 	 */
-	async updatePulse(pulseId: string, data: Partial<PulseType>) {
+	async updatePulse(
+		pulseId: string,
+		data: Partial<PulseType>,
+	): Promise<PulseType | null> {
 		try {
 			const updatedPulse = await this.pulseRepository.update(pulseId, data);
 			return updatedPulse;
@@ -64,7 +67,7 @@ export class PulseService {
 	}: {
 		userId: string;
 		position: { x: number; y: number };
-	}) {
+	}): Promise<PulseType[] | null> {
 		try {
 			const user = await userRepository.getOne(userId);
 			if (!user) {

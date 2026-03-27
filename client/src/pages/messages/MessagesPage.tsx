@@ -1,13 +1,13 @@
-import { H3 } from "../../components/typography";
 import { useAuth } from "@client/hooks/useAuth";
-import { useGetPendingRequests } from "../resources/hooks";
-import { Table, Spinner } from "@heroui/react";
-import { Avatar } from "../../components/user/Avatar";
-import { Button } from "../../components/Button/Button";
+import { Spinner, Table } from "@heroui/react";
 import { formatDate } from "@shared/utils/formatDate";
 import { CheckIcon, XIcon } from "lucide-react";
-import type { ModalRefType } from "../../components/Modal";
 import { useRef, useState } from "react";
+import { Button } from "../../components/Button/Button";
+import type { ModalRefType } from "../../components/Modal";
+import { H3 } from "../../components/typography";
+import { Avatar } from "../../components/user/Avatar";
+import { useGetPendingRequests } from "../resources/hooks";
 import { RespondRequestModal } from "./components/RespondRequestModal";
 
 export const MessagesPage = () => {

@@ -1,16 +1,15 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
+import type { ModalRefType } from "@client/components/Modal";
 import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
 import { ScrollShadow, Separator } from "@heroui/react";
 import { PlusSquareIcon, Wrench } from "lucide-react";
-import { UploadResourceModal } from "./components/UploadResourceModal";
-import type { ModalRefType } from "@client/components/Modal";
-import { useRef } from "react";
 import { parseAsString, useQueryState } from "nuqs";
-
+import { useRef } from "react";
 import { AllResourcesTab } from "./components/AllResourcesTab";
 import { MySkillsTab } from "./components/MySkillsTab";
 import { NetworkTab } from "./components/NetworkTab";
+import { UploadResourceModal } from "./components/UploadResourceModal";
 
 const tabItems: TabItemType[] = [
 	{

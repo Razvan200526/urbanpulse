@@ -1,7 +1,7 @@
 import { hono, queryClient } from "@client/main";
 import type { ClientUserType } from "@client/utils/types";
-import type { ResourceType } from "@server/db/schema";
 import { Toast } from "@heroui/react";
+import type { ResourceType } from "@server/db/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useUploadResource = (userId: string) => {

@@ -1,8 +1,8 @@
 import { db } from "@server/db";
 import { type TransactionType, transaction } from "@server/db/schema";
-import { eq, and } from "drizzle-orm";
-import type { IRepository } from "./IRepository";
 import { TransactionStatusEnum } from "@shared/types";
+import { and, eq } from "drizzle-orm";
+import type { IRepository } from "./IRepository";
 
 export class TransactionRepository implements IRepository<TransactionType> {
 	async getOne(id: string): Promise<TransactionType | null> {

@@ -2,7 +2,6 @@ import { Button } from "@client/components/Button/Button";
 import { ProgressChip } from "@client/components/chips/ProgressChip";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
 import { SignalIcon } from "@client/components/icons/SignalIcon";
-import { H4 } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { Chip, cn, Drawer } from "@heroui/react";
 import type { PulseType } from "@server/db/schema";

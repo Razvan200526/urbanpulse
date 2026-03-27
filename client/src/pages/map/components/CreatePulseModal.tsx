@@ -1,22 +1,23 @@
+import { AudioRecorder } from "@client/components/audio/AudioRecordComponent";
 import { Button } from "@client/components/Button/Button";
+import { ImageUploader } from "@client/components/ImageUploader";
 import {
 	InputName,
 	type InputNameRefType,
 } from "@client/components/input/InputName";
 import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
-import { TabItemType, Tabs } from "@client/components/tabs/Tabs";
+import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
 import { H3, Label } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { Separator, Toast, Tooltip } from "@heroui/react";
 import { PulseEnum, UrgencyEnum } from "@shared/types";
-import { MicIcon, PaperclipIcon, XIcon } from "lucide-react";
+import { isBioValid } from "@shared/validators/isBioValid";
+import { isNameValid } from "@shared/validators/isNameValid";
+import { PaperclipIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCreatePulse } from "../hooks";
-import { ImageUploader } from "@client/components/ImageUploader";
-import { isNameValid } from "@shared/validators/isNameValid";
-import { isBioValid } from "@shared/validators/isBioValid";
 
 export const pulseTypeItems: TabItemType[] = [
 	{
@@ -155,65 +156,64 @@ export const CreatePulseModal = ({
 					maxLength={100}
 				/>
 
-				{imageUrls.length > 0 && (
-					<div className="flex gap-2 items-center justify-start flex-wrap">
-						{imageUrls.map((url) => (
-							<div
-								key={url}
-								className="relative w-16 h-16 rounded overflow-hidden border border-border mt-2"
-							>
-								<img
-									src={url}
-									alt={`upload-${url}`}
-									className="w-full h-full object-cover"
-								/>
-								<Button
-									isIconOnly
-									size="sm"
-									variant="danger"
-									className="absolute top-1 right-1 h-5 w-5 min-w-0 min-h-0 rounded-full bg-danger/80"
-									onPress={() =>
-										setImageUrls((p) => p.filter((u) => u !== url))
-									}
-								>
-									<XIcon className="size-3" />
-								</Button>
-							</div>
-						))}
+				<div className="flex flex-col gap-3 bg-surface-secondary/30 p-3 rounded-lg border border-border">
+					<div className="flex items-center justify-between">
+						<span className="text-sm font-semibold text-accent">Media & Attachments</span>
 					</div>
-				)}
 
-				<div className="flex items-center justify-end gap-2 mt-2">
-					<ImageUploader
-						onSave={(url) => setImageUrls((prev) => [...prev, url])}
-						trigger={(open) => (
-							<Tooltip delay={0}>
-								<Button
-									variant="outline"
-									isIconOnly
-									radius="full"
-									startContent={
-										<PaperclipIcon className="size-4 text-accent" />
-									}
-									onPress={open}
-								/>
-								<Tooltip.Content className="border border-accent rounded-full bg-surface text-accent">
-									Upload photo
-								</Tooltip.Content>
-							</Tooltip>
-						)}
-					/>
-					<Tooltip delay={0}>
-						<Button
-							variant="outline"
-							isIconOnly
-							radius="full"
-							startContent={<MicIcon className="size-4 text-accent" />}
-						/>
-						<Tooltip.Content className="border border-accent rounded-full bg-surface text-accent">
-							Record audio
-						</Tooltip.Content>
-					</Tooltip>
+					{imageUrls.length > 0 && (
+						<div className="flex gap-2 items-center overflow-x-auto pb-2 scrollbar-thin">
+							{imageUrls.map((url) => (
+								<div
+									key={url}
+									className="relative w-16 h-16 shrink-0 rounded overflow-hidden border border-border"
+								>
+									<img
+										src={url}
+										alt={`upload-${url}`}
+										className="w-full h-full object-cover"
+									/>
+									<Button
+										isIconOnly
+										size="sm"
+										variant="danger"
+										className="absolute top-1 right-1 h-5 w-5 min-w-0 min-h-0 rounded-full bg-danger/80"
+										onPress={() =>
+											setImageUrls((p) => p.filter((u) => u !== url))
+										}
+									>
+										<XIcon className="size-3" />
+									</Button>
+								</div>
+							))}
+						</div>
+					)}
+
+					<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+						<div className="flex items-center order-2 sm:order-1 flex-1">
+							<AudioRecorder />
+						</div>
+						<div className="flex items-center justify-end order-1 sm:order-2 shrink-0">
+							<ImageUploader
+								onSave={(url) => setImageUrls((prev) => [...prev, url])}
+								trigger={(open) => (
+									<Tooltip delay={0}>
+										<span className="inline-block">
+											<Button
+												variant="outline"
+												isIconOnly
+												radius="full"
+												startContent={
+													<PaperclipIcon className="size-4 text-accent" />
+												}
+												onPress={open}
+											/>
+										</span>
+									</Tooltip>
+								)}
+							/>
+						</div>
+					</div>
 				</div>
 				<Separator variant="tertiary" />
 			</div>

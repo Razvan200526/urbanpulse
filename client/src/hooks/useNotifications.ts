@@ -1,7 +1,7 @@
 import { hono, queryClient } from "@client/main";
-import { backend } from "client/sdk/backend";
 import { Toast } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
+import { backend } from "client/sdk/backend";
 import { useEffect } from "react";
 
 type NotificationData = { type: string; payload: Record<string, unknown> };

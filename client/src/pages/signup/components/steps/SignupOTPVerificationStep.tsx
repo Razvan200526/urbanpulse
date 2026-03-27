@@ -1,16 +1,16 @@
+import { Button } from "@client/components/Button/Button";
 import {
 	type InputOTPRefType,
 	InputOtp,
 } from "@client/components/input/InputOtp";
+import { H2 } from "@client/components/typography";
 import { Separator, Toast } from "@heroui/react";
+import { isOTPValid } from "@shared/validators/isOTPValid";
+import { ChevronLeftIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useVerifyOTP } from "../../hooks";
 import { useSignupStore } from "../../signUpStore";
-import { isOTPValid } from "@shared/validators/isOTPValid";
-import { H2 } from "@client/components/typography";
-import { Button } from "@client/components/Button/Button";
-import { ChevronLeftIcon } from "lucide-react";
 export const SignupOTPVerificationStep = () => {
 	const { data, setStep, clear } = useSignupStore();
 	const { mutateAsync: verifyOTP, isPending } = useVerifyOTP();

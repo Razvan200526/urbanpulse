@@ -8,19 +8,18 @@ import {
 	resourceRepository,
 } from "@server/repositories/ResourceRepository";
 import {
-	userRepository,
-	type UserRepository,
-} from "@server/repositories/UserRepository";
-import { handleError } from "@server/utils/handleError";
-import { logger } from "@server/utils/Logger";
-import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
-import {
 	type TransactionRepository,
 	transactionRepository,
 } from "@server/repositories/TransactionRepository";
+import {
+	type UserRepository,
+	userRepository,
+} from "@server/repositories/UserRepository";
 import { socketManager } from "@server/services/SocketManager";
+import { handleError } from "@server/utils/handleError";
+import { logger } from "@server/utils/Logger";
 import { TransactionStatusEnum } from "@shared/types";
-import type { ResourceAvailabilityType } from "@shared/types";
+import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
 
 export class ResourceService {
 	private resourceRepo: ResourceRepository;

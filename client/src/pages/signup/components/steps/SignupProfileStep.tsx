@@ -1,18 +1,18 @@
+import { Button } from "@client/components/Button/Button";
 import { InputAvatar } from "@client/components/input/InputAvatar";
 import {
 	InputName,
 	type InputNameRefType,
 } from "@client/components/input/InputName";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
+import { H2 } from "@client/components/typography";
 import { Separator, Toast } from "@heroui/react";
+import { isBioValid } from "@shared/validators/isBioValid";
+import { isNameValid } from "@shared/validators/isNameValid";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRef } from "react";
 import { useSignUp } from "../../hooks";
 import { useSignupStore } from "../../signUpStore";
-import { H2 } from "@client/components/typography";
-import { Button } from "@client/components/Button/Button";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { isNameValid } from "@shared/validators/isNameValid";
-import { isBioValid } from "@shared/validators/isBioValid";
 
 export const SignupProfileStep = () => {
 	const { data, setData, setStep } = useSignupStore();

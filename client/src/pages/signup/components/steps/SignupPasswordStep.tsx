@@ -1,12 +1,12 @@
+import { Button } from "@client/components/Button/Button";
 import type { InputPasswordRefType } from "@client/components/input/InputPassword";
 import { InputPassword } from "@client/components/input/InputPassword";
+import { H2 } from "@client/components/typography";
 import { Separator, Toast } from "@heroui/react";
+import { isPasswordValid } from "@shared/validators/isPasswordValid";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRef } from "react";
 import { useSignupStore } from "../../signUpStore";
-import { isPasswordValid } from "@shared/validators/isPasswordValid";
-import { Button } from "@client/components/Button/Button";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import { H2 } from "@client/components/typography";
 export const SignupPasswordStep = () => {
 	const passwordRef = useRef<InputPasswordRefType>(null);
 	const confirmPasswordRef = useRef<InputPasswordRefType>(null);

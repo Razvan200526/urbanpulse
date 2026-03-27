@@ -6,8 +6,8 @@ import { authController } from "./controllers/AuthController";
 import { avatarController } from "./controllers/AvatarController";
 import { notificationController } from "./controllers/NotificationController";
 import { pulseController } from "./controllers/PulseController";
-import { userController } from "./controllers/UserController";
 import { resourceController } from "./controllers/ResourceController";
+import { userController } from "./controllers/UserController";
 export const app = new Hono()
 	.use(
 		rateLimiter({

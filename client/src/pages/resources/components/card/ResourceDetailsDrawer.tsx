@@ -1,13 +1,13 @@
 import { Button } from "@client/components/Button/Button";
 import { AvailabilityChip } from "@client/components/chips/AvaiabilityChip";
 import { Avatar } from "@client/components/user/Avatar";
+import { useAuth } from "@client/hooks/useAuth";
 import { MetaRow } from "@client/pages/map/components/MetaRow";
 import type { ClientUserType } from "@client/utils/types";
-import { Chip, Drawer, cn } from "@heroui/react";
+import { Chip, cn, Drawer } from "@heroui/react";
 import { formatDate } from "@shared/utils/formatDate";
 import { ClockIcon, PackageIcon } from "lucide-react";
 import type { ResourceWithUsersType } from "../../hooks";
-import { useAuth } from "@client/hooks/useAuth";
 import { useRequestBorrow } from "../../hooks";
 
 interface ResourceDetailsDrawerProps {

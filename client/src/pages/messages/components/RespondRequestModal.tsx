@@ -2,8 +2,8 @@ import { Button } from "@client/components/Button/Button";
 import { Modal, type ModalRefType } from "@client/components/Modal";
 import { H3 } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
-import { useRespondToRequest } from "../../resources/hooks";
 import { Toast } from "@heroui/react";
+import { useRespondToRequest } from "../../resources/hooks";
 
 export const RespondRequestModal = ({
 	modalRef,

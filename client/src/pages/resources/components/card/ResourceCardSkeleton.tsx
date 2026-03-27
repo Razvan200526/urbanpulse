@@ -1,4 +1,4 @@
-import { Card, Skeleton, Separator } from "@heroui/react";
+import { Card, Separator, Skeleton } from "@heroui/react";
 
 export const ResourceCardSkeleton = () => {
 	return (

@@ -14,8 +14,8 @@ import "./index.css";
 import { client } from "@server/client.ts";
 import { createAuthClient } from "better-auth/client";
 import { emailOTPClient } from "better-auth/client/plugins";
-import { RouterProvider } from "react-router";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
+import { RouterProvider } from "react-router";
 import { RootProvider } from "./components/RootProvider.tsx";
 import { router } from "./router.tsx";
 

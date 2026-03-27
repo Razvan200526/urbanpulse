@@ -1,3 +1,4 @@
+import { Button } from "@client/components/Button/Button";
 import { ChevronRightIcon } from "@client/components/icons/ChevronRight";
 import {
 	InputEmail,
@@ -5,11 +6,10 @@ import {
 } from "@client/components/input/InputEmail";
 import { Link } from "@client/components/Link";
 import { Separator } from "@heroui/react";
+import { isEmailValid } from "@shared/validators/isEmailValid";
 import { useRef } from "react";
 import { useVerifyEmail } from "../../hooks";
 import { useSignupStore } from "../../signUpStore";
-import { isEmailValid } from "@shared/validators/isEmailValid";
-import { Button } from "@client/components/Button/Button";
 
 export const SignupEmailStep = () => {
 	const emailRef = useRef<InputEmailRefType>(null);

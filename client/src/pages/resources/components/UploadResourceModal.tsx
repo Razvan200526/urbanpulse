@@ -1,4 +1,5 @@
 import { Button } from "@client/components/Button/Button";
+import { ImageUploader } from "@client/components/ImageUploader";
 import {
 	InputName,
 	type InputNameRefType,
@@ -7,14 +8,12 @@ import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import { Tabs } from "@client/components/tabs/Tabs";
 import { H3, Label } from "@client/components/typography";
+import { useAuth } from "@client/hooks/useAuth";
 import { Separator, Toast, Tooltip } from "@heroui/react";
-import { MicIcon, PaperclipIcon } from "lucide-react";
+import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
+import { MicIcon, PaperclipIcon, XIcon } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useUploadResource } from "../hooks";
-import { useAuth } from "@client/hooks/useAuth";
-import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
-import { ImageUploader } from "@client/components/ImageUploader";
-import { XIcon } from "lucide-react";
 
 export const UploadResourceModal = ({
 	modalRef,
