@@ -158,7 +158,9 @@ export const CreatePulseModal = ({
 
 				<div className="flex flex-col gap-3 bg-surface-secondary/30 p-3 rounded-lg border border-border">
 					<div className="flex items-center justify-between">
-						<span className="text-sm font-semibold text-accent">Media & Attachments</span>
+						<span className="text-sm font-semibold text-accent">
+							Media & Attachments
+						</span>
 					</div>
 
 					{imageUrls.length > 0 && (
