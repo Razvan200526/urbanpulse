@@ -14,7 +14,7 @@ type GeolocationResult = {
 
 const GEO_OPTIONS: PositionOptions = {
 	enableHighAccuracy: true,
-	timeout: 10000,
+	timeout: 100,
 	maximumAge: 60000,
 };
 
@@ -81,9 +81,7 @@ export function useGetGeolocation(
 		geoLocation();
 
 		return () => {
-			// Mark as unmounted so in-flight callbacks are ignored
 			mountedRef.current = false;
-			// Clean up the position watcher if one is active
 			if (watchIdRef.current !== null) {
 				navigator.geolocation.clearWatch(watchIdRef.current);
 				watchIdRef.current = null;

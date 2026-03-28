@@ -1,1 +1,0 @@
-ALTER TABLE "pulse" ALTER COLUMN "position" SET DATA TYPE "undefined"."point";

@@ -1,9 +1,11 @@
 import type { PulseResponseType } from "@server/db/schema";
+import { pulseRepository } from "@server/repositories/PulseRepository";
 import {
 	type ResponseRepository,
 	responseRepository,
 } from "@server/repositories/ResponseRepository";
 import { handleError } from "@server/utils/handleError";
+import { ResponseStatusEnum } from "@shared/types";
 import { isResponseRequestValid } from "@shared/validators/isResponseValid";
 
 export class ResponseService {
@@ -13,7 +15,64 @@ export class ResponseService {
 		this.responseRepo = responseRepository;
 	}
 
-	async createResponse(data: Partial<ResponseService>) {
+	/**
+	 * Neighbor offers help on a pulse. Caller must ensure no duplicate responder row.
+	 */
+	async offerHelp(
+		pulseId: string,
+		responderId: string,
+	): Promise<PulseResponseType | null> {
+		try {
+			return await this.responseRepo.create({
+				pulseId,
+				responderId,
+				status: ResponseStatusEnum.Pending,
+			});
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
+	/**
+	 * Pulse owner accepts one helper; other pending offers for that pulse are declined.
+	 */
+	async acceptHelpOffer(
+		ownerUserId: string,
+		pulseId: string,
+		responseId: string,
+	): Promise<{
+		accepted: PulseResponseType;
+		pulseTitle: string;
+		responderId: string;
+	} | null> {
+		try {
+			const pulse = await pulseRepository.getOne(pulseId);
+			if (!pulse || pulse.userId !== ownerUserId) return null;
+			const row = await this.responseRepo.getOne(responseId);
+			if (
+				!row ||
+				row.pulseId !== pulseId ||
+				row.status !== ResponseStatusEnum.Pending
+			) {
+				return null;
+			}
+			const accepted = await this.responseRepo.update(responseId, {
+				status: ResponseStatusEnum.Accepted,
+			});
+			await this.responseRepo.declineOtherPendingForPulse(pulseId, responseId);
+			return {
+				accepted,
+				pulseTitle: pulse.title,
+				responderId: row.responderId,
+			};
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
+	async createResponse(data: unknown) {
 		const result = isResponseRequestValid(data);
 		try {
 			if (result.error) {

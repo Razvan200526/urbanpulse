@@ -1,47 +1,32 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { RefreshIcon } from "@client/components/icons/RefreshIcon";
-import { Avatar } from "@client/components/user/Avatar";
+import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { Card, Separator } from "@heroui/react";
-import { AlertTriangle, TrendingUp } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router";
 import { Chart } from "./components/Chart";
+import { NeighborhoodPulseFeed } from "./components/NeighborhoodPulseFeed";
+import { SafetyCheckInBanner } from "./components/SafetyCheckInBanner";
 import { fakeStats } from "./components/fakeStats";
 import { StatsCard } from "./components/StatsCard";
 
-const RECENT_ACTIVITY_FAKE = [
-	{
-		id: 1,
-		user: "Elena Smith",
-		action: "confirmed a pulse in",
-		target: "Sector 7G",
-		time: "2m ago",
-		avatar: "https://i.pravatar.cc/150?u=elena",
-	},
-	{
-		id: 2,
-		user: "Marcus Chen",
-		action: "reported a water leak",
-		target: "Downtown",
-		time: "15m ago",
-		avatar: "https://i.pravatar.cc/150?u=marcus",
-	},
-	{
-		id: 3,
-		user: "Sarah Miller",
-		action: "joined the community",
-		target: "North District",
-		time: "1h ago",
-		avatar: "https://i.pravatar.cc/150?u=sarah",
-	},
-];
-
 export const DashboardPages = () => {
+	const navigate = useNavigate();
+	const { coords, isLoading: geoLoading, isError: geoError } = useGetGeolocation();
+	const geoReady = !!coords && !geoError && !geoLoading;
+
 	return (
 		<div className="flex flex-col h-full bg-surface overflow-auto">
 			<Header title="Dashboard" />
 			<Separator />
 
 			<div className="p-6 space-y-8">
+				<SafetyCheckInBanner
+					lat={coords?.lat}
+					lon={coords?.long}
+					geoReady={geoReady}
+				/>
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 					{fakeStats.map((stat) => (
 						<StatsCard key={stat.title} stat={stat} />
@@ -74,41 +59,7 @@ export const DashboardPages = () => {
 					</Card>
 
 					<div className="space-y-6">
-						<Card className="shadow-none border border-border">
-							<Card.Header>
-								<Card.Title className="text-lg flex items-center text-accent gap-2">
-									<TrendingUp className="size-4" />
-									Live Feed
-								</Card.Title>
-							</Card.Header>
-							<Card.Content className="space-y-4">
-								{RECENT_ACTIVITY_FAKE.map((activity) => (
-									<div key={activity.id} className="flex items-start gap-3">
-										<Avatar />
-										<div className="flex flex-col">
-											<p className="text-sm leading-tight">
-												<span className="font-semibold text-accent">
-													{activity.user}
-												</span>{" "}
-												{activity.action}{" "}
-												<span className="text-muted font-medium">
-													{activity.target}
-												</span>
-											</p>
-											<span className="text-xs text-muted mt-0.5">
-												{activity.time}
-											</span>
-										</div>
-									</div>
-								))}
-							</Card.Content>
-							<Separator />
-							<Card.Footer>
-								<Button size="sm" variant="primary" fullWidth>
-									View All Activity
-								</Button>
-							</Card.Footer>
-						</Card>
+						<NeighborhoodPulseFeed />
 
 						<Card className="bg-danger/5 border border-danger-soft-hover">
 							<Card.Content className="p-4 flex flex-col items-center text-center">
@@ -116,13 +67,19 @@ export const DashboardPages = () => {
 									<AlertTriangle className="size-6 text-danger" />
 								</div>
 								<h4 className="font-semibold text-danger">
-									Emergency Dispatch
+									Local emergency
 								</h4>
 								<p className="text-xs text-danger/70 mt-1 mb-4">
-									Immediate attention required at your location
+									Post an urgent pulse from the map so neighbors are notified in
+									real time.
 								</p>
-								<Button size="sm" variant="danger" className="w-full">
-									Deploy Team
+								<Button
+									size="sm"
+									variant="danger"
+									className="w-full"
+									onPress={() => navigate("/map")}
+								>
+									Open map
 								</Button>
 							</Card.Content>
 						</Card>

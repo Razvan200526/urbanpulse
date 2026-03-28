@@ -1,5 +1,5 @@
-import { logger } from "@server/utils/Logger";
 import * as z from "zod";
+import { printZodError } from "./utils/printZodError";
 
 export const envSchema = z.object({
 	NODE_ENV: z.enum(["development", "staging", "production"]),
@@ -13,26 +13,22 @@ export const envSchema = z.object({
 	R2_ACCESS_KEY: z.string(),
 	R2_SECRET_ACCESS_KEY: z.string(),
 	R2_TOKEN: z.string(),
-	R2_BUCKET_NAME: z.string(),
 	R2_DOMAIN: z.string(),
+	R2_BUCKET_NAME: z.string(),
 	RESEND_API_KEY: z.string(),
 	BETTER_AUTH_API_KEY: z.string(),
 	GITHUB_CLIENT_ID: z.string(),
 	GITHUB_CLIENT_SECRET: z.string(),
 	GOOGLE_CLIENT_ID: z.string(),
 	GOOGLE_CLIENT_SECRET: z.string(),
+	/** Optional: enables /api/weather/alerts for dashboard safety banner */
+	OPENWEATHER_API_KEY: z.string().optional(),
 });
 
 export function parseEnv() {
-	try {
-		envSchema.parse(Bun.env);
-	} catch (e) {
-		if (e instanceof Error) {
-			logger.exception(e);
-		} else {
-			logger.error(`Env parsing failed: ${e}`);
-			process.exit(1);
-		}
+	const { error } = envSchema.safeParse(Bun.env);
+	if (error) {
+		printZodError(error);
 	}
 }
 

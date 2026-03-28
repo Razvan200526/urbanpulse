@@ -11,17 +11,19 @@ import { upgradeWebSocket } from "hono/bun";
 import { z } from "zod";
 
 export const resourceController = new Hono()
+	.basePath("/resources")
 	.get("/", zValidator("query", getResourcesSchema), async (c) => {
 		const { _userId } = c.req.query();
 
 		const resources = await resourceService.getAllResource();
 
-		if (!resources || resources.length === 0) {
+		if (!resources) {
 			return c.json(
 				{ success: false, message: "No resources found", data: null },
 				404,
 			);
 		}
+
 		return c.json(
 			{
 				success: true,

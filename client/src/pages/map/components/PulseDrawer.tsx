@@ -3,7 +3,7 @@ import { ProgressChip } from "@client/components/chips/ProgressChip";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
 import { SignalIcon } from "@client/components/icons/SignalIcon";
 import { useAuth } from "@client/hooks/useAuth";
-import { Chip, cn, Drawer } from "@heroui/react";
+import { Chip, cn, Drawer, Toast } from "@heroui/react";
 import type { PulseType } from "@server/db/schema";
 import { PulseEnum, PulseStatusEnum } from "@shared/types";
 import { formatDate } from "@shared/utils/formatDate";
@@ -17,6 +17,7 @@ import {
 	XCircleIcon,
 	ZapIcon,
 } from "lucide-react";
+import { useOfferHelp, useUpdatePulse } from "../hooks";
 import { MetaRow } from "./MetaRow";
 import { UrgencyMeter } from "./UrgencyMeter";
 
@@ -83,6 +84,11 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 	const StatusIcon = statusCfg.icon;
 
 	const { data: user } = useAuth();
+	const updatePulse = useUpdatePulse();
+	const offerHelp = useOfferHelp();
+	const isOwner = user?.user.id === pulse.userId;
+	const canOfferHelp =
+		!isOwner && pulse.status === PulseStatusEnum.Active && user?.user.id;
 
 	return (
 		<Drawer isOpen={isOpen} onOpenChange={onOpenChange} key="right">
@@ -193,17 +199,99 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 									</span>
 								</MetaRow>
 							</div>
+
+							{isOwner && pulse.status === PulseStatusEnum.Active && (
+								<div className="rounded bg-surface border border-border p-4 space-y-3">
+									<p className="text-xs font-medium tracking-widest uppercase text-muted">
+										Your pulse
+									</p>
+									<div className="flex flex-wrap gap-2">
+										<Button
+											variant="primary"
+											size="sm"
+											isDisabled={updatePulse.isPending}
+											startContent={<CheckCircle2Icon className="size-4" />}
+											onPress={() =>
+												updatePulse.mutate(
+													{
+														pulseId: pulse.id,
+														status: PulseStatusEnum.Resolved,
+													},
+													{
+														onSuccess: () =>
+															Toast.toast.success("Marked as resolved"),
+														onError: (err) =>
+															Toast.toast.danger(
+																err instanceof Error
+																	? err.message
+																	: "Could not update pulse",
+															),
+													},
+												)
+											}
+										>
+											Mark resolved
+										</Button>
+										<Button
+											variant="danger-soft"
+											size="sm"
+											isDisabled={updatePulse.isPending}
+											startContent={<XCircleIcon className="size-4" />}
+											onPress={() =>
+												updatePulse.mutate(
+													{
+														pulseId: pulse.id,
+														status: PulseStatusEnum.Dismissed,
+													},
+													{
+														onSuccess: () =>
+															Toast.toast.success("Pulse dismissed"),
+														onError: (err) =>
+															Toast.toast.danger(
+																err instanceof Error
+																	? err.message
+																	: "Could not update pulse",
+															),
+													},
+												)
+											}
+										>
+											Dismiss
+										</Button>
+									</div>
+								</div>
+							)}
 						</Drawer.Body>
 						<div className="flex items-center justify-end gap-3">
 							<Button variant="danger-soft" onPress={() => onOpenChange(false)}>
 								Close
 							</Button>
-							{user?.user.id !== pulse.userId && (
+							{canOfferHelp && (
 								<Button
 									variant="primary"
 									startContent={<HelpIcon className="size-4" />}
+									isPending={offerHelp.isPending}
+									onPress={() =>
+										offerHelp.mutate(
+											{ pulseId: pulse.id },
+											{
+												onSuccess: () => {
+													Toast.toast.success(
+														"Your offer was sent to the poster",
+													);
+													onOpenChange(false);
+												},
+												onError: (err) =>
+													Toast.toast.danger(
+														err instanceof Error
+															? err.message
+															: "Could not offer help",
+													),
+											},
+										)
+									}
 								>
-									Offer Help
+									Offer help
 								</Button>
 							)}
 						</div>

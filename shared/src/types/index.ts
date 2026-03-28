@@ -24,6 +24,8 @@ export type ResourceAvailabilityType =
 export type NotificationType =
 	| "HERO_ALERT"
 	| "PULSE_CONFIRMED"
+	| "PULSE_RESPONSE"
+	| "PULSE_RESPONSE_ACCEPTED"
 	| "MESSAGE"
 	| "TRANSACTION"
 	| "FEEDBACK";

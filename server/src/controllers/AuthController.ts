@@ -1,6 +1,8 @@
 import auth from "@server/services/auth/AuthService";
 import { Hono } from "hono";
 
-export const authController = new Hono().on(["POST", "GET"], "/*", (c) => {
-	return auth.handler(c.req.raw);
-});
+export const authController = new Hono()
+	.basePath("/auth")
+	.on(["POST", "GET"], "/*", (c) => {
+		return auth.handler(c.req.raw);
+	});

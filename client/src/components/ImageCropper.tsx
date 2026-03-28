@@ -99,14 +99,13 @@ export const ImageCropper = ({
 				: await uploadImage(file);
 			setIsLoading(false);
 
-			const res = await response.json();
-			if (!res.data.success || !res.data.url) {
-				Toast.toast.danger(res.data.message || "Upload failed");
+			if (!response.data.success || !response.data.url) {
+				Toast.toast.danger(response.data.message || "Upload failed");
 				return;
 			}
 
 			Toast.toast.success("Image uploaded successfully");
-			onSave(res.data.url);
+			onSave(response.data.url);
 			setIsOpen(false);
 		}
 	};

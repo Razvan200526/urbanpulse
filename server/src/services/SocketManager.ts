@@ -94,6 +94,12 @@ export class SocketManager {
 		return Array.from(this.connections.values());
 	}
 
+	public getConnectionsForUser(userId: string) {
+		return Array.from(this.connections.values()).filter(
+			(c) => c.userId === userId,
+		);
+	}
+
 	private calculateDistance(
 		p1: { x: number; y: number },
 		p2: { x: number; y: number },

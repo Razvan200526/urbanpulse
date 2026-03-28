@@ -8,6 +8,8 @@ import { notificationController } from "./controllers/NotificationController";
 import { pulseController } from "./controllers/PulseController";
 import { resourceController } from "./controllers/ResourceController";
 import { userController } from "./controllers/UserController";
+import { uploadController } from "./controllers/UploadController";
+import { weatherController } from "./controllers/WeatherController";
 export const app = new Hono()
 	.use(
 		rateLimiter({
@@ -37,12 +39,14 @@ export const app = new Hono()
 			credentials: true,
 		}),
 	)
-	.route("/auth", authController)
-	.route("/users", userController)
-	.route("/avatar", avatarController)
-	.route("/pulse", pulseController)
-	.route("/notifications", notificationController)
-	.route("/resources", resourceController);
+	.route("/", authController)
+	.route("/", userController)
+	.route("/", avatarController)
+	.route("/", pulseController)
+	.route("/", notificationController)
+	.route("/", resourceController)
+	.route("/", uploadController)
+	.route("/", weatherController);
 
 export type AppType = typeof app;
 export default app;

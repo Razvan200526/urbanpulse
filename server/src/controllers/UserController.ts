@@ -2,10 +2,9 @@ import { zValidator } from "@hono/zod-validator";
 import { userService } from "@server/services/UserService";
 import { emailSchema } from "@shared/validators/isEmailValid";
 import { Hono } from "hono";
-export const userController = new Hono().get(
-	"/verify-email",
-	zValidator("query", emailSchema),
-	async (c) => {
+export const userController = new Hono()
+	.basePath("/users")
+	.get("/verify-email", zValidator("query", emailSchema), async (c) => {
 		const { email } = c.req.valid("query");
 		if (!email) {
 			return c.json(
@@ -28,5 +27,4 @@ export const userController = new Hono().get(
 			{ success: true, exists: true, message: "User already exists" },
 			200,
 		);
-	},
-);
+	});

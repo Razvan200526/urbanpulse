@@ -88,6 +88,22 @@ export class StorageService {
 		const bucketUrl = this.getImageBucket();
 		return `${bucketUrl}${key}`;
 	}
+
+	async uploadAudioFile(file: File): Promise<string> {
+		const key = `audio/${Date.now()}-${file.name}`;
+		this.setBucket("urbanpulse");
+
+		const command = new PutObjectCommand({
+			Bucket: this.bucketName,
+			Key: key,
+			Body: new Uint8Array(await file.arrayBuffer()),
+			ContentType: file.type,
+		});
+
+		await this.S3Client.send(command);
+		const bucketUrl = this.getImageBucket();
+		return `${bucketUrl}${key}`;
+	}
 }
 
 export const storageService = new StorageService();

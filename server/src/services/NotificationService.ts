@@ -1,4 +1,4 @@
-import type { NotificationType } from "@server/db/schema";
+import type { NotificationType, PulseType } from "@server/db/schema";
 import {
 	type NotificationRepository,
 	notificationRepository,
@@ -15,6 +15,20 @@ export class NotificationService {
 
 	constructor() {
 		this.notificationRepo = notificationRepository;
+	}
+
+	private recipientsNearPulse(position: { x: number; y: number }) {
+		let recipients = socketManager.getConnectionsInRange(position, 500);
+		if (recipients.length === 0) {
+			const allConnections = socketManager.getAllConnections();
+			if (allConnections.length > 0) {
+				logger.info(
+					`No users found in range — falling back to all ${allConnections.length} connected user(s).`,
+				);
+				recipients = allConnections;
+			}
+		}
+		return recipients;
 	}
 
 	/**
@@ -78,21 +92,7 @@ export class NotificationService {
 			`Broadcasting pulse ${id} to users near [Long: ${position.x}, Lat: ${position.y}]`,
 		);
 
-		// 1. Find connected users in range (500m)
-		// We use the singleton instance to get active connections
-		let recipients = socketManager.getConnectionsInRange(position, 500);
-
-		// Fallback: if no users have synced their location yet, broadcast to all
-		if (recipients.length === 0) {
-			const allConnections = socketManager.getAllConnections();
-			if (allConnections.length > 0) {
-				logger.info(
-					`No users found in range — falling back to all ${allConnections.length} connected user(s).`,
-				);
-				recipients = allConnections;
-			}
-		}
-
+		const recipients = this.recipientsNearPulse(position);
 		logger.info(`Broadcasting to ${recipients.length} user(s)`);
 
 		const broadcastData = {
@@ -122,6 +122,126 @@ export class NotificationService {
 				payload: broadcastData.data.payload as any,
 			});
 		}
+	}
+
+	/**
+	 * Notifies connected neighbors that a pulse changed (status, resolution, etc.).
+	 * Does not persist to notification history — clients refetch the pulse list.
+	 */
+	broadcastPulseUpdated(pulse: PulseType) {
+		const { position, id, status, isResolved, title, type: pulseKind } = pulse;
+		logger.info(
+			`Broadcasting pulse update ${id} near [Long: ${position.x}, Lat: ${position.y}]`,
+		);
+		const recipients = this.recipientsNearPulse(position);
+		const broadcastData = {
+			success: true,
+			channelName: "notifications:pulse_updated",
+			data: {
+				type: "PULSE_UPDATED",
+				payload: {
+					pulseId: id,
+					status,
+					isResolved,
+					type: pulseKind,
+					title,
+					location: position,
+				},
+			},
+			message: "A nearby pulse was updated",
+		};
+		for (const conn of recipients) {
+			conn.ws.send(JSON.stringify(broadcastData));
+		}
+	}
+
+	/**
+	 * Direct notification to the pulse author when someone offers help.
+	 */
+	async notifyPulseOwnerOfResponse(params: {
+		ownerUserId: string;
+		responseId: string;
+		pulseId: string;
+		pulseTitle: string;
+		responderId: string;
+		responderName: string;
+		note: string;
+	}) {
+		const {
+			ownerUserId,
+			responseId,
+			pulseId,
+			pulseTitle,
+			responderId,
+			responderName,
+			note,
+		} = params;
+		const payload = {
+			responseId,
+			pulseId,
+			pulseTitle,
+			responderId,
+			responderName,
+			note,
+		};
+		const message = `${responderName} offered help on "${pulseTitle}"`;
+		const broadcastData = {
+			success: true,
+			channelName: "notifications:pulse_response",
+			data: {
+				type: "PULSE_RESPONSE",
+				payload,
+			},
+			message,
+		};
+		const body = JSON.stringify(broadcastData);
+		for (const conn of socketManager.getConnectionsForUser(ownerUserId)) {
+			conn.ws.send(body);
+		}
+		await this.createNotification({
+			userId: ownerUserId,
+			type: "PULSE_RESPONSE",
+			payload,
+		});
+	}
+
+	/**
+	 * Lets the responder know their help offer was accepted.
+	 */
+	async notifyResponderHelpAccepted(params: {
+		responderUserId: string;
+		pulseId: string;
+		pulseTitle: string;
+		ownerName: string;
+		responseId: string;
+	}) {
+		const { responderUserId, pulseId, pulseTitle, ownerName, responseId } =
+			params;
+		const payload = {
+			pulseId,
+			pulseTitle,
+			ownerName,
+			responseId,
+		};
+		const message = `${ownerName} accepted your help for “${pulseTitle}”`;
+		const broadcastData = {
+			success: true,
+			channelName: "notifications:help_accepted",
+			data: {
+				type: "PULSE_RESPONSE_ACCEPTED",
+				payload,
+			},
+			message,
+		};
+		const body = JSON.stringify(broadcastData);
+		for (const conn of socketManager.getConnectionsForUser(responderUserId)) {
+			conn.ws.send(body);
+		}
+		await this.createNotification({
+			userId: responderUserId,
+			type: "PULSE_RESPONSE_ACCEPTED",
+			payload,
+		});
 	}
 
 	/**

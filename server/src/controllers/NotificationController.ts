@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
 
 export const notificationController = new Hono()
+	.basePath("/notifications")
 	.get("/", async (c) => {
 		const session = await auth.api.getSession({
 			headers: c.req.raw.headers,

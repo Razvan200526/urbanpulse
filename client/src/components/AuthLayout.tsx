@@ -1,3 +1,4 @@
+import { HelpOfferSnackbar } from "@client/components/notifications/HelpOfferSnackbar";
 import { useAuth } from "@client/hooks/useAuth";
 import { useLocationSync } from "@client/hooks/useLocationSync";
 import { useNotifications } from "@client/hooks/useNotifications";
@@ -33,6 +34,7 @@ export const AuthLayout = () => {
 
 	return (
 		<div className="w-full min-h-dvh flex flex-row font-medium bg-background">
+			<HelpOfferSnackbar />
 			<SidebarDrawer />
 			<div
 				className={cn(

@@ -1,13 +1,187 @@
+import auth from "@server/services/auth/AuthService";
 import { notificationService } from "@server/services/NotificationService";
 import { pulseService } from "@server/services/PulseService";
+import { responseService } from "@server/services/ResponseService";
+import { userRepository } from "@server/repositories/UserRepository";
+import { responseRepository } from "@server/repositories/ResponseRepository";
 import { handleError } from "@server/utils/handleError";
-import { PulseUploadStateEnum } from "@shared/types";
+import { PulseStatusEnum, PulseUploadStateEnum } from "@shared/types";
+import { acceptHelpParamsSchema } from "@shared/validators/pulses/isAcceptHelpParamsValid";
+import { offerHelpBodySchema } from "@shared/validators/pulses/isOfferHelpValid";
 import { pulseRequestSchema } from "@shared/validators/pulses/isPulseRequestValid";
+import {
+	pulseIdParamSchema,
+	pulseUpdateBodySchema,
+} from "@shared/validators/pulses/isPulseUpdateValid";
 import { retrievePulsePayloadSchema } from "@shared/validators/pulses/isPulseRetrieveValid";
+import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
 
 export const pulseController = new Hono()
+	.basePath("/pulse")
+	.patch(
+		"/:id",
+		zValidator("param", pulseIdParamSchema),
+		zValidator("json", pulseUpdateBodySchema),
+		async (c) => {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+			const { id } = c.req.valid("param");
+			const body = c.req.valid("json");
+			const updated = await pulseService.updatePulseAsOwner(
+				id,
+				session.user.id,
+				body,
+			);
+			if (!updated) {
+				return c.json(
+					{ success: false, message: "Pulse not found", data: null },
+					404,
+				);
+			}
+			notificationService.broadcastPulseUpdated(updated);
+			return c.json({
+				success: true,
+				message: "Pulse updated",
+				data: updated,
+			});
+		},
+	)
+	.post(
+		"/:id/responses/:responseId/accept",
+		zValidator("param", acceptHelpParamsSchema),
+		async (c) => {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+			const { id: pulseId, responseId } = c.req.valid("param");
+			const result = await responseService.acceptHelpOffer(
+				session.user.id,
+				pulseId,
+				responseId,
+			);
+			if (!result) {
+				return c.json(
+					{
+						success: false,
+						message: "Offer not found or already handled",
+						data: null,
+					},
+					404,
+				);
+			}
+			const owner = await userRepository.getOne(session.user.id);
+			const ownerName = owner?.name ?? "Neighbor";
+			await notificationService.notifyResponderHelpAccepted({
+				responderUserId: result.responderId,
+				pulseId,
+				pulseTitle: result.pulseTitle,
+				ownerName,
+				responseId: result.accepted.id,
+			});
+			return c.json({
+				success: true,
+				message: "Help offer accepted",
+				data: result.accepted,
+			});
+		},
+	)
+	.post(
+		"/:id/responses",
+		zValidator("param", pulseIdParamSchema),
+		zValidator("json", offerHelpBodySchema),
+		async (c) => {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+			const { id: pulseId } = c.req.valid("param");
+			const { note } = c.req.valid("json");
+			const pulse = await pulseService.getPulseById(pulseId);
+			if (!pulse) {
+				return c.json(
+					{ success: false, message: "Pulse not found", data: null },
+					404,
+				);
+			}
+			if (pulse.userId === session.user.id) {
+				return c.json(
+					{
+						success: false,
+						message: "You cannot respond to your own pulse",
+						data: null,
+					},
+					400,
+				);
+			}
+			if (pulse.status !== PulseStatusEnum.Active) {
+				return c.json(
+					{
+						success: false,
+						message: "This pulse is no longer active",
+						data: null,
+					},
+					400,
+				);
+			}
+			const existing = await responseRepository.findByPulseAndResponder(
+				pulseId,
+				session.user.id,
+			);
+			if (existing) {
+				return c.json(
+					{
+						success: false,
+						message: "You already offered help on this pulse",
+						data: null,
+					},
+					409,
+				);
+			}
+			const created = await responseService.offerHelp(pulseId, session.user.id);
+			if (!created) {
+				return c.json(
+					{ success: false, message: "Failed to offer help", data: null },
+					500,
+				);
+			}
+			const responder = await userRepository.getOne(session.user.id);
+			const responderName = responder?.name ?? "A neighbor";
+			await notificationService.notifyPulseOwnerOfResponse({
+				ownerUserId: pulse.userId,
+				responseId: created.id,
+				pulseId: pulse.id,
+				pulseTitle: pulse.title,
+				responderId: session.user.id,
+				responderName,
+				note,
+			});
+			return c.json({
+				success: true,
+				message: "Help offer recorded",
+				data: created,
+			});
+		},
+	)
 	.get(
 		"/",
 		upgradeWebSocket(async () => {

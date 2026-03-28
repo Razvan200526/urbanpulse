@@ -1,0 +1,49 @@
+
+Here’s how your repo lines up with the rubric **excluding** OpenWeatherMap and the severe-weather / Safety Check-in thread.
+
+## What you already cover
+
+- **Pulse categories & urgency in data/UI:** `PulseEnum` (Emergency, Skill, Item), `UrgencyEnum`, and map UI (`PulseMarker`, `PulseDrawer`, `UrgencyMeter`) reflect types and urgency.
+- **Radius:** Pulses are loaded with a **500 m** radius in `PulseService.getPulses`.
+- **Some real-time behavior:** After login, `AuthLayout` runs `useNotifications` + `useLocationSync`. New pulses trigger `broadcastToNearbyUsers` → clients get a WS message → React Query invalidates `["pulse", "retrieve"]`, so the **map can update without a full page reload** when that path fires.
+- **Map:** Mapbox map with **per-pulse markers** (not density).
+
+---
+
+## Gaps (aside from weather)
+
+### 1. **Neighborhood “Dashboard” as a live pulse feed (Dynamic Feed)**
+
+`/dashboard` is still mostly **placeholder**: the “Live Feed” is **hard-coded** (`RECENT_ACTIVITY_FAKE`), not the real pulse list with **Emergency / Skill / Item** and **urgency** driving order or filters. So the **main dashboard** does not yet match the “heart of the app = live feed of Pulses” requirement.
+
+### 2. **Live updates when something changes (not only new pulses)**
+
+`PulseController` only exposes **create** and **retrieve** over WebSockets. There’s **no** broadcast path tied to **resolve / dismiss / other status updates**. So “status changes in real time without refresh” is **largely missing** unless you add update endpoints + WS (or polling) and invalidate/push accordingly.
+
+### 3. **Notification engine (urgent emergencies + replies to *your* requests)**
+
+- Broadcasting is implemented for **new nearby pulses** (`HERO_ALERT` in `NotificationService.broadcastToNearbyUsers`).
+- **`pulseResponse` exists in the DB**, but notifications are **not** wired so that **“direct responses to a user’s request”** show up as their own real-time alerts (the notification types in shared code are narrow, and server-side `createNotification` usage is basically that pulse broadcast).
+- **System-wide** or **admin/emergency** style alerts are not really there (`broadcastNotification` is still commented / unused).
+
+### 4. **Map: location + density of needs/resources (Interactive Visualization)**
+
+You have **individual markers** for pulses. There is **no** heatmap, **clustering**, or other **density** view, and **resources** are not shown on a map as “density of local needs or resources” (the resources area doesn’t use Mapbox for that).
+
+### 5. **Smaller product gaps**
+
+- **Map “Emergency” button** is still `onPress={() => {}}` (stub).
+- **`/alerts`** is a **minimal placeholder** (“Hero Alerts” only), not a real alerts center tied to weather or community rules.
+
+---
+
+## Short checklist vs rubric
+
+| Rubric area | Main gap |
+|-------------|----------|
+| **Dynamic feed** | Real pulse feed on the **dashboard** with type + urgency, not fake feed. |
+| **Live updates** | Real-time **updates** (not only **new** pulses); likely needs WS/push or polling for edits/status. |
+| **Notification engine** | Alerts for **responses to your pulses** and stronger **urgent / system** alerting. |
+| **Map visualization** | **Density** (heatmap/clusters) and optionally **resources** on the map. |
+
+So aside from **OpenWeatherMap** and the **Safety Check-in** thread, the biggest missing pieces are: a **real dashboard feed**, **live propagation of pulse status changes**, **notification coverage for direct responses (and broader emergencies)**, and **density-style map visualization** (plus resources on the map if graders expect “needs **or** resources” there).

@@ -1,6 +1,7 @@
 import { db } from "@server/db";
 import { type PulseResponseType, pulseResponse } from "@server/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
+import { ResponseStatusEnum } from "@shared/types";
 import type { IRepository } from "./IRepository";
 
 export class ResponseRepository implements IRepository<PulseResponseType> {
@@ -16,6 +17,23 @@ export class ResponseRepository implements IRepository<PulseResponseType> {
 		return await db.select().from(pulseResponse);
 	}
 
+	async findByPulseAndResponder(
+		pulseId: string,
+		responderId: string,
+	): Promise<PulseResponseType | null> {
+		const [row] = await db
+			.select()
+			.from(pulseResponse)
+			.where(
+				and(
+					eq(pulseResponse.pulseId, pulseId as any),
+					eq(pulseResponse.responderId, responderId),
+				),
+			)
+			.limit(1);
+		return row ?? null;
+	}
+
 	async create(
 		data: Partial<PulseResponseType>,
 	): Promise<PulseResponseType | null> {
@@ -24,6 +42,22 @@ export class ResponseRepository implements IRepository<PulseResponseType> {
 			.values(data as any)
 			.returning();
 		return result ?? null;
+	}
+
+	async declineOtherPendingForPulse(
+		pulseId: string,
+		acceptedResponseId: string,
+	): Promise<void> {
+		await db
+			.update(pulseResponse)
+			.set({ status: ResponseStatusEnum.Declined })
+			.where(
+				and(
+					eq(pulseResponse.pulseId, pulseId as any),
+					eq(pulseResponse.status, ResponseStatusEnum.Pending),
+					ne(pulseResponse.id, acceptedResponseId as any),
+				),
+			);
 	}
 
 	async update(

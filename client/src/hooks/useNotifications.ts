@@ -1,4 +1,5 @@
 import { hono, queryClient } from "@client/main";
+import { useHelpOfferUiStore } from "@client/stores/helpOfferUiStore";
 import { Toast } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import { backend } from "client/sdk/backend";
@@ -41,6 +42,42 @@ export const useNotifications = (userId: string | undefined) => {
 						return old ? [newNotif, ...old] : [newNotif];
 					});
 					Toast.toast.success(`${response.message}`);
+				} else if (
+					response.success &&
+					response.channelName === "notifications:pulse_updated"
+				) {
+					queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+				} else if (
+					response.success &&
+					response.channelName === "notifications:pulse_response"
+				) {
+					queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
+					queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+					const pl = response.data?.payload as
+						| { pulseId?: string; responseId?: string }
+						| undefined;
+					if (pl?.pulseId && pl?.responseId) {
+						useHelpOfferUiStore.getState().show({
+							pulseId: String(pl.pulseId),
+							responseId: String(pl.responseId),
+							message:
+								response.message ||
+								"A neighbor offered help on your pulse",
+						});
+					} else {
+						Toast.toast.success(
+							response.message ||
+								"Someone offered help on your pulse",
+						);
+					}
+				} else if (
+					response.success &&
+					response.channelName === "notifications:help_accepted"
+				) {
+					queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
+					Toast.toast.success(
+						response.message || "Your help was accepted",
+					);
 				} else if (
 					response.success &&
 					response.channelName === "notifications:transaction"

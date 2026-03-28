@@ -26,8 +26,6 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core";
 
-// --- Better Auth Core Tables ---
-
 export const user = pgTable("user", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
@@ -111,6 +109,7 @@ export const pulse = pgTable(
 			.$type<PulseUploadStateEnum>()
 			.notNull()
 			.default(PulseUploadStateEnum.Pending),
+		audioUrl: text("audioUrl"),
 		imageUrls: text("imageUrls").array().notNull().default(sql`'{}'::text[]`),
 		isResolved: boolean("isResolved").notNull().default(false),
 		isVerified: boolean("isVerified"),

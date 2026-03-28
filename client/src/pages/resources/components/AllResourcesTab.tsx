@@ -5,6 +5,7 @@ import { Filter } from "lucide-react";
 import { useRetrieveResources } from "../hooks";
 import { ResourceCard } from "./card/ResourceCard";
 import { ResourceCardSkeleton } from "./card/ResourceCardSkeleton";
+import { NoResources } from "./NoResources";
 
 export const AllResourcesTab = () => {
 	const { data: user } = useAuth();
@@ -38,16 +39,7 @@ export const AllResourcesTab = () => {
 					))}
 				</div>
 			) : (
-				<div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-					<p className="text-4xl">📦</p>
-					<p className="text-lg font-semibold text-foreground">
-						No resources yet
-					</p>
-					<p className="text-sm text-muted max-w-xs">
-						Be the first to contribute a skill, item, or space to your
-						community.
-					</p>
-				</div>
+				<NoResources />
 			)}
 		</div>
 	);

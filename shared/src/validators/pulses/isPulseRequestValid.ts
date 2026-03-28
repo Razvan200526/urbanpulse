@@ -12,6 +12,7 @@ export const pulseRequestSchema = z.object({
 		y: z.number().min(-90).max(90),
 	}),
 	imageUrls: z.array(z.string()).optional().default([]),
+	audioUrl: z.string().optional(),
 });
 
 export const isPulseRequestValid = (data: unknown) => {

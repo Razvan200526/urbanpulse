@@ -18,6 +18,8 @@ import { isNameValid } from "@shared/validators/isNameValid";
 import { PaperclipIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCreatePulse } from "../hooks";
+import { useUploadAudio } from "@client/hooks/uploadHooks";
+import { ImageList } from "./ImageList";
 
 export const pulseTypeItems: TabItemType[] = [
 	{
@@ -45,11 +47,14 @@ export const urgencyItems: TabItemType[] = [
 
 export const CreatePulseModal = ({
 	modalRef,
+	emergencyLaunch = false,
 }: {
 	modalRef: React.RefObject<ModalRefType | null>;
+	/** When true (e.g. Emergency shortcut), prefill title and lock Emergency + Immediate. */
+	emergencyLaunch?: boolean;
 }) => {
 	const { data: user } = useAuth();
-	const { coords } = useGetGeolocation({
+	const { coords, refresh } = useGetGeolocation({
 		enableHighAccuracy: true,
 	});
 	const { mutateAsync: createPulse, isPending } = useCreatePulse();
@@ -59,7 +64,8 @@ export const CreatePulseModal = ({
 	const [pulseType, setPulseType] = useState<PulseEnum>(PulseEnum.Emergency);
 	const [urgency, setUrgency] = useState<UrgencyEnum>(UrgencyEnum.Immediate);
 	const [imageUrls, setImageUrls] = useState<string[]>([]);
-
+	const [audioUrl, setAudioUrl] = useState<string>("");
+	const audioRef = useRef<HTMLAudioElement>(null);
 	const handleCreate = async () => {
 		const title = titleRef.current?.getValue() || "";
 		const description = descriptionRef.current?.getValue() || "";
@@ -69,12 +75,14 @@ export const CreatePulseModal = ({
 		}
 
 		if (!coords) {
+			refresh();
 			Toast.toast.danger(
 				"Location is required. Please enable geolocation in the browser.",
 			);
 			return;
 		}
 
+		console.log("Audio url : ", audioUrl);
 		await createPulse({
 			title,
 			description,
@@ -84,6 +92,7 @@ export const CreatePulseModal = ({
 			position: { x: coords.long, y: coords.lat },
 			imageUrls,
 			isResolved: false,
+			audioUrl: audioUrl,
 		});
 		modalRef.current?.close();
 	};
@@ -147,6 +156,7 @@ export const CreatePulseModal = ({
 					label="Pulse name"
 					placeholder="My pulse..."
 					maxLength={20}
+					initialValue={emergencyLaunch ? "Emergency need help" : ""}
 				/>
 
 				<TextArea
@@ -156,68 +166,48 @@ export const CreatePulseModal = ({
 					maxLength={100}
 				/>
 
-				<div className="flex flex-col gap-3 bg-surface-secondary/30 p-3 rounded-lg border border-border">
+				<div className="flex flex-col gap-3 bg-surface-secondary/30 p-3 rounded border border-accent">
 					<div className="flex items-center justify-between">
 						<span className="text-sm font-semibold text-accent">
 							Media & Attachments
 						</span>
 					</div>
 
-					{imageUrls.length > 0 && (
-						<div className="flex gap-2 items-center overflow-x-auto pb-2 scrollbar-thin">
-							{imageUrls.map((url) => (
-								<div
-									key={url}
-									className="relative w-16 h-16 shrink-0 rounded overflow-hidden border border-border"
-								>
-									<img
-										src={url}
-										alt={`upload-${url}`}
-										className="w-full h-full object-cover"
-									/>
-									<Button
-										isIconOnly
-										size="sm"
-										variant="danger"
-										className="absolute top-1 right-1 h-5 w-5 min-w-0 min-h-0 rounded-full bg-danger/80"
-										onPress={() =>
-											setImageUrls((p) => p.filter((u) => u !== url))
-										}
-									>
-										<XIcon className="size-3" />
-									</Button>
-								</div>
-							))}
-						</div>
-					)}
+					{imageUrls.length > 0 && <ImageList imageUrls={imageUrls} />}
 
 					<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
 						<div className="flex items-center order-2 sm:order-1 flex-1">
-							<AudioRecorder />
+							<AudioRecorder
+								audioRef={audioRef}
+								onRecordingComplete={(blobUrl) => {
+									audioRef.current?.setAttribute("src", blobUrl);
+								}}
+								onUpload={(response) => setAudioUrl(response.url)}
+							/>
 						</div>
 						<div className="flex items-center justify-end order-1 sm:order-2 shrink-0">
 							<ImageUploader
 								onSave={(url) => setImageUrls((prev) => [...prev, url])}
 								trigger={(open) => (
 									<Tooltip delay={0}>
-										<span className="inline-block">
-											<Button
-												variant="outline"
-												isIconOnly
-												radius="full"
-												startContent={
-													<PaperclipIcon className="size-4 text-accent" />
-												}
-												onPress={open}
-											/>
-										</span>
+										<Button
+											variant="outline"
+											isIconOnly
+											radius="full"
+											startContent={
+												<PaperclipIcon className="size-4 text-accent" />
+											}
+											onPress={open}
+										/>
+										<Tooltip.Content className="rounded-full border border-accent text-accent">
+											Upload Images
+										</Tooltip.Content>
 									</Tooltip>
 								)}
 							/>
 						</div>
 					</div>
 				</div>
-				<Separator variant="tertiary" />
 			</div>
 		</Modal>
 	);

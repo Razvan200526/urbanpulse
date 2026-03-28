@@ -2,14 +2,11 @@ import { zValidator } from "@hono/zod-validator";
 import { storageService } from "@server/services/S3Service";
 import { handleError } from "@server/utils/handleError";
 import { Hono } from "hono";
-import * as z from "zod";
-
-const uploadSchema = z.object({
-	file: z.custom<File>((val) => val instanceof Blob),
-});
+import { fileUploadSchema } from "@shared/validators/upload/isFileUploadValid";
 
 export const avatarController = new Hono()
-	.post("/upload", zValidator("form", uploadSchema), async (c) => {
+	.basePath("/avatar")
+	.post("/upload", zValidator("form", fileUploadSchema), async (c) => {
 		try {
 			const { file } = c.req.valid("form");
 
@@ -32,7 +29,7 @@ export const avatarController = new Hono()
 			);
 		}
 	})
-	.post("/upload/image", zValidator("form", uploadSchema), async (c) => {
+	.post("/upload/image", zValidator("form", fileUploadSchema), async (c) => {
 		try {
 			const { file } = c.req.valid("form");
 			const url = await storageService.uploadImage(file);

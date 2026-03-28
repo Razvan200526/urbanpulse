@@ -37,12 +37,12 @@ const AudioVisualizer = ({ stream }: { stream: MediaStream | null }) => {
 			canvasCtx.clearRect(0, 0, width, height);
 
 			const barWidth = (width / bufferLength) * 2.5;
-			let barHeight: any;
+			let barHeight: number;
 			let x = 0;
 
 			for (let i = 0; i < bufferLength; i++) {
 				barHeight = dataArray[i] / 2;
-				canvasCtx.fillStyle = `oklch(62.04% 0.195 299.94)`; // Corresponds to --accent in index.css
+				canvasCtx.fillStyle = "oklch(62.04% 0.195 299.94)"; // Corresponds to --accent in index.css
 				canvasCtx.fillRect(x, height - barHeight, barWidth, barHeight);
 				x += barWidth + 1;
 			}
@@ -75,11 +75,13 @@ const AudioVisualizer = ({ stream }: { stream: MediaStream | null }) => {
 export type AudioRecorderProps = {
 	onRecordingComplete?: (blobUrl: string) => void;
 	audioRef?: React.RefObject<HTMLAudioElement | null>;
+	onUpload?: (response: any) => void;
 };
 
 export const AudioRecorder = ({
 	onRecordingComplete,
 	audioRef,
+	onUpload,
 }: AudioRecorderProps) => {
 	const {
 		status,
@@ -87,6 +89,7 @@ export const AudioRecorder = ({
 		stopRecording,
 		mediaBlobUrl,
 		previewAudioStream,
+		clearBlobUrl,
 	} = useReactMediaRecorder({
 		audio: true,
 		blobPropertyBag: {
@@ -116,7 +119,7 @@ export const AudioRecorder = ({
 				</Tooltip>
 			)}
 			{status === "recording" && (
-				<div className="flex items-center gap-3 bg-surface border border-accent rounded-full p-2 w-72 shadow-sm transition-all duration-300 ease-out animate-in fade-in zoom-in-95">
+				<div className="flex items-center gap-3 bg-surface border border-accent rounded-full p-2 w-72 shadow-sm transition-all duration-300 ease-out animate-in fade-in zoom-in-95 h-10">
 					<Tooltip delay={0}>
 						<span className="inline-block">
 							<Button
@@ -124,13 +127,13 @@ export const AudioRecorder = ({
 								isIconOnly
 								radius="full"
 								onPress={() => stopRecording()}
-								className="bg-accent/10 hover:bg-accent-soft-hover min-w-10 w-10 h-10 shrink-0"
+								className="bg-accent/10 hover:bg-accent-soft-hover min-w-7 w-7 h-7 shrink-0"
 							>
 								<Square className="size-4 text-accent" fill="currentColor" />
 							</Button>
 						</span>
 					</Tooltip>
-					<div className="flex-1 overflow-hidden h-8 flex items-center justify-center">
+					<div className="flex-1 overflow-hidden h-4 flex items-center justify-center">
 						<AudioVisualizer stream={previewAudioStream} />
 					</div>
 					<div className="flex items-center justify-center pr-3 shrink-0 gap-1.5 ">
@@ -146,7 +149,12 @@ export const AudioRecorder = ({
 			)}
 			{(status === "stopped" || status === "idle") && mediaBlobUrl && (
 				<div className="animate-in fade-in zoom-in-95 duration-300">
-					<CustomPlayer ref={audioRef} mediaBlobUrl={mediaBlobUrl} />
+					<CustomPlayer
+						audioRef={audioRef}
+						mediaBlobUrl={mediaBlobUrl}
+						onDelete={clearBlobUrl}
+						onUpload={onUpload}
+					/>
 				</div>
 			)}
 		</div>

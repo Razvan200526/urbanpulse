@@ -1,16 +1,23 @@
 import { ProgressBar, Tooltip } from "@heroui/react";
-import { Pause, Play, Trash2Icon } from "lucide-react";
+import { Pause, Play, Trash2Icon, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../Button/Button";
+import { useUploadAudio } from "@client/hooks/uploadHooks";
 
 export type CustomPlayerProps = {
 	mediaBlobUrl: string;
-	ref?: React.RefObject<HTMLAudioElement | null>;
+	audioRef?: React.RefObject<HTMLAudioElement | null>;
+	onDelete?: () => void;
 };
 
-export const CustomPlayer = ({ mediaBlobUrl, ref }: CustomPlayerProps) => {
+export const CustomPlayer = ({
+	mediaBlobUrl,
+	audioRef,
+	onDelete,
+}: CustomPlayerProps) => {
+	const { mutateAsync: uploadFile, isPending } = useUploadAudio();
 	const internalRef = useRef<HTMLAudioElement>(null);
-	const playerRef = ref || internalRef;
+	const playerRef = audioRef || internalRef;
 
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [progress, setProgress] = useState(0);
@@ -47,6 +54,24 @@ export const CustomPlayer = ({ mediaBlobUrl, ref }: CustomPlayerProps) => {
 		setProgress(0);
 		setCurrentTime(0);
 	};
+	const handleUpload = async () => {
+		try {
+			let blobToUpload = audioBlob;
+
+			if (!blobToUpload && mediaBlobUrl) {
+				const response = await fetch(mediaBlobUrl);
+				blobToUpload = await response.blob();
+			}
+
+			if (!blobToUpload) return;
+			const file = new File([blobToUpload], "recording.wav", {
+				type: "audio/wav",
+			});
+			const uploadResponse = await uploadFile(file);
+		} catch (error) {
+			console.error("Failed to upload audio:", error);
+		}
+	};
 
 	const formatTime = (time: number) => {
 		if (!time || Number.isNaN(time)) return "00:00";
@@ -62,7 +87,7 @@ export const CustomPlayer = ({ mediaBlobUrl, ref }: CustomPlayerProps) => {
 	}, []);
 
 	return (
-		<div className="flex items-center gap-3 bg-surface border border-accent rounded-full p-2 pr-4 h-10 w-72 transition-all">
+		<div className="flex items-center gap-3 bg-surface border border-accent rounded-full p-2 pr-4 h-10 w-72 transition-all duration-300 animate-in fade-in zoom-in-95">
 			<audio
 				ref={playerRef}
 				src={mediaBlobUrl}
@@ -90,16 +115,30 @@ export const CustomPlayer = ({ mediaBlobUrl, ref }: CustomPlayerProps) => {
 						Play
 					</Tooltip.Content>
 				</Tooltip>
+				<Tooltip delay={0}>
+					<Button
+						isIconOnly
+						radius="full"
+						onPress={handleUpload}
+						isPending={isPending}
+						className="bg-success/10 hover:bg-success-soft-hover min-w-7 w-7 h-7 shrink-0"
+					>
+						<Upload className="size-4 text-success" />
+					</Button>
+					<Tooltip.Content className="text-xs text-success rounded-full border border-success bg-surface">
+						Upload recording
+					</Tooltip.Content>
+				</Tooltip>
 
 				<Tooltip delay={0}>
 					<Button
 						variant="danger-soft"
 						isIconOnly
 						radius="full"
-						onPress={() => {}}
-						className="bg-accent/10 hover:bg-accent-soft-hover min-w-7 w-7 h-7 shrink-0"
+						onPress={onDelete}
+						className="bg-danger/10 hover:bg-danger-soft-hover min-w-7 w-7 h-7 shrink-0"
 					>
-						<Trash2Icon className="size-4" />
+						<Trash2Icon className="size-4 text-danger" />
 					</Button>
 					<Tooltip.Content className="text-xs text-danger rounded-full border border-danger bg-surface">
 						Delete recording

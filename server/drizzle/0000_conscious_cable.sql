@@ -64,12 +64,16 @@ CREATE TABLE "pet_match" (
 --> statement-breakpoint
 CREATE TABLE "pulse" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"type" text NOT NULL,
+	"type" text DEFAULT 'Emergency' NOT NULL,
 	"userId" text NOT NULL,
 	"urgency" text NOT NULL,
 	"title" varchar(30) NOT NULL,
 	"description" text,
-	"position" geometry(Point, 4326) NOT NULL,
+	"location" geometry(point) NOT NULL,
+	"status" text DEFAULT 'ACTIVE' NOT NULL,
+	"pulseUploadState" text DEFAULT 'pending' NOT NULL,
+	"audioUrl" text,
+	"imageUrls" text[] DEFAULT '{}'::text[] NOT NULL,
 	"isResolved" boolean DEFAULT false NOT NULL,
 	"isVerified" boolean,
 	"createdAt" timestamp DEFAULT now() NOT NULL
@@ -114,6 +118,7 @@ CREATE TABLE "resources" (
 	"name" text NOT NULL,
 	"description" text,
 	"availability" text NOT NULL,
+	"imageUrls" text[] DEFAULT '{}'::text[] NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -195,4 +200,5 @@ ALTER TABLE "session" ADD CONSTRAINT "session_userId_user_id_fk" FOREIGN KEY ("u
 ALTER TABLE "skill" ADD CONSTRAINT "skill_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transaction" ADD CONSTRAINT "transaction_resourceId_resources_id_fk" FOREIGN KEY ("resourceId") REFERENCES "public"."resources"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transaction" ADD CONSTRAINT "transaction_borrowerId_user_id_fk" FOREIGN KEY ("borrowerId") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "transaction" ADD CONSTRAINT "transaction_lenderId_user_id_fk" FOREIGN KEY ("lenderId") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;
+ALTER TABLE "transaction" ADD CONSTRAINT "transaction_lenderId_user_id_fk" FOREIGN KEY ("lenderId") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "spatial_index" ON "pulse" USING gist ("location");

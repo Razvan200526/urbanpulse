@@ -3,6 +3,8 @@ import * as z from "zod";
 export const notificationTypeSchema = z.enum([
 	"PULSE_CONFIRMED",
 	"HERO_ALERT",
+	"PULSE_RESPONSE",
+	"PULSE_RESPONSE_ACCEPTED",
 	"MESSAGE",
 	"TRANSACTION",
 	"FEEDBACK",

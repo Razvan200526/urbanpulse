@@ -1,3 +1,4 @@
+import "./utils/PrettyError";
 import { websocket } from "hono/bun";
 import app from "./app";
 import { parseEnv } from "./env";
