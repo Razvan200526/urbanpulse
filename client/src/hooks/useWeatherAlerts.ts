@@ -23,7 +23,8 @@ export function useWeatherAlerts(
 ) {
 	return useQuery({
 		queryKey: ["weather", "alerts", lat, lon],
-		enabled: lat != null && lon != null && !Number.isNaN(lat) && !Number.isNaN(lon),
+		enabled:
+			lat != null && lon != null && !Number.isNaN(lat) && !Number.isNaN(lon),
 		queryFn: async () => {
 			const res = await hono.api.weather.alerts.$get({
 				query: { lat: String(lat), lon: String(lon) },

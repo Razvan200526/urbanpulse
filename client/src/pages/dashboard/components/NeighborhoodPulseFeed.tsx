@@ -20,22 +20,30 @@ function urgencyLabel(u: UrgencyEnum | string): string {
 }
 
 function TypeIcon({ type }: { type: PulseEnum }) {
-	if (type === PulseEnum.Emergency) return <AlertTriangle className="size-4 text-danger" />;
-	if (type === PulseEnum.Skill) return <Wrench className="size-4 text-accent" />;
+	if (type === PulseEnum.Emergency)
+		return <AlertTriangle className="size-4 text-danger" />;
+	if (type === PulseEnum.Skill)
+		return <Wrench className="size-4 text-accent" />;
 	return <PackageIcon className="size-4 text-primary" />;
 }
 
 export function NeighborhoodPulseFeed() {
 	const navigate = useNavigate();
 	const { data: user } = useAuth();
-	const { coords, isLoading: geoLoading, isError: geoError } = useGetGeolocation();
+	const {
+		coords,
+		isLoading: geoLoading,
+		isError: geoError,
+	} = useGetGeolocation();
 
-	const enabled =
-		!!user?.user.id &&
-		coords != null &&
-		!geoError;
+	const enabled = !!user?.user.id && coords != null && !geoError;
 
-	const { data: pulsesRes, isPending, refetch, isFetching } = useRetrievePulses(
+	const {
+		data: pulsesRes,
+		isPending,
+		refetch,
+		isFetching,
+	} = useRetrievePulses(
 		{
 			userId: user?.user.id || "",
 			position: { x: coords?.long ?? 0, y: coords?.lat ?? 0 },

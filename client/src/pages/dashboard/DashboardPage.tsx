@@ -13,7 +13,11 @@ import { StatsCard } from "./components/StatsCard";
 
 export const DashboardPages = () => {
 	const navigate = useNavigate();
-	const { coords, isLoading: geoLoading, isError: geoError } = useGetGeolocation();
+	const {
+		coords,
+		isLoading: geoLoading,
+		isError: geoError,
+	} = useGetGeolocation();
 	const geoReady = !!coords && !geoError && !geoLoading;
 
 	return (
@@ -66,9 +70,7 @@ export const DashboardPages = () => {
 								<div className="p-3 bg-danger/10 border border-danger-soft rounded-full mb-3">
 									<AlertTriangle className="size-6 text-danger" />
 								</div>
-								<h4 className="font-semibold text-danger">
-									Local emergency
-								</h4>
+								<h4 className="font-semibold text-danger">Local emergency</h4>
 								<p className="text-xs text-danger/70 mt-1 mb-4">
 									Post an urgent pulse from the map so neighbors are notified in
 									real time.

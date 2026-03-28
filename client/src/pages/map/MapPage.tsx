@@ -80,8 +80,8 @@ export const MapPage = () => {
 				))}
 			</MapComponent>
 			<div className="absolute bottom-6 left-4 z-50 max-w-[240px] rounded-lg border border-border bg-surface/90 px-3 py-2 text-xs text-muted backdrop-blur-sm">
-				Heat tint shows density of nearby needs (Emergency and urgent pulses weigh
-				more). Shared items and skills live under Resources.
+				Heat tint shows density of nearby needs (Emergency and urgent pulses
+				weigh more). Shared items and skills live under Resources.
 			</div>
 			<div className="absolute top-4 right-4 z-50 flex items-center justify-end gap-4">
 				<Button

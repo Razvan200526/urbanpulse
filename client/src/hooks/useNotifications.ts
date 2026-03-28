@@ -51,7 +51,9 @@ export const useNotifications = (userId: string | undefined) => {
 					response.success &&
 					response.channelName === "notifications:pulse_response"
 				) {
-					queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
+					queryClient.invalidateQueries({
+						queryKey: ["notifications", userId],
+					});
 					queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
 					const pl = response.data?.payload as
 						| { pulseId?: string; responseId?: string }
@@ -61,23 +63,21 @@ export const useNotifications = (userId: string | undefined) => {
 							pulseId: String(pl.pulseId),
 							responseId: String(pl.responseId),
 							message:
-								response.message ||
-								"A neighbor offered help on your pulse",
+								response.message || "A neighbor offered help on your pulse",
 						});
 					} else {
 						Toast.toast.success(
-							response.message ||
-								"Someone offered help on your pulse",
+							response.message || "Someone offered help on your pulse",
 						);
 					}
 				} else if (
 					response.success &&
 					response.channelName === "notifications:help_accepted"
 				) {
-					queryClient.invalidateQueries({ queryKey: ["notifications", userId] });
-					Toast.toast.success(
-						response.message || "Your help was accepted",
-					);
+					queryClient.invalidateQueries({
+						queryKey: ["notifications", userId],
+					});
+					Toast.toast.success(response.message || "Your help was accepted");
 				} else if (
 					response.success &&
 					response.channelName === "notifications:transaction"

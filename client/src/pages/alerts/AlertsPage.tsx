@@ -8,7 +8,10 @@ import { formatDate } from "@shared/utils/formatDate";
 import { Bell } from "lucide-react";
 import { useState } from "react";
 
-function summarizePayload(type: string, payload: Record<string, unknown> | null) {
+function summarizePayload(
+	type: string,
+	payload: Record<string, unknown> | null,
+) {
 	if (!payload || typeof payload !== "object") return "";
 	if (type === "HERO_ALERT") {
 		const t = payload.type as string | undefined;
@@ -64,9 +67,7 @@ export const AlertsPage = () => {
 					Recent notifications, including nearby pulses and responses to your
 					requests.
 				</p>
-				{isPending && (
-					<p className="text-sm text-muted">Loading…</p>
-				)}
+				{isPending && <p className="text-sm text-muted">Loading…</p>}
 				{!isPending && (!notifications || notifications.length === 0) && (
 					<Card className="border border-border shadow-none">
 						<Card.Content className="p-8 flex flex-col items-center text-center gap-2">
@@ -90,17 +91,13 @@ export const AlertsPage = () => {
 									: null;
 							const summary = summarizePayload(n.type, payload);
 							const pulseId =
-								payload && "pulseId" in payload
-									? String(payload.pulseId)
-									: "";
+								payload && "pulseId" in payload ? String(payload.pulseId) : "";
 							const responseId =
 								payload && "responseId" in payload
 									? String(payload.responseId)
 									: "";
 							const offerKey =
-								pulseId && responseId
-									? `${pulseId}:${responseId}`
-									: "";
+								pulseId && responseId ? `${pulseId}:${responseId}` : "";
 							const canAcceptHelp =
 								n.type === "PULSE_RESPONSE" &&
 								pulseId &&
@@ -145,9 +142,7 @@ export const AlertsPage = () => {
 																			next.add(offerKey);
 																			return next;
 																		});
-																		Toast.toast.success(
-																			"Help offer accepted",
-																		);
+																		Toast.toast.success("Help offer accepted");
 																	},
 																	onError: (err) =>
 																		Toast.toast.danger(

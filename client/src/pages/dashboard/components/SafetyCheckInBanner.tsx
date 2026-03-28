@@ -47,17 +47,11 @@ export function SafetyCheckInBanner({ lat, lon, geoReady }: Props) {
 						variant="danger"
 						size="sm"
 						startContent={<ShieldCheck className="size-4" />}
-						onPress={() =>
-							navigate("/map", { state: { safetyCheckin: true } })
-						}
+						onPress={() => navigate("/map", { state: { safetyCheckin: true } })}
 					>
 						Post check-in pulse
 					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						onPress={() => navigate("/map")}
-					>
+					<Button variant="outline" size="sm" onPress={() => navigate("/map")}>
 						View map
 					</Button>
 				</div>

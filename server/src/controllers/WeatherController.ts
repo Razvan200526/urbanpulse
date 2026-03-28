@@ -52,7 +52,9 @@ export const weatherController = new Hono()
 			url.searchParams.set("appid", apiKey);
 			const res = await fetch(url.toString());
 			if (!res.ok) {
-				logger.error(`OpenWeather API error: ${res.status} ${await res.text()}`);
+				logger.error(
+					`OpenWeather API error: ${res.status} ${await res.text()}`,
+				);
 				return c.json(
 					{
 						success: false,
@@ -83,11 +85,13 @@ export const weatherController = new Hono()
 				},
 			});
 		} catch (e) {
-			logger.exception(
-				e instanceof Error ? e : new Error(String(e)),
-			);
+			logger.exception(e instanceof Error ? e : new Error(String(e)));
 			return c.json(
-				{ success: false, message: "Failed to fetch weather alerts", data: null },
+				{
+					success: false,
+					message: "Failed to fetch weather alerts",
+					data: null,
+				},
 				502,
 			);
 		}

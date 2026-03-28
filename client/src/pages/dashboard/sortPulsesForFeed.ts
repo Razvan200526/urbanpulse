@@ -23,8 +23,6 @@ export function sortPulsesForFeed(pulses: PulseType[]): PulseType[] {
 		const ta = typeOrder[a.type] ?? 9;
 		const tb = typeOrder[b.type] ?? 9;
 		if (ta !== tb) return ta - tb;
-		return (
-			new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-		);
+		return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 	});
 }
