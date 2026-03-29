@@ -113,35 +113,39 @@ export const CustomPlayer = ({
 					</Tooltip.Content>
 				</Tooltip>
 
-				{showButtons ? <Tooltip delay={0}>
-					<Button
-						isIconOnly
-						radius="full"
-						onPress={handleUpload}
-						isPending={isPending}
-						className="bg-success/10 hover:bg-success-soft-hover min-w-7 w-7 h-7 shrink-0"
-					>
-						<Upload className="size-4 text-success" />
-					</Button>
-					<Tooltip.Content className="text-xs text-success rounded-full border border-success bg-surface">
-						Upload recording
-					</Tooltip.Content>
-				</Tooltip> : null}
+				{showButtons ? (
+					<Tooltip delay={0}>
+						<Button
+							isIconOnly
+							radius="full"
+							onPress={handleUpload}
+							isPending={isPending}
+							className="bg-success/10 hover:bg-success-soft-hover min-w-7 w-7 h-7 shrink-0"
+						>
+							<Upload className="size-4 text-success" />
+						</Button>
+						<Tooltip.Content className="text-xs text-success rounded-full border border-success bg-surface">
+							Upload recording
+						</Tooltip.Content>
+					</Tooltip>
+				) : null}
 
-				{showButtons ? <Tooltip delay={0}>
-					<Button
-						variant="danger-soft"
-						isIconOnly
-						radius="full"
-						onPress={onDelete}
-						className="bg-danger/10 hover:bg-danger-soft-hover min-w-7 w-7 h-7 shrink-0"
-					>
-						<Trash2Icon className="size-4 text-danger" />
-					</Button>
-					<Tooltip.Content className="text-xs text-danger rounded-full border border-danger bg-surface">
-						Delete recording
-					</Tooltip.Content>
-				</Tooltip> : null}
+				{showButtons ? (
+					<Tooltip delay={0}>
+						<Button
+							variant="danger-soft"
+							isIconOnly
+							radius="full"
+							onPress={onDelete}
+							className="bg-danger/10 hover:bg-danger-soft-hover min-w-7 w-7 h-7 shrink-0"
+						>
+							<Trash2Icon className="size-4 text-danger" />
+						</Button>
+						<Tooltip.Content className="text-xs text-danger rounded-full border border-danger bg-surface">
+							Delete recording
+						</Tooltip.Content>
+					</Tooltip>
+				) : null}
 			</div>
 
 			<div className="flex flex-row flex-1 justify-between items-center text-[10px] text-accent font-medium gap-1">
@@ -151,7 +155,7 @@ export const CustomPlayer = ({
 					size="sm"
 					value={progress}
 					aria-label="Audio progress"
-					className={cn(showButtons ? "w-20" : "w-30" )}
+					className={cn(showButtons ? "w-20" : "w-30")}
 				>
 					<ProgressBar.Track>
 						<ProgressBar.Fill />
