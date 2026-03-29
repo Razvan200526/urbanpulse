@@ -6,9 +6,9 @@ import { Card, Separator } from "@heroui/react";
 import { AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Chart } from "./components/Chart";
+import { fakeStats } from "./components/fakeStats";
 import { NeighborhoodPulseFeed } from "./components/NeighborhoodPulseFeed";
 import { SafetyCheckInBanner } from "./components/SafetyCheckInBanner";
-import { fakeStats } from "./components/fakeStats";
 import { StatsCard } from "./components/StatsCard";
 
 export const DashboardPages = () => {

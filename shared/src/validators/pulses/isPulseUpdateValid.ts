@@ -1,6 +1,8 @@
 import { PulseStatusEnum } from "@shared/types";
 import * as z from "zod";
 
+//		const { position, id, status, isResolved, title, type: pulseKind } = pulse;
+
 export const pulseIdParamSchema = z.object({
 	id: z.string().uuid(),
 });

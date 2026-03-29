@@ -14,7 +14,7 @@ type GeolocationResult = {
 
 const GEO_OPTIONS: PositionOptions = {
 	enableHighAccuracy: true,
-	timeout: 100,
+	timeout: 10000000,
 	maximumAge: 60000,
 };
 
@@ -56,8 +56,11 @@ export function useGetGeolocation(
 			setIsLoading(false);
 		};
 
-		// Always do a one-shot fetch first for an immediate result
-		navigator.geolocation.getCurrentPosition(onSuccess, onError);
+		navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+			enableHighAccuracy,
+			timeout,
+			maximumAge,
+		});
 
 		if (watch) {
 			const currentOptions: PositionOptions = {

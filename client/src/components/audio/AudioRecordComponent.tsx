@@ -33,16 +33,14 @@ const AudioVisualizer = ({ stream }: { stream: MediaStream | null }) => {
 			const height = canvas.height;
 
 			analyser.getByteFrequencyData(dataArray);
-
 			canvasCtx.clearRect(0, 0, width, height);
 
 			const barWidth = (width / bufferLength) * 2.5;
-			let barHeight: number;
 			let x = 0;
 
 			for (let i = 0; i < bufferLength; i++) {
-				barHeight = dataArray[i] / 2;
-				canvasCtx.fillStyle = "oklch(62.04% 0.195 299.94)"; // Corresponds to --accent in index.css
+				const barHeight = dataArray[i] / 2;
+				canvasCtx.fillStyle = "oklch(62.04% 0.195 299.94)";
 				canvasCtx.fillRect(x, height - barHeight, barWidth, barHeight);
 				x += barWidth + 1;
 			}
@@ -75,7 +73,9 @@ const AudioVisualizer = ({ stream }: { stream: MediaStream | null }) => {
 export type AudioRecorderProps = {
 	onRecordingComplete?: (blobUrl: string) => void;
 	audioRef?: React.RefObject<HTMLAudioElement | null>;
-	onUpload?: (response: any) => void;
+	onUpload?: (response: {
+		data: { url: string; message: string; success: boolean };
+	}) => void;
 };
 
 export const AudioRecorder = ({
@@ -92,32 +92,29 @@ export const AudioRecorder = ({
 		clearBlobUrl,
 	} = useReactMediaRecorder({
 		audio: true,
-		blobPropertyBag: {
-			type: "audio/wav",
-		},
+		blobPropertyBag: { type: "audio/wav" },
 		onStop: (blobUrl) => {
-			if (onRecordingComplete) {
-				onRecordingComplete(blobUrl);
-			}
+			onRecordingComplete?.(blobUrl);
 		},
 	});
 
 	return (
 		<div className="flex items-center gap-2">
-			{status === "idle" && (
+			{status === "idle" && !mediaBlobUrl && (
 				<Tooltip delay={0}>
 					<span className="inline-block">
 						<Button
 							variant="outline"
 							isIconOnly
 							radius="full"
-							onPress={() => startRecording()}
+							onPress={startRecording}
 						>
 							<MicIcon className="size-4 text-accent" />
 						</Button>
 					</span>
 				</Tooltip>
 			)}
+
 			{status === "recording" && (
 				<div className="flex items-center gap-3 bg-surface border border-accent rounded-full p-2 w-72 shadow-sm transition-all duration-300 ease-out animate-in fade-in zoom-in-95 h-10">
 					<Tooltip delay={0}>
@@ -126,7 +123,7 @@ export const AudioRecorder = ({
 								variant="ghost"
 								isIconOnly
 								radius="full"
-								onPress={() => stopRecording()}
+								onPress={stopRecording}
 								className="bg-accent/10 hover:bg-accent-soft-hover min-w-7 w-7 h-7 shrink-0"
 							>
 								<Square className="size-4 text-accent" fill="currentColor" />
@@ -136,10 +133,10 @@ export const AudioRecorder = ({
 					<div className="flex-1 overflow-hidden h-4 flex items-center justify-center">
 						<AudioVisualizer stream={previewAudioStream} />
 					</div>
-					<div className="flex items-center justify-center pr-3 shrink-0 gap-1.5 ">
+					<div className="flex items-center justify-center pr-3 shrink-0 gap-1.5">
 						<span className="relative flex h-2 w-2">
-							<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger opacity-75"></span>
-							<span className="relative inline-flex rounded-full h-2 w-2 bg-danger"></span>
+							<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger opacity-75" />
+							<span className="relative inline-flex rounded-full h-2 w-2 bg-danger" />
 						</span>
 						<span className="text-[10px] uppercase font-bold text-accent tracking-wider">
 							Rec
@@ -147,7 +144,8 @@ export const AudioRecorder = ({
 					</div>
 				</div>
 			)}
-			{(status === "stopped" || status === "idle") && mediaBlobUrl && (
+
+			{status !== "recording" && mediaBlobUrl && (
 				<div className="animate-in fade-in zoom-in-95 duration-300">
 					<CustomPlayer
 						audioRef={audioRef}

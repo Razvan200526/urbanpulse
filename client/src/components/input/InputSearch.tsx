@@ -55,6 +55,7 @@ export const InputSearch = forwardRef<InputSearchRefType, InputSearchProps>(
 
 		return (
 			<TextField
+				aria-label="text-field"
 				{...rest}
 				type="text"
 				name={name}

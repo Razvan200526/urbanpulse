@@ -15,7 +15,7 @@ export const useNotifications = (userId: string | undefined) => {
 			const res = await hono.api.notifications.$get();
 			const data = await res.json();
 			if (!data.success) throw new Error(data.message);
-			return data.data;
+			return data.data.res;
 		},
 	});
 

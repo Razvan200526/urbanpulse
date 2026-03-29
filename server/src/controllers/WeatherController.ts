@@ -1,7 +1,7 @@
-import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { logger } from "@server/utils/Logger";
 import { weatherAlertsQuerySchema } from "@shared/validators/weather/isWeatherAlertsQueryValid";
+import { Hono } from "hono";
 
 type OwmAlert = {
 	event?: string;

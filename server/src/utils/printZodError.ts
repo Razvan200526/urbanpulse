@@ -1,6 +1,6 @@
+import * as p from "picocolors";
 import type { ZodError } from "zod";
 import { pe } from "./PrettyError";
-import * as p from "picocolors";
 
 export const printZodError = (err: ZodError) => {
 	const issues = err.issues;

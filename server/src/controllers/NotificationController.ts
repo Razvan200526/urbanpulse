@@ -1,3 +1,4 @@
+import type { Variables } from "@server/app";
 import auth from "@server/services/auth/AuthService";
 import { notificationService } from "@server/services/NotificationService";
 import { socketManager } from "@server/services/SocketManager";
@@ -5,12 +6,10 @@ import { logger } from "@server/utils/Logger";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
 
-export const notificationController = new Hono()
+export const notificationController = new Hono<{ Variables: Variables }>()
 	.basePath("/notifications")
 	.get("/", async (c) => {
-		const session = await auth.api.getSession({
-			headers: c.req.raw.headers,
-		});
+		const session = c.get("session");
 
 		if (!session) {
 			return c.json(
@@ -19,14 +18,12 @@ export const notificationController = new Hono()
 			);
 		}
 
-		const notifications = await notificationService.getNotifications(
-			session.user.id,
-		);
+		const res = await notificationService.getNotificationsWithUsers();
 
 		return c.json({
 			success: true,
 			message: "Notifications retrieved",
-			data: notifications,
+			data: { res },
 		});
 	})
 	.get(

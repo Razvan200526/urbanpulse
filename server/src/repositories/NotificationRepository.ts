@@ -1,6 +1,6 @@
 import { db } from "@server/db";
-import { type NotificationType, notification } from "@server/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { type NotificationType, notification, user } from "@server/db/schema";
+import { desc, eq, inArray } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class NotificationRepository implements IRepository<NotificationType> {
@@ -22,6 +22,14 @@ export class NotificationRepository implements IRepository<NotificationType> {
 
 	async getAll(): Promise<NotificationType[]> {
 		return await db.select().from(notification);
+	}
+
+	async getNotificationsWithUsers() {
+		return await db
+			.select()
+			.from(notification)
+			.fullJoin(user, eq(notification.userId, user.id))
+			.orderBy(desc(notification.createdAt));
 	}
 
 	async create(

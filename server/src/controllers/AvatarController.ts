@@ -1,16 +1,16 @@
 import { zValidator } from "@hono/zod-validator";
-import { storageService } from "@server/services/S3Service";
+import { uploadService } from "@server/services/UploadService";
 import { handleError } from "@server/utils/handleError";
-import { Hono } from "hono";
 import { fileUploadSchema } from "@shared/validators/upload/isFileUploadValid";
+import { Hono } from "hono";
 
 export const avatarController = new Hono()
 	.basePath("/avatar")
-	.post("/upload", zValidator("form", fileUploadSchema), async (c) => {
+	.post("/", zValidator("form", fileUploadSchema), async (c) => {
 		try {
-			const { file } = c.req.valid("form");
+			const { file, type } = c.req.valid("form");
 
-			const url = await storageService.uploadAvatar(file);
+			const url = await uploadService.upload(file, type);
 			return c.json(
 				{ data: { url, success: true, message: "File uploaded successfully" } },
 				200,
@@ -23,28 +23,6 @@ export const avatarController = new Hono()
 						url: null,
 						success: false,
 						message: "Failed to upload avatar",
-					},
-				},
-				500,
-			);
-		}
-	})
-	.post("/upload/image", zValidator("form", fileUploadSchema), async (c) => {
-		try {
-			const { file } = c.req.valid("form");
-			const url = await storageService.uploadImage(file);
-			return c.json(
-				{ data: { url, success: true, message: "File uploaded successfully" } },
-				200,
-			);
-		} catch (e) {
-			handleError(e);
-			return c.json(
-				{
-					data: {
-						url: null,
-						success: false,
-						message: "Failed to upload image",
 					},
 				},
 				500,

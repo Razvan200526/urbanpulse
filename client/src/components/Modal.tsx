@@ -10,9 +10,7 @@ export type ModalPropsType = Omit<ModalProps, "children"> & {
 	header?: React.ReactNode;
 	footer?: React.ReactNode;
 	modalRef?: React.RefObject<ModalRefType | null>;
-	footerClassName?: string;
-	headerClassName?: string;
-	trigger?: React.ReactNode;
+	trigger: React.ReactNode;
 	backdrop?: "opaque" | "blur" | "transparent";
 	children: React.ReactNode;
 	className?: string;
@@ -23,8 +21,6 @@ export const Modal = (props: ModalPropsType) => {
 		modalRef,
 		header,
 		footer,
-		footerClassName,
-		headerClassName,
 		backdrop,
 		trigger,
 		children,
@@ -53,7 +49,7 @@ export const Modal = (props: ModalPropsType) => {
 	});
 
 	return (
-		<>
+		<div>
 			{trigger}
 			<HeroModal isOpen={isOpen} onOpenChange={handleOpenChange} {...rest}>
 				<HeroModal.Backdrop
@@ -74,6 +70,6 @@ export const Modal = (props: ModalPropsType) => {
 					</HeroModal.Container>
 				</HeroModal.Backdrop>
 			</HeroModal>
-		</>
+		</div>
 	);
 };

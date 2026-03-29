@@ -4,7 +4,7 @@ import type { WSContext } from "hono/ws";
 /**
  * Represents a single active user connection via WebSocket.
  */
-interface UserConnection {
+export interface UserConnection {
 	/** Unique identifier for the user from the database. */
 	userId: string;
 	/** The Hono WebSocket context object. */

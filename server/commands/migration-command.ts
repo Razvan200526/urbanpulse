@@ -1,9 +1,10 @@
-import postgres from "postgres";
-import figures from "figures";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
-import PrettyError from "pretty-error";
+import figures from "figures";
 import * as p from "picocolors";
+import postgres from "postgres";
+import PrettyError from "pretty-error";
+
 const pe = new PrettyError();
 
 try {

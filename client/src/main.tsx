@@ -29,36 +29,22 @@ export const authClient = createAuthClient({
 	baseURL: import.meta.env.VITE_SERVER_URL,
 	plugins: [emailOTPClient()],
 });
-export const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			refetchOnWindowFocus: false,
-		},
-	},
-});
+export const queryClient = new QueryClient({});
 
-const render = () => {
-	const rootElement = document.getElementById("root");
+const rootElement = document.getElementById("root");
 
-	if (!rootElement) {
-		throw new Error("Root element not found");
-	}
-	const root = createRoot(rootElement);
-	root.render(
-		<StrictMode>
-			<QueryClientProvider client={queryClient}>
-				<RootProvider>
-					<NuqsAdapter>
-						<RouterProvider router={router} />
-					</NuqsAdapter>
-				</RootProvider>
-			</QueryClientProvider>
-		</StrictMode>,
-	);
-};
-
-try {
-	render();
-} catch (e) {
-	console.error(e);
+if (!rootElement) {
+	throw new Error("Root element not found");
 }
+const root = createRoot(rootElement);
+root.render(
+	<StrictMode>
+		<QueryClientProvider client={queryClient}>
+			<RootProvider>
+				<NuqsAdapter>
+					<RouterProvider router={router} />
+				</NuqsAdapter>
+			</RootProvider>
+		</QueryClientProvider>
+	</StrictMode>,
+);

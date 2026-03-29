@@ -70,6 +70,7 @@ export const UploadResourceModal = ({
 
 	return (
 		<Modal
+			trigger={<Button variant="primary">Upload Resource</Button>}
 			modalRef={modalRef}
 			header={
 				<header className="flex flex-col items-start justify-start">

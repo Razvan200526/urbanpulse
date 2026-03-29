@@ -7,10 +7,16 @@ import { avatarController } from "./controllers/AvatarController";
 import { notificationController } from "./controllers/NotificationController";
 import { pulseController } from "./controllers/PulseController";
 import { resourceController } from "./controllers/ResourceController";
-import { userController } from "./controllers/UserController";
 import { uploadController } from "./controllers/UploadController";
+import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
-export const app = new Hono()
+import { authMiddleware } from "./middleware/authMiddleware";
+import type auth from "./services/auth/AuthService";
+export type Variables = {
+	user: typeof auth.$Infer.Session.user | null;
+	session: typeof auth.$Infer.Session.session | null;
+};
+export const app = new Hono<{ Variables: Variables }>()
 	.use(
 		rateLimiter({
 			windowMs: 60 * 1000,
@@ -40,6 +46,7 @@ export const app = new Hono()
 		}),
 	)
 	.route("/", authController)
+	.use("*", authMiddleware)
 	.route("/", userController)
 	.route("/", avatarController)
 	.route("/", pulseController)

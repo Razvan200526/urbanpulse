@@ -20,6 +20,7 @@ import {
 import { useOfferHelp, useUpdatePulse } from "../hooks";
 import { MetaRow } from "./MetaRow";
 import { UrgencyMeter } from "./UrgencyMeter";
+import { CustomPlayer } from "@client/components/audio/CustomPlayer";
 
 const PULSE_TYPE_CONFIG: Record<
 	PulseEnum,
@@ -199,7 +200,24 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 									</span>
 								</MetaRow>
 							</div>
-
+							{/*{pulse.imageUrls && (
+								<div>
+									{pulse.imageUrls.map((url, index) => (
+										<img
+											key={index}
+											src={url}
+											alt={`Pulse ${index + 1}`}
+											className="w-full"
+										/>
+									))}
+								</div>
+							)}*/}
+							{pulse.audioUrl && (
+								<CustomPlayer
+									mediaBlobUrl={pulse.audioUrl}
+									showButtons={false}
+								/>
+							)}
 							{isOwner && pulse.status === PulseStatusEnum.Active && (
 								<div className="rounded bg-surface border border-border p-4 space-y-3">
 									<p className="text-xs font-medium tracking-widest uppercase text-muted">

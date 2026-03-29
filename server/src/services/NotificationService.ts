@@ -3,32 +3,33 @@ import {
 	type NotificationRepository,
 	notificationRepository,
 } from "@server/repositories/NotificationRepository";
-import { socketManager } from "@server/services/SocketManager";
-import { logger } from "@server/utils/Logger";
-import { notificationCreateSchema } from "@shared/validators/notifications/isValidCreateNotification";
+import {
+	socketManager,
+	type UserConnection,
+} from "@server/services/SocketManager";
+import { isNotificationCreateValid } from "@shared/validators/notifications/isValidCreateNotification";
+import { locationService, type LocationService } from "./LocationService";
+import { handleError } from "@server/utils/handleError";
+import {
+	type BroadcastDataType,
+	type NotificationFactory,
+	notificationFactory,
+} from "@server/shared/NotificationFactory";
+import { isPulseDataValid } from "@shared/validators/pulses/isPulseDataValid";
+import type { PulseRepsponseParamsType } from "@server/types";
 
 /**
  * Service for managing user notifications and real-time broadcasting.
  */
 export class NotificationService {
 	private notificationRepo: NotificationRepository;
+	private locationService: LocationService;
+	private notificationFactory: NotificationFactory;
 
 	constructor() {
 		this.notificationRepo = notificationRepository;
-	}
-
-	private recipientsNearPulse(position: { x: number; y: number }) {
-		let recipients = socketManager.getConnectionsInRange(position, 500);
-		if (recipients.length === 0) {
-			const allConnections = socketManager.getAllConnections();
-			if (allConnections.length > 0) {
-				logger.info(
-					`No users found in range — falling back to all ${allConnections.length} connected user(s).`,
-				);
-				recipients = allConnections;
-			}
-		}
-		return recipients;
+		this.locationService = locationService;
+		this.notificationFactory = notificationFactory;
 	}
 
 	/**
@@ -39,25 +40,12 @@ export class NotificationService {
 	async createNotification(
 		data: Partial<NotificationType>,
 	): Promise<NotificationType | null> {
+		const { data: notificationData, success } = isNotificationCreateValid(data);
+		if (!success) return null;
 		try {
-			const {
-				data: notificationReq,
-				error,
-				success,
-			} = notificationCreateSchema.safeParse(data);
-			if (!success || error) {
-				logger.exception(error);
-				logger.error("Failed to create notification");
-				return null;
-			}
-			const newNotification =
-				await this.notificationRepo.create(notificationReq);
-			return newNotification;
+			return await this.notificationRepo.create(notificationData);
 		} catch (error) {
-			if (error instanceof Error) {
-				logger.exception(error);
-			}
-			logger.error("Failed to create notification");
+			handleError(error);
 			return null;
 		}
 	}
@@ -69,58 +57,69 @@ export class NotificationService {
 	 */
 	async getNotifications(userId: string): Promise<NotificationType[]> {
 		try {
-			const notifications = await this.notificationRepo.getByUserId(userId);
-			return notifications;
+			return await this.notificationRepo.getByUserId(userId);
 		} catch (error) {
-			if (error instanceof Error) {
-				logger.exception(error);
-			}
-			logger.error(`Failed to get notifications for user ${userId}`);
+			handleError(error);
 			return [];
 		}
 	}
 
 	/**
-	 * Broadcasts a pulse alert to all active users within range of the pulse location.
-	 * @param {any} pulseData - The data of the newly created pulse.
+	 *
+	 * @param userIds
+	 * Retrieves all notifications with the users that posted them
+	 * @returns All notifications with users (it joins their tables).Used for displaying notifications with user details.
 	 */
-	async broadcastToNearbyUsers(pulseData: any) {
-		const { position, type, description, id } = pulseData;
+	async getNotificationsWithUsers() {
+		try {
+			return await this.notificationRepo.getNotificationsWithUsers();
+		} catch (error) {
+			handleError(error);
+			return [];
+		}
+	}
+	/**
+	 * Broadcasts a pulse alert to all active users within range of the pulse location.
+	 * @param {Partial<PulseType>} pulseData - The data of the newly created pulse.
+	 */
+	async broadcastToNearbyUsers(pulseData: Partial<PulseType>) {
+		const { success, data } = isPulseDataValid(pulseData);
+		if (!success) return;
+		const recipients = this.locationService.getNearbyConnections(data.position);
 
-		// Verify that 'position' is {x, y} where x=Long and y=Lat
-		logger.info(
-			`Broadcasting pulse ${id} to users near [Long: ${position.x}, Lat: ${position.y}]`,
-		);
-
-		const recipients = this.recipientsNearPulse(position);
-		logger.info(`Broadcasting to ${recipients.length} user(s)`);
-
-		const broadcastData = {
-			success: true,
-			channelName: "notifications:broadcast",
-			data: {
-				type: "HERO_ALERT",
-				payload: {
-					pulseId: id,
-					type,
-					description,
-					location: position,
-				},
+		const broadcastData = this.notificationFactory.create({
+			type: "HERO_ALERT",
+			payload: {
+				pulseId: data.id,
+				type: data.type,
+				description: data.description,
+				location: data.position,
 			},
 			message: "New pulse nearby!",
-		};
+		});
+		await this.sendAndSaveData(recipients, broadcastData);
+	}
 
-		// 2. Send to each user and persist to their history
+	/**
+	 *
+	 * @param recipients Array of UserConnection types
+	 * @param broadcastData The data to broadcast to the recipients(created by notificationFactory)
+	 * @param persist Whether to persist the notification to the database
+	 */
+	async sendAndSaveData(
+		recipients: UserConnection[],
+		broadcastData: BroadcastDataType<unknown>,
+		persist: boolean = true,
+	) {
 		for (const conn of recipients) {
-			logger.info(`Sending alert to User ${conn.userId}`);
 			conn.ws.send(JSON.stringify(broadcastData));
-
-			// 3. Save to DB so user sees it in their history later
-			await this.createNotification({
-				userId: conn.userId,
-				type: "HERO_ALERT",
-				payload: broadcastData.data.payload as any,
-			});
+			if (persist) {
+				await this.createNotification({
+					userId: conn.userId,
+					type: broadcastData.data.type,
+					payload: broadcastData.data.payload,
+				});
+			}
 		}
 	}
 
@@ -130,43 +129,26 @@ export class NotificationService {
 	 */
 	broadcastPulseUpdated(pulse: PulseType) {
 		const { position, id, status, isResolved, title, type: pulseKind } = pulse;
-		logger.info(
-			`Broadcasting pulse update ${id} near [Long: ${position.x}, Lat: ${position.y}]`,
-		);
-		const recipients = this.recipientsNearPulse(position);
-		const broadcastData = {
-			success: true,
-			channelName: "notifications:pulse_updated",
-			data: {
-				type: "PULSE_UPDATED",
-				payload: {
-					pulseId: id,
-					status,
-					isResolved,
-					type: pulseKind,
-					title,
-					location: position,
-				},
+		const recipients = this.locationService.getNearbyConnections(position);
+		const broadcastData = this.notificationFactory.create({
+			message: "A pulse nearby was updated",
+			payload: {
+				pulseId: id,
+				status,
+				isResolved,
+				type: pulseKind,
+				title,
+				location: position,
 			},
-			message: "A nearby pulse was updated",
-		};
-		for (const conn of recipients) {
-			conn.ws.send(JSON.stringify(broadcastData));
-		}
+			type: "PULSE_UPDATED",
+		});
+		this.sendAndSaveData(recipients, broadcastData, false);
 	}
 
 	/**
 	 * Direct notification to the pulse author when someone offers help.
 	 */
-	async notifyPulseOwnerOfResponse(params: {
-		ownerUserId: string;
-		responseId: string;
-		pulseId: string;
-		pulseTitle: string;
-		responderId: string;
-		responderName: string;
-		note: string;
-	}) {
+	async notifyPulseOwnerOfResponse(params: PulseRepsponseParamsType) {
 		const {
 			ownerUserId,
 			responseId,
@@ -185,24 +167,13 @@ export class NotificationService {
 			note,
 		};
 		const message = `${responderName} offered help on "${pulseTitle}"`;
-		const broadcastData = {
-			success: true,
-			channelName: "notifications:pulse_response",
-			data: {
-				type: "PULSE_RESPONSE",
-				payload,
-			},
-			message,
-		};
-		const body = JSON.stringify(broadcastData);
-		for (const conn of socketManager.getConnectionsForUser(ownerUserId)) {
-			conn.ws.send(body);
-		}
-		await this.createNotification({
-			userId: ownerUserId,
+		const broadcastData = this.notificationFactory.create({
 			type: "PULSE_RESPONSE",
 			payload,
+			message,
 		});
+		const recipients = socketManager.getConnectionsForUser(ownerUserId);
+		await this.sendAndSaveData(recipients, broadcastData);
 	}
 
 	/**
@@ -224,24 +195,13 @@ export class NotificationService {
 			responseId,
 		};
 		const message = `${ownerName} accepted your help for “${pulseTitle}”`;
-		const broadcastData = {
-			success: true,
-			channelName: "notifications:help_accepted",
-			data: {
-				type: "PULSE_RESPONSE_ACCEPTED",
-				payload,
-			},
-			message,
-		};
-		const body = JSON.stringify(broadcastData);
-		for (const conn of socketManager.getConnectionsForUser(responderUserId)) {
-			conn.ws.send(body);
-		}
-		await this.createNotification({
-			userId: responderUserId,
+		const broadcastData = this.notificationFactory.create({
 			type: "PULSE_RESPONSE_ACCEPTED",
 			payload,
+			message,
 		});
+		const recipients = socketManager.getConnectionsForUser(responderUserId);
+		await this.sendAndSaveData(recipients, broadcastData);
 	}
 
 	/**

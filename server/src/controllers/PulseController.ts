@@ -1,30 +1,34 @@
+import { zValidator } from "@hono/zod-validator";
+import { authMiddleware } from "@server/middleware/authMiddleware";
+import { responseRepository } from "@server/repositories/ResponseRepository";
+import { userRepository } from "@server/repositories/UserRepository";
 import auth from "@server/services/auth/AuthService";
 import { notificationService } from "@server/services/NotificationService";
 import { pulseService } from "@server/services/PulseService";
 import { responseService } from "@server/services/ResponseService";
-import { userRepository } from "@server/repositories/UserRepository";
-import { responseRepository } from "@server/repositories/ResponseRepository";
 import { handleError } from "@server/utils/handleError";
 import { PulseStatusEnum, PulseUploadStateEnum } from "@shared/types";
 import { acceptHelpParamsSchema } from "@shared/validators/pulses/isAcceptHelpParamsValid";
 import { offerHelpBodySchema } from "@shared/validators/pulses/isOfferHelpValid";
 import { pulseRequestSchema } from "@shared/validators/pulses/isPulseRequestValid";
+import { retrievePulsePayloadSchema } from "@shared/validators/pulses/isPulseRetrieveValid";
 import {
 	pulseIdParamSchema,
 	pulseUpdateBodySchema,
 } from "@shared/validators/pulses/isPulseUpdateValid";
-import { retrievePulsePayloadSchema } from "@shared/validators/pulses/isPulseRetrieveValid";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
 
 export const pulseController = new Hono()
 	.basePath("/pulse")
+	.use(authMiddleware)
 	.patch(
 		"/:id",
 		zValidator("param", pulseIdParamSchema),
 		zValidator("json", pulseUpdateBodySchema),
 		async (c) => {
+			const { id } = c.req.valid("param");
+			const body = c.req.valid("json");
 			const session = await auth.api.getSession({
 				headers: c.req.raw.headers,
 			});
@@ -34,8 +38,6 @@ export const pulseController = new Hono()
 					401,
 				);
 			}
-			const { id } = c.req.valid("param");
-			const body = c.req.valid("json");
 			const updated = await pulseService.updatePulseAsOwner(
 				id,
 				session.user.id,
@@ -203,6 +205,7 @@ export const pulseController = new Hono()
 							);
 							return;
 						}
+						console.log(result.data);
 						const newPulse = await pulseService.createPulse(result.data);
 						if (!newPulse) {
 							ws.send(

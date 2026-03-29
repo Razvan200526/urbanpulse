@@ -28,7 +28,8 @@ export type NotificationType =
 	| "PULSE_RESPONSE_ACCEPTED"
 	| "MESSAGE"
 	| "TRANSACTION"
-	| "FEEDBACK";
+	| "FEEDBACK"
+	| "PULSE_UPDATED";
 
 export enum ResponseStatusEnum {
 	Pending = "PENDING",

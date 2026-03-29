@@ -1,9 +1,10 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
+import { Avatar } from "@client/components/user/Avatar";
 import { useAuth } from "@client/hooks/useAuth";
 import { useNotifications } from "@client/hooks/useNotifications";
 import { useAcceptHelpOffer } from "@client/pages/map/hooks";
-import { Card, Separator, Toast } from "@heroui/react";
+import { Card, ProgressCircle, Separator, Table, Toast } from "@heroui/react";
 import { formatDate } from "@shared/utils/formatDate";
 import { Bell } from "lucide-react";
 import { useState } from "react";
@@ -58,16 +59,23 @@ export const AlertsPage = () => {
 	const acceptHelp = useAcceptHelpOffer();
 	const [acceptedKeys, setAcceptedKeys] = useState(() => new Set<string>());
 
+	if (isPending) {
+		return (
+			<ProgressCircle
+				isIndeterminate
+				className="h-screen flex items-center justify-center"
+			/>
+		);
+	}
 	return (
-		<div className="flex flex-col h-full bg-surface overflow-auto">
+		<div className="flex flex-col h-full bg-surface">
 			<Header title="Alerts" />
 			<Separator />
-			<div className="p-6 max-w-2xl mx-auto w-full space-y-4">
+			<div className="p-6 max-w-2xl mx-auto w-full space-y-4 flex flex-col items-start justify-start">
 				<p className="text-sm text-muted">
 					Recent notifications, including nearby pulses and responses to your
 					requests.
 				</p>
-				{isPending && <p className="text-sm text-muted">Loading…</p>}
 				{!isPending && (!notifications || notifications.length === 0) && (
 					<Card className="border border-border shadow-none">
 						<Card.Content className="p-8 flex flex-col items-center text-center gap-2">
@@ -76,95 +84,29 @@ export const AlertsPage = () => {
 						</Card.Content>
 					</Card>
 				)}
-				<ul className="space-y-2">
-					{notifications?.map(
-						(n: {
-							id: string;
-							type: string;
-							payload: unknown;
-							createdAt: Date | string;
-							read: boolean;
-						}) => {
-							const payload =
-								n.payload && typeof n.payload === "object"
-									? (n.payload as Record<string, unknown>)
-									: null;
-							const summary = summarizePayload(n.type, payload);
-							const pulseId =
-								payload && "pulseId" in payload ? String(payload.pulseId) : "";
-							const responseId =
-								payload && "responseId" in payload
-									? String(payload.responseId)
-									: "";
-							const offerKey =
-								pulseId && responseId ? `${pulseId}:${responseId}` : "";
-							const canAcceptHelp =
-								n.type === "PULSE_RESPONSE" &&
-								pulseId &&
-								responseId &&
-								!acceptedKeys.has(offerKey);
-							return (
-								<li key={n.id}>
-									<Card
-										className={`border border-border shadow-none ${n.read ? "opacity-70" : ""}`}
-									>
-										<Card.Content className="p-4">
-											<div className="flex items-start justify-between gap-2">
-												<span className="text-xs font-semibold uppercase tracking-wide text-accent">
-													{labelForType(n.type)}
-												</span>
-												<span className="text-[11px] text-muted shrink-0">
-													{formatDate(n.createdAt)}
-												</span>
-											</div>
-											{summary ? (
-												<p className="text-sm text-muted mt-2 leading-snug">
-													{summary}
-												</p>
-											) : (
-												<pre className="text-xs text-muted mt-2 whitespace-pre-wrap font-sans break-words">
-													{JSON.stringify(n.payload, null, 2)}
-												</pre>
-											)}
-											{canAcceptHelp && (
-												<div className="mt-3 flex justify-end">
-													<Button
-														size="sm"
-														variant="primary"
-														isPending={acceptHelp.isPending}
-														onPress={() =>
-															acceptHelp.mutate(
-																{ pulseId, responseId },
-																{
-																	onSuccess: () => {
-																		setAcceptedKeys((prev) => {
-																			const next = new Set(prev);
-																			next.add(offerKey);
-																			return next;
-																		});
-																		Toast.toast.success("Help offer accepted");
-																	},
-																	onError: (err) =>
-																		Toast.toast.danger(
-																			err instanceof Error
-																				? err.message
-																				: "Could not accept",
-																		),
-																},
-															)
-														}
-													>
-														Accept help
-													</Button>
-												</div>
-											)}
-										</Card.Content>
-									</Card>
-								</li>
-							);
-						},
-					)}
-				</ul>
+				<div className="w-full flex flex-row items-start justify-start">
+					<Table variant="secondary">
+						<Table.ScrollContainer>
+							<Table.Content aria-label="alerts-table">
+								<Table.Header>
+									<Table.Column>User</Table.Column>
+									<Table.Column>Type</Table.Column>
+								</Table.Header>
+								<Table.Body>
+									{notifications?.map((n) => (
+										<Table.Row key={n.notification?.id}>
+											<Table.Cell className="flex items-center justify-start gap-2">
+												{n.user && <Avatar user={n.user} />}
+												<p className="text-sm text-accent"> {n.user?.name}</p>
+											</Table.Cell>
+											<Table.Cell>{n.notification?.type}</Table.Cell>
+										</Table.Row>
+									))}
+								</Table.Body>
+							</Table.Content>
+						</Table.ScrollContainer>
+					</Table>
+				</div>
 			</div>
 		</div>
 	);

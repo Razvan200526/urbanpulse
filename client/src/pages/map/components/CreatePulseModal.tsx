@@ -15,28 +15,15 @@ import { Separator, Toast, Tooltip } from "@heroui/react";
 import { PulseEnum, UrgencyEnum } from "@shared/types";
 import { isBioValid } from "@shared/validators/isBioValid";
 import { isNameValid } from "@shared/validators/isNameValid";
-import { PaperclipIcon, XIcon } from "lucide-react";
+import { PaperclipIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useCreatePulse } from "../hooks";
-import { useUploadAudio } from "@client/hooks/uploadHooks";
 import { ImageList } from "./ImageList";
 
 export const pulseTypeItems: TabItemType[] = [
-	{
-		key: PulseEnum.Emergency,
-		label: "Emergency",
-		className: "mx-2",
-	},
-	{
-		key: PulseEnum.Skill,
-		label: "Skill",
-		className: "mx-2",
-	},
-	{
-		key: PulseEnum.Item,
-		label: "Item",
-		className: "mx-2",
-	},
+	{ key: PulseEnum.Emergency, label: "Emergency", className: "mx-2" },
+	{ key: PulseEnum.Skill, label: "Skill", className: "mx-2" },
+	{ key: PulseEnum.Item, label: "Item", className: "mx-2" },
 ];
 
 export const urgencyItems: TabItemType[] = [
@@ -48,52 +35,53 @@ export const urgencyItems: TabItemType[] = [
 export const CreatePulseModal = ({
 	modalRef,
 	emergencyLaunch = false,
+	coords,
 }: {
 	modalRef: React.RefObject<ModalRefType | null>;
-	/** When true (e.g. Emergency shortcut), prefill title and lock Emergency + Immediate. */
 	emergencyLaunch?: boolean;
+	coords?: { lat: number; long: number };
 }) => {
 	const { data: user } = useAuth();
-	const { coords, refresh } = useGetGeolocation({
-		enableHighAccuracy: true,
-	});
 	const { mutateAsync: createPulse, isPending } = useCreatePulse();
 
 	const titleRef = useRef<InputNameRefType>(null);
 	const descriptionRef = useRef<TextAreaRefType>(null);
+	const audioUrlRef = useRef<string>("");
+	const audioRef = useRef<HTMLAudioElement>(null);
+
 	const [pulseType, setPulseType] = useState<PulseEnum>(PulseEnum.Emergency);
 	const [urgency, setUrgency] = useState<UrgencyEnum>(UrgencyEnum.Immediate);
 	const [imageUrls, setImageUrls] = useState<string[]>([]);
-	const [audioUrl, setAudioUrl] = useState<string>("");
-	const audioRef = useRef<HTMLAudioElement>(null);
+
 	const handleCreate = async () => {
-		const title = titleRef.current?.getValue() || "";
-		const description = descriptionRef.current?.getValue() || "";
+		const title = titleRef.current?.getValue() ?? "";
+		const description = descriptionRef.current?.getValue() ?? "";
+
+		console.log(audioUrlRef.current);
 		if (!isNameValid(title) || !isBioValid(description)) {
 			Toast.toast.danger("Title and description are required.");
 			return;
 		}
 
 		if (!coords) {
-			refresh();
 			Toast.toast.danger(
 				"Location is required. Please enable geolocation in the browser.",
 			);
 			return;
 		}
 
-		console.log("Audio url : ", audioUrl);
 		await createPulse({
 			title,
 			description,
 			type: pulseType,
-			urgency: urgency,
+			urgency,
 			userId: user?.user.id,
 			position: { x: coords.long, y: coords.lat },
 			imageUrls,
 			isResolved: false,
-			audioUrl: audioUrl,
+			audioUrl: audioUrlRef.current,
 		});
+
 		modalRef.current?.close();
 	};
 
@@ -179,10 +167,9 @@ export const CreatePulseModal = ({
 						<div className="flex items-center order-2 sm:order-1 flex-1">
 							<AudioRecorder
 								audioRef={audioRef}
-								onRecordingComplete={(blobUrl) => {
-									audioRef.current?.setAttribute("src", blobUrl);
+								onUpload={(response) => {
+									audioUrlRef.current = response.data.url;
 								}}
-								onUpload={(response) => setAudioUrl(response.url)}
 							/>
 						</div>
 						<div className="flex items-center justify-end order-1 sm:order-2 shrink-0">

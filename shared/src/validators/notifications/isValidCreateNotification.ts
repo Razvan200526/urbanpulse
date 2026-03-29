@@ -16,4 +16,8 @@ export const notificationCreateSchema = z.object({
 	payload: z.json(),
 });
 
+export const isNotificationCreateValid = (data: unknown) => {
+	return notificationCreateSchema.safeParse(data);
+};
+
 export type CreateNotification = z.infer<typeof notificationCreateSchema>;

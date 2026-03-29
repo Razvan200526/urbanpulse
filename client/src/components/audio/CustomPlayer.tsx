@@ -1,4 +1,4 @@
-import { ProgressBar, Tooltip } from "@heroui/react";
+import { cn, ProgressBar, Tooltip } from "@heroui/react";
 import { Pause, Play, Trash2Icon, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../Button/Button";
@@ -8,39 +8,47 @@ export type CustomPlayerProps = {
 	mediaBlobUrl: string;
 	audioRef?: React.RefObject<HTMLAudioElement | null>;
 	onDelete?: () => void;
+	onUpload?: (response: any) => void;
+	showButtons?: boolean;
 };
 
 export const CustomPlayer = ({
 	mediaBlobUrl,
 	audioRef,
 	onDelete,
+	onUpload,
+	showButtons = true,
 }: CustomPlayerProps) => {
 	const { mutateAsync: uploadFile, isPending } = useUploadAudio();
 	const internalRef = useRef<HTMLAudioElement>(null);
-	const playerRef = audioRef || internalRef;
+	const playerRef = audioRef ?? internalRef;
 
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [progress, setProgress] = useState(0);
 	const [duration, setDuration] = useState(0);
 	const [currentTime, setCurrentTime] = useState(0);
 
+	useEffect(() => {
+		setIsPlaying(false);
+		setProgress(0);
+		setCurrentTime(0);
+	}, []);
+
 	const togglePlayPause = () => {
-		const prevValue = isPlaying;
-		setIsPlaying(!prevValue);
-		if (!prevValue) {
-			playerRef.current?.play();
+		if (!playerRef.current) return;
+		if (isPlaying) {
+			playerRef.current.pause();
 		} else {
-			playerRef.current?.pause();
+			playerRef.current.play();
 		}
+		setIsPlaying((prev) => !prev);
 	};
 
 	const handleTimeUpdate = () => {
-		if (playerRef.current) {
-			setCurrentTime(playerRef.current.currentTime);
-			setProgress(
-				(playerRef.current.currentTime / playerRef.current.duration) * 100 || 0,
-			);
-		}
+		const el = playerRef.current;
+		if (!el) return;
+		setCurrentTime(el.currentTime);
+		setProgress((el.currentTime / el.duration) * 100 || 0);
 	};
 
 	const handleLoadedMetadata = () => {
@@ -54,20 +62,14 @@ export const CustomPlayer = ({
 		setProgress(0);
 		setCurrentTime(0);
 	};
+
 	const handleUpload = async () => {
 		try {
-			let blobToUpload = audioBlob;
-
-			if (!blobToUpload && mediaBlobUrl) {
-				const response = await fetch(mediaBlobUrl);
-				blobToUpload = await response.blob();
-			}
-
-			if (!blobToUpload) return;
-			const file = new File([blobToUpload], "recording.wav", {
-				type: "audio/wav",
-			});
+			const response = await fetch(mediaBlobUrl);
+			const blob = await response.blob();
+			const file = new File([blob], "recording.wav", { type: "audio/wav" });
 			const uploadResponse = await uploadFile(file);
+			onUpload?.(uploadResponse);
 		} catch (error) {
 			console.error("Failed to upload audio:", error);
 		}
@@ -80,12 +82,6 @@ export const CustomPlayer = ({
 		return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 	};
 
-	useEffect(() => {
-		setIsPlaying(false);
-		setProgress(0);
-		setCurrentTime(0);
-	}, []);
-
 	return (
 		<div className="flex items-center gap-3 bg-surface border border-accent rounded-full p-2 pr-4 h-10 w-72 transition-all duration-300 animate-in fade-in zoom-in-95">
 			<audio
@@ -95,6 +91,7 @@ export const CustomPlayer = ({
 				onLoadedMetadata={handleLoadedMetadata}
 				onEnded={handleEnded}
 			/>
+
 			<div className="flex items-center justify-start gap-2">
 				<Tooltip>
 					<Button
@@ -115,7 +112,8 @@ export const CustomPlayer = ({
 						Play
 					</Tooltip.Content>
 				</Tooltip>
-				<Tooltip delay={0}>
+
+				{showButtons ? <Tooltip delay={0}>
 					<Button
 						isIconOnly
 						radius="full"
@@ -128,9 +126,9 @@ export const CustomPlayer = ({
 					<Tooltip.Content className="text-xs text-success rounded-full border border-success bg-surface">
 						Upload recording
 					</Tooltip.Content>
-				</Tooltip>
+				</Tooltip> : null}
 
-				<Tooltip delay={0}>
+				{showButtons ? <Tooltip delay={0}>
 					<Button
 						variant="danger-soft"
 						isIconOnly
@@ -143,7 +141,7 @@ export const CustomPlayer = ({
 					<Tooltip.Content className="text-xs text-danger rounded-full border border-danger bg-surface">
 						Delete recording
 					</Tooltip.Content>
-				</Tooltip>
+				</Tooltip> : null}
 			</div>
 
 			<div className="flex flex-row flex-1 justify-between items-center text-[10px] text-accent font-medium gap-1">
@@ -153,7 +151,7 @@ export const CustomPlayer = ({
 					size="sm"
 					value={progress}
 					aria-label="Audio progress"
-					className="w-20"
+					className={cn(showButtons ? "w-20" : "w-30" )}
 				>
 					<ProgressBar.Track>
 						<ProgressBar.Fill />
