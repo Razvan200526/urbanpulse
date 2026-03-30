@@ -27,6 +27,7 @@
 		"nuqs": "^2.8.9",
 		"react": "^19.2.4",
 		"react-dom": "^19.2.4",
+		"react-error-boundary": "^6.1.1",
 		"react-image-crop": "^11.0.10",
 		"react-media-recorder": "^1.7.2",
 		"react-router": "^7.13.1",
