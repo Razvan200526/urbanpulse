@@ -6,12 +6,9 @@ export const createReportSchema = z
 		targetUserId: z.string().min(1).nullable().optional(),
 		targetPulseId: z.string().uuid().nullable().optional(),
 	})
-	.refine(
-		(data) => Boolean(data.targetUserId || data.targetPulseId),
-		{
-			message: "Either targetUserId or targetPulseId is required",
-			path: ["targetPulseId"],
-		},
-	);
+	.refine((data) => Boolean(data.targetUserId || data.targetPulseId), {
+		message: "Either targetUserId or targetPulseId is required",
+		path: ["targetPulseId"],
+	});
 
 export type CreateReportType = z.infer<typeof createReportSchema>;

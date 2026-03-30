@@ -5,6 +5,7 @@ import { rateLimiter } from "hono-rate-limiter";
 import { adminController } from "./controllers/AdminController";
 import { authController } from "./controllers/AuthController";
 import { avatarController } from "./controllers/AvatarController";
+import { dashboardController } from "./controllers/DashboardController";
 import { notificationController } from "./controllers/NotificationController";
 import { pulseController } from "./controllers/PulseController";
 import { reportController } from "./controllers/ReportController";
@@ -55,6 +56,7 @@ export const app = new Hono<{ Variables: Variables }>()
 	.route("/", notificationController)
 	.route("/", reportController)
 	.route("/", resourceController)
+	.route("/", dashboardController)
 	.route("/", uploadController)
 	.route("/", adminController)
 	.route("/", weatherController);

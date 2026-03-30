@@ -32,11 +32,11 @@ export function HelpOfferSnackbar() {
 
 	return (
 		<div
-			className="fixed bottom-6 left-1/2 z-[200] flex w-[min(100%-2rem,28rem)] -translate-x-1/2 flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-lg md:flex-row md:items-center md:justify-between"
+			className="fixed bottom-6 left-1/2 z-200 flex w-[min(100%-2rem,28rem)] -translate-x-1/2 flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-lg md:flex-row md:items-center md:justify-between"
 			role="status"
 		>
 			<div className="flex gap-3 min-w-0">
-				<div className="shrink-0 rounded-full bg-accent/15 p-2 text-accent">
+				<div className="shrink-0 rounded-full bg-accent-soft p-2 text-accent">
 					<HandHeart className="size-5" />
 				</div>
 				<div className="min-w-0">

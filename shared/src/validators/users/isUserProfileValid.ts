@@ -1,14 +1,6 @@
 import * as z from "zod";
 
-const weekdaySchema = z.enum([
-	"Mon",
-	"Tue",
-	"Wed",
-	"Thu",
-	"Fri",
-	"Sat",
-	"Sun",
-]);
+const weekdaySchema = z.enum(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
 
 export const userProfileUpdateSchema = z.object({
 	name: z.string().trim().min(1).max(80),

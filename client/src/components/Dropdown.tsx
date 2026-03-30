@@ -92,7 +92,7 @@ export const CustomDropdown = ({
 }: DropdownProps) => {
 	return (
 		<Dropdown>
-			<Dropdown.Trigger>{trigger}</Dropdown.Trigger>
+			{trigger}
 			<Dropdown.Popover
 				placement={placement}
 				className={cn(

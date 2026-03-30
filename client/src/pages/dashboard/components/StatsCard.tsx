@@ -1,7 +1,14 @@
 import { Card } from "@heroui/react";
-import type { StatType } from "./fakeStats";
+import type { StatType } from "./dashboardStats";
 
 export const StatsCard = ({ stat }: { stat: StatType }) => {
+	const trendClassName =
+		stat.trend === "No change" || stat.trend === "--"
+			? "text-muted"
+			: stat.trend.startsWith("+")
+				? "text-success"
+				: "text-danger";
+
 	return (
 		<Card
 			key={stat.title}
@@ -16,14 +23,8 @@ export const StatsCard = ({ stat }: { stat: StatType }) => {
 			<Card.Content>
 				<div className="text-xl font-bold text-foreground">{stat.value}</div>
 				<p className="text-xs text-foreground/50 mt-1 flex items-center justify-start gap-2">
-					<span
-						className={
-							stat.trend.startsWith("+") ? "text-success" : "text-danger"
-						}
-					>
-						{stat.trend}
-					</span>
-					from last month
+					<span className={trendClassName}>{stat.trend}</span>
+					{stat.comparisonLabel}
 				</p>
 			</Card.Content>
 		</Card>

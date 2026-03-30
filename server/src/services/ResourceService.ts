@@ -101,7 +101,10 @@ export class ResourceService {
 					async (item: ResourceType & { transactions: TransactionType[] }) => {
 						const { transactions, ...resourceProps } = item;
 						const recentUsers = transactions
-							.map((t: TransactionType & { borrower?: UserType | null }) => t.borrower)
+							.map(
+								(t: TransactionType & { borrower?: UserType | null }) =>
+									t.borrower,
+							)
 							.filter((u): u is UserType => Boolean(u));
 						const author = await this.userRepo.getOne(resourceProps.userId);
 

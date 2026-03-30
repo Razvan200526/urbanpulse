@@ -15,17 +15,15 @@ export const SidebarDrawer = () => {
 				)}
 			>
 				<Tooltip delay={0}>
-					<Tooltip.Trigger>
-						<Button
-							variant="ghost"
-							isIconOnly={true}
-							onPress={open}
-							size="md"
-							className="rounded-full text-accent"
-						>
-							<MenuIcon className="size-5" />
-						</Button>
-					</Tooltip.Trigger>
+					<Button
+						variant="ghost"
+						isIconOnly={true}
+						onPress={open}
+						size="md"
+						className="rounded-full text-accent"
+					>
+						<MenuIcon className="size-5" />
+					</Button>
 					<Tooltip.Content className="rounded-full">
 						<p className="text-accent">Expand Sidebar</p>
 					</Tooltip.Content>
@@ -37,14 +35,12 @@ export const SidebarDrawer = () => {
 			</div>
 			<div className="2xl:hidden">
 				<Drawer>
-					<Drawer.Trigger>
-						<button
-							type="button"
-							className="sr-only"
-							tabIndex={-1}
-							aria-hidden="true"
-						/>
-					</Drawer.Trigger>
+					<button
+						type="button"
+						className="sr-only"
+						tabIndex={-1}
+						aria-hidden="true"
+					/>
 					<Drawer.Backdrop
 						variant="transparent"
 						isOpen={isOpen}

@@ -336,9 +336,7 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 											variant="danger-soft"
 											size="sm"
 											startContent={<FlagIcon className="size-4" />}
-											onPress={() =>
-												setIsReporting((current) => !current)
-											}
+											onPress={() => setIsReporting((current) => !current)}
 										>
 											{isReporting ? "Hide report form" : "Report concern"}
 										</Button>

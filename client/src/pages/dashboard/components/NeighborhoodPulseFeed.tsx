@@ -70,10 +70,7 @@ export function NeighborhoodPulseFeed() {
 		isPending,
 		refetch,
 		isFetching,
-	} = useRetrievePulses(
-		retrievePayload,
-		enabled,
-	);
+	} = useRetrievePulses(retrievePayload, enabled);
 
 	const sorted = useMemo(() => {
 		const raw = pulsesRes?.data ?? [];
@@ -172,9 +169,7 @@ export function NeighborhoodPulseFeed() {
 							<Button
 								key={option.label}
 								size="sm"
-								variant={
-									urgencyFilter === option.value ? "primary" : "outline"
-								}
+								variant={urgencyFilter === option.value ? "primary" : "outline"}
 								onPress={() => setUrgencyFilter(option.value)}
 							>
 								{option.label}

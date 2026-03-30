@@ -1,6 +1,5 @@
-import { Card } from "@heroui/react";
-import { Activity } from "lucide-react";
 import {
+	CartesianGrid,
 	Line,
 	LineChart,
 	ResponsiveContainer,
@@ -9,78 +8,78 @@ import {
 	YAxis,
 } from "recharts";
 
-const data = [
-	{ month: "Jan", activeUsers: 4000, newReports: 2400 },
-	{ month: "Feb", activeUsers: 3000, newReports: 1398 },
-	{ month: "Mar", activeUsers: 2000, newReports: 9800 },
-	{ month: "Apr", activeUsers: 2780, newReports: 3908 },
-	{ month: "May", activeUsers: 1890, newReports: 4800 },
-	{ month: "Jun", activeUsers: 2390, newReports: 3800 },
-	{ month: "Jul", activeUsers: 3490, newReports: 4300 },
-];
+type ChartPoint = {
+	date: string;
+	label: string;
+	pulses: number;
+	alerts: number;
+};
 
-export const Chart = () => {
+export const Chart = ({ data }: { data: ChartPoint[] }) => {
+	if (data.length === 0) {
+		return <p className="text-sm text-muted">No activity data yet.</p>;
+	}
+
 	return (
-		<Card className="lg:col-span-2 shadow-none border border-border bg-surface w-full h-full">
-			<Card.Header className="flex flex-col items-start justify-center pb-4">
-				<Card.Title className="flex items-center gap-2">
-					<Activity className="size-5 text-accent" />
-					City Activity Overview
-				</Card.Title>
-				<Card.Description className="text-muted">
-					Monitoring real-time urban dynamics over the last 7 months
-				</Card.Description>
-			</Card.Header>
-			<Card.Content className="h-75 w-full pt-6 border-t border-border">
-				<ResponsiveContainer width="100%" height="100%">
-					<LineChart
-						data={data}
-						margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-					>
-						<XAxis
-							dataKey="month"
-							stroke="var(--muted)"
-							fontSize={12}
-							tickLine={false}
-							axisLine={false}
-							className="text-muted"
-						/>
-						<YAxis
-							stroke="var(--muted)"
-							fontSize={12}
-							tickLine={false}
-							axisLine={false}
-							className="text-muted"
-							tickFormatter={(value) => `${value}`}
-						/>
-						<Tooltip
-							contentStyle={{
-								backgroundColor: "var(--color-surface)",
-								borderColor: "var(--color-border)",
-								borderRadius: "8px",
-								color: "var(--color-accent)",
-							}}
-							itemStyle={{ color: "var(--color-accent)" }}
-						/>
-						<Line
-							type="monotone"
-							dataKey="activeUsers"
-							stroke="var(--color-accent)"
-							strokeWidth={2}
-							dot={false}
-							activeDot={{ r: 4 }}
-						/>
-						<Line
-							type="monotone"
-							dataKey="newReports"
-							stroke="var(--color-secondary)"
-							strokeWidth={2}
-							dot={false}
-							activeDot={{ r: 4 }}
-						/>
-					</LineChart>
-				</ResponsiveContainer>
-			</Card.Content>
-		</Card>
+		<ResponsiveContainer width="100%" height="100%">
+			<LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+				<CartesianGrid
+					stroke="var(--color-border)"
+					strokeDasharray="3 3"
+					vertical={false}
+				/>
+				<XAxis
+					dataKey="label"
+					stroke="var(--muted)"
+					fontSize={12}
+					tickLine={false}
+					axisLine={false}
+					className="text-muted"
+				/>
+				<YAxis
+					allowDecimals={false}
+					stroke="var(--muted)"
+					fontSize={12}
+					tickLine={false}
+					axisLine={false}
+					className="text-muted"
+				/>
+				<Tooltip
+					labelFormatter={(_, payload) => {
+						const point = payload?.[0]?.payload as ChartPoint | undefined;
+						if (!point) return "";
+						return new Date(point.date).toLocaleDateString("en-US", {
+							month: "short",
+							day: "numeric",
+						});
+					}}
+					contentStyle={{
+						backgroundColor: "var(--color-surface)",
+						borderColor: "var(--color-border)",
+						borderRadius: "8px",
+						color: "var(--color-accent)",
+					}}
+					itemStyle={{ color: "var(--color-accent)" }}
+				/>
+				<Line
+					type="monotone"
+					dataKey="pulses"
+					name="Pulses"
+					stroke="var(--color-accent)"
+					strokeWidth={2}
+					dot={false}
+					activeDot={{ r: 4 }}
+				/>
+				<Line
+					type="monotone"
+					dataKey="alerts"
+					name="Alerts"
+					stroke="var(--color-secondary)"
+					strokeWidth={2}
+					dot={false}
+					activeDot={{ r: 4 }}
+				/>
+			</LineChart>
+		</ResponsiveContainer>
 	);
 };

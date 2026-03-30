@@ -31,13 +31,14 @@
 		"@better-auth/drizzle-adapter": "^1.5.5",
 		"@better-auth/infra": "^0.1.12",
 		"@hono/zod-validator": "^0.7.6",
+		"bcryptjs": "^3.0.3",
 		"better-auth": "^1.5.5",
 		"drizzle-orm": "^0.45.1",
 		"figures": "^6.1.0",
 		"hono": "^4.12.8",
 		"hono-rate-limiter": "^0.5.3",
 		"nanoid": "^5.1.7",
-		"nodemailer": "^8.0.2",
+		"nodemailer": "^8.0.4",
 		"pg": "^8.20.0",
 		"picocolors": "^1.1.1",
 		"postgres": "^3.4.8",
@@ -48,6 +49,7 @@
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
+		"@types/nodemailer": "^7.0.11",
 		"@types/pg": "^8.18.0",
 		"drizzle-kit": "^0.31.10",
 		"drizzle-seed": "^0.3.1"

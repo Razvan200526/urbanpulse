@@ -2,11 +2,7 @@ import {
 	type UserRepository,
 	userRepository,
 } from "@server/repositories/UserRepository";
-import type {
-	QuietHoursType,
-	SkillType,
-	UserType,
-} from "@server/db/schema";
+import type { QuietHoursType, SkillType, UserType } from "@server/db/schema";
 import {
 	type QuietHoursRepository,
 	quietHoursRepository,
@@ -136,11 +132,7 @@ export class UserService {
 
 	async updateSkillTags(userId: string, payload: SkillTagsUpdateType) {
 		const tags = Array.from(
-			new Set(
-				payload.tags
-					.map((tag) => tag.trim())
-					.filter(Boolean),
-			),
+			new Set(payload.tags.map((tag) => tag.trim()).filter(Boolean)),
 		);
 
 		try {

@@ -241,9 +241,7 @@ export const AdminPage = () => {
 																},
 																{
 																	onSuccess: () =>
-																		Toast.toast.success(
-																			"Report resolved",
-																		),
+																		Toast.toast.success("Report resolved"),
 																	onError: (error: unknown) =>
 																		Toast.toast.danger(
 																			error instanceof Error
@@ -269,9 +267,7 @@ export const AdminPage = () => {
 																},
 																{
 																	onSuccess: () =>
-																		Toast.toast.success(
-																			"Report dismissed",
-																		),
+																		Toast.toast.success("Report dismissed"),
 																	onError: (error: unknown) =>
 																		Toast.toast.danger(
 																			error instanceof Error
