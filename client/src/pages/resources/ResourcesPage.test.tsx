@@ -151,8 +151,12 @@ describe("ResourcesPage", () => {
 	test("wires the request and upload actions", () => {
 		renderToStaticMarkup(<ResourcesPage />);
 
-		const requestButton = buttonProps.find((props) => props.children === "Request");
-		const uploadButton = buttonProps.find((props) => props.children === "Upload");
+		const requestButton = buttonProps.find(
+			(props) => props.children === "Request",
+		);
+		const uploadButton = buttonProps.find(
+			(props) => props.children === "Upload",
+		);
 
 		requestButton?.onPress?.();
 		uploadButton?.onPress?.();
