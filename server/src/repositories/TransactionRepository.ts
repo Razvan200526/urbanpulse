@@ -54,9 +54,12 @@ export class TransactionRepository implements IRepository<TransactionType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(transaction).where(eq(transaction.id, id as any));
-		return { affected: 1 };
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
+			.delete(transaction)
+			.where(eq(transaction.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

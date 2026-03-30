@@ -25,7 +25,6 @@ export const ForgotPasswordNewPasswordStep = () => {
 		const confirmPassword = confirmPasswordRef.current?.getValue() || "";
 
 		if (password !== confirmPassword) {
-			console.error("Passwords do not match");
 			return;
 		}
 

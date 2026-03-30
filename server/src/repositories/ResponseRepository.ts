@@ -75,9 +75,12 @@ export class ResponseRepository implements IRepository<PulseResponseType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(pulseResponse).where(eq(pulseResponse.id, id as any));
-		return { affected: 1 };
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
+			.delete(pulseResponse)
+			.where(eq(pulseResponse.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

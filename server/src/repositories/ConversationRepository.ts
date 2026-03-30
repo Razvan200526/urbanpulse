@@ -13,7 +13,7 @@ export class ConversationRepository implements IRepository<ConversationType> {
 	}
 
 	async getAll(): Promise<ConversationType[]> {
-		return await db.select().from(conversation);
+		return db.select().from(conversation);
 	}
 
 	async create(
@@ -41,9 +41,12 @@ export class ConversationRepository implements IRepository<ConversationType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(conversation).where(eq(conversation.id, id as any));
-		return { affected: 1 };
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
+			.delete(conversation)
+			.where(eq(conversation.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

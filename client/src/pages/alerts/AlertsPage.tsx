@@ -1,15 +1,22 @@
-import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { Avatar } from "@client/components/user/Avatar";
+import { Button } from "@client/components/Button/Button";
 import { useAuth } from "@client/hooks/useAuth";
 import { useNotifications } from "@client/hooks/useNotifications";
 import { useAcceptHelpOffer } from "@client/pages/map/hooks";
-import { Card, ProgressCircle, Separator, Table, Toast } from "@heroui/react";
-import { formatDate } from "@shared/utils/formatDate";
-import { Bell } from "lucide-react";
+import {
+	Card,
+	Modal,
+	ProgressCircle,
+	ScrollShadow,
+	Separator,
+	Table,
+	Tooltip,
+} from "@heroui/react";
+import { Bell, CheckCircle2, Info, XCircle } from "lucide-react";
 import { useState } from "react";
 
-function summarizePayload(
+function _summarizePayload(
 	type: string,
 	payload: Record<string, unknown> | null,
 ) {
@@ -56,8 +63,11 @@ function labelForType(type: string): string {
 export const AlertsPage = () => {
 	const { data: user } = useAuth();
 	const { data: notifications, isPending } = useNotifications(user?.user.id);
-	const acceptHelp = useAcceptHelpOffer();
-	const [acceptedKeys, setAcceptedKeys] = useState(() => new Set<string>());
+	const { mutate: acceptHelp } = useAcceptHelpOffer();
+	const [selectedPayload, setSelectedPayload] = useState<{
+		type: string;
+		payload: Record<string, unknown> | null;
+	} | null>(null);
 
 	if (isPending) {
 		return (
@@ -67,15 +77,11 @@ export const AlertsPage = () => {
 			/>
 		);
 	}
+
 	return (
-		<div className="flex flex-col h-full bg-surface">
+		<div className="flex flex-col w-full h-[calc(100dvh)] bg-surface">
 			<Header title="Alerts" />
-			<Separator />
-			<div className="p-6 max-w-2xl mx-auto w-full space-y-4 flex flex-col items-start justify-start">
-				<p className="text-sm text-muted">
-					Recent notifications, including nearby pulses and responses to your
-					requests.
-				</p>
+			<div className="m-4 p-4 flex flex-col items-center justify-start rounded border flex-1 min-h-0">
 				{!isPending && (!notifications || notifications.length === 0) && (
 					<Card className="border border-border shadow-none">
 						<Card.Content className="p-8 flex flex-col items-center text-center gap-2">
@@ -84,30 +90,191 @@ export const AlertsPage = () => {
 						</Card.Content>
 					</Card>
 				)}
-				<div className="w-full flex flex-row items-start justify-start">
-					<Table variant="secondary">
+				<ScrollShadow
+					size={8}
+					hideScrollBar
+					className="w-full max-h-full flex flex-col items-start justify-start overflow-y-auto"
+				>
+					<Table variant="primary" className="bg-accent">
 						<Table.ScrollContainer>
 							<Table.Content aria-label="alerts-table">
-								<Table.Header>
-									<Table.Column>User</Table.Column>
-									<Table.Column>Type</Table.Column>
+								<Table.Header className="rounded bg-accent">
+									<Table.Column className="text-xs text-white">
+										User
+									</Table.Column>
+									<Table.Column className="text-xs text-white">
+										Type
+									</Table.Column>
+									<Table.Column className="text-xs text-white text-center">
+										Details
+									</Table.Column>
+									<Table.Column className="text-xs text-white text-center">
+										Actions
+									</Table.Column>
 								</Table.Header>
 								<Table.Body>
 									{notifications?.map((n) => (
-										<Table.Row key={n.notification?.id}>
-											<Table.Cell className="flex items-center justify-start gap-2">
-												{n.user && <Avatar user={n.user} />}
-												<p className="text-sm text-accent"> {n.user?.name}</p>
+										<Table.Row key={n.notification?.id} className="rounded">
+											<Table.Cell>
+												<div className="flex items-center justify-start gap-3">
+													{n.user && <Avatar user={n.user} />}
+													<div className="flex flex-col">
+														<p className="text-sm font-medium text-foreground">
+															{n.user?.name}
+														</p>
+														<p className="text-xs text-muted">
+															{n.user?.email}
+														</p>
+													</div>
+												</div>
 											</Table.Cell>
-											<Table.Cell>{n.notification?.type}</Table.Cell>
+											<Table.Cell>
+												<p className="text-sm">
+													{labelForType(n.notification?.type || "")}
+												</p>
+											</Table.Cell>
+											<Table.Cell>
+												<div className="flex items-center justify-center">
+													<Tooltip delay={0}>
+														<Tooltip.Trigger>
+															<Button
+																isIconOnly
+																variant="ghost"
+																size="sm"
+																radius="full"
+																onPress={() =>
+																	setSelectedPayload({
+																		type: n.notification?.type || "",
+																		payload:
+																			(n.notification?.payload as Record<
+																				string,
+																				unknown
+																			> | null) || null,
+																	})
+																}
+															>
+																<Info className="size-4 text-accent" />
+															</Button>
+														</Tooltip.Trigger>
+														<Tooltip.Content className="rounded-full">
+															View details
+														</Tooltip.Content>
+													</Tooltip>
+												</div>
+											</Table.Cell>
+											<Table.Cell>
+												<div className="flex items-center justify-center gap-2">
+													<Tooltip delay={0}>
+														<Tooltip.Trigger>
+															<Button
+																isIconOnly
+																variant="ghost"
+																size="sm"
+																radius="full"
+																onPress={() => {
+																	if (n.notification?.id) {
+																		acceptHelp({
+																			pulseId: "",
+																			responseId: n.notification.id,
+																		});
+																	}
+																}}
+															>
+																<CheckCircle2 className="size-4 text-success" />
+															</Button>
+														</Tooltip.Trigger>
+														<Tooltip.Content className="rounded-full">
+															Accept
+														</Tooltip.Content>
+													</Tooltip>
+													<Tooltip delay={0}>
+														<Tooltip.Trigger>
+															<Button
+																isIconOnly
+																variant="ghost"
+																size="sm"
+																radius="full"
+																onPress={() => {
+																	if (n.notification?.id) {
+																		acceptHelp({
+																			pulseId: "",
+																			responseId: n.notification.id,
+																		});
+																	}
+																}}
+															>
+																<XCircle className="size-4 text-danger" />
+															</Button>
+														</Tooltip.Trigger>
+														<Tooltip.Content className="rounded-full">
+															Reject
+														</Tooltip.Content>
+													</Tooltip>
+												</div>
+											</Table.Cell>
 										</Table.Row>
 									))}
 								</Table.Body>
 							</Table.Content>
 						</Table.ScrollContainer>
 					</Table>
-				</div>
+				</ScrollShadow>
 			</div>
+
+			{/* Payload Details Modal */}
+			<Modal
+				isOpen={selectedPayload !== null}
+				onOpenChange={(open) => {
+					if (!open) setSelectedPayload(null);
+				}}
+			>
+				<Modal.Backdrop />
+				<Modal.Container>
+					<Modal.Dialog className="border border-border">
+						<Modal.Header>
+							<Modal.Heading>
+								{selectedPayload && labelForType(selectedPayload.type)}
+								{" - Details"}
+							</Modal.Heading>
+						</Modal.Header>
+						<Separator />
+						<Modal.Body>
+							{selectedPayload?.payload ? (
+								<div className="flex flex-col gap-3">
+									{Object.entries(selectedPayload.payload).map(
+										([key, value]) => (
+											<div
+												key={key}
+												className="bg-surface-secondary/30 rounded border border-border p-3"
+											>
+												<p className="text-xs font-semibold text-accent uppercase tracking-wider mb-1">
+													{key.replace(/([A-Z])/g, " $1").trim()}
+												</p>
+												<p className="text-sm text-foreground wrap-break-word">
+													{typeof value === "string"
+														? value
+														: JSON.stringify(value, null, 2)}
+												</p>
+											</div>
+										),
+									)}
+								</div>
+							) : (
+								<p className="text-sm text-muted">No details available</p>
+							)}
+						</Modal.Body>
+						<Separator />
+						<Modal.Footer>
+							<Button
+								variant="primary"
+								onPress={() => setSelectedPayload(null)}
+							>
+								Close
+							</Button>
+						</Modal.Footer>
+					</Modal.Dialog>
+				</Modal.Container>
+			</Modal>
 		</div>
 	);
 };

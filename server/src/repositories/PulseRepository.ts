@@ -62,7 +62,6 @@ export class PulseRepository implements IRepository<PulseType> {
 			if (error instanceof Error) {
 				logger.exception(error);
 			}
-			console.error(error);
 			return null;
 		}
 	}
@@ -79,9 +78,12 @@ export class PulseRepository implements IRepository<PulseType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(pulse).where(eq(pulse.id, id as any));
-		return { affected: 1 };
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
+			.delete(pulse)
+			.where(eq(pulse.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

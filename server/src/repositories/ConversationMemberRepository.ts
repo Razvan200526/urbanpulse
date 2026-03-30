@@ -18,7 +18,7 @@ export class ConversationMemberRepository
 	}
 
 	async getAll(): Promise<ConversationMemberType[]> {
-		return await db.select().from(conversationMember);
+		return db.select().from(conversationMember);
 	}
 
 	async create(
@@ -48,11 +48,12 @@ export class ConversationMemberRepository
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
 			.delete(conversationMember)
-			.where(eq(conversationMember.id, id as any));
-		return { affected: 1 };
+			.where(eq(conversationMember.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

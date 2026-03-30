@@ -48,11 +48,12 @@ export class PulseConfirmationRepository
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
 			.delete(pulseConfirmation)
-			.where(eq(pulseConfirmation.id, id as any));
-		return { affected: 1 };
+			.where(eq(pulseConfirmation.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

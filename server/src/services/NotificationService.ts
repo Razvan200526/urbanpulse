@@ -17,6 +17,7 @@ import {
 } from "@server/shared/NotificationFactory";
 import { isPulseDataValid } from "@shared/validators/pulses/isPulseDataValid";
 import type { PulseRepsponseParamsType } from "@server/types";
+import { logger } from "@server/utils/Logger";
 
 /**
  * Service for managing user notifications and real-time broadcasting.
@@ -111,6 +112,9 @@ export class NotificationService {
 		broadcastData: BroadcastDataType<unknown>,
 		persist: boolean = true,
 	) {
+		logger.info(
+			`Broadcasting notification to ${recipients.length} recipients: ${broadcastData.message}`,
+		);
 		for (const conn of recipients) {
 			conn.ws.send(JSON.stringify(broadcastData));
 			if (persist) {

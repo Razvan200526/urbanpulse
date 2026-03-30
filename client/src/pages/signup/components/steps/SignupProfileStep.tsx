@@ -64,7 +64,6 @@ export const SignupProfileStep = () => {
 					ref={nameRef}
 					onChange={(e) => {
 						nameRef.current?.setValue(e);
-						console.log(e);
 					}}
 					placeholder="John"
 				/>
@@ -77,7 +76,6 @@ export const SignupProfileStep = () => {
 					ref={bioRef}
 					onChange={(e) => {
 						bioRef.current?.setValue(e.target.value);
-						console.log(e.target.value);
 					}}
 				/>
 			</div>

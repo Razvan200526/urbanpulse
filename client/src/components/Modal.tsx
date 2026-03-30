@@ -10,7 +10,6 @@ export type ModalPropsType = Omit<ModalProps, "children"> & {
 	header?: React.ReactNode;
 	footer?: React.ReactNode;
 	modalRef?: React.RefObject<ModalRefType | null>;
-	trigger: React.ReactNode;
 	backdrop?: "opaque" | "blur" | "transparent";
 	children: React.ReactNode;
 	className?: string;
@@ -22,7 +21,6 @@ export const Modal = (props: ModalPropsType) => {
 		header,
 		footer,
 		backdrop,
-		trigger,
 		children,
 		isOpen: controlledIsOpen,
 		onOpenChange: controlledOnOpenChange,
@@ -49,27 +47,24 @@ export const Modal = (props: ModalPropsType) => {
 	});
 
 	return (
-		<div>
-			{trigger}
-			<HeroModal isOpen={isOpen} onOpenChange={handleOpenChange} {...rest}>
-				<HeroModal.Backdrop
-					isOpen={isOpen}
-					onOpenChange={handleOpenChange}
-					variant={backdrop ?? "opaque"}
-				>
-					<HeroModal.Container className={cn("items-center p-20", className)}>
-						<HeroModal.Dialog className="border border-border-secondary">
-							{header && (
-								<HeroModal.Header>
-									<HeroModal.Heading>{header}</HeroModal.Heading>
-								</HeroModal.Header>
-							)}
-							<HeroModal.Body>{children}</HeroModal.Body>
-							{footer && <HeroModal.Footer>{footer}</HeroModal.Footer>}
-						</HeroModal.Dialog>
-					</HeroModal.Container>
-				</HeroModal.Backdrop>
-			</HeroModal>
-		</div>
+		<HeroModal isOpen={isOpen} onOpenChange={handleOpenChange} {...rest}>
+			<HeroModal.Backdrop
+				isOpen={isOpen}
+				onOpenChange={handleOpenChange}
+				variant={backdrop ?? "opaque"}
+			>
+				<HeroModal.Container className={cn("items-center p-20", className)}>
+					<HeroModal.Dialog className="border border-border-secondary">
+						{header && (
+							<HeroModal.Header>
+								<HeroModal.Heading>{header}</HeroModal.Heading>
+							</HeroModal.Header>
+						)}
+						<HeroModal.Body>{children}</HeroModal.Body>
+						{footer && <HeroModal.Footer>{footer}</HeroModal.Footer>}
+					</HeroModal.Dialog>
+				</HeroModal.Container>
+			</HeroModal.Backdrop>
+		</HeroModal>
 	);
 };

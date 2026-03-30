@@ -1,4 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
+import { authMiddleware } from "@server/middleware/authMiddleware";
 import { userService } from "@server/services/UserService";
 import { emailSchema } from "@shared/validators/isEmailValid";
 import { Hono } from "hono";
@@ -27,4 +28,11 @@ export const userController = new Hono()
 			{ success: true, exists: true, message: "User already exists" },
 			200,
 		);
+	})
+	.get("/me", authMiddleware, async (c) => {
+		const user = c.get("user");
+		if (!user) {
+			return c.json({ user: null, message: "Unauthorized" }, 401);
+		}
+		return c.json({ user, message: "User found" }, 201);
 	});

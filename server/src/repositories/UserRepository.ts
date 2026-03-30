@@ -34,9 +34,9 @@ export class UserRepository implements IRepository<UserType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(user).where(eq(user.id, id));
-		return { affected: 1 }; // Mimicking TypeORM's DeleteResult interface
+	async delete(id: string): Promise<boolean> {
+		const affected = await db.delete(user).where(eq(user.id, id)).returning();
+		return affected.length > 0;
 	}
 
 	async findByEmail(email: string): Promise<UserType | null> {

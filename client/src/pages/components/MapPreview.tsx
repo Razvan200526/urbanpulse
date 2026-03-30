@@ -42,20 +42,6 @@ export const MapPreview = () => {
 			zoom={14}
 			className="rounded"
 			style={{ width: "100%", height: "400px", minHeight: "400px" }}
-		>
-			{/*{coords && (
-				<PulseMarker
-					position={{ x: coords.lat, y: coords.long }}
-					type="emergency"
-				/>
-			)}
-			{nearbyCoords.map((point, idx) => (
-				<PulseMarker
-					key={`${point.lat}-${point.long}`}
-					position={{ x: point.lat, y: point.long }}
-					type={idx % 2 === 0 ? "warning" : "item"}
-				/>
-			))}*/}
-		</MapComponent>
+		/>
 	);
 };

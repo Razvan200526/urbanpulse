@@ -37,7 +37,7 @@ export const ResourcesPage = () => {
 			case "network":
 				return <NetworkTab />;
 			case "resources":
-			//to be implemented
+				return <div>h1</div>; //implementation will follow
 			default:
 				return <AllResourcesTab />;
 		}

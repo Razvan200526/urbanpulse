@@ -10,12 +10,13 @@ import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
 import { z } from "zod";
 
+//implement a way to retrieve the resources that are close to the user maybe
 export const resourceController = new Hono()
 	.basePath("/resources")
 	.get("/", zValidator("query", getResourcesSchema), async (c) => {
 		const { _userId } = c.req.query();
 
-		const resources = await resourceService.getAllResource();
+		const resources = await resourceService.getAllResources();
 
 		if (!resources) {
 			return c.json(

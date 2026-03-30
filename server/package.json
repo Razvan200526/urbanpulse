@@ -16,9 +16,14 @@
 	"scripts": {
 		"build": "tsc",
 		"dev": "bun --watch run src/index.ts & tsc --watch",
+		"db:seed": "bun run ./commands/seed-command.ts",
 		"db:generate": "bunx --bun drizzle-kit generate",
 		"db:push": "bunx --bun drizzle-kit push",
-		"db:migrate": "bun run ./commands/migration-command.ts"
+		"db:migrate": "bun run ./commands/migration-command.ts",
+		"test": "bun test",
+		"test:repositories": "bun test",
+		"test:db:up": "docker compose -f ../docker-compose.test.yaml up -d --wait",
+		"test:db:down": "docker compose -f ../docker-compose.test.yaml down"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.1009.0",
@@ -43,6 +48,7 @@
 	"devDependencies": {
 		"@types/bun": "latest",
 		"@types/pg": "^8.18.0",
-		"drizzle-kit": "^0.31.10"
+		"drizzle-kit": "^0.31.10",
+		"drizzle-seed": "^0.3.1"
 	}
 }

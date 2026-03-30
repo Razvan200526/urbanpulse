@@ -92,8 +92,13 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 		!isOwner && pulse.status === PulseStatusEnum.Active && user?.user.id;
 
 	return (
-		<Drawer isOpen={isOpen} onOpenChange={onOpenChange} key="right">
-			<Drawer.Backdrop variant="transparent">
+		<Drawer key="right">
+			<span hidden />
+			<Drawer.Backdrop
+				variant="transparent"
+				isOpen={isOpen}
+				onOpenChange={onOpenChange}
+			>
 				<Drawer.Content className="overflow-hidden" placement="right">
 					<Drawer.Dialog className="rounded-l">
 						<Drawer.Header className="relative px-5 pt-4 pb-6 overflow-hidden border border-accent rounded">

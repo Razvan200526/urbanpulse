@@ -70,9 +70,7 @@ export const CustomPlayer = ({
 			const file = new File([blob], "recording.wav", { type: "audio/wav" });
 			const uploadResponse = await uploadFile(file);
 			onUpload?.(uploadResponse);
-		} catch (error) {
-			console.error("Failed to upload audio:", error);
-		}
+		} catch (_e) {}
 	};
 
 	const formatTime = (time: number) => {

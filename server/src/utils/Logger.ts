@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noConsole: <logger class> */
 import { mainSymbols as f } from "figures";
 import * as p from "picocolors";
 import { pe } from "./PrettyError";
@@ -7,7 +8,7 @@ export class Logger {
 	}
 
 	public error(message: string) {
-		console.log(p.red(`${f.cross}: ${message}`));
+		console.error(p.red(`${f.cross}: ${message}`));
 	}
 
 	public exception(e: Error) {

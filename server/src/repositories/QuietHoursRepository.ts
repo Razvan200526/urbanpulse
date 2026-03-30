@@ -39,9 +39,12 @@ export class QuietHoursRepository implements IRepository<QuietHoursType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(quietHours).where(eq(quietHours.id, id as any));
-		return { affected: 1 };
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
+			.delete(quietHours)
+			.where(eq(quietHours.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

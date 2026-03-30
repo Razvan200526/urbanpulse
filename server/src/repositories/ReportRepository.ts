@@ -36,9 +36,12 @@ export class ReportRepository implements IRepository<ReportType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(report).where(eq(report.id, id as any));
-		return { affected: 1 };
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
+			.delete(report)
+			.where(eq(report.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

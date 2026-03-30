@@ -12,6 +12,5 @@ export const signUpSchema = z.object({
 export type SignUpInfoType = z.infer<typeof signUpSchema>;
 
 export const isSignUpInfoValid = (signUpInfo: SignUpInfoType) => {
-	console.log(signUpInfo);
 	return signUpSchema.safeParse(signUpInfo).success;
 };

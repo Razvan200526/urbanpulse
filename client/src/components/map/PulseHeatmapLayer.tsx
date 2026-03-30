@@ -108,25 +108,54 @@ export function PulseHeatmapLayer({ pulses }: { pulses: PulseType[] }) {
 			map.off("load", onStyleReady);
 		};
 	}, [map]);
+	useEffect(() => {
+		if (!map) return;
+
+		const onStyleData = () => {
+			if (!map.isStyleLoaded()) return;
+
+			const fc = toFeatureCollection(pulsesRef.current);
+
+			if (!map.getSource(SOURCE_ID)) {
+				map.addSource(SOURCE_ID, { type: "geojson", data: fc });
+				map.addLayer({
+					id: HEAT_LAYER_ID,
+					type: "heatmap",
+					source: SOURCE_ID,
+					paint: {
+						/* ... */
+					},
+				});
+			}
+		};
+
+		map.on("styledata", onStyleData);
+
+		return () => {
+			map.off("styledata", onStyleData);
+		};
+	}, [map]);
 
 	useEffect(() => {
-		if (!map?.getSource(SOURCE_ID)) return;
+		if (!map || !map.isStyleLoaded()) return;
+
+		const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+		if (!source) return;
+
 		const fc = toFeatureCollection(pulses);
-		(map.getSource(SOURCE_ID) as GeoJSONSource).setData(
-			fc as GeoJSON.FeatureCollection,
-		);
+		source.setData(fc as GeoJSON.FeatureCollection);
 	}, [map, pulses]);
 
 	useEffect(() => {
 		if (!map) return;
+
 		return () => {
 			if (!map.isStyleLoaded()) return;
+
 			try {
 				if (map.getLayer(HEAT_LAYER_ID)) map.removeLayer(HEAT_LAYER_ID);
 				if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID);
-			} catch {
-				/* style may be tearing down */
-			}
+			} catch {}
 		};
 	}, [map]);
 

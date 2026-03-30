@@ -53,9 +53,12 @@ export class ResourceRepository implements IRepository<ResourceType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(resource).where(eq(resource.id, id as any));
-		return { affected: 1 };
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
+			.delete(resource)
+			.where(eq(resource.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

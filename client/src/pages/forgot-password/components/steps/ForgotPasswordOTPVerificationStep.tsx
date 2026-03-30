@@ -47,7 +47,6 @@ export const ForgotPasswordOTPVerificationStep = () => {
 
 	const handleResend = () => {
 		setTimeLeft(300);
-		console.log("Resending OTP...");
 	};
 
 	return (

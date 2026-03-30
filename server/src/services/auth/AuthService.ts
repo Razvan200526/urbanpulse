@@ -18,12 +18,12 @@ export const auth = betterAuth({
 		level: "debug",
 		log: (level, message, ...args) => {
 			if (level === "error") {
-				console.error(
-					`[AUTH_ERROR] ${message}`,
-					args.length ? JSON.stringify(args, null, 2) : "",
+				logger.error(
+					`[AUTH_ERROR] ${message},
+					${args.length ? JSON.stringify(args, null, 2) : ""}`,
 				);
 			} else {
-				console.log(`[AUTH_${level.toUpperCase()}] ${message}`);
+				logger.info(`[AUTH_${level.toUpperCase()}] ${message}`);
 			}
 		},
 	},

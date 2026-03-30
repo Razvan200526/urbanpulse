@@ -61,8 +61,7 @@ export const SignupOTPVerificationStep = () => {
 
 	const handleResend = () => {
 		setTimeLeft(300);
-		console.log("Resending OTP...");
-	}; //handle resending otp logic
+	};
 
 	return (
 		<div className="w-full max-w-md mx-auto flex flex-col gap-6">

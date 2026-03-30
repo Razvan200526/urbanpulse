@@ -1,1 +1,4 @@
-
+[test]
+root = "./test/repositories"
+preload = ["./test/preload.ts"]
+maxConcurrency = 1

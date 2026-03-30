@@ -13,7 +13,7 @@ export class MessageRepository implements IRepository<MessageType> {
 	}
 
 	async getAll(): Promise<MessageType[]> {
-		return await db.select().from(message);
+		return db.select().from(message);
 	}
 
 	async create(data: Partial<MessageType>): Promise<MessageType | null> {
@@ -36,9 +36,12 @@ export class MessageRepository implements IRepository<MessageType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(message).where(eq(message.id, id as any));
-		return { affected: 1 };
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
+			.delete(message)
+			.where(eq(message.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

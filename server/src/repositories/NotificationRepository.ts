@@ -1,6 +1,6 @@
 import { db } from "@server/db";
 import { type NotificationType, notification, user } from "@server/db/schema";
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class NotificationRepository implements IRepository<NotificationType> {
@@ -13,7 +13,7 @@ export class NotificationRepository implements IRepository<NotificationType> {
 	}
 
 	async getByUserId(userId: string): Promise<NotificationType[]> {
-		return await db
+		return db
 			.select()
 			.from(notification)
 			.where(eq(notification.userId, userId))
@@ -21,11 +21,11 @@ export class NotificationRepository implements IRepository<NotificationType> {
 	}
 
 	async getAll(): Promise<NotificationType[]> {
-		return await db.select().from(notification);
+		return db.select().from(notification);
 	}
 
 	async getNotificationsWithUsers() {
-		return await db
+		return db
 			.select()
 			.from(notification)
 			.fullJoin(user, eq(notification.userId, user.id))
@@ -57,9 +57,12 @@ export class NotificationRepository implements IRepository<NotificationType> {
 		return result;
 	}
 
-	async delete(id: string): Promise<any> {
-		await db.delete(notification).where(eq(notification.id, id as any));
-		return { affected: 1 };
+	async delete(id: string): Promise<boolean> {
+		const affected = await db
+			.delete(notification)
+			.where(eq(notification.id, id as any))
+			.returning();
+		return affected.length > 0;
 	}
 }
 

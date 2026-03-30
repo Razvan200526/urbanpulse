@@ -10,7 +10,6 @@ import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
 import { H3, Label } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
-import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { Separator, Toast, Tooltip } from "@heroui/react";
 import { PulseEnum, UrgencyEnum } from "@shared/types";
 import { isBioValid } from "@shared/validators/isBioValid";
@@ -57,7 +56,6 @@ export const CreatePulseModal = ({
 		const title = titleRef.current?.getValue() ?? "";
 		const description = descriptionRef.current?.getValue() ?? "";
 
-		console.log(audioUrlRef.current);
 		if (!isNameValid(title) || !isBioValid(description)) {
 			Toast.toast.danger("Title and description are required.");
 			return;

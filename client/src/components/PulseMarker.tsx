@@ -38,37 +38,35 @@ export const PulseMarker = ({ pulse }: { pulse: PulseType }) => {
 
 		const markerEl = el.current;
 		markerEl.style.cursor = "pointer";
-
+		markerEl.setAttribute("role", "button");
+		markerEl.setAttribute("tabindex", "0");
 		const handleClick = (e: MouseEvent) => {
 			e.stopPropagation();
-			console.log("clicked");
 			setIsDrawerOpen(true);
 		};
+
 		markerEl.addEventListener("click", handleClick);
 
-		markerRef.current = new mapboxgl.Marker({
-			element: el.current,
-		})
-			.setPopup(
-				new mapboxgl.Popup({ offset: 25 }).setHTML(
-					`<div class="bg-surface border border-accent rounded-lg p-3 shadow-xl min-w-50 flex flex-col gap-1 font-primary">
-							<div class="flex items-center justify-between gap-2">
-							  <h3 class="text-accent font-semibold text-sm m-0 truncate">${pulse.title}</h3>
-							  <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full ${pulse.type === PulseEnum.Emergency ? "bg-red-500/20 text-red-500" : pulse.type === PulseEnum.Skill ? "bg-blue-500/20 text-blue-500" : "bg-green-500/20 text-green-500"}">
-									${pulse.type}
-								</span>
-							</div>
-							${pulse.description ? `<p class="text-muted text-xs m-0 line-clamp-2">${pulse.description}</p>` : ""}
-						</div>`,
-				),
-			)
-			.setLngLat([pulse.position.x, pulse.position.y])
-			.addTo(map);
+		const addMarker = () => {
+			markerRef.current = new mapboxgl.Marker({
+				element: el.current,
+			})
+				.setLngLat([pulse.position.x, pulse.position.y])
+				.addTo(map);
+		};
+
+		if (map.loaded()) {
+			addMarker();
+		} else {
+			map.once("idle", addMarker);
+		}
 
 		return () => {
 			markerEl.removeEventListener("click", handleClick);
+			map.off("idle", addMarker);
 			if (markerRef.current) {
 				markerRef.current.remove();
+				markerRef.current = null;
 			}
 		};
 	}, [map, pulse]);

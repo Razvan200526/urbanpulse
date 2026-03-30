@@ -43,13 +43,10 @@ export class Socket {
 			try {
 				const response = JSON.parse(event.data) as SocketResponseType;
 				if (!response.success) {
-					console.error(response);
 					Toast.toast.danger(response.message || "An error occurred");
 				}
 				for (const handler of this.messageHandlers) handler(response);
-			} catch (err) {
-				console.error("Failed to parse WebSocket message", err);
-			}
+			} catch (_err) {}
 		};
 	}
 

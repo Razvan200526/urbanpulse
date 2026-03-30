@@ -26,7 +26,6 @@ export const MapComponent = ({
 		const token = import.meta.env.VITE_MAPBOX_GL_ACCESS_TOKEN as string;
 
 		if (!token) {
-			console.error("Missing VITE_MAPBOX_GL_ACCESS_TOKEN");
 			return;
 		}
 
@@ -47,8 +46,8 @@ export const MapComponent = ({
 			map.resize();
 		});
 
-		map.on("error", (e) => {
-			console.error("Mapbox error:", e);
+		map.on("error", () => {
+			return;
 		});
 
 		return () => {

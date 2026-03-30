@@ -107,9 +107,7 @@ export const pulseController = new Hono()
 		zValidator("param", pulseIdParamSchema),
 		zValidator("json", offerHelpBodySchema),
 		async (c) => {
-			const session = await auth.api.getSession({
-				headers: c.req.raw.headers,
-			});
+			const session = c.var.session;
 			if (!session) {
 				return c.json(
 					{ success: false, message: "Unauthorized", data: null },
@@ -125,7 +123,7 @@ export const pulseController = new Hono()
 					404,
 				);
 			}
-			if (pulse.userId === session.user.id) {
+			if (pulse.userId === session.userId) {
 				return c.json(
 					{
 						success: false,
@@ -147,7 +145,7 @@ export const pulseController = new Hono()
 			}
 			const existing = await responseRepository.findByPulseAndResponder(
 				pulseId,
-				session.user.id,
+				session.userId,
 			);
 			if (existing) {
 				return c.json(
@@ -159,21 +157,21 @@ export const pulseController = new Hono()
 					409,
 				);
 			}
-			const created = await responseService.offerHelp(pulseId, session.user.id);
+			const created = await responseService.offerHelp(pulseId, session.userId);
 			if (!created) {
 				return c.json(
 					{ success: false, message: "Failed to offer help", data: null },
 					500,
 				);
 			}
-			const responder = await userRepository.getOne(session.user.id);
+			const responder = await userRepository.getOne(session.userId);
 			const responderName = responder?.name ?? "A neighbor";
 			await notificationService.notifyPulseOwnerOfResponse({
 				ownerUserId: pulse.userId,
 				responseId: created.id,
 				pulseId: pulse.id,
 				pulseTitle: pulse.title,
-				responderId: session.user.id,
+				responderId: session.userId,
 				responderName,
 				note,
 			});
@@ -185,12 +183,10 @@ export const pulseController = new Hono()
 		},
 	)
 	.get(
-		"/",
+		"/", //merge the 2 ws endpoints into one and let PulseRepository decide what action there needs to be done(create/retrieve)
 		upgradeWebSocket(async () => {
 			return {
-				onOpen: () => {
-					console.log("WebSocket opened");
-				},
+				onOpen: () => {},
 				onMessage: async (event, ws) => {
 					try {
 						const data = JSON.parse(event.data.toString());
@@ -205,7 +201,6 @@ export const pulseController = new Hono()
 							);
 							return;
 						}
-						console.log(result.data);
 						const newPulse = await pulseService.createPulse(result.data);
 						if (!newPulse) {
 							ws.send(
@@ -236,9 +231,7 @@ export const pulseController = new Hono()
 						handleError(e);
 					}
 				},
-				onClose: () => {
-					console.log("WebSocket closed");
-				},
+				onClose: () => {},
 			};
 		}),
 	)
@@ -247,9 +240,7 @@ export const pulseController = new Hono()
 		"/retrieve",
 		upgradeWebSocket(async () => {
 			return {
-				onOpen: () => {
-					console.log("Retrieve WebSocket opened");
-				},
+				onOpen: () => {},
 				onMessage: async (event, ws) => {
 					const data = JSON.parse(event.data.toString());
 					const result = retrievePulsePayloadSchema.safeParse(data);
@@ -264,7 +255,6 @@ export const pulseController = new Hono()
 						return;
 					}
 					const pulses = await pulseService.getPulses({
-						userId: result.data.userId,
 						position: result.data.position,
 					});
 					ws.send(
@@ -275,9 +265,7 @@ export const pulseController = new Hono()
 						}),
 					);
 				},
-				onClose: () => {
-					console.log("Retrieve WebSocket closed");
-				},
+				onClose: () => {},
 			};
 		}),
 	);
