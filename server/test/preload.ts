@@ -7,44 +7,47 @@ import {
 const databaseUrl =
 	process.env.DATABASE_URL ??
 	"postgresql://urbanpulse:urbanpulse@localhost:5433/urbanpulse_test";
+const shouldSkipDatabaseSetup = process.env.SKIP_TEST_DB_SETUP === "1";
 
 process.env.DATABASE_URL = databaseUrl;
 Bun.env.DATABASE_URL = databaseUrl;
 
-const shouldManageDocker = process.env.TEST_DB_MANAGED_EXTERNALLY !== "1";
-
-if (shouldManageDocker) {
-	const result = Bun.spawnSync({
-		cmd: [
-			"docker",
-			"compose",
-			"-f",
-			"../docker-compose.test.yaml",
-			"up",
-			"-d",
-			"--wait",
-		],
-		cwd: import.meta.dir + "/..",
-		stdout: "inherit",
-		stderr: "inherit",
-	});
-
-	if (result.exitCode !== 0) {
-		throw new Error("Failed to start the Docker test database.");
-	}
-}
-
-await initializeRunDatabase();
-
-afterAll(async () => {
-	await disposeRunDatabase();
+if (!shouldSkipDatabaseSetup) {
+	const shouldManageDocker = process.env.TEST_DB_MANAGED_EXTERNALLY !== "1";
 
 	if (shouldManageDocker) {
-		Bun.spawnSync({
-			cmd: ["docker", "compose", "-f", "../docker-compose.test.yaml", "down"],
+		const result = Bun.spawnSync({
+			cmd: [
+				"docker",
+				"compose",
+				"-f",
+				"../docker-compose.test.yaml",
+				"up",
+				"-d",
+				"--wait",
+			],
 			cwd: import.meta.dir + "/..",
 			stdout: "inherit",
 			stderr: "inherit",
 		});
+
+		if (result.exitCode !== 0) {
+			throw new Error("Failed to start the Docker test database.");
+		}
 	}
-});
+
+	await initializeRunDatabase();
+
+	afterAll(async () => {
+		await disposeRunDatabase();
+
+		if (shouldManageDocker) {
+			Bun.spawnSync({
+				cmd: ["docker", "compose", "-f", "../docker-compose.test.yaml", "down"],
+				cwd: import.meta.dir + "/..",
+				stdout: "inherit",
+				stderr: "inherit",
+			});
+		}
+	});
+}

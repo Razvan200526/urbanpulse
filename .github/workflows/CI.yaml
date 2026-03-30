@@ -1,3 +1,9 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+
 jobs:
   lint:
     name: Lint
@@ -16,6 +22,33 @@ jobs:
 
       - name: Lint
         run: bun run lint
+
+  frontend:
+    name: Frontend Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Client lint
+        run: bun run --cwd client lint
+
+      - name: Client type-check
+        run: bun run --cwd client type-check
+
+      - name: Client tests
+        run: bun run --cwd client test
+
+      - name: Client build
+        run: bun run --cwd client build
 
   server-repositories:
     name: Server Repository Tests

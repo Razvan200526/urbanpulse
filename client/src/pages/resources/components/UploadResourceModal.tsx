@@ -11,7 +11,7 @@ import { H3, Label } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { Separator, Toast, Tooltip } from "@heroui/react";
 import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
-import { MicIcon, PaperclipIcon, XIcon } from "lucide-react";
+import { PaperclipIcon, XIcon } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useUploadResource } from "../hooks";
 
@@ -165,32 +165,23 @@ export const UploadResourceModal = ({
 						onSave={(url) => setImageUrls((prev) => [...prev, url])}
 						trigger={(open) => (
 							<Tooltip delay={0}>
-								<Button
-									variant="outline"
-									isIconOnly
-									radius="full"
-									startContent={
-										<PaperclipIcon className="size-4 text-accent" />
-									}
-									onPress={open}
-								/>
+								<Tooltip.Trigger>
+									<Button
+										variant="outline"
+										isIconOnly
+										radius="full"
+										startContent={
+											<PaperclipIcon className="size-4 text-accent" />
+										}
+										onPress={open}
+									/>
+								</Tooltip.Trigger>
 								<Tooltip.Content className="border border-accent rounded-full bg-surface text-accent">
 									Upload photo
 								</Tooltip.Content>
 							</Tooltip>
 						)}
 					/>
-					<Tooltip delay={0}>
-						<Button
-							variant="outline"
-							isIconOnly
-							radius="full"
-							startContent={<MicIcon className="size-4 text-accent" />}
-						/>
-						<Tooltip.Content className="border border-accent rounded-full bg-surface text-accent">
-							Record audio
-						</Tooltip.Content>
-					</Tooltip>
 				</div>
 				<Separator variant="tertiary" />
 			</div>

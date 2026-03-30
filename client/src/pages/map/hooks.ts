@@ -1,43 +1,86 @@
 import { hono, queryClient } from "@client/main";
 import { Toast } from "@heroui/react";
 import type { PulseType } from "@server/db/schema";
+import type { PulseRequestType } from "@shared/validators/pulses/isPulseRequestValid";
 import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
+import type { PulseSocketMessageType } from "@shared/validators/pulses/isPulseSocketMessageValid";
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
 import { useMutation, useQuery } from "@tanstack/react-query";
+
+type PulseSocketResponse<T> = {
+	success: boolean;
+	message: string;
+	data: T;
+};
+
+type UploadPulseSocketMessage = Extract<
+	PulseSocketMessageType,
+	{ type: "upload-pulse" }
+>;
+
+type PulseResponseMutationInput = {
+	pulseId: string;
+	responseId: string;
+};
+
+type PulseResponseMutationResult = {
+	success: boolean;
+	message?: string;
+};
+
+const sendPulseSocketMessage = <T>(message: PulseSocketMessageType) => {
+	return new Promise<PulseSocketResponse<T>>((resolve, reject) => {
+		const socket = hono.api.pulse.$ws();
+
+		const cleanup = () => {
+			socket.removeEventListener("open", onOpen);
+			socket.removeEventListener("message", onMessage);
+			socket.removeEventListener("error", onError);
+			socket.close();
+		};
+
+		const onOpen = () => {
+			socket.send(JSON.stringify(message));
+		};
+
+		const onMessage = (event: MessageEvent) => {
+			try {
+				const parsed = JSON.parse(event.data) as PulseSocketResponse<T>;
+				cleanup();
+				resolve(parsed);
+			} catch (error) {
+				cleanup();
+				reject(error);
+			}
+		};
+
+		const onError = () => {
+			cleanup();
+			reject(new Error("WebSocket error"));
+		};
+
+		socket.addEventListener("open", onOpen);
+		socket.addEventListener("message", onMessage);
+		socket.addEventListener("error", onError);
+	});
+};
 
 export const useCreatePulse = () => {
 	return useMutation({
 		mutationKey: ["pulse", "create"],
-		mutationFn: (pulseData: Partial<PulseType>) => {
-			return new Promise((resolve, reject) => {
-				const socket = hono.api.pulse.$ws();
+		mutationFn: (pulseData: PulseRequestType) => {
+			return sendPulseSocketMessage<PulseType>({
+				type: "upload-pulse",
+				payload: pulseData,
+			} satisfies UploadPulseSocketMessage).then((response) => {
+				if (!response.success) {
+					Toast.toast.danger(response.message || "Failed to create pulse.");
+					throw new Error(response.message || "Failed to create pulse");
+				}
 
-				const onOpen = () => {
-					socket.send(JSON.stringify(pulseData));
-				};
-
-				const onMessage = (event: MessageEvent) => {
-					try {
-						const parsed = JSON.parse(event.data);
-						socket.close();
-
-						queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
-						Toast.toast.success("Pulse created successfully!");
-						resolve(parsed);
-					} catch (e) {
-						Toast.toast.danger("Failed to create pulse. Try again later.");
-						reject(e);
-					}
-				};
-
-				const onError = () => {
-					socket.close();
-					reject(new Error("WebSocket error"));
-				};
-
-				socket.addEventListener("open", onOpen);
-				socket.addEventListener("message", onMessage);
-				socket.addEventListener("error", onError);
+				queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+				Toast.toast.success("Pulse created successfully!");
+				return response;
 			});
 		},
 	});
@@ -46,24 +89,37 @@ export const useCreatePulse = () => {
 export const useAcceptHelpOffer = () => {
 	return useMutation({
 		mutationKey: ["pulse", "accept-help"],
-		mutationFn: async ({
-			pulseId,
-			responseId,
-		}: {
-			pulseId: string;
-			responseId: string;
-		}) => {
+		mutationFn: async ({ pulseId, responseId }: PulseResponseMutationInput) => {
 			const res = await hono.api.pulse[":id"].responses[
 				":responseId"
 			].accept.$post({
 				param: { id: pulseId, responseId },
 			});
-			const data = (await res.json()) as {
-				success: boolean;
-				message?: string;
-			};
+			const data = (await res.json()) as PulseResponseMutationResult;
 			if (!data.success) {
 				throw new Error(data.message || "Could not accept offer");
+			}
+			return data;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["notifications"] });
+			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+		},
+	});
+};
+
+export const useRejectHelpOffer = () => {
+	return useMutation({
+		mutationKey: ["pulse", "reject-help"],
+		mutationFn: async ({ pulseId, responseId }: PulseResponseMutationInput) => {
+			const res = await hono.api.pulse[":id"].responses[
+				":responseId"
+			].reject.$post({
+				param: { id: pulseId, responseId },
+			});
+			const data = (await res.json()) as PulseResponseMutationResult;
+			if (!data.success) {
+				throw new Error(data.message || "Could not reject offer");
 			}
 			return data;
 		},
@@ -130,42 +186,19 @@ export const useRetrievePulses = (
 	data: PulseRetrievePayloadType,
 	enabled = true,
 ) => {
-	return useQuery<{ data: PulseType[] }>({
+	return useQuery<PulseSocketResponse<PulseType[]>>({
 		queryKey: ["pulse", "retrieve", data],
 		enabled,
 		queryFn: () => {
-			return new Promise((resolve, reject) => {
-				const socket = hono.api.pulse.retrieve.$ws();
+			return sendPulseSocketMessage<PulseType[]>({
+				type: "get-pulses",
+				payload: data,
+			}).then((response) => {
+				if (!response.success) {
+					throw new Error(response.message || "Failed to retrieve pulses");
+				}
 
-				const onOpen = () => {
-					socket.send(JSON.stringify(data));
-				};
-
-				const onMessage = (event: MessageEvent) => {
-					try {
-						const parsed = JSON.parse(event.data);
-						socket.close();
-						resolve(parsed);
-					} catch (e) {
-						reject(e);
-					}
-				};
-
-				const onError = () => {
-					socket.close();
-					reject(new Error("WebSocket error"));
-				};
-
-				socket.addEventListener("open", onOpen);
-				socket.addEventListener("message", onMessage);
-				socket.addEventListener("error", onError);
-
-				return () => {
-					socket.removeEventListener("open", onOpen);
-					socket.removeEventListener("message", onMessage);
-					socket.removeEventListener("error", onError);
-					socket.close();
-				};
+				return response;
 			});
 		},
 	});

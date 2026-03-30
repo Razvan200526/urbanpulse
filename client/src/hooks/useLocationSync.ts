@@ -14,6 +14,23 @@ export const useLocationSync = () => {
 	const lastSyncRef = useRef<number>(0);
 
 	useEffect(() => {
+		const sendLocation = () => {
+			if (!backend.notifications.isOpen || !latestCoordsRef.current) return;
+			lastSyncRef.current = Date.now();
+			backend.notifications.send({
+				type: "UPDATE_LOCATION",
+				location: {
+					x: latestCoordsRef.current.long,
+					y: latestCoordsRef.current.lat,
+				},
+			});
+		};
+
+		const unsubscribe = backend.notifications.on("open", sendLocation);
+		return unsubscribe;
+	}, []);
+
+	useEffect(() => {
 		latestCoordsRef.current = coords ?? null;
 
 		if (!backend.notifications.isOpen || !coords) return;

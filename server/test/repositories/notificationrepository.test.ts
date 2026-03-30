@@ -31,7 +31,7 @@ describe("NotificationRepository", () => {
 			read: true,
 		});
 		expect(updated.read).toBe(true);
-		await expect(
+		expect(
 			notificationRepository.update("00000000-0000-0000-0000-000000000000", {
 				read: true,
 			}),

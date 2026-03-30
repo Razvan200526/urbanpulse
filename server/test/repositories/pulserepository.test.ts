@@ -32,7 +32,7 @@ describe("PulseRepository", () => {
 			title: "Need water",
 		});
 		expect(updated.title).toBe("Need water");
-		await expect(
+		expect(
 			pulseRepository.update("00000000-0000-0000-0000-000000000000", {
 				title: "Nope",
 			}),

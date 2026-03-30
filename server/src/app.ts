@@ -2,10 +2,12 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { rateLimiter } from "hono-rate-limiter";
+import { adminController } from "./controllers/AdminController";
 import { authController } from "./controllers/AuthController";
 import { avatarController } from "./controllers/AvatarController";
 import { notificationController } from "./controllers/NotificationController";
 import { pulseController } from "./controllers/PulseController";
+import { reportController } from "./controllers/ReportController";
 import { resourceController } from "./controllers/ResourceController";
 import { uploadController } from "./controllers/UploadController";
 import { userController } from "./controllers/UserController";
@@ -51,8 +53,10 @@ export const app = new Hono<{ Variables: Variables }>()
 	.route("/", avatarController)
 	.route("/", pulseController)
 	.route("/", notificationController)
+	.route("/", reportController)
 	.route("/", resourceController)
 	.route("/", uploadController)
+	.route("/", adminController)
 	.route("/", weatherController);
 
 export type AppType = typeof app;

@@ -18,7 +18,9 @@ export const notificationController = new Hono<{ Variables: Variables }>()
 			);
 		}
 
-		const res = await notificationService.getNotificationsWithUsers();
+		const res = await notificationService.getNotificationsWithUsers(
+			session.userId,
+		);
 
 		return c.json({
 			success: true,

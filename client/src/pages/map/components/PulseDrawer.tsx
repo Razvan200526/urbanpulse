@@ -1,15 +1,19 @@
+import { CustomPlayer } from "@client/components/audio/CustomPlayer";
 import { Button } from "@client/components/Button/Button";
 import { ProgressChip } from "@client/components/chips/ProgressChip";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
 import { SignalIcon } from "@client/components/icons/SignalIcon";
 import { useAuth } from "@client/hooks/useAuth";
+import { useConfirmPulse, useCreateReport } from "@client/hooks/useModeration";
 import { Chip, cn, Drawer, Toast } from "@heroui/react";
 import type { PulseType } from "@server/db/schema";
 import { PulseEnum, PulseStatusEnum } from "@shared/types";
 import { formatDate } from "@shared/utils/formatDate";
 import {
+	AlertTriangleIcon,
 	CheckCircle2Icon,
 	ClockIcon,
+	FlagIcon,
 	MapPinIcon,
 	PackageIcon,
 	ShieldCheckIcon,
@@ -17,10 +21,10 @@ import {
 	XCircleIcon,
 	ZapIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { useOfferHelp, useUpdatePulse } from "../hooks";
 import { MetaRow } from "./MetaRow";
 import { UrgencyMeter } from "./UrgencyMeter";
-import { CustomPlayer } from "@client/components/audio/CustomPlayer";
 
 const PULSE_TYPE_CONFIG: Record<
 	PulseEnum,
@@ -87,13 +91,24 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 	const { data: user } = useAuth();
 	const updatePulse = useUpdatePulse();
 	const offerHelp = useOfferHelp();
+	const confirmPulse = useConfirmPulse();
+	const createReport = useCreateReport();
+	const [reportReason, setReportReason] = useState("");
+	const [isReporting, setIsReporting] = useState(false);
 	const isOwner = user?.user.id === pulse.userId;
 	const canOfferHelp =
 		!isOwner && pulse.status === PulseStatusEnum.Active && user?.user.id;
 
 	return (
 		<Drawer key="right">
-			<span hidden />
+			<Drawer.Trigger>
+				<button
+					type="button"
+					className="sr-only"
+					tabIndex={-1}
+					aria-hidden="true"
+				/>
+			</Drawer.Trigger>
 			<Drawer.Backdrop
 				variant="transparent"
 				isOpen={isOpen}
@@ -284,8 +299,113 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 									</div>
 								</div>
 							)}
+							{!isOwner && user?.user.id && (
+								<div className="rounded bg-surface border border-border p-4 space-y-3">
+									<p className="text-xs font-medium tracking-widest uppercase text-muted">
+										Community trust
+									</p>
+									<div className="flex flex-wrap gap-2">
+										<Button
+											variant="outline"
+											size="sm"
+											isDisabled={
+												confirmPulse.isPending ||
+												pulse.status !== PulseStatusEnum.Active
+											}
+											startContent={<ShieldCheckIcon className="size-4" />}
+											onPress={() =>
+												confirmPulse.mutate(
+													{ pulseId: pulse.id },
+													{
+														onSuccess: (response) => {
+															Toast.toast.success(response.message);
+														},
+														onError: (error: unknown) =>
+															Toast.toast.danger(
+																error instanceof Error
+																	? error.message
+																	: "Could not confirm pulse",
+															),
+													},
+												)
+											}
+										>
+											Confirm pulse
+										</Button>
+										<Button
+											variant="danger-soft"
+											size="sm"
+											startContent={<FlagIcon className="size-4" />}
+											onPress={() =>
+												setIsReporting((current) => !current)
+											}
+										>
+											{isReporting ? "Hide report form" : "Report concern"}
+										</Button>
+									</div>
+									<p className="text-xs text-muted">
+										Confirm only when you can verify this pulse nearby. Report
+										it if the content looks abusive, unsafe, or misleading.
+									</p>
+									{isReporting && (
+										<div className="space-y-3 rounded border border-danger/20 bg-danger/5 p-3">
+											<div className="flex items-start gap-2 text-danger">
+												<AlertTriangleIcon className="size-4 shrink-0 mt-0.5" />
+												<p className="text-xs leading-relaxed">
+													Reports go to moderators for review. Add enough
+													context so the moderation team can act quickly.
+												</p>
+											</div>
+											<textarea
+												value={reportReason}
+												onChange={(event) =>
+													setReportReason(event.target.value)
+												}
+												rows={4}
+												maxLength={500}
+												placeholder="What’s wrong with this pulse?"
+												className="w-full rounded border border-border bg-surface px-3 py-2 text-sm outline-none transition focus:border-danger"
+											/>
+											<div className="flex items-center justify-between gap-3">
+												<span className="text-[11px] text-muted">
+													{reportReason.length}/500
+												</span>
+												<Button
+													size="sm"
+													variant="danger"
+													isPending={createReport.isPending}
+													isDisabled={reportReason.trim().length < 5}
+													onPress={() =>
+														createReport.mutate(
+															{
+																targetPulseId: pulse.id,
+																reason: reportReason.trim(),
+															},
+															{
+																onSuccess: (response) => {
+																	Toast.toast.success(response.message);
+																	setReportReason("");
+																	setIsReporting(false);
+																},
+																onError: (error: unknown) =>
+																	Toast.toast.danger(
+																		error instanceof Error
+																			? error.message
+																			: "Could not submit report",
+																	),
+															},
+														)
+													}
+												>
+													Submit report
+												</Button>
+											</div>
+										</div>
+									)}
+								</div>
+							)}
 						</Drawer.Body>
-						<div className="flex items-center justify-end gap-3">
+						<Drawer.Footer className="flex items-center justify-end gap-3">
 							<Button variant="danger-soft" onPress={() => onOpenChange(false)}>
 								Close
 							</Button>
@@ -317,7 +437,7 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 									Offer help
 								</Button>
 							)}
-						</div>
+						</Drawer.Footer>
 					</Drawer.Dialog>
 				</Drawer.Content>
 			</Drawer.Backdrop>

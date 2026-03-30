@@ -3,7 +3,9 @@ import { glass } from "@dicebear/collection";
 import { createAvatar } from "@dicebear/core";
 import { Avatar as HeroAvatar } from "@heroui/react";
 
-export const Avatar = ({ user }: { user?: ClientUserType }) => {
+type AvatarUser = Pick<ClientUserType, "image"> & Partial<ClientUserType>;
+
+export const Avatar = ({ user }: { user?: AvatarUser | null }) => {
 	let avatar: string = "";
 	if (!user?.image) {
 		avatar = createAvatar(glass, {

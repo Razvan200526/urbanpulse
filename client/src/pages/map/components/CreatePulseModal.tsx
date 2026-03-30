@@ -68,15 +68,19 @@ export const CreatePulseModal = ({
 			return;
 		}
 
+		if (!user?.user.id) {
+			Toast.toast.danger("You need to be signed in to create a pulse.");
+			return;
+		}
+
 		await createPulse({
 			title,
 			description,
 			type: pulseType,
 			urgency,
-			userId: user?.user.id,
+			userId: user.user.id,
 			position: { x: coords.long, y: coords.lat },
 			imageUrls,
-			isResolved: false,
 			audioUrl: audioUrlRef.current,
 		});
 
@@ -175,15 +179,17 @@ export const CreatePulseModal = ({
 								onSave={(url) => setImageUrls((prev) => [...prev, url])}
 								trigger={(open) => (
 									<Tooltip delay={0}>
-										<Button
-											variant="outline"
-											isIconOnly
-											radius="full"
-											startContent={
-												<PaperclipIcon className="size-4 text-accent" />
-											}
-											onPress={open}
-										/>
+										<Tooltip.Trigger>
+											<Button
+												variant="outline"
+												isIconOnly
+												radius="full"
+												startContent={
+													<PaperclipIcon className="size-4 text-accent" />
+												}
+												onPress={open}
+											/>
+										</Tooltip.Trigger>
 										<Tooltip.Content className="rounded-full border border-accent text-accent">
 											Upload Images
 										</Tooltip.Content>

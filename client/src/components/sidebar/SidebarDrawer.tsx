@@ -36,8 +36,20 @@ export const SidebarDrawer = () => {
 				</div>
 			</div>
 			<div className="2xl:hidden">
-				<Drawer isOpen={isOpen} onOpenChange={onOpenChange}>
-					<Drawer.Backdrop variant="transparent">
+				<Drawer>
+					<Drawer.Trigger>
+						<button
+							type="button"
+							className="sr-only"
+							tabIndex={-1}
+							aria-hidden="true"
+						/>
+					</Drawer.Trigger>
+					<Drawer.Backdrop
+						variant="transparent"
+						isOpen={isOpen}
+						onOpenChange={onOpenChange}
+					>
 						<Drawer.Content className="w-72" placement="left">
 							<Drawer.Dialog className="bg-surface rounded-none h-full flex flex-col gap-8 p-2 border-r border-border">
 								<Sidebar />

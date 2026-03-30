@@ -8,6 +8,7 @@ import type { ModalRefType } from "../../components/Modal";
 import { H3 } from "../../components/typography";
 import { Avatar } from "../../components/user/Avatar";
 import { useGetPendingRequests } from "../resources/hooks";
+import type { PendingRequestItem } from "../resources/resourceResponses";
 import { RespondRequestModal } from "./components/RespondRequestModal";
 
 export const MessagesPage = () => {
@@ -50,7 +51,7 @@ export const MessagesPage = () => {
 								<Table.Column>ACTIONS</Table.Column>
 							</Table.Header>
 							<Table.Body>
-								{requests?.map((item: any) => (
+								{requests?.map((item: PendingRequestItem) => (
 									<Table.Row key={item.transaction.id}>
 										<Table.Cell>
 											<div className="font-medium">

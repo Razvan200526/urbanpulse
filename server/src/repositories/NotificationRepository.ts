@@ -32,6 +32,15 @@ export class NotificationRepository implements IRepository<NotificationType> {
 			.orderBy(desc(notification.createdAt));
 	}
 
+	async getNotificationsWithUsersByUserId(userId: string) {
+		return db
+			.select()
+			.from(notification)
+			.fullJoin(user, eq(notification.userId, user.id))
+			.where(eq(notification.userId, userId))
+			.orderBy(desc(notification.createdAt));
+	}
+
 	async create(
 		data: Partial<NotificationType>,
 	): Promise<NotificationType | null> {

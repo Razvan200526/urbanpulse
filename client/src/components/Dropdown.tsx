@@ -1,5 +1,5 @@
 import { cn, Description, Dropdown, Kbd, Label } from "@heroui/react";
-import type { Key, ReactNode } from "react";
+import type { Key, ReactElement, ReactNode } from "react";
 
 export type DropdownItemDataType = {
 	key: string;
@@ -15,7 +15,7 @@ export type DropdownItemDataType = {
 };
 
 interface DropdownProps {
-	trigger: ReactNode;
+	trigger: ReactElement;
 	items: DropdownItemDataType[];
 	onAction?: (key: Key) => void;
 	className?: string;

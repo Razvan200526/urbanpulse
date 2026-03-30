@@ -2,17 +2,15 @@ import { Button } from "@client/components/Button/Button";
 import { AvailabilityChip } from "@client/components/chips/AvaiabilityChip";
 import { H6 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
-import type { ClientUserType } from "@client/utils/types";
 import { Card, Separator } from "@heroui/react";
 import { formatDate } from "@shared/utils/formatDate";
 import { MoreVertical, Star } from "lucide-react";
 import { useState } from "react";
-import { type ResourceWithUsersType, useGetResourceAuthor } from "../../hooks";
+import type { ResourceWithUsersType } from "../../resourceResponses";
 import { ResourceDetailsDrawer } from "./ResourceDetailsDrawer";
 
 export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {
-	const { resource, recentUsers } = item;
-	const { data: author } = useGetResourceAuthor(resource.id);
+	const { resource, recentUsers, author } = item;
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
 	return (
@@ -51,7 +49,7 @@ export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {
 			<Card.Footer className="flex justify-between items-center py-3">
 				<div className="flex -space-x-2">
 					{recentUsers?.slice(0, 3).map((user) => (
-						<Avatar key={user.id} user={user as ClientUserType} />
+						<Avatar key={user.id} user={user} />
 					))}
 				</div>
 				<Button variant="primary" onPress={() => setIsDrawerOpen(true)}>
@@ -61,7 +59,7 @@ export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {
 
 			<ResourceDetailsDrawer
 				item={item}
-				author={author}
+				author={author || undefined}
 				isOpen={isDrawerOpen}
 				onOpenChange={setIsDrawerOpen}
 			/>

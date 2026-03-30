@@ -71,8 +71,13 @@ export class NotificationService {
 	 * Retrieves all notifications with the users that posted them
 	 * @returns All notifications with users (it joins their tables).Used for displaying notifications with user details.
 	 */
-	async getNotificationsWithUsers() {
+	async getNotificationsWithUsers(userId?: string) {
 		try {
+			if (userId) {
+				return await this.notificationRepo.getNotificationsWithUsersByUserId(
+					userId,
+				);
+			}
 			return await this.notificationRepo.getNotificationsWithUsers();
 		} catch (error) {
 			handleError(error);
@@ -115,11 +120,36 @@ export class NotificationService {
 		logger.info(
 			`Broadcasting notification to ${recipients.length} recipients: ${broadcastData.message}`,
 		);
+		const persistedUserIds = new Set<string>();
 		for (const conn of recipients) {
 			conn.ws.send(JSON.stringify(broadcastData));
-			if (persist) {
+			if (persist && !persistedUserIds.has(conn.userId)) {
+				persistedUserIds.add(conn.userId);
 				await this.createNotification({
 					userId: conn.userId,
+					type: broadcastData.data.type,
+					payload: broadcastData.data.payload,
+				});
+			}
+		}
+	}
+
+	async notifyUsers(
+		userIds: string[],
+		broadcastData: BroadcastDataType<unknown>,
+		persist: boolean = true,
+	) {
+		const uniqueUserIds = Array.from(new Set(userIds.filter(Boolean)));
+
+		for (const userId of uniqueUserIds) {
+			const connections = socketManager.getConnectionsForUser(userId);
+			for (const connection of connections) {
+				connection.ws.send(JSON.stringify(broadcastData));
+			}
+
+			if (persist) {
+				await this.createNotification({
+					userId,
 					type: broadcastData.data.type,
 					payload: broadcastData.data.payload,
 				});
@@ -176,8 +206,7 @@ export class NotificationService {
 			payload,
 			message,
 		});
-		const recipients = socketManager.getConnectionsForUser(ownerUserId);
-		await this.sendAndSaveData(recipients, broadcastData);
+		await this.notifyUsers([ownerUserId], broadcastData);
 	}
 
 	/**
@@ -204,8 +233,28 @@ export class NotificationService {
 			payload,
 			message,
 		});
-		const recipients = socketManager.getConnectionsForUser(responderUserId);
-		await this.sendAndSaveData(recipients, broadcastData);
+		await this.notifyUsers([responderUserId], broadcastData);
+	}
+
+	async notifyPulseConfirmed(params: {
+		ownerUserId: string;
+		pulseId: string;
+		pulseTitle: string;
+		confirmationCount: number;
+	}) {
+		const { ownerUserId, pulseId, pulseTitle, confirmationCount } = params;
+		const payload = {
+			pulseId,
+			pulseTitle,
+			confirmationCount,
+		};
+		const message = `Your pulse "${pulseTitle}" was verified by ${confirmationCount} neighbors`;
+		const broadcastData = this.notificationFactory.create({
+			type: "PULSE_CONFIRMED",
+			payload,
+			message,
+		});
+		await this.notifyUsers([ownerUserId], broadcastData);
 	}
 
 	/**

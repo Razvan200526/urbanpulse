@@ -3,15 +3,15 @@ import { authMiddleware } from "@server/middleware/authMiddleware";
 import { responseRepository } from "@server/repositories/ResponseRepository";
 import { userRepository } from "@server/repositories/UserRepository";
 import auth from "@server/services/auth/AuthService";
+import { moderationService } from "@server/services/ModerationService";
 import { notificationService } from "@server/services/NotificationService";
 import { pulseService } from "@server/services/PulseService";
 import { responseService } from "@server/services/ResponseService";
 import { handleError } from "@server/utils/handleError";
-import { PulseStatusEnum, PulseUploadStateEnum } from "@shared/types";
+import { PulseStatusEnum } from "@shared/types";
 import { acceptHelpParamsSchema } from "@shared/validators/pulses/isAcceptHelpParamsValid";
+import { confirmPulseParamsSchema } from "@shared/validators/pulses/isConfirmPulseValid";
 import { offerHelpBodySchema } from "@shared/validators/pulses/isOfferHelpValid";
-import { pulseRequestSchema } from "@shared/validators/pulses/isPulseRequestValid";
-import { retrievePulsePayloadSchema } from "@shared/validators/pulses/isPulseRetrieveValid";
 import {
 	pulseIdParamSchema,
 	pulseUpdateBodySchema,
@@ -58,6 +58,48 @@ export const pulseController = new Hono()
 		},
 	)
 	.post(
+		"/:id/confirm",
+		zValidator("param", confirmPulseParamsSchema),
+		async (c) => {
+			const session = c.var.session;
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+
+			const { id } = c.req.valid("param");
+			const result = await moderationService.confirmPulse(id, session.userId);
+
+			if (!result.ok) {
+				const status =
+					result.code === "NOT_FOUND"
+						? 404
+						: result.code === "CONFLICT"
+							? 409
+							: result.code === "FORBIDDEN"
+								? 403
+								: 400;
+
+				return c.json(
+					{ success: false, message: result.message, data: null },
+					status,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message: result.data.alreadyConfirmed
+					? "Pulse already confirmed by you"
+					: result.data.newlyVerified
+						? "Pulse confirmed and verified"
+						: "Pulse confirmed",
+				data: result.data,
+			});
+		},
+	)
+	.post(
 		"/:id/responses/:responseId/accept",
 		zValidator("param", acceptHelpParamsSchema),
 		async (c) => {
@@ -99,6 +141,42 @@ export const pulseController = new Hono()
 				success: true,
 				message: "Help offer accepted",
 				data: result.accepted,
+			});
+		},
+	)
+	.post(
+		"/:id/responses/:responseId/reject",
+		zValidator("param", acceptHelpParamsSchema),
+		async (c) => {
+			const session = await auth.api.getSession({
+				headers: c.req.raw.headers,
+			});
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+			const { id: pulseId, responseId } = c.req.valid("param");
+			const result = await responseService.rejectHelpOffer(
+				session.user.id,
+				pulseId,
+				responseId,
+			);
+			if (!result) {
+				return c.json(
+					{
+						success: false,
+						message: "Offer not found or already handled",
+						data: null,
+					},
+					404,
+				);
+			}
+			return c.json({
+				success: true,
+				message: "Help offer rejected",
+				data: result,
 			});
 		},
 	)
@@ -183,87 +261,35 @@ export const pulseController = new Hono()
 		},
 	)
 	.get(
-		"/", //merge the 2 ws endpoints into one and let PulseRepository decide what action there needs to be done(create/retrieve)
+		"/",
 		upgradeWebSocket(async () => {
 			return {
 				onOpen: () => {},
 				onMessage: async (event, ws) => {
 					try {
 						const data = JSON.parse(event.data.toString());
-						const result = pulseRequestSchema.safeParse(data);
-						if (!result.success) {
-							ws.send(
-								JSON.stringify({
-									success: false,
-									messaage: "Invalid request",
-									data: null,
-								}),
-							);
-							return;
-						}
-						const newPulse = await pulseService.createPulse(result.data);
-						if (!newPulse) {
-							ws.send(
-								JSON.stringify({
-									success: false,
-									message: "Failed to create pulse",
-									data: null,
-								}),
-							);
-							return;
-						}
-						const uploadedPulse = await pulseService.updatePulse(newPulse.id, {
-							pulseUploadState: PulseUploadStateEnum.Uploaded,
-						});
-
-						ws.send(
-							JSON.stringify({
-								success: true,
-								message: "Pulse received",
-								data: uploadedPulse,
-							}),
-						);
-
-						if (uploadedPulse) {
-							await notificationService.broadcastToNearbyUsers(uploadedPulse);
-						}
+						const response = await pulseService.handleSocketMessage(data);
+						ws.send(JSON.stringify(response));
 					} catch (e) {
+						if (e instanceof SyntaxError) {
+							ws.send(
+								JSON.stringify({
+									success: false,
+									message: "Invalid JSON payload",
+									data: null,
+								}),
+							);
+							return;
+						}
 						handleError(e);
-					}
-				},
-				onClose: () => {},
-			};
-		}),
-	)
-
-	.get(
-		"/retrieve",
-		upgradeWebSocket(async () => {
-			return {
-				onOpen: () => {},
-				onMessage: async (event, ws) => {
-					const data = JSON.parse(event.data.toString());
-					const result = retrievePulsePayloadSchema.safeParse(data);
-					if (!result.success) {
 						ws.send(
 							JSON.stringify({
 								success: false,
-								message: "Invalid request",
+								message: "Failed to process pulse request",
 								data: null,
 							}),
 						);
-						return;
 					}
-					const pulses = await pulseService.getPulses({
-						position: result.data.position,
-					});
-					ws.send(
-						JSON.stringify({
-							success: true,
-							message: "Pulses retrieved",
-							data: pulses,
-						}),
-					);
 				},
 				onClose: () => {},
 			};

@@ -36,8 +36,20 @@ export function ResourceDetailsDrawer({
 	};
 
 	return (
-		<Drawer isOpen={isOpen} onOpenChange={onOpenChange} key="right">
-			<Drawer.Backdrop variant="transparent">
+		<Drawer key="right">
+			<Drawer.Trigger>
+				<button
+					type="button"
+					className="sr-only"
+					tabIndex={-1}
+					aria-hidden="true"
+				/>
+			</Drawer.Trigger>
+			<Drawer.Backdrop
+				variant="transparent"
+				isOpen={isOpen}
+				onOpenChange={onOpenChange}
+			>
 				<Drawer.Content className="overflow-hidden" placement="right">
 					<Drawer.Dialog className="rounded-l">
 						<Drawer.Header className="relative px-5 pt-4 pb-6 overflow-hidden border border-accent rounded">
@@ -95,11 +107,18 @@ export function ResourceDetailsDrawer({
 								<MetaRow label="Borrowers">
 									<div className="flex flex-wrap gap-2">
 										{recentUsers && recentUsers.length > 0 ? (
-											recentUsers.map((user) => (
-												<div key={user.id} className="flex items-center gap-2">
-													<Avatar user={user as ClientUserType} />
-												</div>
-											))
+											recentUsers.map(
+												(
+													user: Pick<ClientUserType, "id" | "name" | "image">,
+												) => (
+													<div
+														key={user.id}
+														className="flex items-center gap-2"
+													>
+														<Avatar user={user as ClientUserType} />
+													</div>
+												),
+											)
 										) : (
 											<span className="text-xs text-muted">None</span>
 										)}
@@ -107,7 +126,7 @@ export function ResourceDetailsDrawer({
 								</MetaRow>
 							</div>
 						</Drawer.Body>
-						<div className="flex items-center justify-end gap-3 mt-4">
+						<Drawer.Footer className="flex items-center justify-end gap-3 mt-4">
 							<Button variant="danger-soft" onPress={() => onOpenChange(false)}>
 								Close
 							</Button>
@@ -120,7 +139,7 @@ export function ResourceDetailsDrawer({
 									Request Borrow
 								</Button>
 							)}
-						</div>
+						</Drawer.Footer>
 					</Drawer.Dialog>
 				</Drawer.Content>
 			</Drawer.Backdrop>

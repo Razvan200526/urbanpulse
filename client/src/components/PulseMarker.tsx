@@ -87,6 +87,9 @@ export const PulseMarker = ({ pulse }: { pulse: PulseType }) => {
 					<span
 						className={`absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${c.core} ring-2 ring-white shadow-md`}
 					/>
+					{pulse.isVerified && (
+						<span className="absolute right-0 top-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+					)}
 				</div>,
 				el.current,
 			)}

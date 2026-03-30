@@ -102,7 +102,7 @@ export const AudioRecorder = ({
 		<div className="flex items-center gap-2">
 			{status === "idle" && !mediaBlobUrl && (
 				<Tooltip delay={0}>
-					<span className="inline-block">
+					<Tooltip.Trigger>
 						<Button
 							variant="outline"
 							isIconOnly
@@ -111,14 +111,17 @@ export const AudioRecorder = ({
 						>
 							<MicIcon className="size-4 text-accent" />
 						</Button>
-					</span>
+					</Tooltip.Trigger>
+					<Tooltip.Content className="rounded-full border border-accent bg-surface text-accent">
+						Start recording
+					</Tooltip.Content>
 				</Tooltip>
 			)}
 
 			{status === "recording" && (
 				<div className="flex items-center gap-3 bg-surface border border-accent rounded-full p-2 w-72 shadow-sm transition-all duration-300 ease-out animate-in fade-in zoom-in-95 h-10">
 					<Tooltip delay={0}>
-						<span className="inline-block">
+						<Tooltip.Trigger>
 							<Button
 								variant="ghost"
 								isIconOnly
@@ -128,7 +131,10 @@ export const AudioRecorder = ({
 							>
 								<Square className="size-4 text-accent" fill="currentColor" />
 							</Button>
-						</span>
+						</Tooltip.Trigger>
+						<Tooltip.Content className="rounded-full border border-accent bg-surface text-accent">
+							Stop recording
+						</Tooltip.Content>
 					</Tooltip>
 					<div className="flex-1 overflow-hidden h-4 flex items-center justify-center">
 						<AudioVisualizer stream={previewAudioStream} />

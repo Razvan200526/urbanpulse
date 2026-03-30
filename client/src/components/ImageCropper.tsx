@@ -1,10 +1,9 @@
+import { useUploadAvatar, useUploadImage } from "@client/hooks/uploadHooks";
 import { Button, Toast } from "@heroui/react";
+import { dataURLtoFile } from "@shared/utils/index";
 import { useRef, useState } from "react";
 import ReactCrop, { type Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import { useUploadAvatar, useUploadImage } from "@client/hooks/uploadHooks";
-import { dataURLtoFile } from "@shared/utils/index";
-import { PlusSquareIcon } from "lucide-react";
 import { Modal } from "./Modal";
 import { H4 } from "./typography";
 
@@ -135,17 +134,17 @@ export const ImageCropper = ({
 	return (
 		<Modal
 			isOpen={isOpen}
+			onOpenChange={(open) => {
+				setIsOpen(open);
+				if (!open) {
+					onClose();
+				}
+			}}
 			footer={footer}
 			header={
 				<div className="flex items-center justify-start">
 					<H4 className="text-accent">Upload your avatar</H4>
 				</div>
-			}
-			trigger={
-				<Button onClick={() => setIsOpen(true)}>
-					<PlusSquareIcon />
-					<p>Upload avatar</p>
-				</Button>
 			}
 		>
 			<div className="rounded bg-light p-4 flex">

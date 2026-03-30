@@ -100,19 +100,14 @@ export class ResourceService {
 				res.map(
 					async (item: ResourceType & { transactions: TransactionType[] }) => {
 						const { transactions, ...resourceProps } = item;
-						const recentUsersIds = transactions
-							.map((t: TransactionType) => t.borrowerId)
-							.filter((id): id is string => Boolean(id));
-
-						const recentUsersRaw = await Promise.all(
-							recentUsersIds.map((id: string) => this.userRepo.getOne(id)),
-						);
-						const recentUsers: UserType[] = recentUsersRaw.filter(
-							(u): u is UserType => Boolean(u),
-						);
+						const recentUsers = transactions
+							.map((t: TransactionType & { borrower?: UserType | null }) => t.borrower)
+							.filter((u): u is UserType => Boolean(u));
+						const author = await this.userRepo.getOne(resourceProps.userId);
 
 						return {
 							resource: resourceProps,
+							author,
 							recentUsers,
 						};
 					},

@@ -16,6 +16,14 @@ export class QuietHoursRepository implements IRepository<QuietHoursType> {
 		return await db.select().from(quietHours);
 	}
 
+	async findByUserId(userId: string): Promise<QuietHoursType | null> {
+		const [result] = await db
+			.select()
+			.from(quietHours)
+			.where(eq(quietHours.userId, userId));
+		return result || null;
+	}
+
 	async create(data: Partial<QuietHoursType>): Promise<QuietHoursType | null> {
 		const [result] = await db
 			.insert(quietHours)

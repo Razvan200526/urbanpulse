@@ -1,8 +1,8 @@
+import { useUploadAudio } from "@client/hooks/uploadHooks";
 import { cn, ProgressBar, Tooltip } from "@heroui/react";
 import { Pause, Play, Trash2Icon, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../Button/Button";
-import { useUploadAudio } from "@client/hooks/uploadHooks";
 
 export type CustomPlayerProps = {
 	mediaBlobUrl: string;
@@ -92,36 +92,40 @@ export const CustomPlayer = ({
 
 			<div className="flex items-center justify-start gap-2">
 				<Tooltip>
-					<Button
-						variant="ghost"
-						isIconOnly
-						radius="full"
-						size="sm"
-						onPress={togglePlayPause}
-						className="bg-accent/10 hover:bg-accent-soft-hover min-w-7 w-7 h-7 text-accent shrink-0 flex items-center justify-center p-0 m-0"
-					>
-						{isPlaying ? (
-							<Pause className="size-4" fill="currentColor" />
-						) : (
-							<Play className="size-4" fill="currentColor" />
-						)}
-					</Button>
+					<Tooltip.Trigger>
+						<Button
+							variant="ghost"
+							isIconOnly
+							radius="full"
+							size="sm"
+							onPress={togglePlayPause}
+							className="bg-accent/10 hover:bg-accent-soft-hover min-w-7 w-7 h-7 text-accent shrink-0 flex items-center justify-center p-0 m-0"
+						>
+							{isPlaying ? (
+								<Pause className="size-4" fill="currentColor" />
+							) : (
+								<Play className="size-4" fill="currentColor" />
+							)}
+						</Button>
+					</Tooltip.Trigger>
 					<Tooltip.Content className="text-xs text-accent rounded-full border border-accent bg-surface">
-						Play
+						{isPlaying ? "Pause" : "Play"}
 					</Tooltip.Content>
 				</Tooltip>
 
 				{showButtons ? (
 					<Tooltip delay={0}>
-						<Button
-							isIconOnly
-							radius="full"
-							onPress={handleUpload}
-							isPending={isPending}
-							className="bg-success/10 hover:bg-success-soft-hover min-w-7 w-7 h-7 shrink-0"
-						>
-							<Upload className="size-4 text-success" />
-						</Button>
+						<Tooltip.Trigger>
+							<Button
+								isIconOnly
+								radius="full"
+								onPress={handleUpload}
+								isPending={isPending}
+								className="bg-success/10 hover:bg-success-soft-hover min-w-7 w-7 h-7 shrink-0"
+							>
+								<Upload className="size-4 text-success" />
+							</Button>
+						</Tooltip.Trigger>
 						<Tooltip.Content className="text-xs text-success rounded-full border border-success bg-surface">
 							Upload recording
 						</Tooltip.Content>
@@ -130,15 +134,17 @@ export const CustomPlayer = ({
 
 				{showButtons ? (
 					<Tooltip delay={0}>
-						<Button
-							variant="danger-soft"
-							isIconOnly
-							radius="full"
-							onPress={onDelete}
-							className="bg-danger/10 hover:bg-danger-soft-hover min-w-7 w-7 h-7 shrink-0"
-						>
-							<Trash2Icon className="size-4 text-danger" />
-						</Button>
+						<Tooltip.Trigger>
+							<Button
+								variant="danger-soft"
+								isIconOnly
+								radius="full"
+								onPress={onDelete}
+								className="bg-danger/10 hover:bg-danger-soft-hover min-w-7 w-7 h-7 shrink-0"
+							>
+								<Trash2Icon className="size-4 text-danger" />
+							</Button>
+						</Tooltip.Trigger>
 						<Tooltip.Content className="text-xs text-danger rounded-full border border-danger bg-surface">
 							Delete recording
 						</Tooltip.Content>

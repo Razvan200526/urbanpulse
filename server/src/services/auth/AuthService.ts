@@ -1,4 +1,3 @@
-import { dash } from "@better-auth/infra";
 import { getMailer } from "@server/mailers/getMailer";
 import { OTPMail } from "@server/mailers/templates/OTPMail";
 import { logger } from "@server/utils/Logger";
@@ -127,7 +126,6 @@ export const auth = betterAuth({
 		window: 60 * 1000,
 	},
 	plugins: [
-		dash(),
 		signUpPlugin(),
 		openAPI(),
 		emailOTP({

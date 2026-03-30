@@ -72,6 +72,32 @@ export class ResponseService {
 		}
 	}
 
+	async rejectHelpOffer(
+		ownerUserId: string,
+		pulseId: string,
+		responseId: string,
+	): Promise<PulseResponseType | null> {
+		try {
+			const pulse = await pulseRepository.getOne(pulseId);
+			if (!pulse || pulse.userId !== ownerUserId) return null;
+			const row = await this.responseRepo.getOne(responseId);
+			if (
+				!row ||
+				row.pulseId !== pulseId ||
+				row.status !== ResponseStatusEnum.Pending
+			) {
+				return null;
+			}
+
+			return await this.responseRepo.update(responseId, {
+				status: ResponseStatusEnum.Declined,
+			});
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
 	async createResponse(data: unknown) {
 		const result = isResponseRequestValid(data);
 		try {
@@ -117,8 +143,7 @@ export class ResponseService {
 	}
 	async deleteResponse(id: string): Promise<boolean> {
 		try {
-			await this.responseRepo.delete(id);
-			return true;
+			return await this.responseRepo.delete(id);
 		} catch (error) {
 			handleError(error);
 			return false;

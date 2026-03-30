@@ -1,8 +1,16 @@
 import { hono, queryClient } from "@client/main";
 import type { ClientUserType } from "@client/utils/types";
 import { Toast } from "@heroui/react";
-import type { ResourceType } from "@server/db/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+	getApiErrorMessage,
+	type MutationResponse,
+	normalizeResources,
+	type PendingRequestItem,
+	type ResourceWithUsersApiItem,
+} from "./resourceResponses";
+
+export type { ResourceWithUsersType } from "./resourceResponses";
 
 export const useUploadResource = (userId: string) => {
 	return useMutation({
@@ -14,9 +22,13 @@ export const useUploadResource = (userId: string) => {
 			description: string;
 		}) => {
 			const response = await hono.api.resources.$post({ json: resource });
-			const res = await response.json();
+			const res = (await response.json()) as MutationResponse<unknown>;
 			if (!res.success || !res.data) {
-				Toast.toast.danger(res.message);
+				Toast.toast.danger(
+					res.success
+						? "Failed to upload resource"
+						: getApiErrorMessage(res, "Failed to upload resource"),
+				);
 				return;
 			}
 			return res;
@@ -37,18 +49,18 @@ export const useGetResourceAuthor = (resourceId: string) => {
 					resourceId,
 				},
 			});
-			const res = await response.json();
+			const res = (await response.json()) as MutationResponse<ClientUserType>;
 			if (!res.success || !res.data) {
-				Toast.toast.danger(res.message);
+				Toast.toast.danger(
+					res.success
+						? "Failed to get author"
+						: getApiErrorMessage(res, "Failed to get author"),
+				);
 				return;
 			}
 			return res.data as ClientUserType;
 		},
 	});
-};
-export type ResourceWithUsersType = {
-	resource: ResourceType;
-	recentUsers: Array<Pick<ClientUserType, "id" | "name" | "image">>;
 };
 
 export const useRetrieveResources = (userId: string) => {
@@ -60,18 +72,18 @@ export const useRetrieveResources = (userId: string) => {
 					userId,
 				},
 			});
-			const res = await response.json();
+			const res = (await response.json()) as MutationResponse<
+				ResourceWithUsersApiItem[]
+			>;
 			if (!res.success || !res.data) {
-				Toast.toast.danger(res.message);
+				Toast.toast.danger(
+					res.success
+						? "Failed to retrieve resources"
+						: getApiErrorMessage(res, "Failed to retrieve resources"),
+				);
 				return;
 			}
-			return res.data.map((item: any) => ({
-				resource: {
-					...item.resource,
-					createdAt: new Date(item.resource.createdAt),
-				},
-				recentUsers: item.recentUsers,
-			})) as ResourceWithUsersType[];
+			return normalizeResources(res.data);
 		},
 	});
 };
@@ -85,10 +97,12 @@ export const useGetPendingRequests = (userId: string) => {
 					userId,
 				},
 			});
-			const res = await response.json();
-			if (!res.success || !res.data) {
+			const res = (await response.json()) as MutationResponse<
+				PendingRequestItem[]
+			>;
+			if (!res.success) {
 				Toast.toast.danger(
-					(res as any).error || "Failed to get pending requests",
+					getApiErrorMessage(res, "Failed to get pending requests"),
 				);
 				return [];
 			}
@@ -118,10 +132,10 @@ export const useRespondToRequest = (userId: string) => {
 					accept,
 				},
 			});
-			const res = await response.json();
-			if (!res.success || !res.data) {
+			const res = (await response.json()) as MutationResponse<unknown>;
+			if (!res.success) {
 				Toast.toast.danger(
-					(res as any).error || "Failed to respond to request",
+					getApiErrorMessage(res, "Failed to respond to request"),
 				);
 				throw new Error("Failed to respond");
 			}
@@ -140,7 +154,7 @@ export const useRequestBorrow = (userId: string) => {
 	return useMutation({
 		mutationKey: ["request", "borrow", userId],
 		mutationFn: async (payload: { borrowerId: string; resourceId: string }) => {
-			return new Promise((resolve, reject) => {
+			return new Promise<{ message?: string }>((resolve, reject) => {
 				const ws = hono.api.resources.transaction.ws.$ws(0);
 
 				ws.addEventListener("open", () => {
@@ -149,9 +163,13 @@ export const useRequestBorrow = (userId: string) => {
 
 				ws.addEventListener("message", (event) => {
 					try {
-						const data = JSON.parse(event.data);
+						const data = JSON.parse(event.data) as {
+							success?: boolean;
+							message?: string;
+							error?: string;
+						};
 						if (data.success) {
-							resolve(data);
+							resolve({ message: data.message });
 						} else {
 							reject(
 								new Error(
@@ -171,7 +189,7 @@ export const useRequestBorrow = (userId: string) => {
 				});
 			});
 		},
-		onSuccess: (data: any) => {
+		onSuccess: (data: { message?: string }) => {
 			Toast.toast.success(data.message || "Borrow request sent!");
 		},
 		onError: (error: Error) => {

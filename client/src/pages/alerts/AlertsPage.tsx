@@ -1,9 +1,18 @@
+import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { Avatar } from "@client/components/user/Avatar";
-import { Button } from "@client/components/Button/Button";
 import { useAuth } from "@client/hooks/useAuth";
 import { useNotifications } from "@client/hooks/useNotifications";
-import { useAcceptHelpOffer } from "@client/pages/map/hooks";
+import {
+	useAcceptHelpOffer,
+	useRejectHelpOffer,
+} from "@client/pages/map/hooks";
+import {
+	getPulseResponseActionPayload,
+	labelForNotificationType,
+	type NotificationPayload,
+	summarizeNotificationPayload,
+} from "@client/utils/notifications";
 import {
 	Card,
 	Modal,
@@ -11,62 +20,20 @@ import {
 	ScrollShadow,
 	Separator,
 	Table,
+	Toast,
 	Tooltip,
 } from "@heroui/react";
 import { Bell, CheckCircle2, Info, XCircle } from "lucide-react";
 import { useState } from "react";
 
-function _summarizePayload(
-	type: string,
-	payload: Record<string, unknown> | null,
-) {
-	if (!payload || typeof payload !== "object") return "";
-	if (type === "HERO_ALERT") {
-		const t = payload.type as string | undefined;
-		const d = payload.description as string | undefined;
-		return [t && `Type: ${t}`, d].filter(Boolean).join(" · ") || "Nearby pulse";
-	}
-	if (type === "PULSE_RESPONSE") {
-		const name = payload.responderName as string | undefined;
-		const title = payload.pulseTitle as string | undefined;
-		return `${name ?? "Someone"} offered help${title ? ` on “${title}”` : ""}.`;
-	}
-	if (type === "PULSE_RESPONSE_ACCEPTED") {
-		const owner = payload.ownerName as string | undefined;
-		const title = payload.pulseTitle as string | undefined;
-		return `${owner ?? "Someone"} accepted your help${title ? ` for “${title}”` : ""}.`;
-	}
-	return "";
-}
-
-function labelForType(type: string): string {
-	switch (type) {
-		case "HERO_ALERT":
-			return "Pulse nearby";
-		case "PULSE_RESPONSE":
-			return "Help offer";
-		case "PULSE_RESPONSE_ACCEPTED":
-			return "Help accepted";
-		case "PULSE_CONFIRMED":
-			return "Pulse confirmed";
-		case "MESSAGE":
-			return "Message";
-		case "TRANSACTION":
-			return "Borrow / lend";
-		case "FEEDBACK":
-			return "Feedback";
-		default:
-			return type;
-	}
-}
-
 export const AlertsPage = () => {
 	const { data: user } = useAuth();
 	const { data: notifications, isPending } = useNotifications(user?.user.id);
-	const { mutate: acceptHelp } = useAcceptHelpOffer();
+	const acceptHelp = useAcceptHelpOffer();
+	const rejectHelp = useRejectHelpOffer();
 	const [selectedPayload, setSelectedPayload] = useState<{
 		type: string;
-		payload: Record<string, unknown> | null;
+		payload: NotificationPayload;
 	} | null>(null);
 
 	if (isPending) {
@@ -113,107 +80,154 @@ export const AlertsPage = () => {
 									</Table.Column>
 								</Table.Header>
 								<Table.Body>
-									{notifications?.map((n) => (
-										<Table.Row key={n.notification?.id} className="rounded">
-											<Table.Cell>
-												<div className="flex items-center justify-start gap-3">
-													{n.user && <Avatar user={n.user} />}
-													<div className="flex flex-col">
-														<p className="text-sm font-medium text-foreground">
-															{n.user?.name}
-														</p>
-														<p className="text-xs text-muted">
-															{n.user?.email}
-														</p>
+									{notifications?.map((n) => {
+										const notificationType = n.notification?.type || "";
+										const notificationPayload = n.notification?.payload ?? null;
+										const pulseResponsePayload = getPulseResponseActionPayload(
+											notificationType === "PULSE_RESPONSE"
+												? notificationPayload
+												: null,
+										);
+										const isActionPending =
+											acceptHelp.isPending || rejectHelp.isPending;
+
+										return (
+											<Table.Row key={n.notification?.id} className="rounded">
+												<Table.Cell>
+													<div className="flex items-center justify-start gap-3">
+														{n.user && <Avatar user={n.user} />}
+														<div className="flex flex-col">
+															<p className="text-sm font-medium text-foreground">
+																{n.user?.name}
+															</p>
+															<p className="text-xs text-muted">
+																{n.user?.email}
+															</p>
+														</div>
 													</div>
-												</div>
-											</Table.Cell>
-											<Table.Cell>
-												<p className="text-sm">
-													{labelForType(n.notification?.type || "")}
-												</p>
-											</Table.Cell>
-											<Table.Cell>
-												<div className="flex items-center justify-center">
-													<Tooltip delay={0}>
-														<Tooltip.Trigger>
-															<Button
-																isIconOnly
-																variant="ghost"
-																size="sm"
-																radius="full"
-																onPress={() =>
-																	setSelectedPayload({
-																		type: n.notification?.type || "",
-																		payload:
-																			(n.notification?.payload as Record<
-																				string,
-																				unknown
-																			> | null) || null,
-																	})
-																}
-															>
-																<Info className="size-4 text-accent" />
-															</Button>
-														</Tooltip.Trigger>
-														<Tooltip.Content className="rounded-full">
-															View details
-														</Tooltip.Content>
-													</Tooltip>
-												</div>
-											</Table.Cell>
-											<Table.Cell>
-												<div className="flex items-center justify-center gap-2">
-													<Tooltip delay={0}>
-														<Tooltip.Trigger>
-															<Button
-																isIconOnly
-																variant="ghost"
-																size="sm"
-																radius="full"
-																onPress={() => {
-																	if (n.notification?.id) {
-																		acceptHelp({
-																			pulseId: "",
-																			responseId: n.notification.id,
-																		});
-																	}
-																}}
-															>
-																<CheckCircle2 className="size-4 text-success" />
-															</Button>
-														</Tooltip.Trigger>
-														<Tooltip.Content className="rounded-full">
-															Accept
-														</Tooltip.Content>
-													</Tooltip>
-													<Tooltip delay={0}>
-														<Tooltip.Trigger>
-															<Button
-																isIconOnly
-																variant="ghost"
-																size="sm"
-																radius="full"
-																onPress={() => {
-																	if (n.notification?.id) {
-																		acceptHelp({
-																			pulseId: "",
-																			responseId: n.notification.id,
-																		});
-																	}
-																}}
-															>
-																<XCircle className="size-4 text-danger" />
-															</Button>
-														</Tooltip.Trigger>
-														<Tooltip.Content className="rounded-full">
-															Reject
-														</Tooltip.Content>
-													</Tooltip>
-												</div>
-											</Table.Cell>
-										</Table.Row>
-									))}
+												</Table.Cell>
+												<Table.Cell>
+													<p className="text-sm">
+														{labelForNotificationType(notificationType)}
+													</p>
+												</Table.Cell>
+												<Table.Cell>
+													<div className="flex items-center justify-center">
+														<div className="flex items-center gap-2">
+															<Tooltip delay={0}>
+																<Tooltip.Trigger>
+																	<Button
+																		isIconOnly
+																		variant="ghost"
+																		size="sm"
+																		radius="full"
+																		onPress={() =>
+																			setSelectedPayload({
+																				type: notificationType,
+																				payload: notificationPayload,
+																			})
+																		}
+																	>
+																		<Info className="size-4 text-accent" />
+																	</Button>
+																</Tooltip.Trigger>
+																<Tooltip.Content className="rounded-full">
+																	View details
+																</Tooltip.Content>
+															</Tooltip>
+															<p className="max-w-72 text-xs text-muted text-left">
+																{summarizeNotificationPayload(
+																	notificationType,
+																	notificationPayload,
+																) ||
+																	"Open the details modal to inspect the full alert."}
+															</p>
+														</div>
+													</div>
+												</Table.Cell>
+												<Table.Cell>
+													{pulseResponsePayload ? (
+														<div className="flex items-center justify-center gap-2">
+															<Tooltip delay={0}>
+																<Tooltip.Trigger>
+																	<Button
+																		isIconOnly
+																		variant="ghost"
+																		size="sm"
+																		radius="full"
+																		isDisabled={isActionPending}
+																		onPress={() => {
+																			if (!pulseResponsePayload) {
+																				return;
+																			}
+																			acceptHelp.mutate(pulseResponsePayload, {
+																				onSuccess: () => {
+																					Toast.toast.success(
+																						"Help offer accepted",
+																					);
+																				},
+																				onError: (error: Error) => {
+																					Toast.toast.danger(
+																						error instanceof Error
+																							? error.message
+																							: "Could not accept offer",
+																					);
+																				},
+																			});
+																		}}
+																	>
+																		<CheckCircle2 className="size-4 text-success" />
+																	</Button>
+																</Tooltip.Trigger>
+																<Tooltip.Content className="rounded-full">
+																	Accept
+																</Tooltip.Content>
+															</Tooltip>
+															<Tooltip delay={0}>
+																<Tooltip.Trigger>
+																	<Button
+																		isIconOnly
+																		variant="ghost"
+																		size="sm"
+																		radius="full"
+																		isDisabled={isActionPending}
+																		onPress={() => {
+																			if (!pulseResponsePayload) {
+																				return;
+																			}
+																			rejectHelp.mutate(pulseResponsePayload, {
+																				onSuccess: () => {
+																					Toast.toast.success(
+																						"Help offer rejected",
+																					);
+																				},
+																				onError: (error: Error) => {
+																					Toast.toast.danger(
+																						error instanceof Error
+																							? error.message
+																							: "Could not reject offer",
+																					);
+																				},
+																			});
+																		}}
+																	>
+																		<XCircle className="size-4 text-danger" />
+																	</Button>
+																</Tooltip.Trigger>
+																<Tooltip.Content className="rounded-full">
+																	Reject
+																</Tooltip.Content>
+															</Tooltip>
+														</div>
+													) : (
+														<span className="text-xs text-muted">
+															No quick action
+														</span>
+													)}
+												</Table.Cell>
+											</Table.Row>
+										);
+									})}
 								</Table.Body>
 							</Table.Content>
 						</Table.ScrollContainer>
@@ -233,7 +247,8 @@ export const AlertsPage = () => {
 					<Modal.Dialog className="border border-border">
 						<Modal.Header>
 							<Modal.Heading>
-								{selectedPayload && labelForType(selectedPayload.type)}
+								{selectedPayload &&
+									labelForNotificationType(selectedPayload.type)}
 								{" - Details"}
 							</Modal.Heading>
 						</Modal.Header>

@@ -8,7 +8,7 @@ import type { PulseType } from "@server/db/schema";
 import { PulseEnum, PulseStatusEnum, UrgencyEnum } from "@shared/types";
 import { formatDate } from "@shared/utils/formatDate";
 import { AlertTriangle, PackageIcon, TrendingUp, Wrench } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { sortPulsesForFeed } from "../sortPulsesForFeed";
 
@@ -30,6 +30,14 @@ function TypeIcon({ type }: { type: PulseEnum }) {
 export function NeighborhoodPulseFeed() {
 	const navigate = useNavigate();
 	const { data: user } = useAuth();
+	const [radius, setRadius] = useState(500);
+	const [typeFilter, setTypeFilter] = useState<PulseEnum | "ALL">("ALL");
+	const [urgencyFilter, setUrgencyFilter] = useState<UrgencyEnum | "ALL">(
+		"ALL",
+	);
+	const [statusFilter, setStatusFilter] = useState<PulseStatusEnum | "ALL">(
+		PulseStatusEnum.Active,
+	);
 	const {
 		coords,
 		isLoading: geoLoading,
@@ -37,6 +45,25 @@ export function NeighborhoodPulseFeed() {
 	} = useGetGeolocation();
 
 	const enabled = !!user?.user.id && coords != null && !geoError;
+	const retrievePayload = useMemo(
+		() => ({
+			userId: user?.user.id || "",
+			position: { x: coords?.long ?? 0, y: coords?.lat ?? 0 },
+			radius,
+			...(typeFilter !== "ALL" ? { type: typeFilter } : {}),
+			...(urgencyFilter !== "ALL" ? { urgency: urgencyFilter } : {}),
+			...(statusFilter !== "ALL" ? { status: statusFilter } : {}),
+		}),
+		[
+			coords?.lat,
+			coords?.long,
+			radius,
+			statusFilter,
+			typeFilter,
+			urgencyFilter,
+			user?.user.id,
+		],
+	);
 
 	const {
 		data: pulsesRes,
@@ -44,10 +71,7 @@ export function NeighborhoodPulseFeed() {
 		refetch,
 		isFetching,
 	} = useRetrievePulses(
-		{
-			userId: user?.user.id || "",
-			position: { x: coords?.long ?? 0, y: coords?.lat ?? 0 },
-		},
+		retrievePayload,
 		enabled,
 	);
 
@@ -87,6 +111,77 @@ export function NeighborhoodPulseFeed() {
 				</Button>
 			</Card.Header>
 			<Card.Content className="space-y-3 min-h-[200px]">
+				<div className="space-y-2">
+					<div className="flex flex-wrap gap-2">
+						{[
+							{ label: "500m", value: 500 },
+							{ label: "1km", value: 1000 },
+							{ label: "2km", value: 2000 },
+						].map((option) => (
+							<Button
+								key={option.value}
+								size="sm"
+								variant={radius === option.value ? "primary" : "outline"}
+								onPress={() => setRadius(option.value)}
+							>
+								{option.label}
+							</Button>
+						))}
+					</div>
+					<div className="flex flex-wrap gap-2">
+						{[
+							{ label: "All types", value: "ALL" as const },
+							{ label: "Emergency", value: PulseEnum.Emergency },
+							{ label: "Skill", value: PulseEnum.Skill },
+							{ label: "Item", value: PulseEnum.Item },
+						].map((option) => (
+							<Button
+								key={option.label}
+								size="sm"
+								variant={typeFilter === option.value ? "primary" : "outline"}
+								onPress={() => setTypeFilter(option.value)}
+							>
+								{option.label}
+							</Button>
+						))}
+					</div>
+					<div className="flex flex-wrap gap-2">
+						{[
+							{ label: "Active", value: PulseStatusEnum.Active },
+							{ label: "Resolved", value: PulseStatusEnum.Resolved },
+							{ label: "Dismissed", value: PulseStatusEnum.Dismissed },
+							{ label: "All statuses", value: "ALL" as const },
+						].map((option) => (
+							<Button
+								key={option.label}
+								size="sm"
+								variant={statusFilter === option.value ? "primary" : "outline"}
+								onPress={() => setStatusFilter(option.value)}
+							>
+								{option.label}
+							</Button>
+						))}
+					</div>
+					<div className="flex flex-wrap gap-2">
+						{[
+							{ label: "All urgency", value: "ALL" as const },
+							{ label: "Immediate", value: UrgencyEnum.Immediate },
+							{ label: "Urgent", value: UrgencyEnum.Urgent },
+							{ label: "Not urgent", value: UrgencyEnum.NotUrgent },
+						].map((option) => (
+							<Button
+								key={option.label}
+								size="sm"
+								variant={
+									urgencyFilter === option.value ? "primary" : "outline"
+								}
+								onPress={() => setUrgencyFilter(option.value)}
+							>
+								{option.label}
+							</Button>
+						))}
+					</div>
+				</div>
 				{geoLoading && (
 					<p className="text-sm text-muted">Getting your location…</p>
 				)}
@@ -123,6 +218,11 @@ export function NeighborhoodPulseFeed() {
 								{pulse.status !== PulseStatusEnum.Active && (
 									<span className="text-[10px] uppercase text-muted">
 										{pulse.status}
+									</span>
+								)}
+								{pulse.isVerified && (
+									<span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded border border-success/40 text-success">
+										Verified
 									</span>
 								)}
 							</div>

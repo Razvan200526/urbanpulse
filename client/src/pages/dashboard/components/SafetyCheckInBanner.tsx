@@ -25,7 +25,7 @@ export function SafetyCheckInBanner({ lat, lon, geoReady }: Props) {
 		<Card className="border-2 border-danger/40 bg-danger/5 shadow-none">
 			<Card.Content className="p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex gap-3 min-w-0">
-					<div className="shrink-0 p-2 rounded-full bg-danger/15 border border-danger/30">
+					<div className="shrink-0 p-2 rounded-full bg-danger-soft border border-danger/30">
 						<AlertTriangle className="size-6 text-danger" />
 					</div>
 					<div className="min-w-0">

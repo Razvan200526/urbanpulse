@@ -1,6 +1,7 @@
 import { db } from "@server/db";
 import { type ReportType, report } from "@server/db/schema";
-import { eq } from "drizzle-orm";
+import { ReportStatusEnum } from "@shared/types";
+import { and, eq, isNull } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class ReportRepository implements IRepository<ReportType> {
@@ -14,6 +15,31 @@ export class ReportRepository implements IRepository<ReportType> {
 
 	async getAll(): Promise<ReportType[]> {
 		return await db.select().from(report);
+	}
+
+	async findPendingByReporterAndTargets(params: {
+		reporterId: string;
+		targetUserId?: string | null;
+		targetPulseId?: string | null;
+	}): Promise<ReportType | null> {
+		const filters = [
+			eq(report.reporterId, params.reporterId),
+			eq(report.status, ReportStatusEnum.Pending),
+			params.targetUserId
+				? eq(report.targetUserId, params.targetUserId)
+				: isNull(report.targetUserId),
+			params.targetPulseId
+				? eq(report.targetPulseId, params.targetPulseId as any)
+				: isNull(report.targetPulseId),
+		];
+
+		const [result] = await db
+			.select()
+			.from(report)
+			.where(and(...filters))
+			.limit(1);
+
+		return result ?? null;
 	}
 
 	async create(data: Partial<ReportType>): Promise<ReportType | null> {

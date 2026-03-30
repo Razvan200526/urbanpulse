@@ -6,6 +6,7 @@ import { ScrollShadow, Separator } from "@heroui/react";
 import { PlusSquareIcon, Wrench } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useRef } from "react";
+import { useNavigate } from "react-router";
 import { AllResourcesTab } from "./components/AllResourcesTab";
 import { MySkillsTab } from "./components/MySkillsTab";
 import { NetworkTab } from "./components/NetworkTab";
@@ -23,6 +24,7 @@ const tabItems: TabItemType[] = [
 
 export const ResourcesPage = () => {
 	const uploadModalRef = useRef<ModalRefType>(null);
+	const navigate = useNavigate();
 	const [activeTab, setActiveTab] = useQueryState(
 		"tab",
 		parseAsString.withDefault("resources"),
@@ -37,7 +39,7 @@ export const ResourcesPage = () => {
 			case "network":
 				return <NetworkTab />;
 			case "resources":
-				return <div>h1</div>; //implementation will follow
+				return <AllResourcesTab />;
 			default:
 				return <AllResourcesTab />;
 		}
@@ -60,6 +62,7 @@ export const ResourcesPage = () => {
 						size="md"
 						variant="primary"
 						startContent={<PlusSquareIcon className="size-4" />}
+						onPress={() => navigate("/map")}
 					>
 						Request
 					</Button>

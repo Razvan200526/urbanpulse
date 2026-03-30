@@ -4,14 +4,16 @@ services:
     ports:
       - "1025:1025"
       - "80:1080"
-
   postgres:
     image: postgis/postgis:17-3.4
     environment:
       POSTGRES_USER: urbanpulse
       POSTGRES_PASSWORD: urbanpulse
-      POSTGRES_DB: urbanpulse
+      POSTGRES_DB: urbanpuZlse
     ports:
       - "5432:5432"
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -3,9 +3,21 @@ import {
 	type PulseRepository,
 	pulseRepository,
 } from "@server/repositories/PulseRepository";
+import { notificationService } from "@server/services/NotificationService";
 import { handleError } from "@server/utils/handleError";
-import { PulseStatusEnum } from "@shared/types";
+import { PulseStatusEnum, PulseUploadStateEnum } from "@shared/types";
+import {
+	type PulseSocketMessageType,
+	pulseSocketMessageSchema,
+} from "@shared/validators/pulses/isPulseSocketMessageValid";
+import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
+
+type PulseSocketResponse = {
+	success: boolean;
+	message: string;
+	data: PulseType | PulseType[] | null;
+};
 
 /**
  * Service for managing Urban Pulse records and retrieving location-based pulses.
@@ -85,20 +97,89 @@ export class PulseService {
 	 */
 	async getPulses({
 		position,
-	}: {
-		position: { x: number; y: number };
-	}): Promise<PulseType[] | null> {
+		radius = 500,
+		status = PulseStatusEnum.Active,
+		type,
+		urgency,
+		verifiedOnly,
+	}: PulseRetrievePayloadType): Promise<PulseType[] | null> {
 		try {
 			return await this.pulseRepository.getByOptions({
 				x: position.x,
 				y: position.y,
-				radius: 500,
-				status: PulseStatusEnum.Active,
+				radius,
+				status,
+				type,
+				urgency,
+				isVerified: verifiedOnly ? true : undefined,
 			});
 		} catch (error) {
 			handleError(error);
 			return null;
 		}
+	}
+
+	async handleSocketMessage(message: unknown): Promise<PulseSocketResponse> {
+		const result = pulseSocketMessageSchema.safeParse(message);
+		if (!result.success) {
+			return {
+				success: false,
+				message: "Invalid request",
+				data: null,
+			};
+		}
+
+		switch (result.data.type) {
+			case "upload-pulse":
+				return this.handleUploadPulseMessage(result.data);
+			case "get-pulses":
+				return this.handleGetPulsesMessage(result.data.payload);
+		}
+	}
+
+	private async handleUploadPulseMessage(
+		message: Extract<PulseSocketMessageType, { type: "upload-pulse" }>,
+	): Promise<PulseSocketResponse> {
+		const newPulse = await this.createPulse(message.payload);
+		if (!newPulse) {
+			return {
+				success: false,
+				message: "Failed to create pulse",
+				data: null,
+			};
+		}
+
+		const uploadedPulse = await this.updatePulse(newPulse.id, {
+			pulseUploadState: PulseUploadStateEnum.Uploaded,
+		});
+
+		if (!uploadedPulse) {
+			return {
+				success: false,
+				message: "Failed to update pulse upload state",
+				data: null,
+			};
+		}
+
+		await notificationService.broadcastToNearbyUsers(uploadedPulse);
+
+		return {
+			success: true,
+			message: "Pulse received",
+			data: uploadedPulse,
+		};
+	}
+
+	private async handleGetPulsesMessage(
+		payload: PulseRetrievePayloadType,
+	): Promise<PulseSocketResponse> {
+		const pulses = await this.getPulses(payload);
+
+		return {
+			success: true,
+			message: "Pulses retrieved",
+			data: pulses ?? [],
+		};
 	}
 }
 

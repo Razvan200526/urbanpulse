@@ -42,20 +42,24 @@ export const NavMenuItem = ({
 
 	return isMinimize ? (
 		<Tooltip>
-			<Tooltip.Content className="text-accent">{item.title}</Tooltip.Content>
-			<NavLink
-				to={item.href}
-				className={({ isActive }) =>
-					cn(baseClasses, "justify-center", isActive && activeClasses)
-				}
-			>
-				{({ isActive }) => (
-					<item.icon
-						className={cn(iconClasses, isActive && "text-accent-hover")}
-						data-active={isActive || undefined}
-					/>
-				)}
-			</NavLink>
+			<Tooltip.Trigger>
+				<NavLink
+					to={item.href}
+					className={({ isActive }) =>
+						cn(baseClasses, "justify-center", isActive && activeClasses)
+					}
+				>
+					{({ isActive }) => (
+						<item.icon
+							className={cn(iconClasses, isActive && "text-accent-hover")}
+							data-active={isActive || undefined}
+						/>
+					)}
+				</NavLink>
+			</Tooltip.Trigger>
+			<Tooltip.Content className="rounded-full text-accent">
+				{item.title}
+			</Tooltip.Content>
 		</Tooltip>
 	) : (
 		<NavLink

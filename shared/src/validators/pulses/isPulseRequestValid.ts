@@ -23,3 +23,5 @@ export const isPulseRequestValid = (data: unknown) => {
 	} = pulseRequestSchema.safeParse(data);
 	return { error, success, pulseData };
 };
+
+export type PulseRequestType = z.infer<typeof pulseRequestSchema>;

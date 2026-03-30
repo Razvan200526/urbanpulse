@@ -16,6 +16,10 @@ export class SkillRepository implements IRepository<SkillType> {
 		return await db.select().from(skill);
 	}
 
+	async getByUserId(userId: string): Promise<SkillType[]> {
+		return await db.select().from(skill).where(eq(skill.userId, userId));
+	}
+
 	async create(data: Partial<SkillType>): Promise<SkillType | null> {
 		const [result] = await db
 			.insert(skill)
@@ -42,6 +46,14 @@ export class SkillRepository implements IRepository<SkillType> {
 			.where(eq(skill.id, id as any))
 			.returning();
 		return affected.length > 0;
+	}
+
+	async deleteByUserId(userId: string): Promise<number> {
+		const affected = await db
+			.delete(skill)
+			.where(eq(skill.userId, userId))
+			.returning();
+		return affected.length;
 	}
 }
 

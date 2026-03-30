@@ -6,7 +6,10 @@
 	"scripts": {
 		"dev": "bunx --bun vite",
 		"build": "tsc -b && bunx --bun vite build",
-		"preview": "bunx --bun vite preview"
+		"preview": "bunx --bun vite preview",
+		"lint": "bunx --bun biome check src",
+		"type-check": "bunx --bun tsc -p tsconfig.json --noEmit",
+		"test": "bun test src"
 	},
 	"dependencies": {
 		"@dicebear/collection": "^9.4.2",
