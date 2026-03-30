@@ -1,59 +1,59 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
-  "files": {
-    "ignoreUnknown": false
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "tab"
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "suspicious": {
-        "noExplicitAny": "off",
-        "noConsole": "error"
-      },
-      "a11y": {
-        "noSvgWithoutTitle": "off",
-        "useMediaCaption": "off"
-      },
-      "complexity": {
-        "noImportantStyles": "off"
-      }
-    },
-    "includes": [
-      "**",
-      "!**/test/**",
-      "!**/tests/**",
-      "!**/*.test.ts",
-      "!**/*.test.tsx",
-      "!**/*.spec.ts",
-      "!**/*.spec.tsx"
-    ]
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "double"
-    }
-  },
-  "assist": {
-    "enabled": true,
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
-  },
-  "css": {
-    "parser": {
-      "tailwindDirectives": true
-    }
-  }
+	"$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": false
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab"
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"suspicious": {
+				"noExplicitAny": "off",
+				"noConsole": "error"
+			},
+			"a11y": {
+				"noSvgWithoutTitle": "off",
+				"useMediaCaption": "off"
+			},
+			"complexity": {
+				"noImportantStyles": "off"
+			}
+		},
+		"includes": [
+			"**",
+			"!**/test/**",
+			"!**/tests/**",
+			"!**/*.test.ts",
+			"!**/*.test.tsx",
+			"!**/*.spec.ts",
+			"!**/*.spec.tsx"
+		]
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "double"
+		}
+	},
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	}
 }
