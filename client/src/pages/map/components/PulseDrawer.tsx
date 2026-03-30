@@ -346,7 +346,7 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 										it if the content looks abusive, unsafe, or misleading.
 									</p>
 									{isReporting && (
-										<div className="space-y-3 rounded border border-danger/20 bg-danger/5 p-3">
+										<div className="space-y-3 rounded border border-danger-soft-hover bg-danger/5 p-3">
 											<div className="flex items-start gap-2 text-danger">
 												<AlertTriangleIcon className="size-4 shrink-0 mt-0.5" />
 												<p className="text-xs leading-relaxed">

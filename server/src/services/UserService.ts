@@ -1,7 +1,3 @@
-import {
-	type UserRepository,
-	userRepository,
-} from "@server/repositories/UserRepository";
 import type { QuietHoursType, SkillType, UserType } from "@server/db/schema";
 import {
 	type QuietHoursRepository,
@@ -11,15 +7,19 @@ import {
 	type SkillRepository,
 	skillRepository,
 } from "@server/repositories/SkillRepository";
+import {
+	type UserRepository,
+	userRepository,
+} from "@server/repositories/UserRepository";
 import { logger } from "@server/utils/Logger";
 import { isEmailValid } from "@shared/validators/isEmailValid";
 import type { SignUpInfoType } from "@shared/validators/isSignUpInfoValid";
-import type { User } from "better-auth";
 import type {
 	QuietHoursUpsertType,
 	SkillTagsUpdateType,
 	UserProfileUpdateType,
 } from "@shared/validators/users/isUserProfileValid";
+import type { User } from "better-auth";
 import auth from "./auth/AuthService";
 
 type UserProfileView = {

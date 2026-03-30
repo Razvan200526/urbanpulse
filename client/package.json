@@ -9,7 +9,7 @@
 		"preview": "bunx --bun vite preview",
 		"lint": "bunx --bun biome check src",
 		"type-check": "bunx --bun tsc -p tsconfig.json --noEmit",
-		"test": "bun test src"
+		"test": "bun run ./scripts/run-tests.ts"
 	},
 	"dependencies": {
 		"@dicebear/collection": "^9.4.2",

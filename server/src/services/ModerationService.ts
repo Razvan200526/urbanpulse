@@ -168,7 +168,7 @@ export class ModerationService {
 	): Promise<ModerationResult<{ report: ReportType }>> {
 		try {
 			let targetUserId = payload.targetUserId ?? null;
-			let targetPulseId = payload.targetPulseId ?? null;
+			const targetPulseId = payload.targetPulseId ?? null;
 
 			if (targetPulseId) {
 				const pulse = await this.pulseRepo.getOne(targetPulseId);

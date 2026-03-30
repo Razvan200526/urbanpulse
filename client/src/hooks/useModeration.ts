@@ -1,5 +1,5 @@
 import { hono, queryClient } from "@client/main";
-import { PulseStatusEnum, ReportStatusEnum } from "@shared/types";
+import type { PulseStatusEnum, ReportStatusEnum } from "@shared/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 type ConfirmPulseResponse = {

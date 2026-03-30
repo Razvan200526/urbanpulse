@@ -1,264 +1,196 @@
-# bhvr 🦫
+# UrbanPulse
 
-![cover](https://cdn.stevedylan.dev/ipfs/bafybeievx27ar5qfqyqyud7kemnb5n2p4rzt2matogi6qttwkpxonqhra4)
+UrbanPulse is a neighborhood coordination app built with Bun, Hono, React, and Postgres/PostGIS.
 
-A full-stack TypeScript monorepo starter with shared types, using Bun, Hono, Vite, and React.
+The current app focuses on helping nearby people discover urgent local needs, publish resources, respond to community requests, and receive live notifications when something important happens around them.
 
-## Why bhvr?
+## What The App Can Do Right Now
 
-While there are plenty of existing app building stacks out there, many of them are either bloated, outdated, or have too much of a vendor lock-in. bhvr is built with the opinion that you should be able to deploy your client or server in any environment while also keeping type safety.
+### Authentication And Access
+- Sign up and sign in flows
+- Forgot password flow
+- Protected app shell for authenticated users
 
-## Features
+### Dashboard
+- Neighborhood dashboard route
+- Live neighborhood pulse feed driven by backend data
+- Feed filtering by:
+  - distance
+  - pulse type
+  - urgency
+  - status
+- Severe weather banner that can launch a safety check-in flow
 
-- **Full-Stack TypeScript**: End-to-end type safety between client and server
-- **Shared Types**: Common type definitions shared between client and server
-- **Monorepo Structure**: Organized as a workspaces-based monorepo with Turbo for build orchestration
-- **Modern Stack**:
-  - [Bun](https://bun.sh) as the JavaScript runtime and package manager
-  - [Hono](https://hono.dev) as the backend framework
-  - [Vite](https://vitejs.dev) for frontend bundling
-  - [React](https://react.dev) for the frontend UI
-  - [Turbo](https://turbo.build) for monorepo build orchestration and caching
+### Map And Pulse Reporting
+- Map view centered on the user’s geolocation
+- Pulse heatmap overlay
+- Pulse markers rendered on the map
+- Create a pulse from the map
+- Emergency launch shortcut for urgent pulse creation
+- Pulse retrieval based on the user’s location
+- Pulse update actions for existing pulses
 
-## Project Structure
+### Real-Time Behavior
+- Nearby users receive a live notification when a pulse is uploaded near them
+- Pulse owners receive a live notification when someone offers help
+- Notifications update without a full page refresh
+- Pulse lists refresh in response to live events
+- User location is synced to the notification socket so “nearby” behavior works in real time
 
-```
+### Alerts And Response Handling
+- Alerts page with notification history
+- Live alert rows with payload details
+- Quick actions to accept or reject help offers directly from alerts
+- Snackbar prompt when a new help offer arrives for one of your pulses
+
+### Skills, Resources, And Borrowing
+- Skills & Resources area with tabbed sections
+- Resource upload flow
+- Resource listing flow
+- Borrow request creation
+- Pending borrow requests view for lenders
+- Accept / reject actions for borrow requests
+
+### Messaging
+- Current messages page acts as a coordination surface for pending borrow requests
+- Transaction decisions can be handled from the UI
+
+### Backend And Data Layer
+- Hono API with typed client integration
+- Shared validation and types across client and server
+- Postgres-backed repositories
+- WebSocket support for pulse and notification flows
+- Real repository integration tests using Bun + a Docker-backed Postgres test database
+
+## Current Product Status
+
+The app already demonstrates the core UrbanPulse interaction model:
+
+1. A user opens the dashboard or map
+2. The app retrieves nearby pulses using location-aware queries
+3. A user can create a new pulse from the map
+4. Nearby connected users receive a live notification
+5. Another user can offer help
+6. The pulse owner receives the help offer in real time
+7. The owner can accept or reject the offer from the alerts UI
+
+That means the project already has a working base for:
+- local discovery
+- urgent reporting
+- community response
+- real-time notifications
+- lightweight coordination
+
+## Screens In The App
+
+- `/` landing page
+- `/signup`
+- `/signin`
+- `/forgot-password`
+- `/dashboard`
+- `/map`
+- `/resources`
+- `/alerts`
+- `/messages`
+- `/admin`
+- `/settings`
+- `/profile`
+
+## Still In Progress
+
+Some parts of the product are still partial or placeholder-level:
+
+- `Profile`
+- `Settings`
+- `Admin / moderation`
+- Full messaging / inbox experience
+- Some dashboard stats still need to be fully backend-driven
+- Trust / verification / moderation workflows are not complete yet
+
+The implementation roadmap for the missing work lives in [IMPLEMENTATION_GAPS.md](./IMPLEMENTATION_GAPS.md).
+
+## Tech Stack
+
+- Bun
+- Hono
+- React
+- Vite
+- TanStack Query
+- HeroUI
+- Better Auth
+- Drizzle ORM
+- Postgres + PostGIS
+- Turbo
+- Biome
+
+## Monorepo Structure
+
+```text
 .
-├── client/               # React frontend
-├── server/               # Hono backend
-├── shared/               # Shared TypeScript definitions
-│   └── src/types/        # Type definitions used by both client and server
-├── package.json          # Root package.json with workspaces
-└── turbo.json            # Turbo configuration for build orchestration
+├── client/      # React frontend
+├── server/      # Hono API, services, repositories, websocket flows
+├── shared/      # Shared validators, contracts, and types
+└── docker-compose.test.yaml
 ```
 
-### Server
+## Development
 
-bhvr uses Hono as a backend API for its simplicity and massive ecosystem of plugins. If you have ever used Express then it might feel familiar. Declaring routes and returning data is easy.
-
-```
-server
-├── bun.lock
-├── package.json
-├── README.md
-├── src
-│   └── index.ts
-└── tsconfig.json
-```
-
-```typescript src/index.ts
-import { Hono } from 'hono'
-import { cors } from 'hono/cors'
-import type { ApiResponse } from 'shared'
-
-const app = new Hono()
-
-app.use(cors())
-
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
-
-app.get('/hello', async (c) => {
-
-  const data: ApiResponse = {
-    message: "Hello BHVR!",
-    success: true
-  }
-
-  return c.json(data, { status: 200 })
-})
-
-export default app
-```
-
-If you wanted to add a database to Hono you can do so with a multitude of Typescript libraries like [Supabase](https://supabase.com), or ORMs like [Drizzle](https://orm.drizzle.team/docs/get-started) or [Prisma](https://www.prisma.io/orm)
-
-### Client
-
-bhvr uses Vite + React Typescript template, which means you can build your frontend just as you would with any other React app. This makes it flexible to add UI components like [shadcn/ui](https://ui.shadcn.com) or routing using [React Router](https://reactrouter.com/start/declarative/installation).
-
-```
-client
-├── eslint.config.js
-├── index.html
-├── package.json
-├── public
-│   └── vite.svg
-├── README.md
-├── src
-│   ├── App.css
-│   ├── App.tsx
-│   ├── assets
-│   ├── index.css
-│   ├── main.tsx
-│   └── vite-env.d.ts
-├── tsconfig.app.json
-├── tsconfig.json
-├── tsconfig.node.json
-└── vite.config.ts
-```
-
-```typescript src/App.tsx
-import { useState } from 'react'
-import beaver from './assets/beaver.svg'
-import { ApiResponse } from 'shared'
-import './App.css'
-
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3000"
-
-function App() {
-  const [data, setData] = useState<ApiResponse | undefined>()
-
-  async function sendRequest() {
-    try {
-      const req = await fetch(`${SERVER_URL}/hello`)
-      const res: ApiResponse = await req.json()
-      setData(res)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  return (
-    <>
-      <div>
-        <a href="https://github.com/stevedylandev/bhvr" target="_blank">
-          <img src={beaver} className="logo" alt="beaver logo" />
-        </a>
-      </div>
-      <h1>bhvr</h1>
-      <h2>Bun + Hono + Vite + React</h2>
-      <p>A typesafe fullstack monorepo</p>
-      <div className="card">
-        <button onClick={sendRequest}>
-          Call API
-        </button>
-        {data && (
-          <pre className='response'>
-            <code>
-            Message: {data.message} <br />
-            Success: {data.success.toString()}
-            </code>
-          </pre>
-        )}
-      </div>
-      <p className="read-the-docs">
-        Click the beaver to learn more
-      </p>
-    </>
-  )
-}
-
-export default App
-```
-
-### Shared
-
-The Shared package is used for anything you want to share between the Server and Client. This could be types or libraries that you use in both environments.
-
-```
-shared
-├── package.json
-├── src
-│   ├── index.ts
-│   └── types
-│       └── index.ts
-└── tsconfig.json
-```
-
-Inside the `src/index.ts` we export any of our code from the folders so it's usable in other parts of the monorepo
-
-```typescript
-export * from "./types"
-```
-
-By running `bun run dev` or `bun run build` it will compile and export the packages from `shared` so it can be used in either `client` or `server`
-
-```typescript
-import { ApiResponse } from 'shared'
-```
-
-## Getting Started
-
-### Quick Start
-
-You can start a new bhvr project using the [CLI](https://github.com/stevedylandev/create-bhvr)
+### Install
 
 ```bash
-bun create bhvr
-```
-
-### Installation
-
-```bash
-# Install dependencies for all workspaces
 bun install
 ```
 
-### Development
+### Run The App
 
 ```bash
-# Run all workspaces in development mode with Turbo
 bun run dev
-
-# Or run individual workspaces directly
-bun run dev:client    # Run the Vite dev server for React
-bun run dev:server    # Run the Hono backend
 ```
 
-### Building
+Useful workspace-specific commands:
 
 ```bash
-# Build all workspaces with Turbo
+bun run dev:client
+bun run dev:server
+```
+
+### Build
+
+```bash
 bun run build
-
-# Or build individual workspaces directly
-bun run build:client  # Build the React frontend
-bun run build:server  # Build the Hono backend
 ```
 
-### Additional Commands
+## Testing
+
+Repository tests run against a real Postgres test database started through Docker.
+
+From `server/`, plain `bun test` handles the lifecycle automatically:
 
 ```bash
-# Lint all workspaces
-bun run lint
-
-# Type check all workspaces
-bun run type-check
-
-# Run tests across all workspaces
-bun run test
+cd server
+bun test
 ```
 
-### Deployment
+Helpful server test scripts:
 
-Deplying each piece is very versatile and can be done numerous ways, and exploration into automating these will happen at a later date. Here are some references in the meantime.
-
-**Client**
-- [Orbiter](https://orbiter.host)
-- [GitHub Pages](https://vite.dev/guide/static-deploy.html#github-pages)
-- [Netlify](https://vite.dev/guide/static-deploy.html#netlify)
-- [Cloudflare Pages](https://vite.dev/guide/static-deploy.html#cloudflare-pages)
-
-**Server**
-- [Cloudflare Worker](https://gist.github.com/stevedylandev/4aa1fc569bcba46b7169193c0498d0b3)
-- [Bun](https://hono.dev/docs/getting-started/bun)
-- [Node.js](https://hono.dev/docs/getting-started/nodejs)
-
-## Type Sharing
-
-Types are automatically shared between the client and server thanks to the shared package and TypeScript path aliases. You can import them in your code using:
-
-```typescript
-import { ApiResponse } from 'shared/types';
+```bash
+bun run test:repositories
+bun run test:services
+bun run test:db:up
+bun run test:db:down
 ```
 
-## Learn More
+## Project Goals
 
-- [Bun Documentation](https://bun.sh/docs)
-- [Vite Documentation](https://vitejs.dev/guide/)
-- [React Documentation](https://react.dev/learn)
-- [Hono Documentation](https://hono.dev/docs)
-- [Turbo Documentation](https://turbo.build/docs)
-- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
+UrbanPulse is being built toward a neighborhood resilience product that supports:
+- live local pulse reporting
+- safety check-ins
+- skills and resource sharing
+- real-time coordination
+- moderation and trust systems
+- broader community support workflows
+
+## Notes
+
+- The README reflects the app as it currently exists in the repository, not the final target spec.
+- If you want the missing features grouped into execution phases, see [IMPLEMENTATION_GAPS.md](./IMPLEMENTATION_GAPS.md).

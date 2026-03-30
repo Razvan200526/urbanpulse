@@ -6,11 +6,11 @@ import {
 import { notificationService } from "@server/services/NotificationService";
 import { handleError } from "@server/utils/handleError";
 import { PulseStatusEnum, PulseUploadStateEnum } from "@shared/types";
+import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import {
 	type PulseSocketMessageType,
 	pulseSocketMessageSchema,
 } from "@shared/validators/pulses/isPulseSocketMessageValid";
-import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
 
 type PulseSocketResponse = {

@@ -1,11 +1,12 @@
 /** biome-ignore-all lint/suspicious/noConsole: <should log success or errors> */
+
+import * as schema from "@server/db/schema";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { seed } from "drizzle-seed";
 import figures from "figures";
 import * as p from "picocolors";
 import postgres from "postgres";
 import PrettyError from "pretty-error";
-import * as schema from "@server/db/schema";
 
 const pe = new PrettyError();
 

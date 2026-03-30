@@ -7,17 +7,17 @@ import {
 	socketManager,
 	type UserConnection,
 } from "@server/services/SocketManager";
-import { isNotificationCreateValid } from "@shared/validators/notifications/isValidCreateNotification";
-import { locationService, type LocationService } from "./LocationService";
-import { handleError } from "@server/utils/handleError";
 import {
 	type BroadcastDataType,
 	type NotificationFactory,
 	notificationFactory,
 } from "@server/shared/NotificationFactory";
-import { isPulseDataValid } from "@shared/validators/pulses/isPulseDataValid";
 import type { PulseRepsponseParamsType } from "@server/types";
+import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
+import { isNotificationCreateValid } from "@shared/validators/notifications/isValidCreateNotification";
+import { isPulseDataValid } from "@shared/validators/pulses/isPulseDataValid";
+import { type LocationService, locationService } from "./LocationService";
 
 /**
  * Service for managing user notifications and real-time broadcasting.

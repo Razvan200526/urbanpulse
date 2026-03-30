@@ -137,7 +137,7 @@ export function PulseHeatmapLayer({ pulses }: { pulses: PulseType[] }) {
 	}, [map]);
 
 	useEffect(() => {
-		if (!map || !map.isStyleLoaded()) return;
+		if (!map?.isStyleLoaded()) return;
 
 		const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
 		if (!source) return;
