@@ -324,7 +324,7 @@ export const AlertDetailsDrawer = () => {
 							</div>
 							<div className="mt-4 space-y-4">
 								{notes.map((note, index) => (
-									<div key={`${note.label}-${index}`} className="flex gap-3">
+									<div key={`${note.label}`} className="flex gap-3">
 										<div className="flex flex-col items-center">
 											<span className="mt-1 block size-3 rounded-full bg-accent" />
 											{index < notes.length - 1 ? (
@@ -335,7 +335,7 @@ export const AlertDetailsDrawer = () => {
 											<p className="text-sm font-semibold text-foreground">
 												{note.label}
 											</p>
-											<p className="break-words text-sm text-muted">
+											<p className="wrap-break-word text-sm text-muted">
 												{note.value}
 											</p>
 										</div>

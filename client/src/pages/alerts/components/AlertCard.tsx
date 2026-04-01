@@ -7,7 +7,6 @@ import { useAlertsPageStore } from "@client/pages/alerts/store";
 import {
 	getPulseResponseActionPayload,
 	labelForNotificationType,
-	summarizeNotificationPayload,
 	type NotificationListItem,
 	type NotificationPayload,
 } from "@client/utils/notifications";

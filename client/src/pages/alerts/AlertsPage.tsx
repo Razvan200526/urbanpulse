@@ -1,8 +1,6 @@
 import { Header } from "@client/components/Header";
-import { Button } from "@client/components/Button/Button";
 import { Dropdown } from "@client/components/Dropdown";
-import { Chip, Drawer, ProgressCircle } from "@heroui/react";
-import { ChevronDown } from "lucide-react";
+import { Chip, ProgressCircle } from "@heroui/react";
 import { AlertDetailsDrawer } from "./components/AlertDetailsDrawer";
 import { AlertsFeed } from "./components/AlertsFeed";
 import {
