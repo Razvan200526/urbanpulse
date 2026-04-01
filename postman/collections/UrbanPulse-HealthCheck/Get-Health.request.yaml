@@ -1,3 +1,18 @@
-$kind: collection
-name: UrbanPulse Health
-description: Health check endpoint under /api/health. Returns the status of the server.
+$kind: http-request
+name: Get Health
+method: GET
+url: "{{baseUrl}}/api/health"
+order: 1000
+description: Returns the status of the server.
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Server is healthy'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("status");
+      pm.expect(json.status).to.equal("ok");
+      pm.expect(json).to.have.property("message");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

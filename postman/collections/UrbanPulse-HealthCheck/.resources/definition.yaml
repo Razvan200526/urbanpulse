@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Health
+description: Health check endpoints under /api/health. Returns the status of the server.
