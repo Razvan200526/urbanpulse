@@ -21,8 +21,6 @@ export const envSchema = z.object({
 	GITHUB_CLIENT_SECRET: z.string(),
 	GOOGLE_CLIENT_ID: z.string(),
 	GOOGLE_CLIENT_SECRET: z.string(),
-	/** Optional: enables /api/weather/alerts for dashboard safety banner */
-	OPENWEATHER_API_KEY: z.string().optional(),
 });
 
 export function parseEnv() {
