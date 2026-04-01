@@ -1,6 +1,7 @@
 import { db } from "@server/db";
 import { type NotificationType, notification, user } from "@server/db/schema";
-import { desc, eq } from "drizzle-orm";
+import type { NotificationConditionOptions } from "@server/repositories/types";
+import { and, desc, eq, gte, lt } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class NotificationRepository implements IRepository<NotificationType> {
@@ -22,6 +23,37 @@ export class NotificationRepository implements IRepository<NotificationType> {
 
 	async getAll(): Promise<NotificationType[]> {
 		return db.select().from(notification);
+	}
+
+	/**
+	 * Retrieves notifications by optional field filters and optional createdAt range condition.
+	 * @param {Partial<NotificationType>} options - Column-value filters.
+	 * @param {NotificationConditionOptions} [condition] - Optional createdAt range condition.
+	 * @returns {Promise<NotificationType[]>} Matching notifications ordered by newest first.
+	 */
+	async getByOptions(
+		options: Partial<NotificationType>,
+		condition?: NotificationConditionOptions,
+	): Promise<NotificationType[]> {
+		const filters = Object.entries(options)
+			.filter(([, value]) => value !== undefined)
+			.map(([key, value]) =>
+				eq(notification[key as keyof typeof notification] as any, value),
+			);
+
+		if (condition?.createdAtFrom) {
+			filters.push(gte(notification.createdAt, condition.createdAtFrom));
+		}
+
+		if (condition?.createdAtTo) {
+			filters.push(lt(notification.createdAt, condition.createdAtTo));
+		}
+
+		return db
+			.select()
+			.from(notification)
+			.where(filters.length > 0 ? and(...filters) : undefined)
+			.orderBy(desc(notification.createdAt));
 	}
 
 	async getNotificationsWithUsers() {

@@ -98,7 +98,7 @@ export const Dropdown = ({
 }: DropdownProps) => {
 	return (
 		<HeroDropdown>
-			{trigger}
+			<HeroDropdown.Trigger>{trigger}</HeroDropdown.Trigger>
 			<HeroDropdown.Popover
 				placement={placement}
 				className={cn(

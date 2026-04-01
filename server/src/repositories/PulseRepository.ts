@@ -1,15 +1,13 @@
 import { db } from "@server/db";
 import { type PulseType, pulse } from "@server/db/schema";
+import type {
+	PulseConditionOptions,
+	PulseSearchOptions,
+} from "@server/repositories/types";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
-
-export interface PulseSearchOptions extends Partial<PulseType> {
-	x?: number;
-	y?: number;
-	radius?: number;
-}
 
 export class PulseRepository implements IRepository<PulseType> {
 	async getOne(id: string): Promise<PulseType | null> {
@@ -24,7 +22,16 @@ export class PulseRepository implements IRepository<PulseType> {
 		return await db.select().from(pulse);
 	}
 
-	async getByOptions(options: PulseSearchOptions): Promise<PulseType[]> {
+	/**
+	 * Retrieves pulses by optional field filters and optional createdAt range condition.
+	 * @param {PulseSearchOptions} options - Column filters and optional geo filters.
+	 * @param {PulseConditionOptions} [condition] - Optional createdAt range condition.
+	 * @returns {Promise<PulseType[]>} Matching pulse records.
+	 */
+	async getByOptions(
+		options: PulseSearchOptions,
+		condition?: PulseConditionOptions,
+	): Promise<PulseType[]> {
 		try {
 			const { x, y, radius, ...rest } = options;
 			const filters = [];
@@ -39,6 +46,14 @@ export class PulseRepository implements IRepository<PulseType> {
 				if (value !== undefined) {
 					filters.push(eq(pulse[key as keyof typeof pulse] as any, value));
 				}
+			}
+
+			if (condition?.createdAtFrom) {
+				filters.push(gte(pulse.createdAt, condition.createdAtFrom));
+			}
+
+			if (condition?.createdAtTo) {
+				filters.push(lt(pulse.createdAt, condition.createdAtTo));
 			}
 
 			return await db
