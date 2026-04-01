@@ -1,0 +1,23 @@
+$kind: http-request
+name: Get Resource
+method: GET
+url: '{{baseUrl}}/api/resources/{{resourceId}}'
+order: 2000
+description: Returns a single resource by ID. Requires an active session cookie (Better Auth).
+pathVariables:
+  - key: resourceId
+    value: '{{resourceId}}'
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Resource retrieved successfully'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Resource retrieved successfully");
+      pm.expect(json).to.have.property("data");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

@@ -1,0 +1,15 @@
+$kind: http-request
+name: Sign Out
+method: POST
+url: '{{baseUrl}}/api/auth/sign-out'
+order: 3000
+description: Signs out the current user. Requires an active session cookie (Better Auth).
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response is successful", function () {
+      // Better Auth sign-out returns 200 with an empty or minimal body
+      pm.expect(pm.response.code).to.equal(200);
+    });

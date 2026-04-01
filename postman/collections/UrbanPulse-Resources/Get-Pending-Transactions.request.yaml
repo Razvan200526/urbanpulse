@@ -1,0 +1,20 @@
+$kind: http-request
+name: Get Pending Transactions
+method: GET
+url: '{{baseUrl}}/api/resources/transaction/pending'
+order: 5000
+description: Returns pending resource transactions for a user. Requires an active session cookie (Better Auth).
+queryParams:
+  - key: userId
+    value: '{{userId}}'
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success field", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.be.a("boolean");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

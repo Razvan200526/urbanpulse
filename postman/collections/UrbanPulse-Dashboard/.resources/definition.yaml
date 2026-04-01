@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Dashboard
+description: Dashboard endpoints under /api/dashboard/*. Provides overview statistics and summaries for the authenticated user. Requires an active session cookie (Better Auth).

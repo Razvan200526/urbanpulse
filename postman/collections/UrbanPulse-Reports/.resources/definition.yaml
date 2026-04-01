@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Reports
+description: Reporting endpoints under /api/reports. Allows users to report content such as pulses or other users. Requires an active session cookie (Better Auth).

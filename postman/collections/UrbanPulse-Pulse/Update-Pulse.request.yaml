@@ -1,0 +1,33 @@
+$kind: http-request
+name: Update Pulse
+method: PATCH
+url: '{{baseUrl}}/api/pulse/{{pulseId}}'
+order: 1000
+description: Updates an existing pulse by ID. Requires an active session cookie (Better Auth).
+headers:
+  - key: Content-Type
+    value: application/json
+pathVariables:
+  - key: pulseId
+    value: '{{pulseId}}'
+body:
+  type: json
+  content: |-
+    {
+      "title": "{{pulseTitle}}",
+      "status": "active"
+    }
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Pulse updated'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Pulse updated");
+      pm.expect(json).to.have.property("data");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

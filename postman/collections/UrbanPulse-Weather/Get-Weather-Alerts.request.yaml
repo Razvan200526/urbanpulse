@@ -1,0 +1,28 @@
+$kind: http-request
+name: Get Weather Alerts
+method: GET
+url: '{{baseUrl}}/api/weather/alerts'
+order: 1000
+description: Returns weather alerts for the given geographic coordinates.
+queryParams:
+  - key: lat
+    value: '{{lat}}'
+  - key: lon
+    value: '{{lon}}'
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and data with alerts shape", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json).to.have.property("data");
+      pm.expect(json.data).to.have.property("configured");
+      pm.expect(json.data).to.have.property("alerts");
+      pm.expect(json.data).to.have.property("severe");
+      pm.expect(json.data.alerts).to.be.an("array");
+      pm.expect(json.data.severe).to.be.a("boolean");
+    });

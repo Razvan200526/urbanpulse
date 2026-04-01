@@ -1,0 +1,21 @@
+$kind: http-request
+name: Verify Email
+method: GET
+url: '{{baseUrl}}/api/users/verify-email'
+order: 1000
+queryParams:
+  - key: email
+    value: '{{userEmail}}'
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success, message, and exists fields", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json).to.have.property("message");
+      pm.expect(json).to.have.property("exists");
+      pm.expect(json.success).to.be.a("boolean");
+      pm.expect(json.exists).to.be.a("boolean");
+    });

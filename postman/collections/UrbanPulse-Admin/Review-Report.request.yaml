@@ -1,0 +1,33 @@
+$kind: http-request
+name: Review Report
+method: PATCH
+url: '{{baseUrl}}/api/admin/reports/{{reportId}}'
+order: 3000
+description: Reviews and takes action on a submitted report. Requires an active admin session cookie (Better Auth).
+headers:
+  - key: Content-Type
+    value: application/json
+pathVariables:
+  - key: reportId
+    value: '{{reportId}}'
+body:
+  type: json
+  content: |-
+    {
+      "action": "dismiss",
+      "note": "Reviewed"
+    }
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Report reviewed'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Report reviewed");
+      pm.expect(json).to.have.property("data");
+    });
+    // Unauthenticated or non-admin: expect 401/403

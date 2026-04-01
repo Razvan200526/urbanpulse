@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Resources
+description: Resource sharing endpoints under /api/resources/*. Handles listing, retrieving, and creating resources, as well as managing borrow/lending transactions. Most endpoints require an active session cookie (Better Auth).

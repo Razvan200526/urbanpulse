@@ -1,0 +1,32 @@
+$kind: http-request
+name: Sign In
+method: POST
+url: '{{baseUrl}}/api/auth/sign-in/email'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{userEmail}}",
+      "password": "{{userPassword}}"
+    }
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has user object with id and email", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("user");
+      pm.expect(json.user).to.have.property("id");
+      pm.expect(json.user).to.have.property("email");
+    });
+    pm.test("Response has token and saves to environment", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("token");
+      pm.environment.set("token", json.token);
+      pm.environment.set("userId", json.user.id);
+    });

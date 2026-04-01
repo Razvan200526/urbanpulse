@@ -1,0 +1,20 @@
+$kind: http-request
+name: Get Me
+method: GET
+url: '{{baseUrl}}/api/users/me'
+order: 2000
+description: Returns the currently authenticated user's data. Requires an active session cookie (Better Auth).
+tests:
+  script: |-
+    // Note: this endpoint returns 201, not 200
+    pm.test("Status code is 201", function () {
+      pm.response.to.have.status(201);
+    });
+    pm.test("Response has user object and message", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("user");
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.user).to.have.property("id");
+      pm.expect(json.user).to.have.property("email");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

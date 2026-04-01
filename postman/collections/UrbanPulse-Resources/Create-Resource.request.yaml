@@ -1,0 +1,37 @@
+$kind: http-request
+name: Create Resource
+method: POST
+url: '{{baseUrl}}/api/resources'
+order: 4000
+description: Creates a new resource. Requires an active session cookie (Better Auth).
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "{{resourceTitle}}",
+      "description": "{{resourceDescription}}",
+      "type": "tool"
+    }
+tests:
+  script: |-
+    pm.test("Status code is 201", function () {
+      pm.response.to.have.status(201);
+    });
+    pm.test("Response has success true and message 'Resource created successfully'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Resource created successfully");
+      pm.expect(json).to.have.property("data");
+      pm.expect(json.data).to.have.property("id");
+    });
+    pm.test("Saves resourceId to environment", function () {
+      const json = pm.response.json();
+      if (json.data && json.data.id) {
+        pm.environment.set("resourceId", json.data.id);
+      }
+    });

@@ -1,0 +1,29 @@
+$kind: http-request
+name: Get Admin Overview
+method: GET
+url: '{{baseUrl}}/api/admin/overview'
+order: 1000
+description: Returns an administrative overview of the platform. Requires an active admin session cookie (Better Auth).
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Admin overview retrieved'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Admin overview retrieved");
+      pm.expect(json).to.have.property("data");
+    });
+    pm.test("Data has counts and recent lists", function () {
+      const data = pm.response.json().data;
+      pm.expect(data).to.have.property("counts");
+      pm.expect(data.counts).to.have.property("users");
+      pm.expect(data.counts).to.have.property("pulses");
+      pm.expect(data).to.have.property("recentReports");
+      pm.expect(data).to.have.property("recentPulses");
+      pm.expect(data).to.have.property("recentResources");
+    });
+    // Unauthenticated or non-admin: expect 401/403

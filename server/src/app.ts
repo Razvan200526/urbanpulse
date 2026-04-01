@@ -15,6 +15,7 @@ import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
 import { authMiddleware } from "./middleware/authMiddleware";
 import type auth from "./services/auth/AuthService";
+import { healthController } from "./controllers/HealthController";
 export type Variables = {
 	user: typeof auth.$Infer.Session.user | null;
 	session: typeof auth.$Infer.Session.session | null;
@@ -49,6 +50,7 @@ export const app = new Hono<{ Variables: Variables }>()
 			credentials: true,
 		}),
 	)
+	.route("/", healthController)
 	.route("/", authController)
 	.route("/", userController)
 	.route("/", avatarController)

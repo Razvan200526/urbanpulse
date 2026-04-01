@@ -1,0 +1,28 @@
+$kind: http-request
+name: Get Overview
+method: GET
+url: '{{baseUrl}}/api/dashboard/overview'
+order: 1000
+description: Returns a summary overview for the authenticated user's dashboard. Requires an active session cookie (Better Auth).
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Dashboard overview retrieved'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Dashboard overview retrieved");
+      pm.expect(json).to.have.property("data");
+    });
+    pm.test("Data has counts, changes, and chart fields", function () {
+      const data = pm.response.json().data;
+      pm.expect(data).to.have.property("counts");
+      pm.expect(data).to.have.property("changes");
+      pm.expect(data).to.have.property("chart");
+      pm.expect(data.counts).to.have.property("pulsesLast7Days");
+      pm.expect(data.counts).to.have.property("newUsersLast7Days");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

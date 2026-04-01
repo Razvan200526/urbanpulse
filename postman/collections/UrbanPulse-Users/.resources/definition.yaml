@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Users
+description: User management endpoints under /api/users/*. Handles profile retrieval and updates, email verification, quiet hours, skills, and account deletion. Most endpoints require an active session cookie (Better Auth).

@@ -1,0 +1,31 @@
+$kind: http-request
+name: Create Report
+method: POST
+url: '{{baseUrl}}/api/reports'
+order: 1000
+description: Submits a report against a target (e.g. a pulse or user). Requires an active session cookie (Better Auth).
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "targetId": "{{targetId}}",
+      "targetType": "pulse",
+      "reason": "inappropriate content"
+    }
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Report submitted'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Report submitted");
+      pm.expect(json).to.have.property("data");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

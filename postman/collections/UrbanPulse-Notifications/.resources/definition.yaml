@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Notifications
+description: Notification endpoints under /api/notifications. Retrieves notifications for the authenticated user. Requires an active session cookie (Better Auth).

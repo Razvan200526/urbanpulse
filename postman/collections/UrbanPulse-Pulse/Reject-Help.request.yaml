@@ -1,0 +1,25 @@
+$kind: http-request
+name: Reject Help
+method: POST
+url: '{{baseUrl}}/api/pulse/{{pulseId}}/responses/{{responseId}}/reject'
+order: 5000
+description: Rejects a help response for a pulse. Requires an active session cookie (Better Auth).
+pathVariables:
+  - key: pulseId
+    value: '{{pulseId}}'
+  - key: responseId
+    value: '{{responseId}}'
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Help offer rejected'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Help offer rejected");
+      pm.expect(json).to.have.property("data");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Weather
+description: Weather alert endpoints under /api/weather/*. Retrieves weather alerts for a given geographic location using latitude and longitude query parameters.

@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Pulse
+description: Pulse (incident/event) management endpoints under /api/pulse/*. Handles updating pulses, confirming pulses, offering help, and accepting or rejecting help responses. Most endpoints require an active session cookie (Better Auth).

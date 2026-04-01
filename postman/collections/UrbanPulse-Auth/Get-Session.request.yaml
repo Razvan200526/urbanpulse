@@ -1,0 +1,21 @@
+$kind: http-request
+name: Get Session
+method: GET
+url: '{{baseUrl}}/api/auth/get-session'
+order: 4000
+description: Retrieves the current session information. Requires an active session cookie (Better Auth).
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response is null or has session and user", function () {
+      const json = pm.response.json();
+      if (json !== null) {
+        pm.expect(json).to.have.property("session");
+        pm.expect(json).to.have.property("user");
+        pm.expect(json.user).to.have.property("id");
+        pm.expect(json.user).to.have.property("email");
+      }
+      // null is valid when no session is active
+    });

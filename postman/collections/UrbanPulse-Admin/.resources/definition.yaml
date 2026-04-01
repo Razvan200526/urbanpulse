@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Admin
+description: Admin-only endpoints under /api/admin/*. Provides administrative overview, report management, and moderation actions. Requires an active admin session cookie (Better Auth).

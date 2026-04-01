@@ -1,0 +1,22 @@
+$kind: http-request
+name: Get Notifications
+method: GET
+url: '{{baseUrl}}/api/notifications'
+order: 1000
+description: Returns all notifications for the authenticated user. Requires an active session cookie (Better Auth).
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Notifications retrieved'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Notifications retrieved");
+      pm.expect(json).to.have.property("data");
+      pm.expect(json.data).to.have.property("res");
+      pm.expect(json.data.res).to.be.an("array");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

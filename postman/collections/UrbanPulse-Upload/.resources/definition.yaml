@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Upload
+description: File upload endpoints for avatars and audio. Handles multipart form-data uploads. Requires an active session cookie (Better Auth).

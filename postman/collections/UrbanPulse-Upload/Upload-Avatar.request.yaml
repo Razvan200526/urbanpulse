@@ -1,0 +1,31 @@
+$kind: http-request
+name: Upload Avatar
+method: POST
+url: '{{baseUrl}}/api/avatar'
+order: 1000
+description: Uploads a user avatar image as multipart form-data. Requires an active session cookie (Better Auth).
+body:
+  type: formdata
+  content:
+    - key: file
+      type: file
+      src: ''
+    - key: type
+      type: text
+      value: avatar
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has data with url, success, and message", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("data");
+      pm.expect(json.data).to.have.property("url");
+      pm.expect(json.data).to.have.property("success");
+      pm.expect(json.data.success).to.equal(true);
+      pm.expect(json.data).to.have.property("message");
+      pm.expect(json.data.message).to.equal("File uploaded successfully");
+      pm.expect(json.data.url).to.be.a("string");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

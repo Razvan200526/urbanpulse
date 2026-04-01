@@ -1,0 +1,3 @@
+$kind: collection
+name: UrbanPulse Auth
+description: Authentication endpoints handled by Better Auth. Routes are under /api/auth/*. These endpoints manage user sign-up, sign-in, sign-out, and session retrieval. Better Auth uses cookies for session management.

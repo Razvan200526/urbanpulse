@@ -1,0 +1,29 @@
+$kind: http-request
+name: Respond To Transaction
+method: POST
+url: '{{baseUrl}}/api/resources/transaction/{{transactionId}}/respond'
+order: 6000
+description: Accepts or rejects a resource transaction. Requires an active session cookie (Better Auth).
+headers:
+  - key: Content-Type
+    value: application/json
+pathVariables:
+  - key: transactionId
+    value: '{{transactionId}}'
+body:
+  type: json
+  content: |-
+    {
+      "accept": true
+    }
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success field", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.be.a("boolean");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present

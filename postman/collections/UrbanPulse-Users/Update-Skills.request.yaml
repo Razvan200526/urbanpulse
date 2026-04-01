@@ -1,0 +1,30 @@
+$kind: http-request
+name: Update Skills
+method: PUT
+url: '{{baseUrl}}/api/users/skills'
+order: 6000
+description: Updates the authenticated user's skill tags. Requires an active session cookie (Better Auth).
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "tags": ["medical", "construction"]
+    }
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and message 'Skill tags updated'", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json.message).to.equal("Skill tags updated");
+      pm.expect(json).to.have.property("data");
+      pm.expect(json.data).to.have.property("tags");
+      pm.expect(json.data.tags).to.be.an("array");
+    });

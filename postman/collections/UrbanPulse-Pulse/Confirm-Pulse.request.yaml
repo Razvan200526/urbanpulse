@@ -1,0 +1,24 @@
+$kind: http-request
+name: Confirm Pulse
+method: POST
+url: '{{baseUrl}}/api/pulse/{{pulseId}}/confirm'
+order: 2000
+description: Confirms a pulse by ID. Requires an active session cookie (Better Auth).
+pathVariables:
+  - key: pulseId
+    value: '{{pulseId}}'
+tests:
+  script: |-
+    pm.test("Status code is 200", function () {
+      pm.response.to.have.status(200);
+    });
+    pm.test("Response has success true and data with confirmation fields", function () {
+      const json = pm.response.json();
+      pm.expect(json).to.have.property("success");
+      pm.expect(json.success).to.equal(true);
+      pm.expect(json).to.have.property("message");
+      pm.expect(json).to.have.property("data");
+      pm.expect(json.data).to.have.property("alreadyConfirmed");
+      pm.expect(json.data).to.have.property("newlyVerified");
+    });
+    // Unauthenticated: expect 401 when no session cookie is present
