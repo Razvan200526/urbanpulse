@@ -1,7 +1,7 @@
 import { Button } from "@client/components/Button/Button";
 import { useAuth } from "@client/hooks/useAuth";
 import { PlusSquareIcon } from "lucide-react";
-import { useRetrieveResources } from "../hooks";
+import { useFilterResources } from "../hooks";
 import { ResourceCard } from "./card/ResourceCard";
 import { ResourceCardSkeleton } from "./card/ResourceCardSkeleton";
 
@@ -11,9 +11,7 @@ export const MySkillsTab = ({
 	onUploadClick: () => void;
 }) => {
 	const { data: user } = useAuth();
-	const { data: resources, isLoading } = useRetrieveResources(
-		user?.user.id || "",
-	);
+	const { data: resources, isLoading } = useFilterResources("All");
 
 	const myResources = resources?.filter(
 		(r) => r.resource.userId === user?.user.id,

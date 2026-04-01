@@ -27,6 +27,7 @@ export const app = new Hono<{ Variables: Variables }>()
 			keyGenerator: (c) => c.req.header("x-forwarded-for") ?? "",
 		}),
 	)
+	.use(authMiddleware)
 	.use(logger())
 	.basePath("/api")
 	.use(
@@ -49,7 +50,6 @@ export const app = new Hono<{ Variables: Variables }>()
 		}),
 	)
 	.route("/", authController)
-	.use("*", authMiddleware)
 	.route("/", userController)
 	.route("/", avatarController)
 	.route("/", pulseController)

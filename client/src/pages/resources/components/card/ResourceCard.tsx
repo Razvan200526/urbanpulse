@@ -48,8 +48,8 @@ export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {
 
 			<Card.Footer className="flex justify-between items-center py-3">
 				<div className="flex -space-x-2">
-					{recentUsers?.slice(0, 3).map((user) => (
-						<Avatar key={user.id} user={user} />
+					{recentUsers?.slice(0, 3).map((user, index) => (
+						<Avatar key={`${user.id}:${index.toString()}`} user={user} />
 					))}
 				</div>
 				<Button variant="primary" onPress={() => setIsDrawerOpen(true)}>

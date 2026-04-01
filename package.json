@@ -18,6 +18,8 @@
 		"build": "turbo build",
 		"build:client": "turbo build --filter=client",
 		"build:server": "turbo build --filter=server",
+		"prod": "turbo build --filter=shared --filter=server --filter=client",
+		"run:prod": "bun run prod && turbo run start:prod --filter=server --filter=client --parallel",
 		"lint": "biome lint .",
 		"type-check": "turbo type-check",
 		"test": "turbo test",

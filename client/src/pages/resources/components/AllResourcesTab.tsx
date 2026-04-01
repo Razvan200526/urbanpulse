@@ -1,44 +1,44 @@
 import { Button } from "@client/components/Button/Button";
+import { Dropdown } from "@client/components/Dropdown";
 import { InputSearch } from "@client/components/input/InputSearch";
-import { useAuth } from "@client/hooks/useAuth";
+import type { FilterResourceType } from "@shared/types";
 import { Filter } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
-import { useRetrieveResources } from "../hooks";
+import { useFilterResources } from "../hooks";
 import { ResourceCard } from "./card/ResourceCard";
 import { ResourceCardSkeleton } from "./card/ResourceCardSkeleton";
 import { NoResources } from "./NoResources";
+import { FilterDropdownItems } from "./utils/FilterDropdownItems";
 
 export const AllResourcesTab = () => {
-	const { data: user } = useAuth();
-	const { data: resources, isLoading } = useRetrieveResources(
-		user?.user.id || "",
-	);
+	const [availabilityFilter, setAvailabilityFilter] =
+		useState<FilterResourceType>("All");
 	const [searchTerm, setSearchTerm] = useState("");
-	const [availabilityFilter, setAvailabilityFilter] = useState<
-		"All" | "Available" | "Unavailable" | "Currently Unavailable"
-	>("All");
 	const deferredSearchTerm = useDeferredValue(searchTerm.trim().toLowerCase());
+	const { data: resources = [], isLoading } =
+		useFilterResources(availabilityFilter);
+	const filterItems = FilterDropdownItems("availability").map((item) => ({
+		...item,
+		onAction: () => setAvailabilityFilter(item.key as FilterResourceType),
+	}));
 
 	const filteredResources = useMemo(() => {
-		return (resources ?? []).filter((item) => {
-			const matchesSearch =
-				deferredSearchTerm.length === 0 ||
-				[
-					item.resource.name,
-					item.resource.description || "",
-					item.author?.name || "",
-				]
-					.join(" ")
-					.toLowerCase()
-					.includes(deferredSearchTerm);
+		if (!deferredSearchTerm) {
+			return resources;
+		}
 
-			const matchesAvailability =
-				availabilityFilter === "All" ||
-				item.resource.availability === availabilityFilter;
+		return resources.filter((item) => {
+			const haystack = [
+				item.resource.name,
+				item.resource.description || "",
+				item.author?.name || "",
+			]
+				.join(" ")
+				.toLowerCase();
 
-			return matchesSearch && matchesAvailability;
+			return haystack.includes(deferredSearchTerm);
 		});
-	}, [availabilityFilter, deferredSearchTerm, resources]);
+	}, [deferredSearchTerm, resources]);
 
 	return (
 		<div className="space-y-6">
@@ -49,19 +49,17 @@ export const AllResourcesTab = () => {
 					onChange={(value) => setSearchTerm(String(value))}
 				/>
 				<div className="flex gap-2">
-					<Button
-						variant={availabilityFilter === "All" ? "primary" : "outline"}
-						onPress={() => setAvailabilityFilter("All")}
-					>
-						<Filter className="h-4 w-4" />
-						All
-					</Button>
-					<Button
-						variant={availabilityFilter === "Available" ? "primary" : "outline"}
-						onPress={() => setAvailabilityFilter("Available")}
-					>
-						Available
-					</Button>
+					<Dropdown
+						trigger={
+							<Button
+								isIconOnly
+								radius="full"
+								variant="primary"
+								startContent={<Filter className="size-4" />}
+							/>
+						}
+						items={filterItems}
+					/>
 				</div>
 			</div>
 

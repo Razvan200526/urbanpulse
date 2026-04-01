@@ -1,9 +1,7 @@
 import * as z from "zod";
 
 export const getResourcesSchema = z.object({
-	userId: z.string(),
-	// long: z.string(),
-	// lat: z.string(),
+	filter: z.enum(["All", "Available", "Unavailable", "Currently Unavailable"]),
 });
 
 export const isGetResourcesQueryValid = (query: unknown) => {

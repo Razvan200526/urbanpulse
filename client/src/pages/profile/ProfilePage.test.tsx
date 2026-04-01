@@ -58,7 +58,7 @@ mock.module("@client/hooks/useProfileSettings", () => ({
 }));
 
 mock.module("@client/pages/resources/hooks", () => ({
-	useRetrieveResources: () => ({
+	useFilterResources: () => ({
 		data: profileState.resources,
 	}),
 }));

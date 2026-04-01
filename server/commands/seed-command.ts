@@ -1,20 +1,26 @@
 /** biome-ignore-all lint/suspicious/noConsole: <should log success or errors> */
 
 import * as schema from "@server/db/schema";
+import { seedDatabase } from "@server/seed";
 import { drizzle } from "drizzle-orm/postgres-js";
-import { seed } from "drizzle-seed";
 import figures from "figures";
 import * as p from "picocolors";
 import postgres from "postgres";
 import PrettyError from "pretty-error";
 
 const pe = new PrettyError();
+const databaseUrl = Bun.env.DATABASE_URL;
+
+if (!databaseUrl) {
+	console.error("DATABASE_URL is required.");
+	process.exit(1);
+}
 
 try {
-	const connection = postgres(process.env.DATABASE_URL, { max: 1 });
-	const db = drizzle(connection);
+	const connection = postgres(databaseUrl, { max: 1 });
+	const db = drizzle(connection, { schema });
 
-	await seed(db, schema);
+	await seedDatabase(db);
 	await connection.end();
 } catch (error) {
 	if (error instanceof Error) {

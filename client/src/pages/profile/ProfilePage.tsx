@@ -7,7 +7,7 @@ import {
 	useUpdateUserProfile,
 	useUserProfile,
 } from "@client/hooks/useProfileSettings";
-import { useRetrieveResources } from "@client/pages/resources/hooks";
+import { useFilterResources } from "@client/pages/resources/hooks";
 import { Card, Chip, ScrollShadow, Separator, Toast } from "@heroui/react";
 import {
 	BadgeCheck,
@@ -24,7 +24,7 @@ export const ProfilePage = () => {
 		useUpdateUserProfile();
 	const { mutateAsync: updateSkillTags, isPending: isSavingTags } =
 		useUpdateSkillTags();
-	const { data: resources } = useRetrieveResources(profile?.user.id || "");
+	const { data: resources } = useFilterResources("All");
 
 	const [name, setName] = useState("");
 	const [bio, setBio] = useState("");

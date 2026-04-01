@@ -1,6 +1,7 @@
 import { hono, queryClient } from "@client/main";
 import type { ClientUserType } from "@client/utils/types";
 import { Toast } from "@heroui/react";
+import type { FilterResourceType } from "@shared/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
 	getApiErrorMessage,
@@ -35,7 +36,7 @@ export const useUploadResource = (userId: string) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["retrieve", "resources", userId],
+				queryKey: ["resources"],
 			});
 		},
 	});
@@ -59,31 +60,6 @@ export const useGetResourceAuthor = (resourceId: string) => {
 				return;
 			}
 			return res.data as ClientUserType;
-		},
-	});
-};
-
-export const useRetrieveResources = (userId: string) => {
-	return useQuery({
-		queryKey: ["retrieve", "resources", userId],
-		queryFn: async () => {
-			const response = await hono.api.resources.$get({
-				query: {
-					userId,
-				},
-			});
-			const res = (await response.json()) as MutationResponse<
-				ResourceWithUsersApiItem[]
-			>;
-			if (!res.success || !res.data) {
-				Toast.toast.danger(
-					res.success
-						? "Failed to retrieve resources"
-						: getApiErrorMessage(res, "Failed to retrieve resources"),
-				);
-				return;
-			}
-			return normalizeResources(res.data);
 		},
 	});
 };
@@ -194,6 +170,27 @@ export const useRequestBorrow = (userId: string) => {
 		},
 		onError: (error: Error) => {
 			Toast.toast.danger(error.message);
+		},
+	});
+};
+
+export const useFilterResources = (filter: FilterResourceType) => {
+	return useQuery({
+		queryKey: ["resources", filter],
+		queryFn: async () => {
+			const response = await hono.api.resources.$get({ query: { filter } });
+			const res = (await response.json()) as MutationResponse<
+				ResourceWithUsersApiItem[]
+			>;
+			if (!res.success || !res.data) {
+				Toast.toast.danger(
+					res.success
+						? "Failed to retrieve resources"
+						: getApiErrorMessage(res, "Failed to retrieve resources"),
+				);
+				return [];
+			}
+			return normalizeResources(res.data);
 		},
 	});
 };

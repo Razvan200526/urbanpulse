@@ -1,6 +1,6 @@
 import { db } from "@server/db";
 import { type ResourceType, resource } from "@server/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class ResourceRepository implements IRepository<ResourceType> {
@@ -33,6 +33,33 @@ export class ResourceRepository implements IRepository<ResourceType> {
 		});
 	}
 
+	async getByOptions(options: Partial<ResourceType>) {
+		const filters = Object.entries(options)
+			.filter(([, value]) => value !== undefined)
+			.map(([key, value]) =>
+				eq(resource[key as keyof typeof resource] as any, value),
+			);
+
+		return await db.query.resource.findMany({
+			where: filters.length > 0 ? and(...filters) : undefined,
+			with: {
+				transactions: {
+					orderBy: (transactions, { desc }) => [desc(transactions.startAt)],
+					limit: 3,
+					with: {
+						borrower: {
+							columns: {
+								id: true,
+								name: true,
+								image: true,
+							},
+						},
+					},
+				},
+			},
+			orderBy: (resources, { desc }) => [desc(resources.createdAt)],
+		});
+	}
 	async create(data: Partial<ResourceType>): Promise<ResourceType | null> {
 		const [result] = await db
 			.insert(resource)

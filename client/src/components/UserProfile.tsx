@@ -3,7 +3,7 @@ import { Avatar, Toast } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { LogOutIcon, UserIcon } from "lucide-react";
 import { useNavigate } from "react-router";
-import { CustomDropdown, type DropdownItemDataType } from "./Dropdown";
+import { Dropdown, type DropdownItemDataType } from "./Dropdown";
 import { useSignOut } from "./sidebar/hooks";
 
 export const UserProfile = () => {
@@ -37,7 +37,7 @@ export const UserProfile = () => {
 	];
 
 	return (
-		<CustomDropdown
+		<Dropdown
 			placement="top end"
 			className="border border-border"
 			trigger={

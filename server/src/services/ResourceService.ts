@@ -18,7 +18,7 @@ import {
 import { socketManager } from "@server/services/SocketManager";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
-import { TransactionStatusEnum } from "@shared/types";
+import { type FilterResourceType, TransactionStatusEnum } from "@shared/types";
 import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
 
 export class ResourceService {
@@ -30,6 +30,31 @@ export class ResourceService {
 		this.resourceRepo = resourceRepository;
 		this.userRepo = userRepository;
 		this.transactionRepo = transactionRepository;
+	}
+
+	private async mapResourcesWithUsers(
+		resources: Array<ResourceType & { transactions: TransactionType[] }>,
+	) {
+		return await Promise.all(
+			resources.map(
+				async (item: ResourceType & { transactions: TransactionType[] }) => {
+					const { transactions, ...resourceProps } = item;
+					const recentUsers = transactions
+						.map(
+							(t: TransactionType & { borrower?: UserType | null }) =>
+								t.borrower,
+						)
+						.filter((u): u is UserType => Boolean(u));
+					const author = await this.userRepo.getOne(resourceProps.userId);
+
+					return {
+						resource: resourceProps,
+						author,
+						recentUsers,
+					};
+				},
+			),
+		);
 	}
 
 	/**
@@ -96,26 +121,28 @@ export class ResourceService {
 	async getAllResources() {
 		try {
 			const res = await this.resourceRepo.getAll();
-			return await Promise.all(
-				res.map(
-					async (item: ResourceType & { transactions: TransactionType[] }) => {
-						const { transactions, ...resourceProps } = item;
-						const recentUsers = transactions
-							.map(
-								(t: TransactionType & { borrower?: UserType | null }) =>
-									t.borrower,
-							)
-							.filter((u): u is UserType => Boolean(u));
-						const author = await this.userRepo.getOne(resourceProps.userId);
+			return await this.mapResourcesWithUsers(res);
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
 
-						return {
-							resource: resourceProps,
-							author,
-							recentUsers,
-						};
-					},
-				),
-			);
+	/**
+	 *
+	 * @param filter Takes in the availability filter
+	 * @returns A list of resources filtered by the availability status.
+	 */
+	async getFilteredResources(filter: FilterResourceType) {
+		try {
+			if (filter === "All") {
+				return await this.getAllResources();
+			}
+
+			const res = await this.resourceRepo.getByOptions({
+				availability: filter,
+			});
+			return await this.mapResourcesWithUsers(res);
 		} catch (error) {
 			handleError(error);
 			return null;

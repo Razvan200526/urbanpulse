@@ -36,6 +36,12 @@
 			],
 			"env": ["NODE_ENV", "PORT", "VITE_*"]
 		},
+		"start:prod": {
+			"cache": false,
+			"persistent": true,
+			"dependsOn": ["build"],
+			"env": ["NODE_ENV", "PORT", "VITE_*"]
+		},
 		"lint": {
 			"dependsOn": ["^build"],
 			"inputs": [

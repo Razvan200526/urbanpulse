@@ -14,7 +14,8 @@ import { z } from "zod";
 export const resourceController = new Hono()
 	.basePath("/resources")
 	.get("/", zValidator("query", getResourcesSchema), async (c) => {
-		const resources = await resourceService.getAllResources();
+		const { filter } = c.req.valid("query");
+		const resources = await resourceService.getFilteredResources(filter);
 
 		if (!resources) {
 			return c.json(

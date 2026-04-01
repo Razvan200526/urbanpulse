@@ -2,8 +2,7 @@ import { Button } from "@client/components/Button/Button";
 import { InputSearch } from "@client/components/input/InputSearch";
 import { H6 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
-import { useAuth } from "@client/hooks/useAuth";
-import { useRetrieveResources } from "@client/pages/resources/hooks";
+import { useFilterResources } from "@client/pages/resources/hooks";
 import type { ClientUserType } from "@client/utils/types";
 import { Card, Chip } from "@heroui/react";
 import { MapPin, Users } from "lucide-react";
@@ -70,10 +69,7 @@ const MemberCard = ({ member }: { member: NetworkMember }) => {
 };
 
 export const NetworkTab = () => {
-	const { data: user } = useAuth();
-	const { data: resources, isLoading } = useRetrieveResources(
-		user?.user.id || "",
-	);
+	const { data: resources, isLoading } = useFilterResources("All");
 	const [searchTerm, setSearchTerm] = useState("");
 	const deferredSearchTerm = useDeferredValue(searchTerm.trim().toLowerCase());
 

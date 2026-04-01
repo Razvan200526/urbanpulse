@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_USER: urbanpulse
       POSTGRES_PASSWORD: urbanpulse
-      POSTGRES_DB: urbanpuZlse
+      POSTGRES_DB: urbanpulse
     ports:
       - "5432:5432"
     volumes:

@@ -2,6 +2,7 @@ import { logger } from "@server/utils/Logger";
 import type { BetterAuthPlugin } from "better-auth";
 import { APIError, createAuthEndpoint } from "better-auth/api";
 import * as z from "zod";
+import { isAdminUser } from "../utils/isAdminUser";
 
 export const signUpPlugin = () => {
 	return {
@@ -38,6 +39,7 @@ export const signUpPlugin = () => {
 						});
 					}
 
+					const isAdmin = isAdminUser(email);
 					const user = await adapter.create({
 						model: "user",
 						data: {
@@ -45,6 +47,7 @@ export const signUpPlugin = () => {
 							name,
 							bio,
 							image,
+							role: isAdmin ? "admin" : "user",
 							emailVerified: false,
 							createdAt: new Date(),
 							updatedAt: new Date(),

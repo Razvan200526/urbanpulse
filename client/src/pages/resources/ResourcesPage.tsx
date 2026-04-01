@@ -1,9 +1,10 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
+import { RequestIcon } from "@client/components/icons/RequestIcon";
 import type { ModalRefType } from "@client/components/Modal";
 import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
 import { ScrollShadow, Separator } from "@heroui/react";
-import { PlusSquareIcon, Wrench } from "lucide-react";
+import { PlusSquareIcon } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
@@ -61,7 +62,7 @@ export const ResourcesPage = () => {
 					<Button
 						size="md"
 						variant="primary"
-						startContent={<PlusSquareIcon className="size-4" />}
+						startContent={<RequestIcon className="size-4" />}
 						onPress={() => navigate("/map")}
 					>
 						Request
@@ -71,7 +72,7 @@ export const ResourcesPage = () => {
 				<Button
 					size="md"
 					variant="primary"
-					startContent={<Wrench className="size-4" />}
+					startContent={<PlusSquareIcon className="size-4" />}
 					onPress={() => uploadModalRef.current?.open()}
 				>
 					Upload

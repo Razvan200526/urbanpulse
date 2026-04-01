@@ -66,3 +66,9 @@ export enum PulseUploadStateEnum {
 	Completed = "completed",
 	Failed = "failed",
 }
+
+export type FilterResourceType =
+	| "All"
+	| "Available"
+	| "Unavailable"
+	| "Currently Unavailable";

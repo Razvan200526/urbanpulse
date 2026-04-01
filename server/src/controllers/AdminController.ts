@@ -1,4 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
+import { adminMiddleware } from "@server/middleware/adminMiddleware";
 import { authMiddleware } from "@server/middleware/authMiddleware";
 import { notificationRepository } from "@server/repositories/NotificationRepository";
 import { pulseRepository } from "@server/repositories/PulseRepository";
@@ -13,14 +14,10 @@ import {
 } from "@shared/validators/reports/isReviewReportValid";
 import { Hono } from "hono";
 
-const ensureAdmin = async (userId: string) => {
-	const currentUser = await userRepository.getOne(userId);
-	return currentUser?.role === "admin";
-};
-
 export const adminController = new Hono()
 	.basePath("/admin")
 	.use(authMiddleware)
+	.use(adminMiddleware)
 	.get("/overview", async (c) => {
 		const session = c.get("session");
 		if (!session) {
@@ -29,15 +26,6 @@ export const adminController = new Hono()
 				401,
 			);
 		}
-
-		const isAdmin = await ensureAdmin(session.userId);
-		if (!isAdmin) {
-			return c.json(
-				{ success: false, message: "Admin access required", data: null },
-				403,
-			);
-		}
-
 		const [users, pulses, resources, reports, transactions, notifications] =
 			await Promise.all([
 				userRepository.getAll(),
@@ -84,14 +72,6 @@ export const adminController = new Hono()
 			);
 		}
 
-		const isAdmin = await ensureAdmin(session.userId);
-		if (!isAdmin) {
-			return c.json(
-				{ success: false, message: "Admin access required", data: null },
-				403,
-			);
-		}
-
 		const reports = await moderationService.getAdminReportQueue();
 
 		return c.json({
@@ -107,22 +87,6 @@ export const adminController = new Hono()
 		zValidator("param", reviewReportParamsSchema),
 		zValidator("json", reviewReportSchema),
 		async (c) => {
-			const session = c.get("session");
-			if (!session) {
-				return c.json(
-					{ success: false, message: "Unauthorized", data: null },
-					401,
-				);
-			}
-
-			const isAdmin = await ensureAdmin(session.userId);
-			if (!isAdmin) {
-				return c.json(
-					{ success: false, message: "Admin access required", data: null },
-					403,
-				);
-			}
-
 			const { id } = c.req.valid("param");
 			const result = await moderationService.reviewReport(
 				id,

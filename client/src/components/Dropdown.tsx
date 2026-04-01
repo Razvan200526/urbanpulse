@@ -1,4 +1,10 @@
-import { cn, Description, Dropdown, Kbd, Label } from "@heroui/react";
+import {
+	cn,
+	Description,
+	Dropdown as HeroDropdown,
+	Kbd,
+	Label,
+} from "@heroui/react";
 import type { Key, ReactElement, ReactNode } from "react";
 
 export type DropdownItemDataType = {
@@ -36,8 +42,8 @@ const RenderItems = ({ items }: { items: DropdownItemDataType[] }) => {
 			{items.map((item) => {
 				if (item.subMenu && item.subMenu.length > 0) {
 					return (
-						<Dropdown.SubmenuTrigger key={item.key}>
-							<Dropdown.Item
+						<HeroDropdown.SubmenuTrigger key={item.key}>
+							<HeroDropdown.Item
 								className={cn("flex items-center gap-2", item.className)}
 								textValue={
 									typeof item.label === "string" ? item.label : item.key
@@ -47,19 +53,19 @@ const RenderItems = ({ items }: { items: DropdownItemDataType[] }) => {
 									{item.icon}
 									<Label>{item.label}</Label>
 								</div>
-								<Dropdown.SubmenuIndicator />
-							</Dropdown.Item>
-							<Dropdown.Popover>
-								<Dropdown.Menu>
+								<HeroDropdown.SubmenuIndicator />
+							</HeroDropdown.Item>
+							<HeroDropdown.Popover>
+								<HeroDropdown.Menu>
 									<RenderItems items={item.subMenu} />
-								</Dropdown.Menu>
-							</Dropdown.Popover>
-						</Dropdown.SubmenuTrigger>
+								</HeroDropdown.Menu>
+							</HeroDropdown.Popover>
+						</HeroDropdown.SubmenuTrigger>
 					);
 				}
 
 				return (
-					<Dropdown.Item
+					<HeroDropdown.Item
 						key={item.key}
 						className={cn("flex items-center gap-2", item.className)}
 						onAction={item.onAction}
@@ -76,14 +82,14 @@ const RenderItems = ({ items }: { items: DropdownItemDataType[] }) => {
 						</div>
 						{item.shortcut && <Kbd slot="keyboard">{item.shortcut}</Kbd>}
 						{item.endContent}
-					</Dropdown.Item>
+					</HeroDropdown.Item>
 				);
 			})}
 		</>
 	);
 };
 
-export const CustomDropdown = ({
+export const Dropdown = ({
 	trigger,
 	items,
 	onAction,
@@ -91,19 +97,19 @@ export const CustomDropdown = ({
 	placement = "bottom start",
 }: DropdownProps) => {
 	return (
-		<Dropdown>
+		<HeroDropdown>
 			{trigger}
-			<Dropdown.Popover
+			<HeroDropdown.Popover
 				placement={placement}
 				className={cn(
-					"min-w-48 shadow-xl rounded border border-border",
+					"min-w-48 shadow-xl rounded border border-accent",
 					className,
 				)}
 			>
-				<Dropdown.Menu onAction={onAction}>
+				<HeroDropdown.Menu onAction={onAction}>
 					<RenderItems items={items} />
-				</Dropdown.Menu>
-			</Dropdown.Popover>
-		</Dropdown>
+				</HeroDropdown.Menu>
+			</HeroDropdown.Popover>
+		</HeroDropdown>
 	);
 };
