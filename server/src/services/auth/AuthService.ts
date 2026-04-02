@@ -124,7 +124,7 @@ export const auth = betterAuth({
 		strategy: "jwe",
 	},
 	rateLimit: {
-		max: 5,
+		max: 2000,
 		window: 60 * 1000,
 	},
 	plugins: [
