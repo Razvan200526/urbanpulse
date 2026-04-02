@@ -12,7 +12,7 @@ export const useAuth = () => {
 	return useQuery({
 		queryKey: authQueryKey,
 		queryFn: fetchAuthSession,
-		staleTime: 0,
+		staleTime: 50_000,
 		retry: false,
 	});
 };
