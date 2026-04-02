@@ -1,4 +1,3 @@
-import { Button } from "@client/components/Button/Button";
 import { Dropdown } from "@client/components/Dropdown";
 import { InputSearch } from "@client/components/input/InputSearch";
 import type { FilterResourceType } from "@shared/types";
@@ -51,12 +50,9 @@ export const AllResourcesTab = () => {
 				<div className="flex gap-2">
 					<Dropdown
 						trigger={
-							<Button
-								isIconOnly
-								radius="full"
-								variant="primary"
-								startContent={<Filter className="size-4" />}
-							/>
+							<div className="bg-accent text-white rounded-full p-2">
+								<Filter className="size-4" />
+							</div>
 						}
 						items={filterItems}
 					/>

@@ -37,12 +37,7 @@ export function ResourceDetailsDrawer({
 
 	return (
 		<Drawer key="right">
-			<button
-				type="button"
-				className="sr-only"
-				tabIndex={-1}
-				aria-hidden="true"
-			/>
+			<div />
 			<Drawer.Backdrop
 				variant="transparent"
 				isOpen={isOpen}

@@ -3,7 +3,12 @@ import {
 	type PulseRepository,
 	pulseRepository,
 } from "@server/repositories/PulseRepository";
+import type {
+	PulseConditionOptions,
+	PulseSearchOptions,
+} from "@server/repositories/types";
 import { notificationService } from "@server/services/NotificationService";
+import type { Last7DaysPulseCounts } from "@server/services/types";
 import { handleError } from "@server/utils/handleError";
 import { PulseStatusEnum, PulseUploadStateEnum } from "@shared/types";
 import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
@@ -27,6 +32,103 @@ export class PulseService {
 
 	constructor() {
 		this.pulseRepository = pulseRepository;
+	}
+
+	/**
+	 * Normalizes the provided date to UTC day start.
+	 * @param {Date} date - Source date.
+	 * @returns {Date} UTC day start.
+	 */
+	private startOfUtcDay(date: Date): Date {
+		return new Date(
+			Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+		);
+	}
+
+	/**
+	 * Adds a number of days to a date.
+	 * @param {Date} date - Base date.
+	 * @param {number} days - Number of days to add.
+	 * @returns {Date} Shifted date.
+	 */
+	private addDays(date: Date, days: number): Date {
+		const DAY_MS = 24 * 60 * 60 * 1000;
+		return new Date(date.getTime() + days * DAY_MS);
+	}
+
+	/**
+	 * Retrieves pulses filtered by column options and optional createdAt condition.
+	 * @param {PulseSearchOptions} options - Partial pulse filters.
+	 * @param {PulseConditionOptions} [condition] - Optional createdAt range.
+	 * @returns {Promise<PulseType[] | null>} Matching pulses or null on failure.
+	 */
+	async getPulsesByCondition(
+		options: PulseSearchOptions,
+		condition?: PulseConditionOptions,
+	): Promise<PulseType[] | null> {
+		try {
+			return await this.pulseRepository.getByOptions(options, condition);
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
+	/**
+	 * Counts pulses filtered by column options and optional createdAt condition.
+	 * @param {PulseSearchOptions} options - Partial pulse filters.
+	 * @param {PulseConditionOptions} [condition] - Optional createdAt range.
+	 * @returns {Promise<number>} Number of matching pulses.
+	 */
+	async countPulsesByCondition(
+		options: PulseSearchOptions,
+		condition?: PulseConditionOptions,
+	): Promise<number> {
+		const pulses = await this.getPulsesByCondition(options, condition);
+		return pulses?.length ?? 0;
+	}
+
+	/**
+	 * Calculates pulse counts for current and previous 7-day windows.
+	 * @param {PulseSearchOptions} options - Partial pulse filters.
+	 * @param {Date} [referenceDate] - Date used to anchor the rolling windows.
+	 * @returns {Promise<Last7DaysPulseCounts | null>} Current and previous window counts.
+	 */
+	async getPulseCountsForLast7Days(
+		options: PulseSearchOptions,
+		referenceDate: Date = new Date(),
+	): Promise<Last7DaysPulseCounts | null> {
+		try {
+			const windowDays = 7;
+			const todayStart = this.startOfUtcDay(referenceDate);
+			const currentWindowStart = this.addDays(todayStart, -(windowDays - 1));
+			const currentWindowEnd = this.addDays(todayStart, 1);
+			const previousWindowStart = this.addDays(currentWindowStart, -windowDays);
+			const previousWindowEnd = currentWindowStart;
+
+			const [pulsesLast7Days, previousPulsesLast7Days] = await Promise.all([
+				this.countPulsesByCondition(options, {
+					createdAtFrom: currentWindowStart,
+					createdAtTo: currentWindowEnd,
+				}),
+				this.countPulsesByCondition(options, {
+					createdAtFrom: previousWindowStart,
+					createdAtTo: previousWindowEnd,
+				}),
+			]);
+
+			return {
+				pulsesLast7Days,
+				previousPulsesLast7Days,
+				currentWindowStart,
+				currentWindowEnd,
+				previousWindowStart,
+				previousWindowEnd,
+			};
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
 	}
 
 	async getPulseById(id: string): Promise<PulseType | null> {

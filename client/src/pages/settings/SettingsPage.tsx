@@ -1,13 +1,14 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { PageLoader } from "@client/components/PageLoader";
+import { H6 } from "@client/components/typography";
 import {
 	useDeleteAccount,
 	useUpdateQuietHours,
 	useUserProfile,
 } from "@client/hooks/useProfileSettings";
 import { Card, ScrollShadow, Separator, Toast } from "@heroui/react";
-import { AlertTriangle, Clock3, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, Clock3, Trash2 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router";
 
@@ -92,10 +93,12 @@ export const SettingsPage = () => {
 			<Separator />
 			<ScrollShadow className="flex-1 p-6" size={10}>
 				<div className="max-w-5xl mx-auto space-y-6">
-					<Card className="border border-border shadow-none">
+					<Card className="border border-accent shadow-none">
 						<Card.Header className="flex flex-col items-start gap-1">
-							<Card.Title>Quiet Hours</Card.Title>
-							<Card.Description>
+							<Card.Title>
+								<H6>Quiet Hours</H6>
+							</Card.Title>
+							<Card.Description className="text-sm">
 								Suppress non-urgent hero alerts during the times you specify.
 							</Card.Description>
 						</Card.Header>
@@ -113,7 +116,7 @@ export const SettingsPage = () => {
 										type="time"
 										value={startTime}
 										onChange={(e) => setStartTime(e.target.value)}
-										className="w-full rounded border border-accent bg-surface px-3 py-2 text-sm outline-none"
+										className="w-full rounded border border-accent text-accent bg-surface px-3 py-2 text-sm outline-none"
 									/>
 								</div>
 								<div className="space-y-1">
@@ -128,7 +131,7 @@ export const SettingsPage = () => {
 										type="time"
 										value={endTime}
 										onChange={(e) => setEndTime(e.target.value)}
-										className="w-full rounded border border-accent bg-surface px-3 py-2 text-sm outline-none"
+										className="w-full rounded border border-accent text-accent bg-surface px-3 py-2 text-sm outline-none"
 									/>
 								</div>
 							</div>
@@ -140,7 +143,7 @@ export const SettingsPage = () => {
 										return (
 											<Button
 												key={day}
-												variant={isSelected ? "primary" : "outline"}
+												variant={isSelected ? "primary" : "secondary"}
 												size="sm"
 												onPress={() => toggleDay(day)}
 											>
@@ -152,8 +155,8 @@ export const SettingsPage = () => {
 							</div>
 						</Card.Content>
 						<Card.Footer className="justify-between p-6 pt-0">
-							<div className="text-xs text-muted flex items-center gap-2">
-								<Clock3 className="size-3" />
+							<div className="text-xs flex items-center gap-2 text-accent">
+								<Clock3 className="size-4" />
 								Current pulse discovery radius remains focused on nearby
 								activity.
 							</div>
@@ -161,43 +164,44 @@ export const SettingsPage = () => {
 								variant="primary"
 								onPress={saveQuietHours}
 								isPending={isSavingQuietHours}
-								startContent={<Save className="size-4" />}
 								isDisabled={days.length === 0}
 							>
-								Save quiet hours
+								Save
 							</Button>
 						</Card.Footer>
 					</Card>
 
-					<Card className="border border-border shadow-none">
+					<Card className="border border-accent shadow-none">
 						<Card.Header className="flex flex-col items-start gap-1">
-							<Card.Title>Account</Card.Title>
+							<Card.Title>
+								<H6>Account</H6>
+							</Card.Title>
 							<Card.Description>
 								Review the current session identity and manage your data.
 							</Card.Description>
 						</Card.Header>
 						<Card.Content className="p-6 grid gap-4 sm:grid-cols-3">
-							<div className="rounded border border-border p-4">
-								<p className="text-xs uppercase tracking-wide text-muted">
+							<div className="rounded border border-accent p-4">
+								<p className="text-xs uppercase tracking-wide text-accent">
 									Role
 								</p>
-								<p className="mt-2 font-semibold capitalize">
+								<p className="mt-2 font-semibold capitalize text-foreground">
 									{profile.user.role ?? "user"}
 								</p>
 							</div>
-							<div className="rounded border border-border p-4">
-								<p className="text-xs uppercase tracking-wide text-muted">
+							<div className="rounded border border-accent p-4">
+								<p className="text-xs uppercase tracking-wide text-accent">
 									Verification
 								</p>
-								<p className="mt-2 font-semibold">
+								<p className="mt-2 font-semibold text-foreground">
 									{profile.user.isVerified ? "Verified" : "Not verified"}
 								</p>
 							</div>
-							<div className="rounded border border-border p-4">
-								<p className="text-xs uppercase tracking-wide text-muted">
+							<div className="rounded border border-accent p-4">
+								<p className="text-xs uppercase tracking-wide text-accent">
 									Email status
 								</p>
-								<p className="mt-2 font-semibold">
+								<p className="mt-2 font-semibold text-foreground">
 									{profile.user.emailVerified ? "Confirmed" : "Unconfirmed"}
 								</p>
 							</div>

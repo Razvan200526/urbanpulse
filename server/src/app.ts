@@ -34,7 +34,7 @@ export const app = new Hono<{ Variables: Variables }>()
 	.use(
 		"/*",
 		cors({
-			origin: [Bun.env.CLIENT_URL || "http://localhost:5173"],
+			origin: [Bun.env.CLIENT_URL],
 			allowHeaders: ["Content-Type", "Authorization"],
 			allowMethods: [
 				"POST",

@@ -1,12 +1,15 @@
 import { Socket } from "./Socket";
 
 export class Backend {
-	public readonly notifications: Socket;
+	private _notifications: Socket | null = null;
 
-	constructor() {
-		this.notifications = new Socket(
-			`${import.meta.env.VITE_SERVER_URL}/api/notifications/ws`,
-		);
+	public get notifications(): Socket {
+		if (!this._notifications) {
+			this._notifications = new Socket(
+				`${import.meta.env.VITE_SERVER_URL}/api/notifications/ws`,
+			);
+		}
+		return this._notifications;
 	}
 }
 

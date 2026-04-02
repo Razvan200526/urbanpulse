@@ -102,12 +102,7 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 	return (
 		<Drawer key="right">
 			<Drawer.Trigger>
-				<button
-					type="button"
-					className="sr-only"
-					tabIndex={-1}
-					aria-hidden="true"
-				/>
+				<div />
 			</Drawer.Trigger>
 			<Drawer.Backdrop
 				variant="transparent"

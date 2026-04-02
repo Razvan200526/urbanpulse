@@ -1,9 +1,9 @@
-import { Button, cn, Drawer, Tooltip } from "@heroui/react";
+import { cn, Drawer, Tooltip } from "@heroui/react";
 import { MenuIcon } from "../icons/MenuIcon";
 import { Sidebar } from "./Sidebar";
 import { SidebarMinimize } from "./SidebarMinimize";
 import { useAppSidebarStore } from "./sidebarStore";
-
+import { Button } from "../Button/Button";
 export const SidebarDrawer = () => {
 	const { isOpen, open, onOpenChange } = useAppSidebarStore();
 	return (
@@ -14,17 +14,17 @@ export const SidebarDrawer = () => {
 					!isOpen ? "flex" : "flex 2xl:hidden",
 				)}
 			>
-				<Tooltip delay={0}>
+				<Tooltip delay={0} trigger={"focus"}>
 					<Button
 						variant="ghost"
 						isIconOnly={true}
 						onPress={open}
 						size="md"
-						className="rounded-full text-accent"
-					>
-						<MenuIcon className="size-5" />
-					</Button>
-					<Tooltip.Content className="rounded-full">
+						className="text-accent"
+						radius="full"
+						startContent={<MenuIcon className="size-5" />}
+					/>
+					<Tooltip.Content className="rounded-full border border-accent">
 						<p className="text-accent">Expand Sidebar</p>
 					</Tooltip.Content>
 				</Tooltip>
@@ -33,27 +33,19 @@ export const SidebarDrawer = () => {
 					<SidebarMinimize onOpen={open} />
 				</div>
 			</div>
-			<div className="2xl:hidden">
-				<Drawer>
-					<button
-						type="button"
-						className="sr-only"
-						tabIndex={-1}
-						aria-hidden="true"
-					/>
-					<Drawer.Backdrop
-						variant="transparent"
-						isOpen={isOpen}
-						onOpenChange={onOpenChange}
-					>
-						<Drawer.Content className="w-72" placement="left">
-							<Drawer.Dialog className="bg-surface rounded-none h-full flex flex-col gap-8 p-2 border-r border-border">
-								<Sidebar />
-							</Drawer.Dialog>
-						</Drawer.Content>
-					</Drawer.Backdrop>
-				</Drawer>
-			</div>
+			<Drawer>
+				<Drawer.Backdrop
+					isOpen={isOpen}
+					variant="opaque"
+					onOpenChange={onOpenChange}
+				>
+					<Drawer.Content className="w-72" placement="left">
+						<Drawer.Dialog className="bg-surface rounded-none h-full flex flex-col gap-8 p-2 border-r border-border">
+							<Sidebar />
+						</Drawer.Dialog>
+					</Drawer.Content>
+				</Drawer.Backdrop>
+			</Drawer>
 		</>
 	);
 };

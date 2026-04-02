@@ -32,7 +32,7 @@ export function HelpOfferSnackbar() {
 
 	return (
 		<div
-			className="fixed bottom-6 left-1/2 z-200 flex w-[min(100%-2rem,28rem)] -translate-x-1/2 flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3 shadow-lg md:flex-row md:items-center md:justify-between"
+			className="fixed bottom-6 left-1/2 z-200 flex w-[min(100%-2rem,28rem)] -translate-x-1/2 flex-col gap-3 rounded border border-border bg-surface px-4 py-3 md:flex-row md:items-center md:justify-between"
 			role="status"
 		>
 			<div className="flex gap-3 min-w-0">
@@ -49,7 +49,7 @@ export function HelpOfferSnackbar() {
 			<div className="flex items-center justify-end gap-2 shrink-0">
 				<Button
 					size="sm"
-					variant="outline"
+					variant="secondary"
 					onPress={dismiss}
 					isDisabled={acceptMutation.isPending}
 					startContent={<X className="size-4" />}

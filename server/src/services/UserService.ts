@@ -7,10 +7,12 @@ import {
 	type SkillRepository,
 	skillRepository,
 } from "@server/repositories/SkillRepository";
+import type { UserConditionOptions } from "@server/repositories/types";
 import {
 	type UserRepository,
 	userRepository,
 } from "@server/repositories/UserRepository";
+import type { Last7DaysUserCounts } from "@server/services/types";
 import { logger } from "@server/utils/Logger";
 import { isEmailValid } from "@shared/validators/isEmailValid";
 import type { SignUpInfoType } from "@shared/validators/isSignUpInfoValid";
@@ -42,6 +44,28 @@ export class UserService {
 		this.userRepo = userRepository;
 		this.quietHoursRepo = quietHoursRepository;
 		this.skillRepo = skillRepository;
+	}
+
+	/**
+	 * Normalizes the provided date to UTC day start.
+	 * @param {Date} date - Source date.
+	 * @returns {Date} UTC day start.
+	 */
+	private startOfUtcDay(date: Date): Date {
+		return new Date(
+			Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+		);
+	}
+
+	/**
+	 * Adds a number of days to a date.
+	 * @param {Date} date - Base date.
+	 * @param {number} days - Number of days to add.
+	 * @returns {Date} Shifted date.
+	 */
+	private addDays(date: Date, days: number): Date {
+		const DAY_MS = 24 * 60 * 60 * 1000;
+		return new Date(date.getTime() + days * DAY_MS);
 	}
 
 	private toShortTime(value: string) {
@@ -84,6 +108,81 @@ export class UserService {
 			quietHours: this.formatQuietHours(quietHours),
 			skillTags: skills.map((entry: SkillType) => entry.tag),
 		};
+	}
+
+	/**
+	 * Retrieves users filtered by column options and optional createdAt condition.
+	 * @param {Partial<UserType>} options - Partial user filters.
+	 * @param {UserConditionOptions} [condition] - Optional createdAt range.
+	 * @returns {Promise<UserType[] | null>} Matching users or null on failure.
+	 */
+	async getUsersByCondition(
+		options: Partial<UserType>,
+		condition?: UserConditionOptions,
+	): Promise<UserType[] | null> {
+		try {
+			return await this.userRepo.getByOptions(options, condition);
+		} catch (error) {
+			logger.exception(error as Error);
+			return null;
+		}
+	}
+
+	/**
+	 * Counts users filtered by column options and optional createdAt condition.
+	 * @param {Partial<UserType>} options - Partial user filters.
+	 * @param {UserConditionOptions} [condition] - Optional createdAt range.
+	 * @returns {Promise<number>} Number of matching users.
+	 */
+	async countUsersByCondition(
+		options: Partial<UserType>,
+		condition?: UserConditionOptions,
+	): Promise<number> {
+		const users = await this.getUsersByCondition(options, condition);
+		return users?.length ?? 0;
+	}
+
+	/**
+	 * Calculates new-user counts for current and previous 7-day windows.
+	 * @param {Partial<UserType>} options - Partial user filters.
+	 * @param {Date} [referenceDate] - Date used to anchor the rolling windows.
+	 * @returns {Promise<Last7DaysUserCounts | null>} Current and previous window counts.
+	 */
+	async getUserCountsForLast7Days(
+		options: Partial<UserType>,
+		referenceDate: Date = new Date(),
+	): Promise<Last7DaysUserCounts | null> {
+		try {
+			const windowDays = 7;
+			const todayStart = this.startOfUtcDay(referenceDate);
+			const currentWindowStart = this.addDays(todayStart, -(windowDays - 1));
+			const currentWindowEnd = this.addDays(todayStart, 1);
+			const previousWindowStart = this.addDays(currentWindowStart, -windowDays);
+			const previousWindowEnd = currentWindowStart;
+
+			const [newUsersLast7Days, previousNewUsersLast7Days] = await Promise.all([
+				this.countUsersByCondition(options, {
+					createdAtFrom: currentWindowStart,
+					createdAtTo: currentWindowEnd,
+				}),
+				this.countUsersByCondition(options, {
+					createdAtFrom: previousWindowStart,
+					createdAtTo: previousWindowEnd,
+				}),
+			]);
+
+			return {
+				newUsersLast7Days,
+				previousNewUsersLast7Days,
+				currentWindowStart,
+				currentWindowEnd,
+				previousWindowStart,
+				previousWindowEnd,
+			};
+		} catch (error) {
+			logger.exception(error as Error);
+			return null;
+		}
 	}
 
 	async verifyUserExists(email: string): Promise<boolean> {

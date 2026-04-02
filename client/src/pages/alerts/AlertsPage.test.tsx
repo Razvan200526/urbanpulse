@@ -58,6 +58,21 @@ mock.module("@client/components/Button/Button", () => ({
 	},
 }));
 
+mock.module("@client/components/Dropdown", () => ({
+	Dropdown: ({
+		trigger,
+		items,
+	}: {
+		trigger: React.ReactNode;
+		items: Array<{ label: React.ReactNode }>;
+	}) => (
+		<div>
+			{trigger}
+			<div>{items.map((item) => item.label).join(" | ")}</div>
+		</div>
+	),
+}));
+
 mock.module("@client/components/Header", () => ({
 	Header: ({ title }: { title: string }) => <h1>{title}</h1>,
 }));
@@ -140,9 +155,45 @@ mock.module("@heroui/react", () => {
 			},
 		},
 	};
+	const HeroButton = (props: Record<string, any>) => (
+		<button onClick={props.onPress}>{props.children}</button>
+	);
+	const Chip = ({ children }: { children: React.ReactNode }) => (
+		<span>{children}</span>
+	);
+	Chip.Label = ({ children }: { children: React.ReactNode }) => (
+		<span>{children}</span>
+	);
+	const Drawer = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Drawer.Trigger = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Drawer.Backdrop = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Drawer.Content = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Drawer.Dialog = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Drawer.Header = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Drawer.Heading = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Drawer.Body = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
 
 	return {
+		Button: HeroButton,
 		Card,
+		Chip,
+		Drawer,
 		Modal,
 		ProgressCircle: () => <div>Progress Circle</div>,
 		ScrollShadow: ({ children }: { children: React.ReactNode }) => (
@@ -221,10 +272,16 @@ describe("AlertsPage", () => {
 		expect(markup).toContain("Ana");
 		expect(markup).toContain("Help offer");
 		expect(markup).toContain("Pulse nearby");
-		expect(markup).toContain("No quick action");
+		expect(markup).toContain("Alert Details");
 
-		buttonProps[1]?.onPress?.();
-		buttonProps[2]?.onPress?.();
+		const acceptButton = buttonProps.find(
+			(props) => props.children === "Accept",
+		);
+		const rejectButton = buttonProps.find(
+			(props) => props.children === "Reject",
+		);
+		acceptButton?.onPress?.();
+		rejectButton?.onPress?.();
 
 		expect(acceptCalls).toEqual([
 			{ pulseId: "pulse-1", responseId: "response-1" },

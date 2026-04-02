@@ -3,10 +3,12 @@ import {
 	type NotificationRepository,
 	notificationRepository,
 } from "@server/repositories/NotificationRepository";
+import type { NotificationConditionOptions } from "@server/repositories/types";
 import {
 	socketManager,
 	type UserConnection,
 } from "@server/services/SocketManager";
+import type { Last7DaysAlertCounts } from "@server/services/types";
 import {
 	type BroadcastDataType,
 	type NotificationFactory,
@@ -31,6 +33,28 @@ export class NotificationService {
 		this.notificationRepo = notificationRepository;
 		this.locationService = locationService;
 		this.notificationFactory = notificationFactory;
+	}
+
+	/**
+	 * Normalizes the provided date to UTC day start.
+	 * @param {Date} date - Source date.
+	 * @returns {Date} UTC day start.
+	 */
+	private startOfUtcDay(date: Date): Date {
+		return new Date(
+			Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+		);
+	}
+
+	/**
+	 * Adds a number of days to a date.
+	 * @param {Date} date - Base date.
+	 * @param {number} days - Number of days to add.
+	 * @returns {Date} Shifted date.
+	 */
+	private addDays(date: Date, days: number): Date {
+		const DAY_MS = 24 * 60 * 60 * 1000;
+		return new Date(date.getTime() + days * DAY_MS);
 	}
 
 	/**
@@ -62,6 +86,84 @@ export class NotificationService {
 		} catch (error) {
 			handleError(error);
 			return [];
+		}
+	}
+
+	/**
+	 * Retrieves notifications filtered by column options and optional createdAt condition.
+	 * @param {Partial<NotificationType>} options - Partial notification filters.
+	 * @param {NotificationConditionOptions} [condition] - Optional createdAt range.
+	 * @returns {Promise<NotificationType[] | null>} Matching notifications or null on failure.
+	 */
+	async getNotificationsByCondition(
+		options: Partial<NotificationType>,
+		condition?: NotificationConditionOptions,
+	): Promise<NotificationType[] | null> {
+		try {
+			return await this.notificationRepo.getByOptions(options, condition);
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
+	/**
+	 * Counts notifications filtered by column options and optional createdAt condition.
+	 * @param {Partial<NotificationType>} options - Partial notification filters.
+	 * @param {NotificationConditionOptions} [condition] - Optional createdAt range.
+	 * @returns {Promise<number>} Number of matching notifications.
+	 */
+	async countNotificationsByCondition(
+		options: Partial<NotificationType>,
+		condition?: NotificationConditionOptions,
+	): Promise<number> {
+		const notifications = await this.getNotificationsByCondition(
+			options,
+			condition,
+		);
+		return notifications?.length ?? 0;
+	}
+
+	/**
+	 * Calculates alert counts for current and previous 7-day windows.
+	 * @param {Partial<NotificationType>} options - Partial notification filters.
+	 * @param {Date} [referenceDate] - Date used to anchor the rolling windows.
+	 * @returns {Promise<Last7DaysAlertCounts | null>} Current and previous window counts.
+	 */
+	async getAlertCountsForLast7Days(
+		options: Partial<NotificationType>,
+		referenceDate: Date = new Date(),
+	): Promise<Last7DaysAlertCounts | null> {
+		try {
+			const windowDays = 7;
+			const todayStart = this.startOfUtcDay(referenceDate);
+			const currentWindowStart = this.addDays(todayStart, -(windowDays - 1));
+			const currentWindowEnd = this.addDays(todayStart, 1);
+			const previousWindowStart = this.addDays(currentWindowStart, -windowDays);
+			const previousWindowEnd = currentWindowStart;
+
+			const [alertsLast7Days, previousAlertsLast7Days] = await Promise.all([
+				this.countNotificationsByCondition(options, {
+					createdAtFrom: currentWindowStart,
+					createdAtTo: currentWindowEnd,
+				}),
+				this.countNotificationsByCondition(options, {
+					createdAtFrom: previousWindowStart,
+					createdAtTo: previousWindowEnd,
+				}),
+			]);
+
+			return {
+				alertsLast7Days,
+				previousAlertsLast7Days,
+				currentWindowStart,
+				currentWindowEnd,
+				previousWindowStart,
+				previousWindowEnd,
+			};
+		} catch (error) {
+			handleError(error);
+			return null;
 		}
 	}
 
