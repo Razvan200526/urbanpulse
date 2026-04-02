@@ -1,0 +1,20 @@
+# Backend service config for the existing `urbanpulse` Railway service.
+
+[build]
+builder = "RAILPACK"
+buildCommand = "bun run build:server"
+watchPatterns = [
+  "/server/**",
+  "/shared/**",
+  "/package.json",
+  "/bun.lock",
+  "/tsconfig.json",
+  "/turbo.json",
+]
+
+[deploy]
+startCommand = "bun run start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

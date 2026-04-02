@@ -1,7 +1,7 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { PageLoader } from "@client/components/PageLoader";
-import { H2, P } from "@client/components/typography";
+import { P } from "@client/components/typography";
 import { useAdminOverview } from "@client/hooks/useAdminOverview";
 import { useAdminReports, useReviewReport } from "@client/hooks/useModeration";
 import { Card, ScrollShadow, Separator, Toast } from "@heroui/react";
@@ -9,7 +9,6 @@ import { PulseStatusEnum, ReportStatusEnum } from "@shared/types";
 import { formatDate } from "@shared/utils/formatDate";
 import {
 	AlertCircleIcon,
-	AlertTriangle,
 	Bell,
 	ClipboardList,
 	MapPinned,
