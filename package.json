@@ -27,7 +27,7 @@
 		"fmt": "biome format . --write",
 		"lint:check": "biome check . --write",
 		"prepare": "husky",
-		"start": "bun run server/dist/index.js"
+		"start": "cd server && bun run start:prod"
 	},
 	"keywords": [
 		"bun",

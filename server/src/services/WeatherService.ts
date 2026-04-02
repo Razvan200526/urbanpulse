@@ -1,5 +1,5 @@
-import { logger } from "@server/utils/Logger";
 import { handleError } from "@server/utils/handleError";
+import { logger } from "@server/utils/Logger";
 
 /**
  * Open-Meteo `current` payload shape for the selected variables.

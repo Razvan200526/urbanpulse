@@ -3,6 +3,7 @@ import { PulseEnum, PulseStatusEnum, UrgencyEnum } from "@shared/types";
 import { formatDate } from "@shared/utils/formatDate";
 import { AlertTriangle, PackageIcon, Wrench } from "lucide-react";
 import { Link } from "react-router";
+
 function urgencyLabel(u: UrgencyEnum | string): string {
 	if (u === UrgencyEnum.Immediate) return "Immediate";
 	if (u === UrgencyEnum.Urgent) return "Urgent";

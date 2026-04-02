@@ -1,4 +1,5 @@
 import { Button } from "@client/components/Button/Button";
+import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { queryClient } from "@client/main";
@@ -9,7 +10,6 @@ import { TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { sortPulsesForFeed } from "../sortPulsesForFeed";
-import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { PulseList } from "./PulseList";
 
 export function NeighborhoodPulseFeed() {

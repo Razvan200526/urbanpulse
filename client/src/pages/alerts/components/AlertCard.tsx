@@ -1,9 +1,9 @@
 import { Button } from "@client/components/Button/Button";
+import { useAlertsPageStore } from "@client/pages/alerts/store";
 import {
 	useAcceptHelpOffer,
 	useRejectHelpOffer,
 } from "@client/pages/map/hooks";
-import { useAlertsPageStore } from "@client/pages/alerts/store";
 import {
 	getPulseResponseActionPayload,
 	labelForNotificationType,

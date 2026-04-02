@@ -6,6 +6,7 @@ import { adminController } from "./controllers/AdminController";
 import { authController } from "./controllers/AuthController";
 import { avatarController } from "./controllers/AvatarController";
 import { dashboardController } from "./controllers/DashboardController";
+import { healthController } from "./controllers/HealthController";
 import { notificationController } from "./controllers/NotificationController";
 import { pulseController } from "./controllers/PulseController";
 import { reportController } from "./controllers/ReportController";
@@ -15,7 +16,6 @@ import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
 import { authMiddleware } from "./middleware/authMiddleware";
 import type auth from "./services/auth/AuthService";
-import { healthController } from "./controllers/HealthController";
 export type Variables = {
 	user: typeof auth.$Infer.Session.user | null;
 	session: typeof auth.$Infer.Session.session | null;

@@ -4,7 +4,7 @@ import { printZodError } from "./utils/printZodError";
 export const envSchema = z.object({
 	NODE_ENV: z.enum(["development", "staging", "production"]),
 	DATABASE_URL: z.string(),
-	PORT: z.number().optional(),
+	PORT: z.coerce.number().optional(),
 	BETTER_AUTH_SECRET: z.string(),
 	BETTER_AUTH_URL: z.string(),
 	SERVER_URL: z.string(),
@@ -15,6 +15,7 @@ export const envSchema = z.object({
 	R2_TOKEN: z.string(),
 	R2_DOMAIN: z.string(),
 	R2_BUCKET_NAME: z.string(),
+	R2_BUCKET: z.string().optional(),
 	RESEND_API_KEY: z.string(),
 	BETTER_AUTH_API_KEY: z.string(),
 	GITHUB_CLIENT_ID: z.string(),
@@ -24,6 +25,10 @@ export const envSchema = z.object({
 });
 
 export function parseEnv() {
+	if (!Bun.env.R2_BUCKET_NAME && Bun.env.R2_BUCKET) {
+		Bun.env.R2_BUCKET_NAME = Bun.env.R2_BUCKET;
+	}
+
 	const { error } = envSchema.safeParse(Bun.env);
 	if (error) {
 		printZodError(error);
