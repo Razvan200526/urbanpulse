@@ -57,7 +57,7 @@ export const NavMenuItem = ({
 					)}
 				</NavLink>
 			</Tooltip.Trigger>
-			<Tooltip.Content className="rounded-full text-accent">
+			<Tooltip.Content className="rounded-full text-accent border border-accent">
 				{item.title}
 			</Tooltip.Content>
 		</Tooltip>

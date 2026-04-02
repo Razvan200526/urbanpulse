@@ -1,9 +1,9 @@
+import { H4 } from "@client/components/typography";
 import { ScrollShadow } from "@heroui/react";
-import { useAlertsPageStore } from "../store";
 import { useAlertsPageData } from "../hooks";
+import { useAlertsPageStore } from "../store";
 import { AlertCard } from "./AlertCard";
 import { AlertsEmptyState } from "./AlertsEmptyState";
-import { H4 } from "@client/components/typography";
 
 export const AlertsFeed = () => {
 	const { filteredNotifications } = useAlertsPageData();

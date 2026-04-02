@@ -44,6 +44,7 @@ const RenderItems = ({ items }: { items: DropdownItemDataType[] }) => {
 					return (
 						<HeroDropdown.SubmenuTrigger key={item.key}>
 							<HeroDropdown.Item
+								id={item.key}
 								className={cn("flex items-center gap-2", item.className)}
 								textValue={
 									typeof item.label === "string" ? item.label : item.key
@@ -67,6 +68,7 @@ const RenderItems = ({ items }: { items: DropdownItemDataType[] }) => {
 				return (
 					<HeroDropdown.Item
 						key={item.key}
+						id={item.key}
 						className={cn("flex items-center gap-2", item.className)}
 						onAction={item.onAction}
 						textValue={typeof item.label === "string" ? item.label : item.key}

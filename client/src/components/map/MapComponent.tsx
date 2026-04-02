@@ -33,7 +33,6 @@ export const MapComponent = ({
 		hasInitialized.current = true;
 
 		mapboxgl.accessToken = token;
-
 		const map = new mapboxgl.Map({
 			container: mapContainerRef.current,
 			style: "mapbox://styles/mapbox/dark-v11",

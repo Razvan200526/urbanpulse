@@ -23,20 +23,18 @@ export const Header = () => {
 			</div>
 			<div className="flex items-center justify-end gap-1.5">
 				<Tooltip delay={0}>
-					<Tooltip.Trigger>
-						<Button
-							className="rounded-full"
-							size="sm"
-							variant="ghost"
-							onPress={toggleTheme}
-						>
-							{theme === "dark" ? (
-								<SunIcon className="size-4 text-accent" />
-							) : (
-								<MoonIcon className="size-4 text-accent" />
-							)}
-						</Button>
-					</Tooltip.Trigger>
+					<Button
+						className="rounded-full"
+						size="sm"
+						variant="ghost"
+						onPress={toggleTheme}
+					>
+						{theme === "dark" ? (
+							<SunIcon className="size-4 text-accent" />
+						) : (
+							<MoonIcon className="size-4 text-accent" />
+						)}
+					</Button>
 					<Tooltip.Content className="rounded-full">
 						<p className="text-accent">Toggle theme</p>
 					</Tooltip.Content>
@@ -44,34 +42,30 @@ export const Header = () => {
 
 				{isOpen ? (
 					<Tooltip delay={0}>
-						<Tooltip.Trigger>
-							<Button
-								className="rounded-full"
-								size="sm"
-								variant="ghost"
-								onPress={() => {
-									closeSidebar();
-								}}
-							>
-								<ChevronRightIcon className="size-3.5 rotate-180 text-accent" />
-							</Button>
-						</Tooltip.Trigger>
-						<Tooltip.Content className="rounded-full">
+						<Button
+							className="rounded-full"
+							size="sm"
+							variant="ghost"
+							onPress={() => {
+								closeSidebar();
+							}}
+						>
+							<ChevronRightIcon className="size-3.5 rotate-180 text-accent" />
+						</Button>
+						<Tooltip.Content className="rounded-full border border-accent">
 							<p className="text-accent">Minimize sidebar</p>
 						</Tooltip.Content>
 					</Tooltip>
 				) : (
 					<Tooltip delay={0}>
-						<Tooltip.Trigger>
-							<Button
-								isIconOnly={true}
-								className="rounded-full"
-								variant="ghost"
-								onPress={closeSidebar}
-							>
-								<ChevronLeftIcon className="size-4" />
-							</Button>
-						</Tooltip.Trigger>
+						<Button
+							isIconOnly={true}
+							className="rounded-full"
+							variant="ghost"
+							onPress={closeSidebar}
+						>
+							<ChevronLeftIcon className="size-4" />
+						</Button>
 						<Tooltip.Content className="rounded-full">
 							<p className="text-accent">Minimize sidebar</p>
 						</Tooltip.Content>

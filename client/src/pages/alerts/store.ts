@@ -1,17 +1,17 @@
 import { create } from "zustand";
 
-export type AlertsFilterMode = "all" | "actionable" | "updates";
+export type AlertsFilter = "All alerts" | "Action needed" | "Updates";
 
 type AlertsPageStore = {
-	filter: AlertsFilterMode;
+	filter: AlertsFilter;
 	selectedAlertId: string | null;
-	setFilter: (filter: AlertsFilterMode) => void;
+	setFilter: (filter: AlertsFilter) => void;
 	selectAlert: (selectedAlertId: string) => void;
 	clearSelection: () => void;
 };
 
 export const useAlertsPageStore = create<AlertsPageStore>((set) => ({
-	filter: "all",
+	filter: "All alerts",
 	selectedAlertId: null,
 	setFilter: (filter) => set({ filter }),
 	selectAlert: (selectedAlertId) => set({ selectedAlertId }),

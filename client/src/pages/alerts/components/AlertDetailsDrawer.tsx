@@ -7,9 +7,9 @@ import {
 import {
 	getPulseResponseActionPayload,
 	labelForNotificationType,
-	summarizeNotificationPayload,
 	type NotificationListItem,
 	type NotificationPayload,
+	summarizeNotificationPayload,
 } from "@client/utils/notifications";
 import { ScrollShadow, Toast } from "@heroui/react";
 import {

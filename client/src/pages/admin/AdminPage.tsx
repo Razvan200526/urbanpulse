@@ -1,12 +1,14 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { PageLoader } from "@client/components/PageLoader";
+import { H2, P } from "@client/components/typography";
 import { useAdminOverview } from "@client/hooks/useAdminOverview";
 import { useAdminReports, useReviewReport } from "@client/hooks/useModeration";
 import { Card, ScrollShadow, Separator, Toast } from "@heroui/react";
 import { PulseStatusEnum, ReportStatusEnum } from "@shared/types";
 import { formatDate } from "@shared/utils/formatDate";
 import {
+	AlertCircleIcon,
 	AlertTriangle,
 	Bell,
 	ClipboardList,
@@ -63,19 +65,11 @@ export const AdminPage = () => {
 			<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden">
 				<Header title="Moderation" />
 				<Separator />
-				<div className="flex-1 p-8">
-					<Card className="max-w-3xl mx-auto border border-danger/30 bg-danger/5 shadow-none">
-						<Card.Content className="p-8 flex items-start gap-4">
-							<AlertTriangle className="size-6 text-danger shrink-0" />
-							<div className="space-y-2">
-								<h2 className="text-lg font-semibold">Admin access required</h2>
-								<p className="text-sm text-muted">
-									This moderation overview is currently available only to users
-									with the `admin` role.
-								</p>
-							</div>
-						</Card.Content>
-					</Card>
+				<div className="flex-1 p-8 flex items-center justify-center">
+					<div className="flex flex-col space-y-4 items-center">
+						<AlertCircleIcon className="size-20 text-danger" />
+						<P>This page is restricted to administrators only.</P>
+					</div>
 				</div>
 			</div>
 		);
