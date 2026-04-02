@@ -1,3 +1,4 @@
+import { dash } from "@better-auth/infra";
 import { getMailer } from "@server/mailers/getMailer";
 import { OTPMail } from "@server/mailers/templates/OTPMail";
 import { getAllowedOrigins } from "@server/utils/getAllowedOrigins";
@@ -9,7 +10,6 @@ import { emailOTP, openAPI } from "better-auth/plugins";
 import { db } from "../../db";
 import { account, session, user, verification } from "../../db/schema";
 import { signUpPlugin } from "./plugins/signUpPlugin";
-import { dash } from "@better-auth/infra";
 export const auth = betterAuth({
 	appName: "UrbanPulse",
 	logger: {
