@@ -15,6 +15,7 @@ import { uploadController } from "./controllers/UploadController";
 import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
 import { authMiddleware } from "./middleware/authMiddleware";
+import { getCorsOrigin } from "./utils/getAllowedOrigins";
 import type auth from "./services/auth/AuthService";
 export type Variables = {
 	user: typeof auth.$Infer.Session.user | null;
@@ -22,19 +23,9 @@ export type Variables = {
 };
 export const app = new Hono<{ Variables: Variables }>()
 	.use(
-		rateLimiter({
-			windowMs: 60 * 1000,
-			limit: 1000,
-			keyGenerator: (c) => c.req.header("x-forwarded-for") ?? "",
-		}),
-	)
-	.use(authMiddleware)
-	.use(logger())
-	.basePath("/api")
-	.use(
 		"/*",
 		cors({
-			origin: [Bun.env.CLIENT_URL],
+			origin: (origin) => getCorsOrigin(origin),
 			allowHeaders: ["Content-Type", "Authorization"],
 			allowMethods: [
 				"POST",
@@ -50,6 +41,16 @@ export const app = new Hono<{ Variables: Variables }>()
 			credentials: true,
 		}),
 	)
+	.use(
+		rateLimiter({
+			windowMs: 60 * 1000,
+			limit: 1000,
+			keyGenerator: (c) => c.req.header("x-forwarded-for") ?? "",
+		}),
+	)
+	.use(authMiddleware)
+	.use(logger())
+	.basePath("/api")
 	.route("/", healthController)
 	.route("/", authController)
 	.route("/", userController)

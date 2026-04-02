@@ -8,6 +8,7 @@ import { emailOTP, openAPI } from "better-auth/plugins";
 import { db } from "../../db";
 import { account, session, user, verification } from "../../db/schema";
 import { signUpPlugin } from "./plugins/signUpPlugin";
+import { getAllowedOrigins } from "@server/utils/getAllowedOrigins";
 
 export const auth = betterAuth({
 	appName: "UrbanPulse",
@@ -85,7 +86,7 @@ export const auth = betterAuth({
 		},
 	},
 	baseURL: Bun.env.BETTER_AUTH_URL,
-	trustedOrigins: [Bun.env.SERVER_URL, Bun.env.CLIENT_URL],
+	trustedOrigins: getAllowedOrigins(),
 	session: {
 		expiresIn: 60 * 60 * 24 * 30,
 		updateAge: 60 * 60 * 24,
