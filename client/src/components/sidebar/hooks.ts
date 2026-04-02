@@ -1,4 +1,5 @@
-import { authClient } from "@client/main";
+import { authClient, queryClient } from "@client/main";
+import { authQueryKey } from "@client/hooks/useAuth";
 import { useMutation } from "@tanstack/react-query";
 import {
 	Bell,
@@ -67,6 +68,9 @@ export const useSignOut = () => {
 		mutationKey: ["sign-out"],
 		mutationFn: async () => {
 			return await authClient.signOut();
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: authQueryKey });
 		},
 	});
 };

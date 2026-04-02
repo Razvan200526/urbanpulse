@@ -1,4 +1,5 @@
-import { authClient } from "@client/main";
+import { authClient, queryClient } from "@client/main";
+import { authQueryKey, fetchAuthSession } from "@client/hooks/useAuth";
 import { Toast } from "@heroui/react";
 import type { SignInInfoType } from "@shared/validators/isSignInInfoValid";
 import { useMutation } from "@tanstack/react-query";
@@ -13,8 +14,25 @@ export const useSignIn = () => {
 			});
 			if (error?.message) {
 				Toast.toast.danger(error.message);
+				return null;
 			}
-			return data;
+
+			if (!data) {
+				return null;
+			}
+
+			await queryClient.invalidateQueries({ queryKey: authQueryKey });
+			const session = await queryClient.fetchQuery({
+				queryKey: authQueryKey,
+				queryFn: fetchAuthSession,
+			});
+
+			if (!session?.user) {
+				Toast.toast.danger("Sign in completed, but your session was not created.");
+				return null;
+			}
+
+			return session;
 		},
 	});
 };

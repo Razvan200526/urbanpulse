@@ -1,4 +1,5 @@
-import { authClient, hono } from "@client/main";
+import { authClient, hono, queryClient } from "@client/main";
+import { authQueryKey, fetchAuthSession } from "@client/hooks/useAuth";
 import { Toast } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 import type { SignUpDataType } from "./signUpStore";
@@ -58,7 +59,21 @@ export const useVerifyOTP = () => {
 				Toast.toast.danger("Could not verify OTP");
 				return;
 			}
-			return data.user;
+
+			await queryClient.invalidateQueries({ queryKey: authQueryKey });
+			const session = await queryClient.fetchQuery({
+				queryKey: authQueryKey,
+				queryFn: fetchAuthSession,
+			});
+
+			if (!session?.user) {
+				Toast.toast.danger(
+					"Email verified, but your session was not created.",
+				);
+				return;
+			}
+
+			return session.user;
 		},
 	});
 };

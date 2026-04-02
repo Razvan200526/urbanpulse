@@ -1,4 +1,3 @@
-import { dash } from "@better-auth/infra";
 import { getMailer } from "@server/mailers/getMailer";
 import { OTPMail } from "@server/mailers/templates/OTPMail";
 import { getAllowedOrigins } from "@server/utils/getAllowedOrigins";
@@ -84,6 +83,7 @@ export const auth = betterAuth({
 			httpOnly: true,
 			secure: Bun.env.NODE_ENV === "production",
 			sameSite: Bun.env.NODE_ENV === "production" ? "none" : "lax",
+			partitioned: Bun.env.NODE_ENV === "production",
 		},
 	},
 	baseURL: Bun.env.BETTER_AUTH_URL,
@@ -128,7 +128,6 @@ export const auth = betterAuth({
 		window: 60 * 1000,
 	},
 	plugins: [
-		dash(),
 		signUpPlugin(),
 		openAPI(),
 		emailOTP({
