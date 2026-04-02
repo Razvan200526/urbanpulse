@@ -15,7 +15,7 @@ watchPatterns = [
 ]
 
 [deploy]
-startCommand = "cd client && bun run start:prod --host"
+startCommand = "cd client && bun run start:prod"
 healthcheckPath = "/"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
