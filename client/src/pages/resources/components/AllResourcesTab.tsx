@@ -1,4 +1,3 @@
-import { Button } from "@client/components/Button/Button";
 import { Dropdown } from "@client/components/Dropdown";
 import { InputSearch } from "@client/components/input/InputSearch";
 import type { FilterResourceType } from "@shared/types";

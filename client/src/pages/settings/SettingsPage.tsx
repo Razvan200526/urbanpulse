@@ -8,7 +8,7 @@ import {
 	useUserProfile,
 } from "@client/hooks/useProfileSettings";
 import { Card, ScrollShadow, Separator, Toast } from "@heroui/react";
-import { AlertTriangle, Clock3, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, Clock3, Trash2 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router";
 
