@@ -2,7 +2,7 @@ import { HelpOfferSnackbar } from "@client/components/notifications/HelpOfferSna
 import { useAuth } from "@client/hooks/useAuth";
 import { useLocationSync } from "@client/hooks/useLocationSync";
 import { useNotifications } from "@client/hooks/useNotifications";
-import { cn, Toast } from "@heroui/react";
+import { cn } from "@heroui/react";
 import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
 import { PageLoader } from "./PageLoader";
@@ -12,7 +12,7 @@ import { useAppSidebarStore } from "./sidebar/sidebarStore";
 import { useThemeStore } from "./sidebar/store";
 
 export const AuthLayout = () => {
-	const { data: user, isError, isPending } = useAuth();
+	const { data: user, isPending } = useAuth();
 	const { theme } = useThemeStore();
 	const { isOpen } = useAppSidebarStore();
 
@@ -25,11 +25,6 @@ export const AuthLayout = () => {
 
 	if (isPending) {
 		return <PageLoader />;
-	}
-
-	if (isError) {
-		Toast.toast.danger("An error occurred while authenticating.");
-		return <Navigate to="/signin" replace />;
 	}
 
 	if (!user) {
