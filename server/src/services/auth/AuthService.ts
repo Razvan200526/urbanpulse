@@ -1,5 +1,6 @@
 import { getMailer } from "@server/mailers/getMailer";
 import { OTPMail } from "@server/mailers/templates/OTPMail";
+import { getAllowedOrigins } from "@server/utils/getAllowedOrigins";
 import { logger } from "@server/utils/Logger";
 import bcrypt from "bcryptjs";
 import { betterAuth } from "better-auth";
@@ -8,8 +9,7 @@ import { emailOTP, openAPI } from "better-auth/plugins";
 import { db } from "../../db";
 import { account, session, user, verification } from "../../db/schema";
 import { signUpPlugin } from "./plugins/signUpPlugin";
-import { getAllowedOrigins } from "@server/utils/getAllowedOrigins";
-
+import { dash } from "@better-auth/infra";
 export const auth = betterAuth({
 	appName: "UrbanPulse",
 	logger: {
@@ -127,6 +127,7 @@ export const auth = betterAuth({
 		window: 60 * 1000,
 	},
 	plugins: [
+		dash(),
 		signUpPlugin(),
 		openAPI(),
 		emailOTP({

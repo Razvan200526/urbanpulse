@@ -15,8 +15,8 @@ import { uploadController } from "./controllers/UploadController";
 import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
 import { authMiddleware } from "./middleware/authMiddleware";
-import { getCorsOrigin } from "./utils/getAllowedOrigins";
 import type auth from "./services/auth/AuthService";
+import { getCorsOrigin } from "./utils/getAllowedOrigins";
 export type Variables = {
 	user: typeof auth.$Infer.Session.user | null;
 	session: typeof auth.$Infer.Session.session | null;

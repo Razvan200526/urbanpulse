@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { getAllowedOrigins, getCorsOrigin } from "@server/utils/getAllowedOrigins";
+import {
+	getAllowedOrigins,
+	getCorsOrigin,
+} from "@server/utils/getAllowedOrigins";
 
 const previousClientUrl = Bun.env.CLIENT_URL;
 const previousServerUrl = Bun.env.SERVER_URL;
