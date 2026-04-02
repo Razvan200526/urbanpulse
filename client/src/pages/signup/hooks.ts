@@ -1,5 +1,5 @@
-import { authClient, hono, queryClient } from "@client/main";
 import { authQueryKey, fetchAuthSession } from "@client/hooks/useAuth";
+import { authClient, hono, queryClient } from "@client/main";
 import { Toast } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 import type { SignUpDataType } from "./signUpStore";
@@ -67,9 +67,7 @@ export const useVerifyOTP = () => {
 			});
 
 			if (!session?.user) {
-				Toast.toast.danger(
-					"Email verified, but your session was not created.",
-				);
+				Toast.toast.danger("Email verified, but your session was not created.");
 				return;
 			}
 

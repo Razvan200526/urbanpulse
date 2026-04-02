@@ -1,5 +1,5 @@
-import { authClient, queryClient } from "@client/main";
 import { authQueryKey, fetchAuthSession } from "@client/hooks/useAuth";
+import { authClient, queryClient } from "@client/main";
 import { Toast } from "@heroui/react";
 import type { SignInInfoType } from "@shared/validators/isSignInInfoValid";
 import { useMutation } from "@tanstack/react-query";
@@ -28,7 +28,9 @@ export const useSignIn = () => {
 			});
 
 			if (!session?.user) {
-				Toast.toast.danger("Sign in completed, but your session was not created.");
+				Toast.toast.danger(
+					"Sign in completed, but your session was not created.",
+				);
 				return null;
 			}
 

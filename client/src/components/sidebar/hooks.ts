@@ -1,5 +1,5 @@
-import { authClient, queryClient } from "@client/main";
 import { authQueryKey } from "@client/hooks/useAuth";
+import { authClient, queryClient } from "@client/main";
 import { useMutation } from "@tanstack/react-query";
 import {
 	Bell,
