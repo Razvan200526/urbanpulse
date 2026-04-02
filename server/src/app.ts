@@ -14,10 +14,10 @@ import { resourceController } from "./controllers/ResourceController";
 import { uploadController } from "./controllers/UploadController";
 import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
+import type { UserType } from "./db/schema";
 import { authMiddleware } from "./middleware/authMiddleware";
 import type auth from "./services/auth/AuthService";
 import { getCorsOrigin } from "./utils/getAllowedOrigins";
-import type { UserType } from "./db/schema";
 export type Variables = {
 	user: UserType | null;
 	session: typeof auth.$Infer.Session.session | null;

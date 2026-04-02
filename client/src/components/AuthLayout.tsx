@@ -27,8 +27,12 @@ export const AuthLayout = () => {
 		return <PageLoader />;
 	}
 
-	if (isError || (!isPending && !user)) {
+	if (isError) {
 		Toast.toast.danger("An error occurred while authenticating.");
+		return <Navigate to="/signin" replace />;
+	}
+
+	if (!user) {
 		return <Navigate to="/signin" replace />;
 	}
 

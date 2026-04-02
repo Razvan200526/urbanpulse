@@ -82,7 +82,8 @@ export const auth = betterAuth({
 	advanced: {
 		defaultCookieAttributes: {
 			httpOnly: true,
-			secure: true,
+			secure: Bun.env.NODE_ENV === "production",
+			sameSite: Bun.env.NODE_ENV === "production" ? "none" : "lax",
 		},
 	},
 	baseURL: Bun.env.BETTER_AUTH_URL,
