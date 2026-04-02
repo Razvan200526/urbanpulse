@@ -17,7 +17,7 @@
 		"build": "tsc",
 		"dev": "bun --watch run src/index.ts & tsc --watch",
 		"start": "bun run src/index.ts",
-		"start:prod": "NODE_ENV=production bun run dist/index.js",
+		"start:prod": "NODE_ENV=production bun run src/index.ts",
 		"db:seed": "bun run ./commands/seed-command.ts",
 		"db:generate": "bunx --bun drizzle-kit generate --config=drizzle.config.ts",
 		"db:push": "bunx --bun drizzle-kit push",

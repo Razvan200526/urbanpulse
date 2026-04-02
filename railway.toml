@@ -1,5 +1,3 @@
-# Backend service config for the existing `urbanpulse` Railway service.
-
 [build]
 builder = "RAILPACK"
 buildCommand = "bun run build:server"
