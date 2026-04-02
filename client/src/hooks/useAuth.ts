@@ -9,6 +9,6 @@ export const useAuth = () => {
 			return data;
 		},
 		staleTime: 60_000,
-		retry: false,
+		retry: true,
 	});
 };

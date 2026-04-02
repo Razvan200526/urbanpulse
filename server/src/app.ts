@@ -17,8 +17,9 @@ import { weatherController } from "./controllers/WeatherController";
 import { authMiddleware } from "./middleware/authMiddleware";
 import type auth from "./services/auth/AuthService";
 import { getCorsOrigin } from "./utils/getAllowedOrigins";
+import type { UserType } from "./db/schema";
 export type Variables = {
-	user: typeof auth.$Infer.Session.user | null;
+	user: UserType | null;
 	session: typeof auth.$Infer.Session.session | null;
 };
 export const app = new Hono<{ Variables: Variables }>()

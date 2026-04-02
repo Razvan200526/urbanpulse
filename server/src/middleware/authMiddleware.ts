@@ -1,4 +1,5 @@
 import type { Variables } from "@server/app";
+import { userRepository } from "@server/repositories/UserRepository";
 import auth from "@server/services/auth/AuthService";
 import { logger } from "@server/utils/Logger";
 import type { Context, Next } from "hono";
@@ -35,8 +36,8 @@ export const authMiddleware = async (
 			await next();
 			return;
 		}
-
-		c.set("user", session.user);
+		const user = await userRepository.getOne(session.user.id);
+		c.set("user", user);
 		c.set("session", session.session);
 		await next();
 	} catch (error) {
