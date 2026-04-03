@@ -32,10 +32,7 @@ export const UserCard = () => {
 				</Card.Description>
 			</Card.Header>
 			<Card.Content className="truncate">
-				{
-					//@ts-expect-error i have to update the query response for type checking
-					<span className="text-muted text-sm">{data?.user.bio}</span>
-				}
+				<span className="text-muted text-sm">{data?.user.bio}</span>
 			</Card.Content>
 			<Card.Footer />
 		</Card>

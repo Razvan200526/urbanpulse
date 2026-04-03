@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { resolveApiOrigin, resolveAppOrigin, toWebSocketUrl } from "./runtimeOrigin";
+import {
+	resolveApiOrigin,
+	resolveAppOrigin,
+	toWebSocketUrl,
+} from "./runtimeOrigin";
 
 describe("runtime origin helpers", () => {
 	test("prefers the browser origin for app URLs and normalizes slashes", () => {

@@ -35,8 +35,10 @@ export const resolveApiOrigin = ({
 		return resolveAppOrigin({ appOrigin, browserOrigin, serverOrigin });
 	}
 
-	return trimTrailingSlashes(serverOrigin) ||
-		resolveAppOrigin({ appOrigin, browserOrigin, serverOrigin });
+	return (
+		trimTrailingSlashes(serverOrigin) ||
+		resolveAppOrigin({ appOrigin, browserOrigin, serverOrigin })
+	);
 };
 
 export const toWebSocketUrl = (url: string) => {

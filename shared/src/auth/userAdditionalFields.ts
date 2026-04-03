@@ -1,0 +1,36 @@
+export const userAdditionalFields = {
+	role: {
+		type: "string",
+		required: false,
+		defaultValue: "user",
+		input: false,
+	},
+	bio: {
+		type: "string",
+		required: false,
+		input: true,
+	},
+	trustScore: {
+		type: "number",
+		required: false,
+		defaultValue: 0,
+		input: false,
+	},
+	successfulInteractions: {
+		type: "number",
+		required: false,
+		defaultValue: 0,
+		input: false,
+	},
+	isVerified: {
+		type: "boolean",
+		required: false,
+		defaultValue: false,
+		input: false,
+	},
+	rememberMe: {
+		type: "boolean",
+		required: false,
+		defaultValue: false,
+	},
+} as const;

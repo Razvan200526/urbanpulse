@@ -8,12 +8,16 @@ import "@fontsource/montserrat/700.css";
 import "@fontsource/montserrat/800.css";
 import "@fontsource/montserrat/900.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { userAdditionalFields } from "@shared/auth/userAdditionalFields";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { client } from "@server/client.ts";
 import { createAuthClient } from "better-auth/client";
-import { emailOTPClient } from "better-auth/client/plugins";
+import {
+	emailOTPClient,
+	inferAdditionalFields,
+} from "better-auth/client/plugins";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
 import { RouterProvider } from "react-router";
 import { RootProvider } from "./components/RootProvider.tsx";
@@ -25,10 +29,9 @@ export const hono = client(getApiOrigin(), {
 		credentials: "include",
 	},
 });
-
 export const authClient = createAuthClient({
 	baseURL: getApiOrigin(),
-	plugins: [emailOTPClient()],
+	plugins: [inferAdditionalFields({ user: userAdditionalFields }), emailOTPClient()],
 });
 export const queryClient = new QueryClient({});
 

@@ -8,10 +8,11 @@ import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import { H2 } from "@client/components/typography";
 import { Separator, Toast } from "@heroui/react";
 import { isBioValid } from "@shared/validators/isBioValid";
-import { isNameValid } from "@shared/validators/isNameValid";
+import { signUpNameSchema } from "@shared/validators/isSignUpInfoValid";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useRef } from "react";
 import { useSignUp } from "../../hooks";
+import { buildSignUpPayload } from "../../signUpPayload";
 import { useSignupStore } from "../../signUpStore";
 
 export const SignupProfileStep = () => {
@@ -21,21 +22,26 @@ export const SignupProfileStep = () => {
 	const bioRef = useRef<TextAreaRefType | null>(null);
 
 	const handleNext = async () => {
-		const name = nameRef.current?.getValue() || "";
-		const bio = bioRef.current?.getValue() || "";
+		const nextData = buildSignUpPayload({
+			...data,
+			name: nameRef.current?.getValue() || "",
+			bio: bioRef.current?.getValue() || "",
+		});
 
-		if (!isNameValid(name) || !isBioValid(bio)) {
+		if (
+			!signUpNameSchema.safeParse(nextData.name).success ||
+			!isBioValid(nextData.bio)
+		) {
 			Toast.toast.danger("Invalid name or bio");
 			return;
 		}
 
-		setData({
-			...data,
-			name,
-			bio,
-		});
+		setData(nextData);
 
-		await signUp(data);
+		const createdUser = await signUp(nextData);
+		if (!createdUser) {
+			return;
+		}
 
 		setStep(3);
 	};
@@ -62,6 +68,7 @@ export const SignupProfileStep = () => {
 				</div>
 				<InputName
 					ref={nameRef}
+					initialValue={data.name}
 					onChange={(e) => {
 						nameRef.current?.setValue(e);
 					}}
@@ -70,9 +77,11 @@ export const SignupProfileStep = () => {
 				<TextArea
 					inputWrapperClassname="h-32"
 					inputMode="text"
+					initialValue={data.bio}
 					label="Bio"
 					placeholder="Bio..."
 					maxLength={100}
+					required={false}
 					ref={bioRef}
 					onChange={(e) => {
 						bioRef.current?.setValue(e.target.value);

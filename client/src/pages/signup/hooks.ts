@@ -1,7 +1,9 @@
 import { authQueryKey, fetchAuthSession } from "@client/hooks/useAuth";
 import { authClient, hono, queryClient } from "@client/main";
 import { Toast } from "@heroui/react";
+import { isSignUpInfoValid } from "@shared/validators/isSignUpInfoValid";
 import { useMutation } from "@tanstack/react-query";
+import { buildSignUpPayload } from "./signUpPayload";
 import type { SignUpDataType } from "./signUpStore";
 
 export const useVerifyEmail = () => {
@@ -25,20 +27,27 @@ export const useSignUp = () => {
 	return useMutation({
 		mutationKey: ["signup"],
 		mutationFn: async (data: SignUpDataType) => {
+			const payload = buildSignUpPayload(data);
+			if (!isSignUpInfoValid(payload)) {
+				Toast.toast.danger("Please complete your profile before signing up.");
+				return null;
+			}
+
 			const result = await authClient.signUp.email({
-				email: data.email,
-				password: data.password,
-				image: data.image,
-				name: data.name,
-				// @ts-expect-error - Custom field handled by our custom signUp plugin
-				bio: data.bio,
+				email: payload.email,
+				password: payload.password,
+				image: payload.image,
+				name: payload.name,
+				bio: payload.bio,
 			});
+
 			if (!result.data?.user || result.error) {
 				Toast.toast.danger(
 					result.error?.message || "Sign up failed,try again later",
 				);
+				return null;
 			}
-			return result;
+			return result.data.user;
 		},
 	});
 };

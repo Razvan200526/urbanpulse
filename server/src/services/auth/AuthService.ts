@@ -2,6 +2,7 @@ import { getMailer } from "@server/mailers/getMailer";
 import { OTPMail } from "@server/mailers/templates/OTPMail";
 import { getAllowedOrigins } from "@server/utils/getAllowedOrigins";
 import { logger } from "@server/utils/Logger";
+import { userAdditionalFields } from "@shared/auth/userAdditionalFields";
 import bcrypt from "bcryptjs";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -9,7 +10,7 @@ import { emailOTP, openAPI } from "better-auth/plugins";
 import { db } from "../../db";
 import { account, session, user, verification } from "../../db/schema";
 import { getAuthCookieAttributes } from "./getAuthCookieAttributes";
-import { signUpPlugin } from "./plugins/signUpPlugin";
+// import { signUpPlugin } from "./plugins/signUpPlugin";
 export const auth = betterAuth({
 	appName: "UrbanPulse",
 	logger: {
@@ -43,41 +44,7 @@ export const auth = betterAuth({
 			image: "image",
 			name: "name",
 		},
-		additionalFields: {
-			role: {
-				type: "string",
-				required: false,
-				defaultValue: "user",
-				input: false,
-			},
-			bio: {
-				type: "string",
-				required: false,
-			},
-			trustScore: {
-				type: "number",
-				required: false,
-				defaultValue: 0,
-				input: false,
-			},
-			successfulInteractions: {
-				type: "number",
-				required: false,
-				defaultValue: 0,
-				input: false,
-			},
-			isVerified: {
-				type: "boolean",
-				required: false,
-				defaultValue: false,
-				input: false,
-			},
-			rememberMe: {
-				type: "boolean",
-				required: false,
-				defaultValue: false,
-			},
-		},
+		additionalFields: userAdditionalFields,
 	},
 	advanced: {
 		defaultCookieAttributes: getAuthCookieAttributes(Bun.env.NODE_ENV),
@@ -124,7 +91,6 @@ export const auth = betterAuth({
 		window: 60 * 1000,
 	},
 	plugins: [
-		signUpPlugin(),
 		openAPI(),
 		emailOTP({
 			storeOTP: "hashed",
@@ -132,7 +98,6 @@ export const auth = betterAuth({
 			expiresIn: 300,
 			allowedAttempts: 5,
 			sendVerificationOnSignUp: true,
-			// overrideDefaultEmailVerification: true,
 			sendVerificationOTP: async ({ email, otp, type }) => {
 				if (type === "email-verification") {
 					const targetEmail = email.trim();
