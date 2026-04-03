@@ -3,6 +3,7 @@ import { authClient, hono, queryClient } from "@client/main";
 import { Toast } from "@heroui/react";
 import { isSignUpInfoValid } from "@shared/validators/isSignUpInfoValid";
 import { useMutation } from "@tanstack/react-query";
+import posthog from "posthog-js";
 import { buildSignUpPayload } from "./signUpPayload";
 import type { SignUpDataType } from "./signUpStore";
 
@@ -47,6 +48,10 @@ export const useSignUp = () => {
 				);
 				return null;
 			}
+			posthog.capture("user_signed_up", {
+				email: payload.email,
+				name: payload.name,
+			});
 			return result.data.user;
 		},
 	});
@@ -79,6 +84,12 @@ export const useVerifyOTP = () => {
 				Toast.toast.danger("Email verified, but your session was not created.");
 				return;
 			}
+
+			posthog.identify(session.user.id, {
+				email: session.user.email,
+				name: session.user.name,
+			});
+			posthog.capture("email_verified");
 
 			return session.user;
 		},

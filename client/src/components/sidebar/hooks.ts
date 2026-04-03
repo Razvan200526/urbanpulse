@@ -10,6 +10,7 @@ import {
 	ShieldAlert,
 	Wrench,
 } from "lucide-react";
+import posthog from "posthog-js";
 
 export const useSideBarItems = () => {
 	const mainItems = [
@@ -70,6 +71,8 @@ export const useSignOut = () => {
 			return await authClient.signOut();
 		},
 		onSuccess: async () => {
+			posthog.capture("user_signed_out");
+			posthog.reset();
 			await queryClient.invalidateQueries({ queryKey: authQueryKey });
 		},
 	});

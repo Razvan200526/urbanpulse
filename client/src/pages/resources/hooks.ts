@@ -3,6 +3,7 @@ import type { ClientUserType } from "@client/utils/types";
 import { Toast } from "@heroui/react";
 import type { FilterResourceType } from "@shared/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import posthog from "posthog-js";
 import {
 	getApiErrorMessage,
 	type MutationResponse,
@@ -34,9 +35,12 @@ export const useUploadResource = (userId: string) => {
 			}
 			return res;
 		},
-		onSuccess: () => {
+		onSuccess: (_, resource) => {
 			queryClient.invalidateQueries({
 				queryKey: ["resources"],
+			});
+			posthog.capture("resource_uploaded", {
+				availability: resource.availability,
 			});
 		},
 	});
@@ -117,11 +121,12 @@ export const useRespondToRequest = (userId: string) => {
 			}
 			return res;
 		},
-		onSuccess: () => {
+		onSuccess: (_, { accept }) => {
 			queryClient.invalidateQueries({
 				queryKey: ["pending", "requests", userId],
 			});
 			Toast.toast.success("Responded successfully");
+			posthog.capture("borrow_request_responded", { accepted: accept });
 		},
 	});
 };
@@ -165,8 +170,9 @@ export const useRequestBorrow = (userId: string) => {
 				});
 			});
 		},
-		onSuccess: (data: { message?: string }) => {
+		onSuccess: (data: { message?: string }, { resourceId }) => {
 			Toast.toast.success(data.message || "Borrow request sent!");
+			posthog.capture("borrow_requested", { resource_id: resourceId });
 		},
 		onError: (error: Error) => {
 			Toast.toast.danger(error.message);

@@ -9,6 +9,7 @@ import {
 } from "@client/hooks/useProfileSettings";
 import { useFilterResources } from "@client/pages/resources/hooks";
 import { Card, Chip, ScrollShadow, Separator, Toast } from "@heroui/react";
+import { usePostHog } from "@posthog/react";
 import {
 	BadgeCheck,
 	HandHelping,
@@ -19,6 +20,7 @@ import {
 import { useEffect, useId, useMemo, useState } from "react";
 
 export const ProfilePage = () => {
+	const posthog = usePostHog();
 	const { data: profile, isPending } = useUserProfile();
 	const { mutateAsync: updateProfile, isPending: isSavingProfile } =
 		useUpdateUserProfile();
@@ -67,6 +69,7 @@ export const ProfilePage = () => {
 				image,
 			});
 			Toast.toast.success("Profile updated");
+			posthog?.capture("profile_updated");
 		} catch (error) {
 			Toast.toast.danger(
 				error instanceof Error ? error.message : "Failed to update profile",
@@ -78,6 +81,7 @@ export const ProfilePage = () => {
 		try {
 			await updateSkillTags(skillTags);
 			Toast.toast.success("Skill tags updated");
+			posthog?.capture("skill_tags_updated", { tag_count: skillTags.length });
 		} catch (error) {
 			Toast.toast.danger(
 				error instanceof Error ? error.message : "Failed to update skill tags",

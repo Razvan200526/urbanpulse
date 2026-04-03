@@ -8,6 +8,7 @@ import {
 	useUserProfile,
 } from "@client/hooks/useProfileSettings";
 import { Card, ScrollShadow, Separator, Toast } from "@heroui/react";
+import { usePostHog } from "@posthog/react";
 import { AlertTriangle, Clock3, Trash2 } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router";
@@ -16,6 +17,7 @@ const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 type Weekday = (typeof weekdays)[number];
 
 export const SettingsPage = () => {
+	const posthog = usePostHog();
 	const navigate = useNavigate();
 	const { data: profile, isPending } = useUserProfile();
 	const { mutateAsync: updateQuietHours, isPending: isSavingQuietHours } =
@@ -57,6 +59,11 @@ export const SettingsPage = () => {
 				days,
 			});
 			Toast.toast.success("Quiet hours saved");
+			posthog?.capture("quiet_hours_saved", {
+				start_time: startTime,
+				end_time: endTime,
+				days,
+			});
 		} catch (error) {
 			Toast.toast.danger(
 				error instanceof Error ? error.message : "Failed to save quiet hours",
@@ -74,6 +81,8 @@ export const SettingsPage = () => {
 
 		try {
 			await deleteAccount();
+			posthog?.capture("account_deleted");
+			posthog?.reset();
 			Toast.toast.success("Account deleted");
 			navigate("/", { replace: true });
 		} catch (error) {

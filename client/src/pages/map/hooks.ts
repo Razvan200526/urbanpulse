@@ -6,6 +6,7 @@ import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulse
 import type { PulseSocketMessageType } from "@shared/validators/pulses/isPulseSocketMessageValid";
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import posthog from "posthog-js";
 
 type PulseSocketResponse<T> = {
 	success: boolean;
@@ -80,6 +81,10 @@ export const useCreatePulse = () => {
 
 				queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
 				Toast.toast.success("Pulse created successfully!");
+				posthog.capture("pulse_created", {
+					pulse_type: pulseData.type,
+					urgency: pulseData.urgency,
+				});
 				return response;
 			});
 		},
@@ -101,9 +106,13 @@ export const useAcceptHelpOffer = () => {
 			}
 			return data;
 		},
-		onSuccess: () => {
+		onSuccess: (_, { pulseId, responseId }) => {
 			queryClient.invalidateQueries({ queryKey: ["notifications"] });
 			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+			posthog.capture("help_offer_accepted", {
+				pulse_id: pulseId,
+				response_id: responseId,
+			});
 		},
 	});
 };
@@ -123,9 +132,13 @@ export const useRejectHelpOffer = () => {
 			}
 			return data;
 		},
-		onSuccess: () => {
+		onSuccess: (_, { pulseId, responseId }) => {
 			queryClient.invalidateQueries({ queryKey: ["notifications"] });
 			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+			posthog.capture("help_offer_rejected", {
+				pulse_id: pulseId,
+				response_id: responseId,
+			});
 		},
 	});
 };
@@ -153,8 +166,9 @@ export const useOfferHelp = () => {
 			}
 			return data;
 		},
-		onSuccess: () => {
+		onSuccess: (_, { pulseId }) => {
 			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+			posthog.capture("help_offered", { pulse_id: pulseId });
 		},
 	});
 };
