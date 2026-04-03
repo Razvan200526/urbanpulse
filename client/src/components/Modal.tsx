@@ -1,5 +1,5 @@
-import { cn, Modal as HeroModal, type ModalProps } from "@heroui/react";
 import { useIsMobile } from "@client/hooks/useMediaQuery";
+import { cn, Modal as HeroModal, type ModalProps } from "@heroui/react";
 import { useImperativeHandle, useState } from "react";
 
 export type ModalRefType = {

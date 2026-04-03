@@ -1,8 +1,8 @@
 import { useAuth } from "@client/hooks/useAuth";
 import { Avatar } from "@heroui/react";
+import { UserIcon } from "../icons/UserIcon";
 import { HeaderMinimize } from "./HeaderMinimize";
 import { NavMenu } from "./NavMenu";
-import { UserIcon } from "../icons/UserIcon";
 
 export const SidebarMinimize = ({ onOpen }: { onOpen: () => void }) => {
 	const { data: user } = useAuth();

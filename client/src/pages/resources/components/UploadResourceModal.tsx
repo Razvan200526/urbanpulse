@@ -7,7 +7,7 @@ import {
 import { ResponsiveChoiceField } from "@client/components/input/ResponsiveChoiceField";
 import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
-import { type TabItemType } from "@client/components/tabs/Tabs";
+import type { TabItemType } from "@client/components/tabs/Tabs";
 import { H3 } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { Separator, Toast, Tooltip } from "@heroui/react";

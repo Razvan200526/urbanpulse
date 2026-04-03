@@ -1,8 +1,8 @@
 import { Button } from "@client/components/Button/Button";
 import { AvailabilityChip } from "@client/components/chips/AvaiabilityChip";
-import { useIsMobile } from "@client/hooks/useMediaQuery";
 import { Avatar } from "@client/components/user/Avatar";
 import { useAuth } from "@client/hooks/useAuth";
+import { useIsMobile } from "@client/hooks/useMediaQuery";
 import { MetaRow } from "@client/pages/map/components/MetaRow";
 import type { ClientUserType } from "@client/utils/types";
 import { Chip, cn, Drawer } from "@heroui/react";

@@ -1,4 +1,4 @@
-import { Tabs, type TabItemType } from "@client/components/tabs/Tabs";
+import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
 import { Label } from "@client/components/typography";
 
 type ResponsiveChoiceFieldProps = {
