@@ -1,5 +1,6 @@
 import { authQueryKey, fetchAuthSession } from "@client/hooks/useAuth";
 import { authClient, queryClient } from "@client/main";
+import { buildAppUrl } from "@client/utils/runtimeOrigin";
 import { Toast } from "@heroui/react";
 import type { SignInInfoType } from "@shared/validators/isSignInInfoValid";
 import { useMutation } from "@tanstack/react-query";
@@ -47,7 +48,7 @@ export const useSignInSocial = () => {
 		mutationFn: async (provider: SocialProviderType) => {
 			const { data, error } = await authClient.signIn.social({
 				provider: provider,
-				callbackURL: `${import.meta.env.VITE_APP_URL}/map`,
+				callbackURL: buildAppUrl("/map"),
 			});
 			if (error?.message) {
 				Toast.toast.danger(error.message);

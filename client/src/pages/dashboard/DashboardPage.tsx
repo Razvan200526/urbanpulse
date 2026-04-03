@@ -66,7 +66,7 @@ export const DashboardPages = () => {
 									</Button>
 								</div>
 							</Card.Header>
-							<Card.Content className="flex min-h-[260px] items-center justify-center p-3 sm:min-h-[320px] sm:p-4">
+							<Card.Content className="flex min-h-65 items-center justify-center p-3 sm:min-h-80 sm:p-4">
 								<Chart data={overview?.chart ?? []} />
 							</Card.Content>
 						</Card>

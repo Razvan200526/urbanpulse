@@ -18,15 +18,16 @@ import { NuqsAdapter } from "nuqs/adapters/react-router";
 import { RouterProvider } from "react-router";
 import { RootProvider } from "./components/RootProvider.tsx";
 import { router } from "./router.tsx";
+import { getApiOrigin } from "./utils/runtimeOrigin";
 
-export const hono = client(import.meta.env.VITE_SERVER_URL, {
+export const hono = client(getApiOrigin(), {
 	init: {
 		credentials: "include",
 	},
 });
 
 export const authClient = createAuthClient({
-	baseURL: import.meta.env.VITE_SERVER_URL,
+	baseURL: getApiOrigin(),
 	plugins: [emailOTPClient()],
 });
 export const queryClient = new QueryClient({});

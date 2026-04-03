@@ -1,3 +1,4 @@
+import { buildApiWebSocketUrl } from "@client/utils/runtimeOrigin";
 import { Socket } from "./Socket";
 
 export class Backend {
@@ -6,7 +7,7 @@ export class Backend {
 	public get notifications(): Socket {
 		if (!this._notifications) {
 			this._notifications = new Socket(
-				`${import.meta.env.VITE_SERVER_URL}/api/notifications/ws`,
+				buildApiWebSocketUrl("/api/notifications/ws"),
 			);
 		}
 		return this._notifications;

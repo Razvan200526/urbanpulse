@@ -19,7 +19,7 @@ export const SidebarMinimize = ({ onOpen }: { onOpen: () => void }) => {
 			>
 				<Avatar className="w-8 h-8">
 					<Avatar.Fallback>
-						<UserIcon />
+						<UserIcon className="size-4" />
 					</Avatar.Fallback>
 					<Avatar.Image src={user?.user.image || ""} />
 				</Avatar>
