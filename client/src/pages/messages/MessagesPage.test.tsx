@@ -37,6 +37,12 @@ mock.module("../../components/user/Avatar", () => ({
 }));
 
 mock.module("@heroui/react", () => {
+	const Card = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Card.Content = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
 	const Table = ({ children }: { children: React.ReactNode }) => (
 		<table>{children}</table>
 	);
@@ -63,6 +69,10 @@ mock.module("@heroui/react", () => {
 	);
 
 	return {
+		Card,
+		ScrollShadow: ({ children }: { children: React.ReactNode }) => (
+			<div>{children}</div>
+		),
 		Spinner: () => <div>Spinner</div>,
 		Table,
 	};

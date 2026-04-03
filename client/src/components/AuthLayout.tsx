@@ -32,18 +32,18 @@ export const AuthLayout = () => {
 	}
 
 	return (
-		<div className="w-full min-h-dvh flex flex-row font-medium bg-background">
+		<div className="flex min-h-dvh w-full bg-background font-medium">
 			<HelpOfferSnackbar />
 			<SidebarDrawer />
 			<div
 				className={cn(
-					"border-r border-border relative w-64 shrink-0 flex-col gap-8 p-2 transition-all duration-300 ease-in-out",
+					"relative hidden h-dvh w-64 shrink-0 self-start border-r border-border bg-surface p-2 transition-all duration-300 ease-in-out 2xl:flex",
 					!isOpen ? "hidden" : "hidden 2xl:flex",
 				)}
 			>
 				<Sidebar />
 			</div>
-			<div className={cn("flex-1 min-h-dvh font-normal overflow-auto")}>
+			<div className={cn("min-w-0 flex-1 min-h-dvh overflow-auto font-normal")}>
 				<Outlet />
 			</div>
 		</div>

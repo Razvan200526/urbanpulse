@@ -103,6 +103,8 @@ mock.module("@heroui/react", () => {
 		),
 		Separator: () => <hr />,
 		Toast,
+		cn: (...classes: Array<string | false | null | undefined>) =>
+			classes.filter(Boolean).join(" "),
 	};
 });
 
@@ -158,9 +160,7 @@ describe("SettingsPage", () => {
 	test("saves quiet hours with the current defaults", async () => {
 		renderToStaticMarkup(<SettingsPage />);
 
-		const saveButton = buttonProps.find(
-			(props) => props.children === "Save quiet hours",
-		);
+		const saveButton = buttonProps.find((props) => props.children === "Save");
 		await saveButton?.onPress?.();
 
 		expect(quietHoursCalls).toEqual([

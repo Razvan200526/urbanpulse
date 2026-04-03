@@ -5,7 +5,7 @@ export const pulseRequestSchema = z.object({
 	userId: z.string(),
 	type: z.enum(PulseEnum).optional().default(PulseEnum.Emergency),
 	urgency: z.enum(UrgencyEnum),
-	title: z.string().min(1).max(30).trim(),
+	title: z.string().min(1).max(100).trim(),
 	description: z.string().max(500).trim().optional().or(z.literal("")),
 	position: z.object({
 		x: z.number().min(-180).max(180),

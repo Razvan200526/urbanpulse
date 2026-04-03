@@ -5,12 +5,13 @@ import {
 	InputName,
 	type InputNameRefType,
 } from "@client/components/input/InputName";
+import { ResponsiveChoiceField } from "@client/components/input/ResponsiveChoiceField";
 import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
-import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
-import { H3, Label } from "@client/components/typography";
+import { type TabItemType } from "@client/components/tabs/Tabs";
+import { H3 } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
-import { Separator, Toast, Tooltip } from "@heroui/react";
+import { Toast, Tooltip } from "@heroui/react";
 import { PulseEnum, UrgencyEnum } from "@shared/types";
 import { isBioValid } from "@shared/validators/isBioValid";
 import { isNameValid } from "@shared/validators/isNameValid";
@@ -116,36 +117,26 @@ export const CreatePulseModal = ({
 			}
 		>
 			<div className="p-4 flex flex-col space-y-5">
-				<Separator variant="tertiary" />
+				<ResponsiveChoiceField
+					label="Pulse Type"
+					items={pulseTypeItems}
+					selectedKey={pulseType}
+					onSelectionChange={(key) => setPulseType(key as PulseEnum)}
+				/>
 
-				<div className="flex flex-col gap-2">
-					<Label className="text-accent font-semibold text-sm">
-						Pulse Type
-					</Label>
-					<Tabs
-						className="flex items-start"
-						items={pulseTypeItems}
-						selectedKey={pulseType}
-						onSelectionChange={(key) => setPulseType(key as PulseEnum)}
-					/>
-				</div>
-
-				<div className="flex flex-col gap-2">
-					<Label className="text-accent font-semibold text-sm">Urgency</Label>
-					<Tabs
-						className="flex items-start"
-						items={urgencyItems}
-						selectedKey={urgency}
-						onSelectionChange={(key) => setUrgency(key as UrgencyEnum)}
-					/>
-				</div>
+				<ResponsiveChoiceField
+					label="Urgency"
+					items={urgencyItems}
+					selectedKey={urgency}
+					onSelectionChange={(key) => setUrgency(key as UrgencyEnum)}
+				/>
 
 				<InputName
 					ref={titleRef}
 					showIcon={false}
 					label="Pulse name"
 					placeholder="My pulse..."
-					maxLength={20}
+					maxLength={100}
 					initialValue={emergencyLaunch ? "Emergency need help" : ""}
 				/>
 

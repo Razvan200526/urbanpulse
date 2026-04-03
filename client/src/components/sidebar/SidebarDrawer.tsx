@@ -10,7 +10,7 @@ export const SidebarDrawer = () => {
 		<>
 			<div
 				className={cn(
-					"flex-col items-center gap-4 border-r border-border p-2 bg-surface shrink-0",
+					"flex h-dvh min-h-dvh shrink-0 flex-col items-center gap-4 border-r border-border bg-surface p-2",
 					!isOpen ? "flex" : "flex 2xl:hidden",
 				)}
 			>
@@ -29,7 +29,7 @@ export const SidebarDrawer = () => {
 					</Tooltip.Content>
 				</Tooltip>
 
-				<div className="flex flex-col items-center gap-8 h-full">
+				<div className="flex h-full min-h-0 w-full flex-col items-center gap-8">
 					<SidebarMinimize onOpen={open} />
 				</div>
 			</div>
@@ -39,8 +39,8 @@ export const SidebarDrawer = () => {
 					variant="opaque"
 					onOpenChange={onOpenChange}
 				>
-					<Drawer.Content className="w-72" placement="left">
-						<Drawer.Dialog className="bg-surface rounded-none h-full flex flex-col gap-8 p-2 border-r border-border">
+					<Drawer.Content className="w-72 max-w-[85vw]" placement="left">
+						<Drawer.Dialog className="flex h-dvh flex-col gap-8 rounded-none border-r border-border bg-surface p-2">
 							<Sidebar />
 						</Drawer.Dialog>
 					</Drawer.Content>

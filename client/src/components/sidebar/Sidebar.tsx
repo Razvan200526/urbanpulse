@@ -5,7 +5,7 @@ import { NavMenu } from "./NavMenu";
 
 export const Sidebar = () => {
 	return (
-		<>
+		<div className="flex h-full min-h-0 flex-col gap-4">
 			<Header />
 
 			<Separator className="p-0 m-0 w-full bg-accent" />
@@ -13,6 +13,6 @@ export const Sidebar = () => {
 			<Separator className="p-0 m-0 w-full bg-accent" />
 
 			<UserProfile />
-		</>
+		</div>
 	);
 };

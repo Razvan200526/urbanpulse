@@ -203,6 +203,8 @@ mock.module("@heroui/react", () => {
 		Table,
 		Toast,
 		Tooltip,
+		cn: (...classes: Array<string | false | null | undefined>) =>
+			classes.filter(Boolean).join(" "),
 	};
 });
 

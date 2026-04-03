@@ -27,34 +27,35 @@ export const DashboardPages = () => {
 	};
 
 	return (
-		<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden">
+		<div className="flex h-screen flex-col bg-surface overflow-y-scroll overscroll-y-contain">
 			<Header title="Dashboard" />
 			<Separator />
 
-			<div>
-				<div className="p-6 space-y-8">
+			<div className="min-h-0 flex-1 h-full">
+				<div className="space-y-6 p-4 pb-24 sm:space-y-8 sm:p-6 sm:pb-10">
 					<SafetyCheckInBanner
 						lat={coords?.lat}
 						lon={coords?.long}
 						geoReady={geoReady}
 					/>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
 						{stats.map((stat) => (
 							<StatsCard key={stat.title} stat={stat} />
 						))}
 					</div>
 
-					<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+					<div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
 						<Card className="lg:col-span-2 shadow-none border border-border bg-surface/50">
-							<Card.Header className="flex flex-row items-center justify-between">
-								<div>
+							<Card.Header className="flex flex-col gap-3 border-b border-border/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+								<div className="min-w-0">
 									<Card.Title>City Activity Overview</Card.Title>
 									<Card.Description>
 										Real activity from the last 7 days
 									</Card.Description>
 								</div>
-								<div className="flex gap-2">
+								<div className="flex w-full gap-2 sm:w-auto sm:justify-end">
 									<Button
+										className="w-full sm:w-auto"
 										size="sm"
 										variant="primary"
 										isPending={isFetching}
@@ -65,13 +66,12 @@ export const DashboardPages = () => {
 									</Button>
 								</div>
 							</Card.Header>
-							<Card.Content className="flex items-center justify-center border-t border-border/10">
+							<Card.Content className="flex min-h-[260px] items-center justify-center p-3 sm:min-h-[320px] sm:p-4">
 								<Chart data={overview?.chart ?? []} />
 							</Card.Content>
-							<Separator />
 						</Card>
 
-						<div className="space-y-6 max-h-full">
+						<div className="space-y-4 lg:space-y-6">
 							<NeighborhoodPulseFeed />
 						</div>
 					</div>

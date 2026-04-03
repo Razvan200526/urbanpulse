@@ -159,6 +159,8 @@ mock.module("@heroui/react", () => {
 		),
 		Separator: () => <hr />,
 		Toast,
+		cn: (...classes: Array<string | false | null | undefined>) =>
+			classes.filter(Boolean).join(" "),
 	};
 });
 
@@ -187,8 +189,8 @@ describe("AdminPage", () => {
 
 		const markup = renderToStaticMarkup(<AdminPage />);
 
-		expect(markup).toContain("Admin access required");
-		expect(markup).toContain("admin");
+		expect(markup).toContain("restricted to administrators only");
+		expect(markup).toContain("Moderation");
 	});
 
 	test("renders the overview metrics, recent activity, and moderation queue", () => {
