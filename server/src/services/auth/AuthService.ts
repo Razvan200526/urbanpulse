@@ -8,6 +8,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, openAPI } from "better-auth/plugins";
 import { db } from "../../db";
 import { account, session, user, verification } from "../../db/schema";
+import { getAuthCookieAttributes } from "./getAuthCookieAttributes";
 import { signUpPlugin } from "./plugins/signUpPlugin";
 export const auth = betterAuth({
 	appName: "UrbanPulse",
@@ -79,12 +80,7 @@ export const auth = betterAuth({
 		},
 	},
 	advanced: {
-		defaultCookieAttributes: {
-			httpOnly: true,
-			secure: Bun.env.NODE_ENV === "production",
-			sameSite: Bun.env.NODE_ENV === "production" ? "none" : "lax",
-			partitioned: Bun.env.NODE_ENV === "production",
-		},
+		defaultCookieAttributes: getAuthCookieAttributes(Bun.env.NODE_ENV),
 	},
 	baseURL: Bun.env.BETTER_AUTH_URL,
 	trustedOrigins: getAllowedOrigins(),
@@ -105,9 +101,6 @@ export const auth = betterAuth({
 			clientId: Bun.env.GOOGLE_CLIENT_ID,
 			clientSecret: Bun.env.GOOGLE_CLIENT_SECRET,
 		},
-	},
-	oauthConfig: {
-		storeStateStrategyCookie: "cookie",
 	},
 	emailAndPassword: {
 		enabled: true,
