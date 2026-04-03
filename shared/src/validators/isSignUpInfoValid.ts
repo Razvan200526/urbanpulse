@@ -1,5 +1,5 @@
-import { bioSchema } from "@shared/validators/isBioValid";
 import { PASSWORD_REGEX } from "@shared/utils/constants";
+import { bioSchema } from "@shared/validators/isBioValid";
 import * as z from "zod";
 
 export const signUpNameSchema = z.string().trim().min(1).max(100);
