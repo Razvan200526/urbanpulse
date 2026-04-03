@@ -36,8 +36,8 @@ export function HelpOfferSnackbar() {
 			role="status"
 		>
 			<div className="flex gap-3 min-w-0">
-				<div className="shrink-0 rounded-full bg-accent-soft p-2 text-accent">
-					<HandHeart className="size-5" />
+				<div className="shrink-0">
+					<HandHeart className="size-4 text-accent" />
 				</div>
 				<div className="min-w-0">
 					<p className="text-sm font-semibold text-foreground">Help offered</p>

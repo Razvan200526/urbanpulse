@@ -106,6 +106,9 @@ export const auth = betterAuth({
 			clientSecret: Bun.env.GOOGLE_CLIENT_SECRET,
 		},
 	},
+	oauthConfig: {
+		storeStateStrategyCookie: "cookie",
+	},
 	emailAndPassword: {
 		enabled: true,
 		password: {
