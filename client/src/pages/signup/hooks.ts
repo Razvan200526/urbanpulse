@@ -1,5 +1,5 @@
 import { authQueryKey, fetchAuthSession } from "@client/hooks/useAuth";
-import { authClient, hono, queryClient } from "@client/main";
+import { authClient, hono, queryClient } from "@client/lib/api/client";
 import { Toast } from "@heroui/react";
 import { isSignUpInfoValid } from "@shared/validators/isSignUpInfoValid";
 import { useMutation } from "@tanstack/react-query";

@@ -1,4 +1,4 @@
-import { hono, queryClient } from "@client/main";
+import { hono, queryClient } from "@client/lib/api/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 type SuccessResponse<T> = {

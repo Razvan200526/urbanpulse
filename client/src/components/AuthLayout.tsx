@@ -16,7 +16,7 @@ export const AuthLayout = () => {
 	const { theme } = useThemeStore();
 	const { isOpen } = useAppSidebarStore();
 
-	useNotifications(user?.user.id);
+	useNotifications(user?.user.id || "");
 	useLocationSync();
 
 	useEffect(() => {

@@ -1,4 +1,4 @@
-import { hono } from "@client/main";
+import { hono } from "@client/lib/api/client";
 import { useQuery } from "@tanstack/react-query";
 
 type AdminOverviewData = {

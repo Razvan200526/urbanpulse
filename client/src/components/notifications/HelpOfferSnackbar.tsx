@@ -49,7 +49,7 @@ export function HelpOfferSnackbar() {
 			<div className="flex items-center justify-end gap-2 shrink-0">
 				<Button
 					size="sm"
-					variant="secondary"
+					variant="danger-soft"
 					onPress={dismiss}
 					isDisabled={acceptMutation.isPending}
 					startContent={<X className="size-4" />}
@@ -58,9 +58,9 @@ export function HelpOfferSnackbar() {
 				</Button>
 				<Button
 					size="sm"
-					variant="primary"
 					onPress={onAccept}
 					isPending={acceptMutation.isPending}
+					className="bg-surface border border-success text-success transition-colors duration-150 ease-in hover:bg-success/10"
 				>
 					Accept
 				</Button>

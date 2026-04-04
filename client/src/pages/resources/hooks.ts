@@ -1,4 +1,4 @@
-import { hono, queryClient } from "@client/main";
+import { hono, queryClient } from "@client/lib/api/client";
 import type { ClientUserType } from "@client/utils/types";
 import { Toast } from "@heroui/react";
 import type { FilterResourceType } from "@shared/types";

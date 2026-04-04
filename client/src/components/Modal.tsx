@@ -75,8 +75,8 @@ export const Modal = (props: ModalPropsType) => {
 							className={cn(
 								"relative overflow-hidden border border-border-secondary bg-surface shadow-2xl",
 								isMobile
-									? "max-h-[88dvh] w-full rounded-t-[2rem] border-x-0 border-b-0"
-									: "mx-4 w-full max-w-3xl rounded-[1.75rem]",
+									? "max-h-[88dvh] w-full rounded-t-sm border-x-0 border-b-0"
+									: "mx-4 w-full max-w-3xl rounded-sm",
 							)}
 						>
 							{header && (

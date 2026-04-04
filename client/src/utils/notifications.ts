@@ -1,70 +1,89 @@
-import type { ClientPulseType, ClientUserType } from "./types";
+import { z } from "zod";
+import { clientPulseSchema, clientUserSchema, geoPointSchema } from "./types";
 
-export type NotificationPayload = Record<string, unknown> | null;
+export const notificationPayloadSchema = z
+	.record(z.string(), z.unknown())
+	.nullable();
+export type NotificationPayload = z.infer<typeof notificationPayloadSchema>;
 
-export type NotificationActor = Pick<
-	ClientUserType,
-	"id" | "name" | "email" | "image"
+export const notificationActorSchema = clientUserSchema.pick({
+	id: true,
+	name: true,
+	email: true,
+	image: true,
+});
+export type NotificationActor = z.infer<typeof notificationActorSchema>;
+
+export const pulseResponseNotificationPayloadSchema = z.object({
+	pulseId: z.string(),
+	responseId: z.string(),
+	pulseTitle: z.string().optional(),
+	responderId: z.string().optional(),
+	responderName: z.string().optional(),
+	note: z.string().nullable().optional(),
+	isActionable: z.boolean().optional(),
+});
+export type PulseResponseNotificationPayload = z.infer<
+	typeof pulseResponseNotificationPayloadSchema
 >;
 
-export type PulseResponseNotificationPayload = {
-	pulseId: string;
-	responseId: string;
-	pulseTitle?: string;
-	responderId?: string;
-	responderName?: string;
-	note?: string | null;
-};
+export const heroAlertNotificationPayloadSchema = z.object({
+	pulseId: z.string(),
+	type: z.string().optional(),
+	description: z.string().nullable().optional(),
+	pulseTitle: z.string().optional(),
+	matchedTags: z.array(z.string()).optional(),
+	distanceMeters: z.number().optional(),
+	usedLiveLocation: z.boolean().optional(),
+	quietHoursBypassed: z.boolean().optional(),
+	conversationId: z.string().optional(),
+	pulse: clientPulseSchema.optional(),
+});
+export type HeroAlertNotificationPayload = z.infer<
+	typeof heroAlertNotificationPayloadSchema
+>;
 
-export type HeroAlertNotificationPayload = {
-	pulseId: string;
-	type?: string;
-	description?: string | null;
-	pulseTitle?: string;
-	matchedTags?: string[];
-	distanceMeters?: number;
-	usedLiveLocation?: boolean;
-	quietHoursBypassed?: boolean;
-	conversationId?: string;
-	pulse?: ClientPulseType;
-};
+export const pulseUpdatedNotificationPayloadSchema = z.object({
+	pulseId: z.string(),
+	status: z.string().optional(),
+	isResolved: z.boolean().optional(),
+	type: z.string().optional(),
+	title: z.string().optional(),
+	location: geoPointSchema.optional(),
+	pulse: clientPulseSchema.optional(),
+});
+export type PulseUpdatedNotificationPayload = z.infer<
+	typeof pulseUpdatedNotificationPayloadSchema
+>;
 
-export type PulseUpdatedNotificationPayload = {
-	pulseId: string;
-	status?: string;
-	isResolved?: boolean;
-	type?: string;
-	title?: string;
-	location?: { x: number; y: number };
-	pulse?: ClientPulseType;
-};
+export const pulseResponseAcceptedNotificationPayloadSchema = z.object({
+	pulseId: z.string(),
+	responseId: z.string(),
+	pulseTitle: z.string().optional(),
+	ownerName: z.string().optional(),
+	conversationId: z.string().nullable().optional(),
+});
+export type PulseResponseAcceptedNotificationPayload = z.infer<
+	typeof pulseResponseAcceptedNotificationPayloadSchema
+>;
 
-export type PulseResponseAcceptedNotificationPayload = {
-	pulseId: string;
-	responseId: string;
-	pulseTitle?: string;
-	ownerName?: string;
-	conversationId?: string | null;
-};
+export const notificationListItemSchema = z.object({
+	notification: z
+		.object({
+			id: z.string(),
+			userId: z.string(),
+			type: z.string(),
+			payload: notificationPayloadSchema,
+			createdAt: z.string(),
+		})
+		.nullable(),
+	user: notificationActorSchema.nullable(),
+});
+export type NotificationListItem = z.infer<typeof notificationListItemSchema>;
 
-export type NotificationListItem = {
-	notification: {
-		id: string;
-		userId: string;
-		type: string;
-		payload: NotificationPayload;
-		createdAt: string;
-	} | null;
-	user: NotificationActor | null;
-};
-
-export type NotificationsResponse = {
-	success: boolean;
-	message: string;
-	data: {
-		res: NotificationListItem[];
-	} | null;
-};
+export const notificationsPayloadSchema = z.object({
+	res: z.array(notificationListItemSchema),
+});
 
 function isRecord(
 	value: NotificationPayload,
@@ -167,8 +186,10 @@ export function getPulseResponseActionPayload(
 		typeof payload.pulseId === "string" ? payload.pulseId : undefined;
 	const responseId =
 		typeof payload.responseId === "string" ? payload.responseId : undefined;
+	const isActionable =
+		payload.isActionable === undefined ? true : payload.isActionable === true;
 
-	if (!pulseId || !responseId) {
+	if (!pulseId || !responseId || !isActionable) {
 		return null;
 	}
 

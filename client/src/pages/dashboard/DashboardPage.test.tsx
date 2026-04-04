@@ -25,7 +25,7 @@ mock.module("react-router", () => ({
 	},
 }));
 
-mock.module("@client/main", () => ({
+mock.module("@client/lib/api/client", () => ({
 	queryClient: {
 		invalidateQueries: (payload: unknown) => {
 			invalidateCalls.push(payload);

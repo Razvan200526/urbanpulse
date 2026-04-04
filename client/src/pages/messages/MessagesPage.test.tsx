@@ -92,8 +92,11 @@ describe("MessagesPage", () => {
 	test("renders the empty inbox state", () => {
 		const markup = renderToStaticMarkup(<MessagesPage />);
 
-		expect(markup).toContain("Coordination inbox");
-		expect(markup).toContain("No conversations yet.");
+		expect(markup).toContain("Your DM&#x27;s");
+		expect(markup).toContain(
+			"No conversations yet. Accepted helpers and direct outreach will show up here.",
+		);
+		expect(markup).toContain("Select a conversation to start coordinating.");
 	});
 
 	test("renders the selected conversation thread", () => {

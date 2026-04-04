@@ -1,4 +1,4 @@
-import { authClient } from "@client/main";
+import { authClient } from "@client/lib/api/client";
 import { Toast } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 

@@ -15,6 +15,10 @@ const rejectCalls: Array<unknown> = [];
 const toastSuccessCalls: string[] = [];
 const toastDangerCalls: string[] = [];
 
+mock.module("react-router", () => ({
+	useNavigate: () => () => {},
+}));
+
 mock.module("@client/hooks/useAuth", () => ({
 	useAuth: () => ({
 		data: alertsState.user,
@@ -273,7 +277,7 @@ describe("AlertsPage", () => {
 		expect(markup).toContain("Alerts");
 		expect(markup).toContain("Ana");
 		expect(markup).toContain("Help offer");
-		expect(markup).toContain("Pulse nearby");
+		expect(markup).toContain("Emergency");
 		expect(markup).toContain("Alert Details");
 
 		const acceptButton = buttonProps.find(

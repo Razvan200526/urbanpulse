@@ -101,12 +101,45 @@ mock.module("@client/hooks/useModeration", () => ({
 	useAdminReports: () => ({
 		data: adminState.reports,
 	}),
+	useAdminDuplicatePulses: () => ({
+		data: [],
+	}),
+	useAdminUsers: () => ({
+		data: [],
+	}),
+	useAdminUserSessions: () => ({
+		data: [],
+	}),
 	useReviewReport: () => ({
 		isPending: false,
 		mutate: (payload: unknown, options?: { onSuccess?: () => void }) => {
 			mutateCalls.push(payload);
 			options?.onSuccess?.();
 		},
+	}),
+	useModeratePulse: () => ({
+		isPending: false,
+		mutate: () => {},
+	}),
+	useMergePulse: () => ({
+		isPending: false,
+		mutate: () => {},
+	}),
+	useAdminSetRole: () => ({
+		isPending: false,
+		mutate: () => {},
+	}),
+	useAdminBanUser: () => ({
+		isPending: false,
+		mutate: () => {},
+	}),
+	useAdminUnbanUser: () => ({
+		isPending: false,
+		mutate: () => {},
+	}),
+	useAdminRevokeUserSession: () => ({
+		isPending: false,
+		mutate: () => {},
 	}),
 }));
 
@@ -210,17 +243,17 @@ describe("AdminPage", () => {
 	test("wires moderation actions for pending reports", () => {
 		renderToStaticMarkup(<AdminPage />);
 
-		const resolveDismissButton = buttonProps.find(
-			(props) => labelOf(props.children) === "Resolve and dismiss pulse",
+		const removePulseButton = buttonProps.find(
+			(props) => labelOf(props.children) === "Remove pulse",
 		);
 		const dismissButton = buttonProps.find(
 			(props) => labelOf(props.children) === "Dismiss report",
 		);
 		const keepPulseButton = buttonProps.find(
-			(props) => labelOf(props.children) === "Resolve and keep pulse",
+			(props) => labelOf(props.children) === "Keep pulse",
 		);
 
-		resolveDismissButton?.onPress?.();
+		removePulseButton?.onPress?.();
 		dismissButton?.onPress?.();
 		keepPulseButton?.onPress?.();
 
@@ -229,21 +262,24 @@ describe("AdminPage", () => {
 				reportId: "report-queue-1",
 				status: "RESOLVED",
 				pulseStatus: "DISMISSED",
+				moderationNote: "Dismissed after moderator review",
 			},
 			{
 				reportId: "report-queue-1",
 				status: "DISMISSED",
+				moderationNote: "Report dismissed by moderator",
 			},
 			{
 				reportId: "report-queue-1",
 				status: "RESOLVED",
 				pulseStatus: "RESOLVED",
+				moderationNote: "Report resolved, pulse retained",
 			},
 		]);
 		expect(toastSuccessCalls).toEqual([
 			"Report resolved",
 			"Report dismissed",
-			"Report resolved and pulse kept visible",
+			"Report resolved and pulse retained",
 		]);
 	});
 });

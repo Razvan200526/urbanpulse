@@ -1,10 +1,16 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { PageLoader } from "@client/components/PageLoader";
+import { H4 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
 import { useAuth } from "@client/hooks/useAuth";
-import { ScrollShadow, Separator, Toast } from "@heroui/react";
-import { MessageSquare, SendHorizonal } from "lucide-react";
+import {
+	Avatar as HeroAvatar,
+	ScrollShadow,
+	Separator,
+	Toast,
+} from "@heroui/react";
+import { MessagesSquareIcon, SendHorizonal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import {
@@ -83,15 +89,12 @@ export const MessagesPage = () => {
 			<Separator />
 			<div className="grid min-h-0 flex-1 gap-4 p-4 xl:grid-cols-[22rem_minmax(0,1fr)]">
 				<div className="min-h-0 overflow-hidden rounded-lg border border-border bg-surface">
-					<div className="border-b border-border px-4 py-4">
-						<h2 className="text-base font-semibold text-foreground">
-							Coordination inbox
-						</h2>
-						<p className="mt-1 text-sm text-muted">
-							Private logistics and pulse coordination threads.
-						</p>
+					<div className="flex items-center gap-2 justify-start border-b border-border px-4 py-4">
+						<MessagesSquareIcon className="text-accent" />
+						<H4>Your DM's</H4>
 					</div>
 					<ScrollShadow
+						hideScrollBar
 						className="h-full max-h-[calc(100dvh-11rem)] p-2"
 						size={8}
 					>
@@ -115,22 +118,21 @@ export const MessagesPage = () => {
 													conversationId: conversation.conversation.id,
 												})
 											}
-											className={`w-full rounded-lg border px-3 py-3 text-left transition-colors ${
+											className={`cursor-pointer w-full rounded border px-3 py-3 text-left transition-colors duration-150 ease-out${
 												active
-													? "border-accent bg-accent/8"
-													: "border-border bg-surface-secondary/35 hover:bg-surface-secondary/55"
+													? "border-accent bg-accent/5"
+													: "border-border bg-surface hover:bg-surface-secondary hover:border-accent"
 											}`}
 										>
 											<div className="flex items-center justify-between gap-3">
-												<div className="min-w-0">
-													<p className="truncate text-sm font-semibold text-foreground">
-														{conversationTitle(conversation, auth?.user.id)}
-													</p>
-													<p className="mt-1 truncate text-xs uppercase tracking-[0.18em] text-muted">
-														{conversation.conversation.type}
+												<div className="min-w-0 flex items-center justify-start gap-2">
+													<HeroAvatar size="sm">
+														<HeroAvatar.Image src={auth?.user.image || ""} />
+													</HeroAvatar>
+													<p className="truncate text-sm text-accent">
+														{auth?.user.name}
 													</p>
 												</div>
-												<MessageSquare className="size-4 shrink-0 text-accent" />
 											</div>
 											<p className="mt-3 truncate text-sm text-muted">
 												{lastMessage || "No messages yet"}
@@ -155,9 +157,9 @@ export const MessagesPage = () => {
 					) : (
 						<>
 							<div className="border-b border-border px-4 py-4">
-								<h2 className="text-base font-semibold text-foreground">
+								<H4 className="text-base font-semibold text-foreground">
 									{conversationTitle(selectedConversation, auth?.user.id)}
-								</h2>
+								</H4>
 								<p className="mt-1 text-sm text-muted">
 									{thread.conversation.type === "PULSE"
 										? "Pulse coordination thread"

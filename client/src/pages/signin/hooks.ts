@@ -1,5 +1,5 @@
 import { authQueryKey, fetchAuthSession } from "@client/hooks/useAuth";
-import { authClient, queryClient } from "@client/main";
+import { authClient, queryClient } from "@client/lib/api/client";
 import { buildAppUrl } from "@client/utils/runtimeOrigin";
 import { Toast } from "@heroui/react";
 import type { SignInInfoType } from "@shared/validators/isSignInInfoValid";

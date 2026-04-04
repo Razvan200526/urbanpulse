@@ -26,28 +26,53 @@ export class Socket {
 	private messageHandlers: Set<MessageHandler> = new Set();
 	private openHandlers: Set<() => void> = new Set();
 	private _isOpen = false;
+	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+	private manuallyClosed = false;
+	private pendingPayloads: Array<SocketPayloadType | Record<string, unknown>> =
+		[];
 
 	constructor(readonly url: string) {
-		this.ws = new WebSocket(this.buildURL(url));
+		this.ws = this.connect();
+	}
 
-		this.ws.onopen = () => {
+	private connect() {
+		const ws = new WebSocket(this.buildURL(this.url));
+
+		ws.onopen = () => {
 			this._isOpen = true;
+			if (this.reconnectTimer) {
+				clearTimeout(this.reconnectTimer);
+				this.reconnectTimer = null;
+			}
+			for (const payload of this.pendingPayloads) {
+				ws.send(JSON.stringify(payload));
+			}
+			this.pendingPayloads = [];
 			for (const handler of this.openHandlers) handler();
 		};
 
-		this.ws.onclose = () => {
+		ws.onclose = () => {
 			this._isOpen = false;
+			if (this.manuallyClosed || this.reconnectTimer) {
+				return;
+			}
+			this.reconnectTimer = setTimeout(() => {
+				this.reconnectTimer = null;
+				this.ws = this.connect();
+			}, 1000);
 		};
 
-		this.ws.onmessage = (event) => {
+		ws.onmessage = (event) => {
 			try {
 				const response = JSON.parse(event.data) as SocketResponseType;
-				if (!response.success) {
+				if (response.success === false) {
 					Toast.toast.danger(response.message || "An error occurred");
 				}
 				for (const handler of this.messageHandlers) handler(response);
 			} catch (_err) {}
 		};
+
+		return ws;
 	}
 
 	/** Whether the underlying WebSocket connection is open. */
@@ -81,16 +106,26 @@ export class Socket {
 	public send(payload: SocketPayloadType): void;
 	public send(raw: Record<string, unknown>): void;
 	public send(payload: SocketPayloadType | Record<string, unknown>): void {
-		const doSend = () => this.ws.send(JSON.stringify(payload));
-
 		if (this.ws.readyState === WebSocket.OPEN) {
-			doSend();
+			this.ws.send(JSON.stringify(payload));
 		} else {
-			this.ws.addEventListener("open", doSend, { once: true });
+			this.pendingPayloads.push(payload);
+			if (
+				this.ws.readyState === WebSocket.CLOSED &&
+				!this.manuallyClosed &&
+				!this.reconnectTimer
+			) {
+				this.ws = this.connect();
+			}
 		}
 	}
 
 	public close(code?: number, reason?: string): void {
+		this.manuallyClosed = true;
+		if (this.reconnectTimer) {
+			clearTimeout(this.reconnectTimer);
+			this.reconnectTimer = null;
+		}
 		if (
 			this.ws.readyState === WebSocket.OPEN ||
 			this.ws.readyState === WebSocket.CONNECTING

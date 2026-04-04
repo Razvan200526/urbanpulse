@@ -55,6 +55,18 @@ mock.module("@client/hooks/useProfileSettings", () => ({
 		},
 		isPending: false,
 	}),
+	useUpdateQuietHours: () => ({
+		mutateAsync: async () => {},
+		isPending: false,
+	}),
+	useUpdateAlertPreferences: () => ({
+		mutateAsync: async () => {},
+		isPending: false,
+	}),
+	useDeleteAccount: () => ({
+		mutateAsync: async () => {},
+		isPending: false,
+	}),
 }));
 
 mock.module("@client/pages/resources/hooks", () => ({

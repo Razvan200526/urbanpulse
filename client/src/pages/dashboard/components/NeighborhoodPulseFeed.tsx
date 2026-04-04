@@ -2,7 +2,7 @@ import { Button } from "@client/components/Button/Button";
 import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
-import { queryClient } from "@client/main";
+import { queryClient } from "@client/lib/api/client";
 import { useRetrievePulses } from "@client/pages/map/hooks";
 import { Card, ScrollShadow } from "@heroui/react";
 import { PulseEnum, PulseStatusEnum, UrgencyEnum } from "@shared/types";
@@ -56,7 +56,9 @@ export function NeighborhoodPulseFeed() {
 	} = useRetrievePulses(retrievePayload, enabled);
 
 	const sorted = useMemo(() => {
-		const raw = pulsesRes?.data ?? [];
+		const raw = (pulsesRes?.data ?? []).map((pulse) => {
+			return { ...pulse, createdAt: new Date(pulse.createdAt) };
+		});
 		return sortPulsesForFeed(raw);
 	}, [pulsesRes?.data]);
 

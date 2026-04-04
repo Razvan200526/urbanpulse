@@ -3,7 +3,7 @@ import { Header } from "@client/components/Header";
 import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { useDashboardOverview } from "@client/hooks/useDashboardOverview";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
-import { queryClient } from "@client/main";
+import { queryClient } from "@client/lib/api/client";
 import { Card, Separator } from "@heroui/react";
 import { Chart } from "./components/Chart";
 import { getDashboardStats } from "./components/dashboardStats";

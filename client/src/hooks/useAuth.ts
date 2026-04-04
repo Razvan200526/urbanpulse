@@ -1,4 +1,4 @@
-import { authClient } from "@client/main";
+import { authClient } from "@client/lib/api/client";
 import { useQuery } from "@tanstack/react-query";
 
 export const authQueryKey = ["auth"] as const;

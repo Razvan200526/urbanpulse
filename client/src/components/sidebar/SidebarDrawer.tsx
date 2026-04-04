@@ -1,4 +1,5 @@
-import { cn, Drawer, Tooltip } from "@heroui/react";
+import { AppDrawer } from "@client/components/AppDrawer";
+import { cn, Tooltip } from "@heroui/react";
 import { Button } from "../Button/Button";
 import { MenuIcon } from "../icons/MenuIcon";
 import { Sidebar } from "./Sidebar";
@@ -33,19 +34,19 @@ export const SidebarDrawer = () => {
 					<SidebarMinimize onOpen={open} />
 				</div>
 			</div>
-			<Drawer>
-				<Drawer.Backdrop
-					isOpen={isOpen}
-					variant="opaque"
-					onOpenChange={onOpenChange}
-				>
-					<Drawer.Content className="w-72 max-w-[85vw]" placement="left">
-						<Drawer.Dialog className="flex h-dvh flex-col gap-8 rounded-none border-r border-border bg-surface p-2">
-							<Sidebar />
-						</Drawer.Dialog>
-					</Drawer.Content>
-				</Drawer.Backdrop>
-			</Drawer>
+			<AppDrawer
+				isOpen={isOpen}
+				onOpenChange={onOpenChange}
+				backdrop="opaque"
+				placement="left"
+				mobilePlacement="left"
+				contentClassName="w-72 max-w-[85vw]"
+				dialogClassName="gap-8 border-r bg-surface p-2"
+				bodyClassName="p-0"
+				showHandle={false}
+			>
+				<Sidebar />
+			</AppDrawer>
 		</>
 	);
 };
