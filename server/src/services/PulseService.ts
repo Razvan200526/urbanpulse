@@ -17,11 +17,7 @@ import { notificationService } from "@server/services/NotificationService";
 import { requestMatchingAIService } from "@server/services/RequestMatchingAIService";
 import type { Last7DaysPulseCounts } from "@server/services/types";
 import { handleError } from "@server/utils/handleError";
-import {
-	PulseEnum,
-	PulseStatusEnum,
-	PulseUploadStateEnum,
-} from "@shared/types";
+import { PulseStatusEnum, PulseUploadStateEnum } from "@shared/types";
 import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import {
 	type PulseSocketMessageType,
@@ -312,8 +308,8 @@ export class PulseService {
 				this.getPulses({
 					position: payload.position,
 					radius: payload.radius,
-					status: PulseStatusEnum.Active,
-					type: PulseEnum.Emergency,
+					status: payload.status,
+					type: payload.type,
 				}),
 				notificationRepository.getByOptions({
 					userId: viewer.id,
@@ -410,9 +406,7 @@ export class PulseService {
 		}
 
 		await notificationService.broadcastToNearbyUsers(uploadedPulse);
-		if (uploadedPulse.type === PulseEnum.Emergency) {
-			await notificationService.broadcastPulseUpdated(uploadedPulse);
-		}
+		await notificationService.broadcastPulseUpdated(uploadedPulse);
 		const serialized = await this.serializePulseForViewer(
 			uploadedPulse,
 			viewer,

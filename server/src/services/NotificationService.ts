@@ -3,6 +3,7 @@ import {
 	type NotificationRepository,
 	notificationRepository,
 } from "@server/repositories/NotificationRepository";
+import { responseRepository } from "@server/repositories/ResponseRepository";
 import type { NotificationConditionOptions } from "@server/repositories/types";
 import {
 	socketManager,
@@ -17,7 +18,7 @@ import {
 import type { PulseRepsponseParamsType } from "@server/types";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
-import { PulseEnum } from "@shared/types";
+import { ResponseStatusEnum } from "@shared/types";
 import { isNotificationCreateValid } from "@shared/validators/notifications/isValidCreateNotification";
 import { heroAlertMatchingService } from "./HeroAlertMatchingService";
 import { type LocationService, locationService } from "./LocationService";
@@ -34,6 +35,60 @@ export class NotificationService {
 		this.notificationRepo = notificationRepository;
 		this.locationService = locationService;
 		this.notificationFactory = notificationFactory;
+	}
+
+	private async annotateActionableNotifications<
+		T extends {
+			notification: {
+				type?: string | null;
+				payload?: unknown;
+			} | null;
+		},
+	>(items: T[]) {
+		return await Promise.all(
+			items.map(async (item) => {
+				if (item.notification?.type !== "PULSE_RESPONSE") {
+					return item;
+				}
+
+				const payload =
+					item.notification.payload &&
+					typeof item.notification.payload === "object"
+						? (item.notification.payload as Record<string, unknown>)
+						: null;
+				const responseId =
+					payload && typeof payload.responseId === "string"
+						? payload.responseId
+						: null;
+
+				if (!responseId) {
+					return {
+						...item,
+						notification: {
+							...item.notification,
+							payload: {
+								...(payload ?? {}),
+								isActionable: false,
+							},
+						},
+					};
+				}
+
+				const response = await responseRepository.getOne(responseId);
+				const isActionable = response?.status === ResponseStatusEnum.Pending;
+
+				return {
+					...item,
+					notification: {
+						...item.notification,
+						payload: {
+							...(payload ?? {}),
+							isActionable,
+						},
+					},
+				};
+			}),
+		);
 	}
 
 	private toSocketSafePulse(pulse: PulseType) {
@@ -181,11 +236,13 @@ export class NotificationService {
 	async getNotificationsWithUsers(userId?: string) {
 		try {
 			if (userId) {
-				return await this.notificationRepo.getNotificationsWithUsersByUserId(
-					userId,
+				return await this.annotateActionableNotifications(
+					await this.notificationRepo.getNotificationsWithUsersByUserId(userId),
 				);
 			}
-			return await this.notificationRepo.getNotificationsWithUsers();
+			return await this.annotateActionableNotifications(
+				await this.notificationRepo.getNotificationsWithUsers(),
+			);
 		} catch (error) {
 			handleError(error);
 			return [];
@@ -218,6 +275,33 @@ export class NotificationService {
 			});
 			await this.notifyUsers([match.user.id], broadcastData);
 		}
+	}
+
+	private async getPulseLiveRecipients(pulse: PulseType) {
+		const recipients = new Map<UserConnection["ws"], UserConnection>();
+
+		for (const connection of socketManager.getConnectionsForUser(
+			pulse.userId,
+		)) {
+			recipients.set(connection.ws, connection);
+		}
+
+		for (const connection of this.locationService.getNearbyConnections(
+			pulse.position,
+		)) {
+			recipients.set(connection.ws, connection);
+		}
+
+		const heroMatches = await heroAlertMatchingService.matchPulse(pulse);
+		for (const match of heroMatches) {
+			for (const connection of socketManager.getConnectionsForUser(
+				match.user.id,
+			)) {
+				recipients.set(connection.ws, connection);
+			}
+		}
+
+		return Array.from(recipients.values());
 	}
 
 	/**
@@ -278,30 +362,7 @@ export class NotificationService {
 	async broadcastPulseUpdated(pulse: PulseType) {
 		const { position, id, status, isResolved, title, type: pulseKind } = pulse;
 		const serializedPulse = this.toSocketSafePulse(pulse);
-		const recipients = new Map<UserConnection["ws"], UserConnection>();
-
-		for (const connection of socketManager.getConnectionsForUser(
-			pulse.userId,
-		)) {
-			recipients.set(connection.ws, connection);
-		}
-
-		if (pulse.type === PulseEnum.Emergency) {
-			for (const connection of this.locationService.getNearbyConnections(
-				position,
-			)) {
-				recipients.set(connection.ws, connection);
-			}
-		}
-
-		const heroMatches = await heroAlertMatchingService.matchPulse(pulse);
-		for (const match of heroMatches) {
-			for (const connection of socketManager.getConnectionsForUser(
-				match.user.id,
-			)) {
-				recipients.set(connection.ws, connection);
-			}
-		}
+		const recipients = await this.getPulseLiveRecipients(pulse);
 
 		const broadcastData = this.notificationFactory.create({
 			message: "A pulse nearby was updated",
@@ -316,11 +377,7 @@ export class NotificationService {
 			},
 			type: "PULSE_UPDATED",
 		});
-		await this.sendAndSaveData(
-			Array.from(recipients.values()),
-			broadcastData,
-			false,
-		);
+		await this.sendAndSaveData(recipients, broadcastData, false);
 	}
 
 	/**

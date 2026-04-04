@@ -346,6 +346,7 @@ describe("PulseService", () => {
 	test("handles upload-pulse socket requests and broadcasts the uploaded pulse", async () => {
 		const pendingPulse = buildPulse();
 		const uploadedPulse = buildPulse({
+			type: PulseEnum.Skill,
 			pulseUploadState: PulseUploadStateEnum.Uploaded,
 		});
 		const { service } = createServiceWithRepo();
@@ -359,6 +360,10 @@ describe("PulseService", () => {
 			notificationService,
 			"broadcastToNearbyUsers",
 		).mockResolvedValue(undefined);
+		const liveUpdateSpy = spyOn(
+			notificationService,
+			"broadcastPulseUpdated",
+		).mockResolvedValue(undefined);
 		const serializeSpy = spyOn(
 			service,
 			"serializePulseForViewer",
@@ -369,7 +374,7 @@ describe("PulseService", () => {
 				{
 					type: "upload-pulse",
 					payload: {
-						type: PulseEnum.Emergency,
+						type: PulseEnum.Skill,
 						urgency: UrgencyEnum.Urgent,
 						title: "Need help",
 						description: "Nearby assistance needed",
@@ -390,6 +395,7 @@ describe("PulseService", () => {
 			pulseUploadState: PulseUploadStateEnum.Uploaded,
 		});
 		expect(broadcastSpy).toHaveBeenCalledWith(uploadedPulse);
+		expect(liveUpdateSpy).toHaveBeenCalledWith(uploadedPulse);
 		expect(serializeSpy).toHaveBeenCalledWith(
 			uploadedPulse,
 			expect.objectContaining({ id: "user-1" }),
