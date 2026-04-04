@@ -3,6 +3,31 @@ export type ApiResponse = {
 	success: true;
 };
 
+export type GeoPoint = {
+	x: number;
+	y: number;
+};
+
+export type AlertPreferences = {
+	homeLocation: GeoPoint | null;
+	lastKnownLocation: GeoPoint | null;
+	lastKnownLocationUpdatedAt: string | null;
+	heroAlertRadiusMeters: number;
+};
+
+export type HeroAlertPayload = {
+	pulseId: string;
+	type: PulseEnum;
+	description: string | null;
+	location: GeoPoint;
+	matchedTags: string[];
+	distanceMeters: number;
+	usedLiveLocation: boolean;
+	quietHoursBypassed: boolean;
+	pulseTitle?: string;
+	conversationId?: string;
+};
+
 export enum PulseEnum {
 	Emergency = "Emergency",
 	Skill = "Skill",

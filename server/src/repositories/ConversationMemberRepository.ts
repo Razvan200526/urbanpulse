@@ -3,7 +3,7 @@ import {
 	type ConversationMemberType,
 	conversationMember,
 } from "@server/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class ConversationMemberRepository
@@ -19,6 +19,38 @@ export class ConversationMemberRepository
 
 	async getAll(): Promise<ConversationMemberType[]> {
 		return db.select().from(conversationMember);
+	}
+
+	async getByConversationId(
+		conversationId: string,
+	): Promise<ConversationMemberType[]> {
+		return await db
+			.select()
+			.from(conversationMember)
+			.where(eq(conversationMember.conversationId, conversationId as any));
+	}
+
+	async getByUserId(userId: string): Promise<ConversationMemberType[]> {
+		return await db
+			.select()
+			.from(conversationMember)
+			.where(eq(conversationMember.userId, userId));
+	}
+
+	async findByConversationAndUser(
+		conversationId: string,
+		userId: string,
+	): Promise<ConversationMemberType | null> {
+		const [result] = await db
+			.select()
+			.from(conversationMember)
+			.where(
+				and(
+					eq(conversationMember.conversationId, conversationId as any),
+					eq(conversationMember.userId, userId),
+				),
+			);
+		return result || null;
 	}
 
 	async create(

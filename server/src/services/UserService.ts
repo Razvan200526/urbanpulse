@@ -17,6 +17,7 @@ import { logger } from "@server/utils/Logger";
 import { isEmailValid } from "@shared/validators/isEmailValid";
 import type { SignUpInfoType } from "@shared/validators/isSignUpInfoValid";
 import type {
+	AlertPreferencesUpdateType,
 	QuietHoursUpsertType,
 	SkillTagsUpdateType,
 	UserProfileUpdateType,
@@ -33,6 +34,12 @@ type UserProfileView = {
 		days: string[];
 	} | null;
 	skillTags: string[];
+	alertPreferences: {
+		homeLocation: { x: number; y: number } | null;
+		lastKnownLocation: { x: number; y: number } | null;
+		lastKnownLocationUpdatedAt: string | null;
+		heroAlertRadiusMeters: number;
+	};
 };
 
 export class UserService {
@@ -92,6 +99,16 @@ export class UserService {
 		};
 	}
 
+	private formatAlertPreferences(user: UserType) {
+		return {
+			homeLocation: user.homeLocation ?? null,
+			lastKnownLocation: user.lastKnownLocation ?? null,
+			lastKnownLocationUpdatedAt:
+				user.lastKnownLocationUpdatedAt?.toISOString() ?? null,
+			heroAlertRadiusMeters: user.heroAlertRadiusMeters ?? 500,
+		};
+	}
+
 	async getProfile(userId: string): Promise<UserProfileView | null> {
 		const user = await this.userRepo.getOne(userId);
 		if (!user) {
@@ -107,6 +124,7 @@ export class UserService {
 			user,
 			quietHours: this.formatQuietHours(quietHours),
 			skillTags: skills.map((entry: SkillType) => entry.tag),
+			alertPreferences: this.formatAlertPreferences(user),
 		};
 	}
 
@@ -272,6 +290,39 @@ export class UserService {
 				: await this.quietHoursRepo.create(data);
 
 			return this.formatQuietHours(quietHours);
+		} catch (error) {
+			logger.exception(error as Error);
+			return null;
+		}
+	}
+
+	async updateAlertPreferences(
+		userId: string,
+		payload: AlertPreferencesUpdateType,
+	) {
+		try {
+			const updated = await this.userRepo.update(userId, {
+				homeLocation: payload.homeLocation,
+				heroAlertRadiusMeters: payload.heroAlertRadiusMeters,
+				updatedAt: new Date(),
+			});
+			return this.formatAlertPreferences(updated);
+		} catch (error) {
+			logger.exception(error as Error);
+			return null;
+		}
+	}
+
+	async updateLastKnownLocation(
+		userId: string,
+		location: { x: number; y: number },
+	) {
+		try {
+			return await this.userRepo.update(userId, {
+				lastKnownLocation: location,
+				lastKnownLocationUpdatedAt: new Date(),
+				updatedAt: new Date(),
+			});
 		} catch (error) {
 			logger.exception(error as Error);
 			return null;

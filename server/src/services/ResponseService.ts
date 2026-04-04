@@ -4,6 +4,7 @@ import {
 	type ResponseRepository,
 	responseRepository,
 } from "@server/repositories/ResponseRepository";
+import { messagingService } from "@server/services/MessagingService";
 import { handleError } from "@server/utils/handleError";
 import { ResponseStatusEnum } from "@shared/types";
 import { isResponseRequestValid } from "@shared/validators/isResponseValid";
@@ -45,6 +46,7 @@ export class ResponseService {
 		accepted: PulseResponseType;
 		pulseTitle: string;
 		responderId: string;
+		conversationId: string | null;
 	} | null> {
 		try {
 			const pulse = await pulseRepository.getOne(pulseId);
@@ -61,10 +63,16 @@ export class ResponseService {
 				status: ResponseStatusEnum.Accepted,
 			});
 			await this.responseRepo.declineOtherPendingForPulse(pulseId, responseId);
+			const coordinationConversation =
+				await messagingService.ensurePulseConversation(pulseId, [
+					ownerUserId,
+					row.responderId,
+				]);
 			return {
 				accepted,
 				pulseTitle: pulse.title,
 				responderId: row.responderId,
+				conversationId: coordinationConversation?.id ?? null,
 			};
 		} catch (error) {
 			handleError(error);

@@ -1,12 +1,19 @@
 import { hono, queryClient } from "@client/main";
+import type {
+	HeroAlertNotificationPayload,
+	PulseUpdatedNotificationPayload,
+} from "@client/utils/notifications";
+import type { ClientPulseType } from "@client/utils/types";
 import { Toast } from "@heroui/react";
-import type { PulseType } from "@server/db/schema";
+import { PulseStatusEnum } from "@shared/types";
 import type { PulseRequestType } from "@shared/validators/pulses/isPulseRequestValid";
 import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import type { PulseSocketMessageType } from "@shared/validators/pulses/isPulseSocketMessageValid";
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { backend } from "client/sdk/backend";
 import posthog from "posthog-js";
+import { useEffect } from "react";
 
 type PulseSocketResponse<T> = {
 	success: boolean;
@@ -19,6 +26,12 @@ type UploadPulseSocketMessage = Extract<
 	{ type: "upload-pulse" }
 >;
 
+type PulseDetailResponse = {
+	success: boolean;
+	message: string;
+	data: ClientPulseType | null;
+};
+
 type PulseResponseMutationInput = {
 	pulseId: string;
 	responseId: string;
@@ -27,6 +40,11 @@ type PulseResponseMutationInput = {
 type PulseResponseMutationResult = {
 	success: boolean;
 	message?: string;
+};
+
+type NotificationSocketData = {
+	type: string;
+	payload: HeroAlertNotificationPayload | PulseUpdatedNotificationPayload;
 };
 
 const sendPulseSocketMessage = <T>(message: PulseSocketMessageType) => {
@@ -69,26 +87,134 @@ const sendPulseSocketMessage = <T>(message: PulseSocketMessageType) => {
 export const useCreatePulse = () => {
 	return useMutation({
 		mutationKey: ["pulse", "create"],
-		mutationFn: (pulseData: PulseRequestType) => {
-			return sendPulseSocketMessage<PulseType>({
+		mutationFn: async (pulseData: PulseRequestType) => {
+			const response = await sendPulseSocketMessage<ClientPulseType>({
 				type: "upload-pulse",
 				payload: pulseData,
-			} satisfies UploadPulseSocketMessage).then((response) => {
-				if (!response.success) {
-					Toast.toast.danger(response.message || "Failed to create pulse.");
-					throw new Error(response.message || "Failed to create pulse");
-				}
+			} satisfies UploadPulseSocketMessage);
 
-				queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
-				Toast.toast.success("Pulse created successfully!");
-				posthog.capture("pulse_created", {
-					pulse_type: pulseData.type,
-					urgency: pulseData.urgency,
-				});
-				return response;
+			if (!response.success) {
+				Toast.toast.danger(response.message || "Failed to create pulse.");
+				throw new Error(response.message || "Failed to create pulse");
+			}
+
+			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+			Toast.toast.success("Pulse created successfully!");
+			posthog.capture("pulse_created", {
+				pulse_type: pulseData.type,
+				urgency: pulseData.urgency,
 			});
+
+			return response;
 		},
 	});
+};
+
+export const useRetrievePulseById = (
+	pulseId: string | null | undefined,
+	enabled = true,
+) => {
+	return useQuery<ClientPulseType>({
+		queryKey: ["pulse", "detail", pulseId],
+		enabled: Boolean(pulseId) && enabled,
+		queryFn: async () => {
+			const res = await hono.api.pulse[":id"].$get({
+				param: { id: pulseId as string },
+			});
+			const data = (await res.json()) as PulseDetailResponse;
+			if (!data.success || !data.data) {
+				throw new Error(data.message || "Failed to retrieve pulse");
+			}
+			return data.data;
+		},
+	});
+};
+
+const upsertMapPulse = (
+	oldPulses: ClientPulseType[] | undefined,
+	pulse: ClientPulseType,
+) => {
+	const next = new Map((oldPulses ?? []).map((entry) => [entry.id, entry]));
+
+	if (pulse.status !== PulseStatusEnum.Active || pulse.mergedIntoPulseId) {
+		next.delete(pulse.id);
+		return Array.from(next.values());
+	}
+
+	next.set(pulse.id, pulse);
+	return Array.from(next.values());
+};
+
+const syncPulseInCache = (pulse: ClientPulseType) => {
+	queryClient.setQueryData<ClientPulseType>(
+		["pulse", "detail", pulse.id],
+		pulse,
+	);
+	queryClient.setQueriesData<ClientPulseType[]>(
+		{ queryKey: ["pulse", "map"] },
+		(oldPulses) => upsertMapPulse(oldPulses, pulse),
+	);
+};
+
+export const useRetrieveMapPulses = (
+	data: PulseRetrievePayloadType,
+	enabled = true,
+) => {
+	const query = useQuery<ClientPulseType[]>({
+		queryKey: ["pulse", "map", data],
+		enabled,
+		queryFn: async () => {
+			const response = await sendPulseSocketMessage<ClientPulseType[]>({
+				type: "get-map-pulses",
+				payload: data,
+			});
+
+			if (!response.success) {
+				throw new Error(response.message || "Failed to retrieve map pulses");
+			}
+
+			return response.data;
+		},
+	});
+
+	useEffect(() => {
+		if (!enabled) {
+			return;
+		}
+
+		const unsubscribe = backend.notifications.on<NotificationSocketData>(
+			"message",
+			(response) => {
+				if (!response.success) {
+					return;
+				}
+
+				if (
+					response.channelName !== "notifications:broadcast" &&
+					response.channelName !== "notifications:pulse_updated"
+				) {
+					return;
+				}
+
+				const pulse =
+					response.data.payload &&
+					typeof response.data.payload === "object" &&
+					"pulse" in response.data.payload
+						? (response.data.payload.pulse as ClientPulseType | undefined)
+						: undefined;
+
+				if (!pulse) {
+					return;
+				}
+
+				syncPulseInCache(pulse);
+			},
+		);
+
+		return unsubscribe;
+	}, [enabled]);
+
+	return query;
 };
 
 export const useAcceptHelpOffer = () => {
@@ -126,7 +252,7 @@ export const useRejectHelpOffer = () => {
 			].reject.$post({
 				param: { id: pulseId, responseId },
 			});
-			const data = (await res.json()) as PulseResponseMutationResult;
+			const data = await res.json();
 			if (!data.success) {
 				throw new Error(data.message || "Could not reject offer");
 			}
@@ -184,13 +310,18 @@ export const useUpdatePulse = () => {
 				param: { id: pulseId },
 				json: body,
 			});
-			const data = await res.json();
+			const data = (await res.json()) as {
+				success: boolean;
+				message?: string;
+				data: ClientPulseType;
+			};
 			if (!data.success) {
 				throw new Error(data.message || "Failed to update pulse");
 			}
 			return data.data;
 		},
-		onSuccess: () => {
+		onSuccess: (pulse) => {
+			syncPulseInCache(pulse);
 			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
 		},
 	});
@@ -200,20 +331,20 @@ export const useRetrievePulses = (
 	data: PulseRetrievePayloadType,
 	enabled = true,
 ) => {
-	return useQuery<PulseSocketResponse<PulseType[]>>({
+	return useQuery<PulseSocketResponse<ClientPulseType[]>>({
 		queryKey: ["pulse", "retrieve", data],
 		enabled,
-		queryFn: () => {
-			return sendPulseSocketMessage<PulseType[]>({
+		queryFn: async () => {
+			const response = await sendPulseSocketMessage<ClientPulseType[]>({
 				type: "get-pulses",
 				payload: data,
-			}).then((response) => {
-				if (!response.success) {
-					throw new Error(response.message || "Failed to retrieve pulses");
-				}
-
-				return response;
 			});
+
+			if (!response.success) {
+				throw new Error(response.message || "Failed to retrieve pulses");
+			}
+
+			return response;
 		},
 	});
 };

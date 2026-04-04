@@ -6,8 +6,8 @@ import { SignalIcon } from "@client/components/icons/SignalIcon";
 import { useAuth } from "@client/hooks/useAuth";
 import { useIsMobile } from "@client/hooks/useMediaQuery";
 import { useConfirmPulse, useCreateReport } from "@client/hooks/useModeration";
+import type { ClientPulseType } from "@client/utils/types";
 import { Chip, cn, Drawer, Toast } from "@heroui/react";
-import type { PulseType } from "@server/db/schema";
 import { PulseEnum, PulseStatusEnum } from "@shared/types";
 import { formatDate } from "@shared/utils/formatDate";
 import {
@@ -78,7 +78,7 @@ const STATUS_CONFIG: Record<
 };
 
 interface PulseDrawerProps {
-	pulse: PulseType;
+	pulse: ClientPulseType;
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 }
@@ -238,18 +238,6 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 										</span>
 									</MetaRow>
 								</div>
-								{/*{pulse.imageUrls && (
-								<div>
-									{pulse.imageUrls.map((url, index) => (
-										<img
-											key={index}
-											src={url}
-											alt={`Pulse ${index + 1}`}
-											className="w-full"
-										/>
-									))}
-								</div>
-							)}*/}
 								{pulse.audioUrl && (
 									<CustomPlayer
 										mediaBlobUrl={pulse.audioUrl}
@@ -274,8 +262,10 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 															status: PulseStatusEnum.Resolved,
 														},
 														{
-															onSuccess: () =>
-																Toast.toast.success("Marked as resolved"),
+															onSuccess: () => {
+																Toast.toast.success("Marked as resolved");
+																onOpenChange(false);
+															},
 															onError: (err) =>
 																Toast.toast.danger(
 																	err instanceof Error
@@ -300,8 +290,10 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 															status: PulseStatusEnum.Dismissed,
 														},
 														{
-															onSuccess: () =>
-																Toast.toast.success("Pulse dismissed"),
+															onSuccess: () => {
+																Toast.toast.success("Pulse dismissed");
+																onOpenChange(false);
+															},
 															onError: (err) =>
 																Toast.toast.danger(
 																	err instanceof Error

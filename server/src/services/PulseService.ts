@@ -1,16 +1,27 @@
-import type { PulseType } from "@server/db/schema";
+import type { PulseType, UserType } from "@server/db/schema";
+import { notificationRepository } from "@server/repositories/NotificationRepository";
 import {
 	type PulseRepository,
 	pulseRepository,
 } from "@server/repositories/PulseRepository";
+import {
+	type ResponseRepository,
+	responseRepository,
+} from "@server/repositories/ResponseRepository";
+import { skillRepository } from "@server/repositories/SkillRepository";
 import type {
 	PulseConditionOptions,
 	PulseSearchOptions,
 } from "@server/repositories/types";
 import { notificationService } from "@server/services/NotificationService";
+import { requestMatchingAIService } from "@server/services/RequestMatchingAIService";
 import type { Last7DaysPulseCounts } from "@server/services/types";
 import { handleError } from "@server/utils/handleError";
-import { PulseStatusEnum, PulseUploadStateEnum } from "@shared/types";
+import {
+	PulseEnum,
+	PulseStatusEnum,
+	PulseUploadStateEnum,
+} from "@shared/types";
 import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import {
 	type PulseSocketMessageType,
@@ -24,14 +35,54 @@ type PulseSocketResponse = {
 	data: PulseType | PulseType[] | null;
 };
 
+type PulseViewerContext = Pick<UserType, "id" | "role"> | null;
+
 /**
  * Service for managing Urban Pulse records and retrieving location-based pulses.
  */
 export class PulseService {
 	private pulseRepository: PulseRepository;
+	responseRepository: ResponseRepository;
 
 	constructor() {
 		this.pulseRepository = pulseRepository;
+		this.responseRepository = responseRepository;
+	}
+
+	private extractPulseIdFromNotificationPayload(
+		payload: unknown,
+	): string | null {
+		if (!payload || typeof payload !== "object" || !("pulseId" in payload)) {
+			return null;
+		}
+
+		return typeof payload.pulseId === "string" ? payload.pulseId : null;
+	}
+
+	private dedupePulses(pulses: PulseType[]): PulseType[] {
+		const unique = new Map<string, PulseType>();
+
+		for (const pulse of pulses) {
+			unique.set(pulse.id, pulse);
+		}
+
+		return Array.from(unique.values());
+	}
+
+	async serializePulseForViewer(
+		pulse: PulseType,
+		_viewer: PulseViewerContext,
+	): Promise<PulseType> {
+		return pulse;
+	}
+
+	async serializePulsesForViewer(
+		pulses: PulseType[],
+		viewer: PulseViewerContext,
+	): Promise<PulseType[]> {
+		return Promise.all(
+			pulses.map((pulse) => this.serializePulseForViewer(pulse, viewer)),
+		);
 	}
 
 	/**
@@ -142,7 +193,36 @@ export class PulseService {
 	 */
 	async createPulse(data: Partial<PulseType>): Promise<PulseType | null> {
 		try {
-			return await this.pulseRepository.create(data);
+			const title = data.title?.trim();
+			const description = data.description?.trim() ?? "";
+			let requestedSkillTags = data.requestedSkillTags ?? [];
+			let matchMetadata = data.matchMetadata ?? {};
+
+			if (title) {
+				const allowedTags = await skillRepository.getDistinctTags();
+				const inferred = await requestMatchingAIService.inferSkillTags({
+					title,
+					description,
+					allowedTags,
+				});
+				requestedSkillTags = inferred.tags;
+				matchMetadata = {
+					provider: inferred.provider,
+					model: inferred.model,
+					matchedKeywords: inferred.matchedKeywords,
+					rawSuggestedTags: inferred.rawSuggestedTags ?? [],
+					inferredAt: new Date().toISOString(),
+				};
+			}
+
+			return await this.pulseRepository.create({
+				...data,
+				requestedSkillTags,
+				matchMetadata,
+				isVerified: false,
+				mergedIntoPulseId: null,
+				moderationNote: null,
+			});
 		} catch (error) {
 			handleError(error);
 			return null;
@@ -206,7 +286,7 @@ export class PulseService {
 		verifiedOnly,
 	}: PulseRetrievePayloadType): Promise<PulseType[] | null> {
 		try {
-			return await this.pulseRepository.getByOptions({
+			const pulses = await this.pulseRepository.getByOptions({
 				x: position.x,
 				y: position.y,
 				radius,
@@ -215,13 +295,65 @@ export class PulseService {
 				urgency,
 				isVerified: verifiedOnly ? true : undefined,
 			});
+
+			return pulses.filter((pulse) => !pulse.mergedIntoPulseId);
 		} catch (error) {
 			handleError(error);
 			return null;
 		}
 	}
 
-	async handleSocketMessage(message: unknown): Promise<PulseSocketResponse> {
+	async getMapPulses(
+		viewer: NonNullable<PulseViewerContext>,
+		payload: PulseRetrievePayloadType,
+	): Promise<PulseType[] | null> {
+		try {
+			const [nearbyEmergencies, heroAlerts] = await Promise.all([
+				this.getPulses({
+					position: payload.position,
+					radius: payload.radius,
+					status: PulseStatusEnum.Active,
+					type: PulseEnum.Emergency,
+				}),
+				notificationRepository.getByOptions({
+					userId: viewer.id,
+					type: "HERO_ALERT",
+				}),
+			]);
+
+			const matchedPulseIds = Array.from(
+				new Set(
+					heroAlerts
+						.map((notification) =>
+							this.extractPulseIdFromNotificationPayload(notification.payload),
+						)
+						.filter((pulseId): pulseId is string => Boolean(pulseId)),
+				),
+			);
+
+			const matchedPulses = await Promise.all(
+				matchedPulseIds.map(async (pulseId) => this.getPulseById(pulseId)),
+			);
+
+			return this.dedupePulses([
+				...(nearbyEmergencies ?? []),
+				...matchedPulses.filter(
+					(pulse): pulse is PulseType =>
+						pulse !== null &&
+						!pulse.mergedIntoPulseId &&
+						pulse.status === PulseStatusEnum.Active,
+				),
+			]);
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
+	async handleSocketMessage(
+		message: unknown,
+		viewer: PulseViewerContext,
+	): Promise<PulseSocketResponse> {
 		const result = pulseSocketMessageSchema.safeParse(message);
 		if (!result.success) {
 			return {
@@ -233,16 +365,30 @@ export class PulseService {
 
 		switch (result.data.type) {
 			case "upload-pulse":
-				return this.handleUploadPulseMessage(result.data);
+				return this.handleUploadPulseMessage(result.data, viewer);
 			case "get-pulses":
-				return this.handleGetPulsesMessage(result.data.payload);
+				return this.handleGetPulsesMessage(result.data.payload, viewer);
+			case "get-map-pulses":
+				return this.handleGetMapPulsesMessage(result.data.payload, viewer);
 		}
 	}
 
 	private async handleUploadPulseMessage(
 		message: Extract<PulseSocketMessageType, { type: "upload-pulse" }>,
+		viewer: PulseViewerContext,
 	): Promise<PulseSocketResponse> {
-		const newPulse = await this.createPulse(message.payload);
+		if (!viewer) {
+			return {
+				success: false,
+				message: "Unauthorized",
+				data: null,
+			};
+		}
+
+		const newPulse = await this.createPulse({
+			...message.payload,
+			userId: viewer.id,
+		});
 		if (!newPulse) {
 			return {
 				success: false,
@@ -264,23 +410,68 @@ export class PulseService {
 		}
 
 		await notificationService.broadcastToNearbyUsers(uploadedPulse);
+		if (uploadedPulse.type === PulseEnum.Emergency) {
+			await notificationService.broadcastPulseUpdated(uploadedPulse);
+		}
+		const serialized = await this.serializePulseForViewer(
+			uploadedPulse,
+			viewer,
+		);
 
 		return {
 			success: true,
 			message: "Pulse received",
-			data: uploadedPulse,
+			data: serialized,
 		};
 	}
 
 	private async handleGetPulsesMessage(
 		payload: PulseRetrievePayloadType,
+		viewer: PulseViewerContext,
 	): Promise<PulseSocketResponse> {
+		if (!viewer) {
+			return {
+				success: false,
+				message: "Unauthorized",
+				data: null,
+			};
+		}
+
 		const pulses = await this.getPulses(payload);
+		const serialized = await this.serializePulsesForViewer(
+			pulses ?? [],
+			viewer,
+		);
 
 		return {
 			success: true,
 			message: "Pulses retrieved",
-			data: pulses ?? [],
+			data: serialized,
+		};
+	}
+
+	private async handleGetMapPulsesMessage(
+		payload: PulseRetrievePayloadType,
+		viewer: PulseViewerContext,
+	): Promise<PulseSocketResponse> {
+		if (!viewer) {
+			return {
+				success: false,
+				message: "Unauthorized",
+				data: null,
+			};
+		}
+
+		const pulses = await this.getMapPulses(viewer, payload);
+		const serialized = await this.serializePulsesForViewer(
+			pulses ?? [],
+			viewer,
+		);
+
+		return {
+			success: true,
+			message: "Map pulses retrieved",
+			data: serialized,
 		};
 	}
 }

@@ -79,10 +79,11 @@ export const CreatePulseModal = ({
 			description,
 			type: pulseType,
 			urgency,
-			userId: user.user.id,
 			position: { x: coords.long, y: coords.lat },
 			imageUrls,
-			audioUrl: audioUrlRef.current,
+			...(audioUrlRef.current.trim()
+				? { audioUrl: audioUrlRef.current.trim() }
+				: {}),
 		});
 
 		modalRef.current?.close();

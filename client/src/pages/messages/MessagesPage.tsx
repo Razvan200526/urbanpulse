@@ -1,180 +1,234 @@
+import { Button } from "@client/components/Button/Button";
+import { Header } from "@client/components/Header";
+import { PageLoader } from "@client/components/PageLoader";
+import { Avatar } from "@client/components/user/Avatar";
 import { useAuth } from "@client/hooks/useAuth";
-import { Card, ScrollShadow, Spinner, Table } from "@heroui/react";
-import { formatDate } from "@shared/utils/formatDate";
-import { CheckIcon, XIcon } from "lucide-react";
-import { useRef, useState } from "react";
-import { Button } from "../../components/Button/Button";
-import type { ModalRefType } from "../../components/Modal";
-import { H3 } from "../../components/typography";
-import { Avatar } from "../../components/user/Avatar";
-import { useGetPendingRequests } from "../resources/hooks";
-import type { PendingRequestItem } from "../resources/resourceResponses";
-import { RespondRequestModal } from "./components/RespondRequestModal";
+import { ScrollShadow, Separator, Toast } from "@heroui/react";
+import { MessageSquare, SendHorizonal } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
+import {
+	type ConversationSummary,
+	useConversationList,
+	useConversationThread,
+	useSendConversationMessage,
+} from "./hooks";
 
-export const MessagesPage = () => {
-	const { data: user } = useAuth();
-	const { data: requests, isLoading } = useGetPendingRequests(
-		user?.user.id || "",
+function conversationTitle(
+	conversation: ConversationSummary,
+	currentUserId: string | undefined,
+) {
+	const otherMembers = conversation.members.filter(
+		(member) => member.id !== currentUserId,
 	);
 
-	const modalRef = useRef<ModalRefType>(null);
-	const [selectedAction, setSelectedAction] = useState<{
-		id: string;
-		action: "accept" | "reject";
-	} | null>(null);
+	if (conversation.conversation.type === "PULSE") {
+		return otherMembers.map((member) => member.name).join(", ") || "Pulse team";
+	}
 
-	const handleActionClick = (id: string, action: "accept" | "reject") => {
-		setSelectedAction({ id, action });
-		modalRef.current?.open();
+	return otherMembers[0]?.name || "Direct conversation";
+}
+
+export const MessagesPage = () => {
+	const { data: auth } = useAuth();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const { data: conversations, isPending } = useConversationList();
+	const selectedConversationId = searchParams.get("conversationId");
+	const { data: thread, isPending: isThreadPending } = useConversationThread(
+		selectedConversationId,
+	);
+	const { mutateAsync: sendMessage, isPending: isSending } =
+		useSendConversationMessage();
+	const [draft, setDraft] = useState("");
+
+	const selectedConversation = useMemo(
+		() =>
+			(conversations ?? []).find(
+				(item) => item.conversation.id === selectedConversationId,
+			) ?? null,
+		[conversations, selectedConversationId],
+	);
+
+	useEffect(() => {
+		if (!selectedConversationId && conversations && conversations.length > 0) {
+			setSearchParams({ conversationId: conversations[0].conversation.id });
+		}
+	}, [conversations, selectedConversationId, setSearchParams]);
+
+	const handleSend = async () => {
+		if (!selectedConversationId || !draft.trim()) {
+			return;
+		}
+
+		try {
+			await sendMessage({
+				conversationId: selectedConversationId,
+				content: draft.trim(),
+			});
+			setDraft("");
+		} catch (error) {
+			Toast.toast.danger(
+				error instanceof Error ? error.message : "Failed to send message",
+			);
+		}
 	};
 
+	if (isPending) {
+		return <PageLoader />;
+	}
+
 	return (
-		<div className="min-h-dvh bg-surface">
-			<div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-				<H3>Pending Borrow Requests</H3>
-
-				{isLoading ? (
-					<div className="flex justify-center p-8">
-						<Spinner size="lg" color="current" />
+		<div className="flex h-[calc(100dvh)] w-full flex-col bg-surface">
+			<Header title="Messages" />
+			<Separator />
+			<div className="grid min-h-0 flex-1 gap-4 p-4 xl:grid-cols-[22rem_minmax(0,1fr)]">
+				<div className="min-h-0 overflow-hidden rounded-lg border border-border bg-surface">
+					<div className="border-b border-border px-4 py-4">
+						<h2 className="text-base font-semibold text-foreground">
+							Coordination inbox
+						</h2>
+						<p className="mt-1 text-sm text-muted">
+							Private logistics and pulse coordination threads.
+						</p>
 					</div>
-				) : !requests || requests.length === 0 ? (
-					<div className="rounded-3xl border border-dashed border-border bg-surface-secondary/30 p-8 text-center text-muted">
-						No pending borrow requests right now.
-					</div>
-				) : (
 					<ScrollShadow
-						size={10}
-						hideScrollBar
-						className="max-h-[calc(100dvh-12rem)] rounded-3xl"
+						className="h-full max-h-[calc(100dvh-11rem)] p-2"
+						size={8}
 					>
-						<div className="space-y-3 md:hidden">
-							{requests.map((item: PendingRequestItem) => (
-								<Card
-									key={item.transaction.id}
-									className="border border-border shadow-none"
-								>
-									<Card.Content className="space-y-4 p-4">
-										<div className="space-y-1">
-											<p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">
-												Resource
-											</p>
-											<p className="text-base font-semibold text-foreground">
-												{item.resource?.name || "Unknown Resource"}
-											</p>
-										</div>
-										<div className="flex items-center gap-3">
-											<Avatar user={item.borrower} />
-											<div className="min-w-0">
-												<p className="truncate text-sm font-medium text-foreground">
-													{item.borrower?.name || "Unknown"}
-												</p>
-												<p className="text-xs text-muted">
-													Requested{" "}
-													{formatDate(new Date(item.transaction.startAt))}
-												</p>
+						{!conversations || conversations.length === 0 ? (
+							<div className="flex min-h-56 items-center justify-center rounded-lg border border-dashed border-border px-4 text-sm text-muted">
+								No conversations yet. Accepted helpers and direct outreach will
+								show up here.
+							</div>
+						) : (
+							<div className="space-y-2">
+								{conversations.map((conversation) => {
+									const active =
+										conversation.conversation.id === selectedConversationId;
+									const lastMessage = conversation.lastMessage?.content;
+									return (
+										<button
+											key={conversation.conversation.id}
+											type="button"
+											onClick={() =>
+												setSearchParams({
+													conversationId: conversation.conversation.id,
+												})
+											}
+											className={`w-full rounded-lg border px-3 py-3 text-left transition-colors ${
+												active
+													? "border-accent bg-accent/8"
+													: "border-border bg-surface-secondary/35 hover:bg-surface-secondary/55"
+											}`}
+										>
+											<div className="flex items-center justify-between gap-3">
+												<div className="min-w-0">
+													<p className="truncate text-sm font-semibold text-foreground">
+														{conversationTitle(conversation, auth?.user.id)}
+													</p>
+													<p className="mt-1 truncate text-xs uppercase tracking-[0.18em] text-muted">
+														{conversation.conversation.type}
+													</p>
+												</div>
+												<MessageSquare className="size-4 shrink-0 text-accent" />
 											</div>
-										</div>
-										<div className="flex flex-col gap-2 sm:flex-row">
-											<Button
-												size="sm"
-												variant="danger-soft"
-												className="w-full"
-												onPress={() =>
-													handleActionClick(item.transaction.id, "reject")
-												}
-												startContent={<XIcon className="size-4" />}
-											>
-												Reject
-											</Button>
-											<Button
-												size="sm"
-												variant="primary"
-												className="w-full"
-												onPress={() =>
-													handleActionClick(item.transaction.id, "accept")
-												}
-												startContent={<CheckIcon className="size-4" />}
-											>
-												Accept
-											</Button>
-										</div>
-									</Card.Content>
-								</Card>
-							))}
-						</div>
-
-						<Table
-							aria-label="Borrow requests table"
-							className="mt-1 hidden md:block"
-						>
-							<Table.ScrollContainer>
-								<Table.Content>
-									<Table.Header>
-										<Table.Column>RESOURCE</Table.Column>
-										<Table.Column>BORROWER</Table.Column>
-										<Table.Column>DATE REQUESTED</Table.Column>
-										<Table.Column>ACTIONS</Table.Column>
-									</Table.Header>
-									<Table.Body>
-										{requests.map((item: PendingRequestItem) => (
-											<Table.Row key={item.transaction.id}>
-												<Table.Cell>
-													<div className="font-medium">
-														{item.resource?.name || "Unknown Resource"}
-													</div>
-												</Table.Cell>
-												<Table.Cell>
-													<div className="flex items-center gap-2">
-														<Avatar user={item.borrower} />
-														<span className="text-sm">
-															{item.borrower?.name || "Unknown"}
-														</span>
-													</div>
-												</Table.Cell>
-												<Table.Cell>
-													<span className="text-sm text-foreground/70">
-														{formatDate(new Date(item.transaction.startAt))}
-													</span>
-												</Table.Cell>
-												<Table.Cell>
-													<div className="flex justify-end gap-2">
-														<Button
-															size="sm"
-															variant="danger-soft"
-															onPress={() =>
-																handleActionClick(item.transaction.id, "reject")
-															}
-															startContent={<XIcon className="size-4" />}
-														>
-															Reject
-														</Button>
-														<Button
-															size="sm"
-															variant="primary"
-															onPress={() =>
-																handleActionClick(item.transaction.id, "accept")
-															}
-															startContent={<CheckIcon className="size-4" />}
-														>
-															Accept
-														</Button>
-													</div>
-												</Table.Cell>
-											</Table.Row>
-										))}
-									</Table.Body>
-								</Table.Content>
-							</Table.ScrollContainer>
-						</Table>
+											<p className="mt-3 truncate text-sm text-muted">
+												{lastMessage || "No messages yet"}
+											</p>
+										</button>
+									);
+								})}
+							</div>
+						)}
 					</ScrollShadow>
-				)}
+				</div>
+
+				<div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-surface">
+					{!selectedConversationId || !selectedConversation ? (
+						<div className="flex h-full items-center justify-center px-6 text-sm text-muted">
+							Select a conversation to start coordinating.
+						</div>
+					) : isThreadPending || !thread ? (
+						<div className="flex h-full items-center justify-center px-6 text-sm text-muted">
+							Loading conversation…
+						</div>
+					) : (
+						<>
+							<div className="border-b border-border px-4 py-4">
+								<h2 className="text-base font-semibold text-foreground">
+									{conversationTitle(selectedConversation, auth?.user.id)}
+								</h2>
+								<p className="mt-1 text-sm text-muted">
+									{thread.conversation.type === "PULSE"
+										? "Pulse coordination thread"
+										: "Direct conversation"}
+								</p>
+							</div>
+
+							<ScrollShadow className="flex-1 px-4 py-4" size={8}>
+								<div className="space-y-3">
+									{thread.messages.length === 0 ? (
+										<div className="flex min-h-56 items-center justify-center rounded-lg border border-dashed border-border px-4 text-sm text-muted">
+											No messages yet. Start the coordination thread here.
+										</div>
+									) : (
+										thread.messages.map((entry) => {
+											const isOwn = entry.senderId === auth?.user.id;
+											return (
+												<div
+													key={entry.id}
+													className={`flex gap-3 ${
+														isOwn ? "justify-end" : "justify-start"
+													}`}
+												>
+													{!isOwn && <Avatar user={entry.sender} />}
+													<div
+														className={`max-w-xl rounded-2xl px-4 py-3 ${
+															isOwn
+																? "bg-accent text-white"
+																: "bg-surface-secondary/55 text-foreground"
+														}`}
+													>
+														<p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-80">
+															{isOwn ? "You" : entry.sender?.name || "Neighbor"}
+														</p>
+														<p className="mt-2 whitespace-pre-wrap text-sm">
+															{entry.content}
+														</p>
+														<p className="mt-2 text-[11px] opacity-75">
+															{new Date(entry.sentAt).toLocaleString()}
+														</p>
+													</div>
+												</div>
+											);
+										})
+									)}
+								</div>
+							</ScrollShadow>
+
+							<div className="border-t border-border p-4">
+								<div className="flex gap-3">
+									<textarea
+										value={draft}
+										onChange={(event) => setDraft(event.target.value)}
+										placeholder="Write a secure logistics message…"
+										className="min-h-24 flex-1 rounded-lg border border-border bg-surface px-3 py-3 text-sm outline-none"
+									/>
+									<Button
+										variant="primary"
+										onPress={handleSend}
+										isPending={isSending}
+										isDisabled={!draft.trim()}
+										startContent={<SendHorizonal className="size-4" />}
+									>
+										Send
+									</Button>
+								</div>
+							</div>
+						</>
+					)}
+				</div>
 			</div>
-			<RespondRequestModal
-				modalRef={modalRef}
-				transactionId={selectedAction?.id || null}
-				action={selectedAction?.action || null}
-				onSettled={() => setSelectedAction(null)}
-			/>
 		</div>
 	);
 };

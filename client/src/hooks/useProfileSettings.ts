@@ -1,5 +1,6 @@
 import { authClient, hono, queryClient } from "@client/main";
 import type { ClientUserType } from "@client/utils/types";
+import type { AlertPreferences, GeoPoint } from "@shared/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export type Weekday = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
@@ -15,6 +16,7 @@ export type UserProfilePayload = {
 	user: ClientUserType;
 	quietHours: QuietHoursForm | null;
 	skillTags: string[];
+	alertPreferences: AlertPreferences;
 };
 
 type SuccessResponse<T> = {
@@ -99,6 +101,29 @@ export const useUpdateQuietHours = () => {
 			const json = (await res.json()) as SuccessResponse<QuietHoursForm | null>;
 			if (!json.success || !json.data) {
 				throw new Error(json.message || "Failed to save quiet hours");
+			}
+			return json.data;
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+		},
+	});
+};
+
+export const useUpdateAlertPreferences = () => {
+	return useMutation({
+		mutationKey: ["user", "alert-preferences", "update"],
+		mutationFn: async (payload: {
+			homeLocation: GeoPoint | null;
+			heroAlertRadiusMeters: number;
+		}) => {
+			const res = await hono.api.users["alert-preferences"].$put({
+				json: payload,
+			});
+			const json =
+				(await res.json()) as SuccessResponse<AlertPreferences | null>;
+			if (!json.success || !json.data) {
+				throw new Error(json.message || "Failed to save alert preferences");
 			}
 			return json.data;
 		},

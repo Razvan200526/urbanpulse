@@ -34,6 +34,24 @@ export class ResponseRepository implements IRepository<PulseResponseType> {
 		return row ?? null;
 	}
 
+	async findAcceptedByPulseAndResponder(
+		pulseId: string,
+		responderId: string,
+	): Promise<PulseResponseType | null> {
+		const [row] = await db
+			.select()
+			.from(pulseResponse)
+			.where(
+				and(
+					eq(pulseResponse.pulseId, pulseId as any),
+					eq(pulseResponse.responderId, responderId),
+					eq(pulseResponse.status, ResponseStatusEnum.Accepted),
+				),
+			)
+			.limit(1);
+		return row ?? null;
+	}
+
 	async create(
 		data: Partial<PulseResponseType>,
 	): Promise<PulseResponseType | null> {

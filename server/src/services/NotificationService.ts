@@ -17,8 +17,9 @@ import {
 import type { PulseRepsponseParamsType } from "@server/types";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
+import { PulseEnum } from "@shared/types";
 import { isNotificationCreateValid } from "@shared/validators/notifications/isValidCreateNotification";
-import { isPulseDataValid } from "@shared/validators/pulses/isPulseDataValid";
+import { heroAlertMatchingService } from "./HeroAlertMatchingService";
 import { type LocationService, locationService } from "./LocationService";
 
 /**
@@ -33,6 +34,10 @@ export class NotificationService {
 		this.notificationRepo = notificationRepository;
 		this.locationService = locationService;
 		this.notificationFactory = notificationFactory;
+	}
+
+	private toSocketSafePulse(pulse: PulseType) {
+		return JSON.parse(JSON.stringify(pulse)) as Record<string, unknown>;
 	}
 
 	/**
@@ -190,22 +195,29 @@ export class NotificationService {
 	 * Broadcasts a pulse alert to all active users within range of the pulse location.
 	 * @param {Partial<PulseType>} pulseData - The data of the newly created pulse.
 	 */
-	async broadcastToNearbyUsers(pulseData: Partial<PulseType>) {
-		const { success, data } = isPulseDataValid(pulseData);
-		if (!success) return;
-		const recipients = this.locationService.getNearbyConnections(data.position);
+	async broadcastToNearbyUsers(pulseData: PulseType) {
+		const matches = await heroAlertMatchingService.matchPulse(pulseData);
+		const serializedPulse = this.toSocketSafePulse(pulseData);
 
-		const broadcastData = this.notificationFactory.create({
-			type: "HERO_ALERT",
-			payload: {
-				pulseId: data.id,
-				type: data.type,
-				description: data.description,
-				location: data.position,
-			},
-			message: "New pulse nearby!",
-		});
-		await this.sendAndSaveData(recipients, broadcastData);
+		for (const match of matches) {
+			const broadcastData = this.notificationFactory.create({
+				type: "HERO_ALERT",
+				payload: {
+					pulseId: pulseData.id,
+					type: pulseData.type,
+					description: pulseData.description,
+					location: pulseData.position,
+					pulseTitle: pulseData.title,
+					matchedTags: match.matchedTags,
+					distanceMeters: match.distanceMeters,
+					usedLiveLocation: match.usedLiveLocation,
+					quietHoursBypassed: match.quietHoursBypassed,
+					pulse: serializedPulse,
+				},
+				message: `Matched nearby request: ${match.matchedTags.join(", ")}`,
+			});
+			await this.notifyUsers([match.user.id], broadcastData);
+		}
 	}
 
 	/**
@@ -263,9 +275,34 @@ export class NotificationService {
 	 * Notifies connected neighbors that a pulse changed (status, resolution, etc.).
 	 * Does not persist to notification history — clients refetch the pulse list.
 	 */
-	broadcastPulseUpdated(pulse: PulseType) {
+	async broadcastPulseUpdated(pulse: PulseType) {
 		const { position, id, status, isResolved, title, type: pulseKind } = pulse;
-		const recipients = this.locationService.getNearbyConnections(position);
+		const serializedPulse = this.toSocketSafePulse(pulse);
+		const recipients = new Map<UserConnection["ws"], UserConnection>();
+
+		for (const connection of socketManager.getConnectionsForUser(
+			pulse.userId,
+		)) {
+			recipients.set(connection.ws, connection);
+		}
+
+		if (pulse.type === PulseEnum.Emergency) {
+			for (const connection of this.locationService.getNearbyConnections(
+				position,
+			)) {
+				recipients.set(connection.ws, connection);
+			}
+		}
+
+		const heroMatches = await heroAlertMatchingService.matchPulse(pulse);
+		for (const match of heroMatches) {
+			for (const connection of socketManager.getConnectionsForUser(
+				match.user.id,
+			)) {
+				recipients.set(connection.ws, connection);
+			}
+		}
+
 		const broadcastData = this.notificationFactory.create({
 			message: "A pulse nearby was updated",
 			payload: {
@@ -275,10 +312,15 @@ export class NotificationService {
 				type: pulseKind,
 				title,
 				location: position,
+				pulse: serializedPulse,
 			},
 			type: "PULSE_UPDATED",
 		});
-		this.sendAndSaveData(recipients, broadcastData, false);
+		await this.sendAndSaveData(
+			Array.from(recipients.values()),
+			broadcastData,
+			false,
+		);
 	}
 
 	/**
@@ -320,14 +362,22 @@ export class NotificationService {
 		pulseTitle: string;
 		ownerName: string;
 		responseId: string;
+		conversationId?: string | null;
 	}) {
-		const { responderUserId, pulseId, pulseTitle, ownerName, responseId } =
-			params;
+		const {
+			responderUserId,
+			pulseId,
+			pulseTitle,
+			ownerName,
+			responseId,
+			conversationId,
+		} = params;
 		const payload = {
 			pulseId,
 			pulseTitle,
 			ownerName,
 			responseId,
+			conversationId,
 		};
 		const message = `${ownerName} accepted your help for “${pulseTitle}”`;
 		const broadcastData = this.notificationFactory.create({

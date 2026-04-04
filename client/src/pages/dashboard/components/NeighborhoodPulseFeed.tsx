@@ -32,7 +32,6 @@ export function NeighborhoodPulseFeed() {
 	const enabled = !!user?.user.id && coords != null && !geoError;
 	const retrievePayload = useMemo(
 		() => ({
-			userId: user?.user.id || "",
 			position: { x: coords?.long ?? 0, y: coords?.lat ?? 0 },
 			radius,
 			...(typeFilter !== "ALL" ? { type: typeFilter } : {}),
@@ -46,7 +45,6 @@ export function NeighborhoodPulseFeed() {
 			statusFilter,
 			typeFilter,
 			urgencyFilter,
-			user?.user.id,
 		],
 	);
 

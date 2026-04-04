@@ -1,4 +1,4 @@
-import type { ClientUserType } from "./types";
+import type { ClientPulseType, ClientUserType } from "./types";
 
 export type NotificationPayload = Record<string, unknown> | null;
 
@@ -16,11 +16,35 @@ export type PulseResponseNotificationPayload = {
 	note?: string | null;
 };
 
+export type HeroAlertNotificationPayload = {
+	pulseId: string;
+	type?: string;
+	description?: string | null;
+	pulseTitle?: string;
+	matchedTags?: string[];
+	distanceMeters?: number;
+	usedLiveLocation?: boolean;
+	quietHoursBypassed?: boolean;
+	conversationId?: string;
+	pulse?: ClientPulseType;
+};
+
+export type PulseUpdatedNotificationPayload = {
+	pulseId: string;
+	status?: string;
+	isResolved?: boolean;
+	type?: string;
+	title?: string;
+	location?: { x: number; y: number };
+	pulse?: ClientPulseType;
+};
+
 export type PulseResponseAcceptedNotificationPayload = {
 	pulseId: string;
 	responseId: string;
 	pulseTitle?: string;
 	ownerName?: string;
+	conversationId?: string | null;
 };
 
 export type NotificationListItem = {
@@ -80,8 +104,22 @@ export function summarizeNotificationPayload(
 			typeof payload.type === "string" ? payload.type : undefined;
 		const description =
 			typeof payload.description === "string" ? payload.description : undefined;
+		const matchedTags = Array.isArray(payload.matchedTags)
+			? payload.matchedTags.filter(
+					(entry): entry is string => typeof entry === "string",
+				)
+			: [];
+		const distanceMeters =
+			typeof payload.distanceMeters === "number"
+				? `${Math.round(payload.distanceMeters)}m away`
+				: undefined;
 		return (
-			[alertType && `Type: ${alertType}`, description]
+			[
+				alertType && `Type: ${alertType}`,
+				matchedTags.length > 0 && `Matched: ${matchedTags.join(", ")}`,
+				distanceMeters,
+				description,
+			]
 				.filter(Boolean)
 				.join(" · ") || "Nearby pulse"
 		);

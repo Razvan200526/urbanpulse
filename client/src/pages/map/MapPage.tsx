@@ -7,13 +7,14 @@ import { PageLoader } from "@client/components/PageLoader";
 import { PulseMarker } from "@client/components/PulseMarker";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
+import { useUserProfile } from "@client/hooks/useProfileSettings";
+import type { ClientPulseType } from "@client/utils/types";
 import { Toast } from "@heroui/react";
-import type { PulseType } from "@server/db/schema";
 import { PlusSquare } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { CreatePulseModal } from "./components/CreatePulseModal";
-import { useRetrievePulses } from "./hooks";
+import { useRetrieveMapPulses } from "./hooks";
 
 export const MapPage = () => {
 	const {
@@ -22,12 +23,21 @@ export const MapPage = () => {
 		isLoading: isGeolocationLoading,
 	} = useGetGeolocation();
 	const { data: user } = useAuth();
+	const { data: profile } = useUserProfile();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const modalRef = useRef<ModalRefType>(null);
 	const [createModalSession, setCreateModalSession] = useState(0);
 	const [emergencyLaunch, setEmergencyLaunch] = useState(false);
 	const hasCoords = coords?.lat != null && coords?.long != null;
+	const mapPulseRadius = profile?.alertPreferences.heroAlertRadiusMeters ?? 500;
+	const retrievePayload = useMemo(
+		() => ({
+			position: { x: coords?.long ?? 0, y: coords?.lat ?? 0 },
+			radius: mapPulseRadius,
+		}),
+		[coords?.lat, coords?.long, mapPulseRadius],
+	);
 
 	const openCreateModal = (emergency: boolean) => {
 		setEmergencyLaunch(emergency);
@@ -35,15 +45,10 @@ export const MapPage = () => {
 		queueMicrotask(() => modalRef.current?.open());
 	};
 
-	const { data: pulses } = useRetrievePulses(
-		{
-			userId: user?.user.id || "",
-			position: { x: coords?.long ?? 0, y: coords?.lat ?? 0 },
-		},
-		hasCoords && !!user,
+	const { data: pulseList = [] } = useRetrieveMapPulses(
+		retrievePayload,
+		hasCoords && Boolean(user?.user.id),
 	);
-
-	const pulseList = pulses?.data ?? [];
 
 	useEffect(() => {
 		const state = location.state as { safetyCheckin?: boolean } | null;
@@ -63,7 +68,7 @@ export const MapPage = () => {
 		}
 	}, [hasCoords, isGeolocationError, isGeolocationLoading, navigate]);
 
-	if (!hasCoords && isGeolocationLoading) {
+	if (isGeolocationLoading) {
 		return (
 			<div className="w-full h-full">
 				<PageLoader />
@@ -76,7 +81,7 @@ export const MapPage = () => {
 			{hasCoords && (
 				<MapComponent center={[coords?.long ?? 0, coords?.lat ?? 0]} zoom={17}>
 					<PulseHeatmapLayer pulses={pulseList} />
-					{pulseList.map((pulse: PulseType) => (
+					{pulseList.map((pulse: ClientPulseType) => (
 						<PulseMarker key={pulse.id} pulse={pulse} />
 					))}
 				</MapComponent>

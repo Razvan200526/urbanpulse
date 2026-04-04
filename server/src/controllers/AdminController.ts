@@ -8,6 +8,11 @@ import { resourceRepository } from "@server/repositories/ResourceRepository";
 import { transactionRepository } from "@server/repositories/TransactionRepository";
 import { userRepository } from "@server/repositories/UserRepository";
 import { moderationService } from "@server/services/ModerationService";
+import { mergePulseSchema } from "@shared/validators/admin/isMergePulseValid";
+import {
+	moderatePulseParamsSchema,
+	moderatePulseSchema,
+} from "@shared/validators/admin/isModeratePulseValid";
 import {
 	reviewReportParamsSchema,
 	reviewReportSchema,
@@ -82,6 +87,25 @@ export const adminController = new Hono()
 			},
 		});
 	})
+	.get("/duplicates", async (c) => {
+		const session = c.get("session");
+		if (!session) {
+			return c.json(
+				{ success: false, message: "Unauthorized", data: null },
+				401,
+			);
+		}
+
+		const duplicates = await moderationService.getDuplicatePulseCandidates();
+
+		return c.json({
+			success: true,
+			message: "Duplicate pulse candidates retrieved",
+			data: {
+				duplicates,
+			},
+		});
+	})
 	.patch(
 		"/reports/:id",
 		zValidator("param", reviewReportParamsSchema),
@@ -107,4 +131,47 @@ export const adminController = new Hono()
 				data: result.data,
 			});
 		},
-	);
+	)
+	.patch(
+		"/pulses/:id",
+		zValidator("param", moderatePulseParamsSchema),
+		zValidator("json", moderatePulseSchema),
+		async (c) => {
+			const { id } = c.req.valid("param");
+			const result = await moderationService.moderatePulse(
+				id,
+				c.req.valid("json"),
+			);
+
+			if (!result.ok) {
+				const status = result.code === "NOT_FOUND" ? 404 : 400;
+				return c.json(
+					{ success: false, message: result.message, data: null },
+					status,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message: "Pulse moderated",
+				data: result.data,
+			});
+		},
+	)
+	.post("/pulses/merge", zValidator("json", mergePulseSchema), async (c) => {
+		const result = await moderationService.mergePulse(c.req.valid("json"));
+
+		if (!result.ok) {
+			const status = result.code === "NOT_FOUND" ? 404 : 400;
+			return c.json(
+				{ success: false, message: result.message, data: null },
+				status,
+			);
+		}
+
+		return c.json({
+			success: true,
+			message: "Pulses merged",
+			data: result.data,
+		});
+	});

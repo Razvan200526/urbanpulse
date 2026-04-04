@@ -16,6 +16,7 @@ import { PostHogProvider } from "@posthog/react";
 import { client } from "@server/client.ts";
 import { createAuthClient } from "better-auth/client";
 import {
+	adminClient,
 	emailOTPClient,
 	inferAdditionalFields,
 } from "better-auth/client/plugins";
@@ -40,6 +41,7 @@ export const authClient = createAuthClient({
 	baseURL: getApiOrigin(),
 	plugins: [
 		inferAdditionalFields({ user: userAdditionalFields }),
+		adminClient(),
 		emailOTPClient(),
 	],
 });

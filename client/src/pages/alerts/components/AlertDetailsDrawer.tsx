@@ -21,6 +21,7 @@ import {
 	UserRoundCheck,
 } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router";
 import { useAlertsPageData } from "../hooks";
 import { useAlertsPageStore } from "../store";
 
@@ -135,6 +136,7 @@ const buildNotes = (item: NotificationListItem | null) => {
 };
 
 export const AlertDetailsDrawer = () => {
+	const navigate = useNavigate();
 	const { filteredNotifications } = useAlertsPageData();
 	const selectedAlertId = useAlertsPageStore((state) => state.selectedAlertId);
 	const selectAlert = useAlertsPageStore((state) => state.selectAlert);
@@ -159,6 +161,10 @@ export const AlertDetailsDrawer = () => {
 
 	const notificationType = selectedItem?.notification?.type || "";
 	const payload = selectedItem?.notification?.payload ?? null;
+	const acceptedConversationId =
+		isRecord(payload) && typeof payload.conversationId === "string"
+			? payload.conversationId
+			: null;
 	const pulseResponsePayload = getPulseResponseActionPayload(
 		notificationType === "PULSE_RESPONSE" ? payload : null,
 	);
@@ -303,8 +309,19 @@ export const AlertDetailsDrawer = () => {
 									<Button
 										radius="md"
 										className="h-12 border border-accent/60 bg-accent text-accent-foreground"
+										onPress={() => {
+											if (acceptedConversationId) {
+												navigate(
+													`/messages?conversationId=${acceptedConversationId}`,
+												);
+												return;
+											}
+										}}
+										isDisabled={!acceptedConversationId}
 									>
-										Resolve Alert
+										{acceptedConversationId
+											? "Open Coordination Chat"
+											: "Resolve Alert"}
 									</Button>
 									<Button
 										radius="md"

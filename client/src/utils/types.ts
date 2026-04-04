@@ -1,3 +1,5 @@
+import type { PulseType } from "@server/db/schema";
+
 export type ClientUserType = {
 	id: string;
 	image: string | null;
@@ -12,4 +14,8 @@ export type ClientUserType = {
 	trustScore: number | null;
 	successfulInteractions: number | null;
 	isVerified: boolean | null;
+};
+
+export type ClientPulseType = Omit<PulseType, "createdAt"> & {
+	createdAt: string;
 };

@@ -1,6 +1,6 @@
 import { db } from "@server/db";
 import { type SkillType, skill } from "@server/db/schema";
-import { eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class SkillRepository implements IRepository<SkillType> {
@@ -18,6 +18,22 @@ export class SkillRepository implements IRepository<SkillType> {
 
 	async getByUserId(userId: string): Promise<SkillType[]> {
 		return await db.select().from(skill).where(eq(skill.userId, userId));
+	}
+
+	async getByUserIds(userIds: string[]): Promise<SkillType[]> {
+		if (userIds.length === 0) {
+			return [];
+		}
+
+		return await db.select().from(skill).where(inArray(skill.userId, userIds));
+	}
+
+	async getDistinctTags(): Promise<string[]> {
+		const rows = await db
+			.selectDistinct({ tag: skill.tag })
+			.from(skill)
+			.orderBy(asc(skill.tag));
+		return rows.map((row) => row.tag);
 	}
 
 	async create(data: Partial<SkillType>): Promise<SkillType | null> {

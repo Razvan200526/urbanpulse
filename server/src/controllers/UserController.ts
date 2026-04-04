@@ -3,6 +3,7 @@ import { authMiddleware } from "@server/middleware/authMiddleware";
 import { userService } from "@server/services/UserService";
 import { emailSchema } from "@shared/validators/isEmailValid";
 import {
+	alertPreferencesUpdateSchema,
 	quietHoursUpsertSchema,
 	skillTagsUpdateSchema,
 	userProfileUpdateSchema,
@@ -92,6 +93,41 @@ export const userController = new Hono()
 				success: true,
 				message: "Profile updated",
 				data: updated,
+			});
+		},
+	)
+	.put(
+		"/alert-preferences",
+		authMiddleware,
+		zValidator("json", alertPreferencesUpdateSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+
+			const alertPreferences = await userService.updateAlertPreferences(
+				session.userId,
+				c.req.valid("json"),
+			);
+			if (!alertPreferences) {
+				return c.json(
+					{
+						success: false,
+						message: "Failed to save alert preferences",
+						data: null,
+					},
+					400,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message: "Alert preferences saved",
+				data: alertPreferences,
 			});
 		},
 	)

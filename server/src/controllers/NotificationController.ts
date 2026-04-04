@@ -2,6 +2,7 @@ import type { Variables } from "@server/app";
 import auth from "@server/services/auth/AuthService";
 import { notificationService } from "@server/services/NotificationService";
 import { socketManager } from "@server/services/SocketManager";
+import { userService } from "@server/services/UserService";
 import { logger } from "@server/utils/Logger";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
@@ -62,6 +63,10 @@ export const notificationController = new Hono<{ Variables: Variables }>()
 								`Notification WS: Location update from User[${session.user.id}]`,
 							);
 							socketManager.updateLocation(ws, data.location);
+							void userService.updateLastKnownLocation(
+								session.user.id,
+								data.location,
+							);
 						}
 					} catch (_e) {
 						logger.error("Notification WS: Failed to parse message");

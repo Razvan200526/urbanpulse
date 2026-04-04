@@ -22,6 +22,7 @@ export const envSchema = z.object({
 	GITHUB_CLIENT_SECRET: z.string(),
 	GOOGLE_CLIENT_ID: z.string(),
 	GOOGLE_CLIENT_SECRET: z.string(),
+	GEMINI_API_KEY: z.string(),
 });
 
 export function parseEnv() {

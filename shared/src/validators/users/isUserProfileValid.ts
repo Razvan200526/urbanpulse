@@ -1,6 +1,10 @@
 import * as z from "zod";
 
 const weekdaySchema = z.enum(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
+export const geoPointSchema = z.object({
+	x: z.number(),
+	y: z.number(),
+});
 
 export const userProfileUpdateSchema = z.object({
 	name: z.string().trim().min(1).max(80),
@@ -18,6 +22,14 @@ export const skillTagsUpdateSchema = z.object({
 	tags: z.array(z.string().trim().min(1).max(100)).max(12),
 });
 
+export const alertPreferencesUpdateSchema = z.object({
+	homeLocation: geoPointSchema.nullable(),
+	heroAlertRadiusMeters: z.number().int().min(100).max(5000),
+});
+
 export type UserProfileUpdateType = z.infer<typeof userProfileUpdateSchema>;
 export type QuietHoursUpsertType = z.infer<typeof quietHoursUpsertSchema>;
 export type SkillTagsUpdateType = z.infer<typeof skillTagsUpdateSchema>;
+export type AlertPreferencesUpdateType = z.infer<
+	typeof alertPreferencesUpdateSchema
+>;

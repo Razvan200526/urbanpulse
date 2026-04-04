@@ -14,12 +14,19 @@ const settingsState = {
 			endTime: "06:00",
 			days: ["Mon", "Tue", "Wed"],
 		},
+		alertPreferences: {
+			homeLocation: null,
+			lastKnownLocation: null,
+			lastKnownLocationUpdatedAt: null,
+			heroAlertRadiusMeters: 500,
+		},
 	},
 	isPending: false,
 };
 
 const buttonProps: Array<Record<string, any>> = [];
 const quietHoursCalls: Array<unknown> = [];
+const alertPreferenceCalls: Array<unknown> = [];
 const deleteCalls: string[] = [];
 const navigateCalls: Array<unknown> = [];
 const toastSuccessCalls: string[] = [];
@@ -32,6 +39,21 @@ mock.module("react-router", () => ({
 	},
 }));
 
+mock.module("@posthog/react", () => ({
+	usePostHog: () => ({
+		capture: () => {},
+		reset: () => {},
+	}),
+}));
+
+mock.module("@client/hooks/useGetGeolocation", () => ({
+	useGetGeolocation: () => ({
+		coords: { lat: 44.43, long: 26.1 },
+		refresh: () => {},
+		isLoading: false,
+	}),
+}));
+
 mock.module("@client/hooks/useProfileSettings", () => ({
 	useUserProfile: () => ({
 		data: settingsState.profile,
@@ -40,6 +62,12 @@ mock.module("@client/hooks/useProfileSettings", () => ({
 	useUpdateQuietHours: () => ({
 		mutateAsync: async (payload: unknown) => {
 			quietHoursCalls.push(payload);
+		},
+		isPending: false,
+	}),
+	useUpdateAlertPreferences: () => ({
+		mutateAsync: async (payload: unknown) => {
+			alertPreferenceCalls.push(payload);
 		},
 		isPending: false,
 	}),
@@ -125,9 +153,16 @@ describe("SettingsPage", () => {
 				endTime: "06:00",
 				days: ["Mon", "Tue", "Wed"],
 			},
+			alertPreferences: {
+				homeLocation: null,
+				lastKnownLocation: null,
+				lastKnownLocationUpdatedAt: null,
+				heroAlertRadiusMeters: 500,
+			},
 		};
 		buttonProps.length = 0;
 		quietHoursCalls.length = 0;
+		alertPreferenceCalls.length = 0;
 		deleteCalls.length = 0;
 		navigateCalls.length = 0;
 		toastSuccessCalls.length = 0;
@@ -150,6 +185,7 @@ describe("SettingsPage", () => {
 		const markup = renderToStaticMarkup(<SettingsPage />);
 
 		expect(markup).toContain("Quiet Hours");
+		expect(markup).toContain("Hero Alert Reach");
 		expect(markup).toContain("Account");
 		expect(markup).toContain("Danger Zone");
 		expect(markup).toContain("admin");
@@ -160,7 +196,9 @@ describe("SettingsPage", () => {
 	test("saves quiet hours with the current defaults", async () => {
 		renderToStaticMarkup(<SettingsPage />);
 
-		const saveButton = buttonProps.find((props) => props.children === "Save");
+		const saveButton = buttonProps.find(
+			(props) => props.children === "Save quiet hours",
+		);
 		await saveButton?.onPress?.();
 
 		expect(quietHoursCalls).toEqual([
@@ -171,6 +209,23 @@ describe("SettingsPage", () => {
 			},
 		]);
 		expect(toastSuccessCalls).toContain("Quiet hours saved");
+	});
+
+	test("saves alert preferences with the current defaults", async () => {
+		renderToStaticMarkup(<SettingsPage />);
+
+		const saveButton = buttonProps.find(
+			(props) => props.children === "Save alert preferences",
+		);
+		await saveButton?.onPress?.();
+
+		expect(alertPreferenceCalls).toEqual([
+			{
+				homeLocation: null,
+				heroAlertRadiusMeters: 500,
+			},
+		]);
+		expect(toastSuccessCalls).toContain("Alert preferences saved");
 	});
 
 	test("does not delete the account when confirmation is cancelled", async () => {

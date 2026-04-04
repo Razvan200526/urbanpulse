@@ -1,6 +1,6 @@
 import { db } from "@server/db";
 import { type QuietHoursType, quietHours } from "@server/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class QuietHoursRepository implements IRepository<QuietHoursType> {
@@ -22,6 +22,17 @@ export class QuietHoursRepository implements IRepository<QuietHoursType> {
 			.from(quietHours)
 			.where(eq(quietHours.userId, userId));
 		return result || null;
+	}
+
+	async findByUserIds(userIds: string[]): Promise<QuietHoursType[]> {
+		if (userIds.length === 0) {
+			return [];
+		}
+
+		return await db
+			.select()
+			.from(quietHours)
+			.where(inArray(quietHours.userId, userIds));
 	}
 
 	async create(data: Partial<QuietHoursType>): Promise<QuietHoursType | null> {

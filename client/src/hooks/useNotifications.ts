@@ -12,20 +12,22 @@ import { useEffect } from "react";
 
 type NotificationData = { type: string; payload: Record<string, unknown> };
 
-export const useNotifications = (userId: string | undefined) => {
+export const useNotifications = (userId: string) => {
 	const query = useQuery<NotificationListItem[]>({
 		queryKey: ["notifications", userId],
 		enabled: !!userId,
 		queryFn: async () => {
 			const res = await hono.api.notifications.$get();
 			const data = (await res.json()) as NotificationsResponse;
-			if (!data.success) throw new Error(data.message);
+			if (!data.success) {
+				Toast.toast.danger(data.message);
+			}
 			return data.data?.res ?? [];
 		},
 	});
 
 	useEffect(() => {
-		if (!userId) return;
+		if (userId === "") return;
 
 		const unsubscribe = backend.notifications.on<NotificationData>(
 			"message",
@@ -65,9 +67,8 @@ export const useNotifications = (userId: string | undefined) => {
 						queryKey: ["notifications", userId],
 					});
 					queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
-					const pl = response.data?.payload as
-						| Partial<PulseResponseNotificationPayload>
-						| undefined;
+					const pl = response.data
+						.payload as Partial<PulseResponseNotificationPayload>;
 					if (pl?.pulseId && pl?.responseId) {
 						useHelpOfferUiStore.getState().show({
 							pulseId: pl.pulseId,
@@ -87,6 +88,9 @@ export const useNotifications = (userId: string | undefined) => {
 					queryClient.invalidateQueries({
 						queryKey: ["notifications", userId],
 					});
+					queryClient.invalidateQueries({
+						queryKey: ["messages", "conversations"],
+					});
 					Toast.toast.success(response.message || "Your help was accepted");
 				} else if (
 					response.success &&
@@ -99,6 +103,17 @@ export const useNotifications = (userId: string | undefined) => {
 					Toast.toast.success(
 						response.message || "Your pulse has been verified",
 					);
+				} else if (
+					response.success &&
+					response.channelName === "notifications:message"
+				) {
+					queryClient.invalidateQueries({
+						queryKey: ["messages", "conversations"],
+					});
+					queryClient.invalidateQueries({
+						queryKey: ["notifications", userId],
+					});
+					Toast.toast.success(response.message || "New message");
 				} else if (
 					response.success &&
 					response.channelName === "notifications:transaction"

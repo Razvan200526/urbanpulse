@@ -6,11 +6,14 @@ import { userAdditionalFields } from "@shared/auth/userAdditionalFields";
 import bcrypt from "bcryptjs";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { emailOTP, openAPI } from "better-auth/plugins";
+import { admin } from "better-auth/plugins/admin";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import { db } from "../../db";
 import { account, session, user, verification } from "../../db/schema";
 import { getAuthCookieAttributes } from "./getAuthCookieAttributes";
-// import { signUpPlugin } from "./plugins/signUpPlugin";
+
+const defaultCookieAttributes = getAuthCookieAttributes(Bun.env.NODE_ENV);
+
 export const auth = betterAuth({
 	appName: "UrbanPulse",
 	logger: {
@@ -47,7 +50,8 @@ export const auth = betterAuth({
 		additionalFields: userAdditionalFields,
 	},
 	advanced: {
-		defaultCookieAttributes: getAuthCookieAttributes(Bun.env.NODE_ENV),
+		defaultCookieAttributes,
+		useSecureCookies: Bun.env.NODE_ENV === "production",
 	},
 	baseURL: Bun.env.BETTER_AUTH_URL,
 	trustedOrigins: getAllowedOrigins(),
@@ -71,6 +75,8 @@ export const auth = betterAuth({
 	},
 	emailAndPassword: {
 		enabled: true,
+		minPasswordLength: 8,
+		maxPasswordLength: 128,
 		password: {
 			hash: async (password: string) => {
 				return bcrypt.hash(password, 10);
@@ -79,8 +85,18 @@ export const auth = betterAuth({
 				return await bcrypt.compare(password, hash);
 			},
 		},
-		requireEmailVerification: false,
+		requireEmailVerification: true,
+		revokeSessionsOnPasswordReset: true,
 		autoSignIn: true,
+		customSyntheticUser: ({ coreFields, additionalFields, id }) => ({
+			...coreFields,
+			role: "user",
+			banned: false,
+			banReason: null,
+			banExpires: null,
+			...additionalFields,
+			id,
+		}),
 	},
 	cookieCache: {
 		enabled: true,
@@ -91,7 +107,7 @@ export const auth = betterAuth({
 		window: 60 * 1000,
 	},
 	plugins: [
-		openAPI(),
+		admin(),
 		emailOTP({
 			storeOTP: "hashed",
 			otpLength: 6,

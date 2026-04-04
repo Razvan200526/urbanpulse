@@ -1,6 +1,8 @@
-import * as z from "zod";
+import { createSafePlainTextSchema } from "@shared/validators/createSafePlainTextSchema";
 
-export const bioSchema = z.string().min(0).max(100);
+export const bioSchema = createSafePlainTextSchema(0, 100, {
+	allowEmpty: true,
+});
 
 export const isBioValid = (bio: unknown) => {
 	return bioSchema.safeParse(bio).success;

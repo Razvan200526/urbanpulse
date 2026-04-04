@@ -1,0 +1,13 @@
+{
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "fronterior.biome-monorepo",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.biome": "always",
+		"source.organizeImports.biome": "always",
+		"source.biome": "always"
+	},
+	"js/ts.tsdk.path": "node_modules/typescript/lib",
+	"[typescript]": {
+		"editor.defaultFormatter": "fronterior.biome-monorepo"
+	}
+}

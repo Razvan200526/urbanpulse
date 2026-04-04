@@ -1,4 +1,4 @@
-import type { PulseType } from "@server/db/schema";
+import type { ClientPulseType } from "@client/utils/types";
 import { PulseEnum, UrgencyEnum } from "@shared/types";
 import type { GeoJSONSource } from "mapbox-gl";
 import { useEffect, useRef } from "react";
@@ -7,14 +7,14 @@ import { useMap } from "./MapContext";
 const SOURCE_ID = "urbanpulse-pulses-density";
 const HEAT_LAYER_ID = "urbanpulse-pulses-heatmap";
 
-function heatWeight(p: PulseType): number {
+function heatWeight(p: ClientPulseType): number {
 	if (p.type === PulseEnum.Emergency) return 4;
 	if (p.urgency === UrgencyEnum.Immediate) return 3;
 	if (p.urgency === UrgencyEnum.Urgent) return 2;
 	return 1;
 }
 
-function toFeatureCollection(pulses: PulseType[]) {
+function toFeatureCollection(pulses: ClientPulseType[]) {
 	return {
 		type: "FeatureCollection" as const,
 		features: pulses.map((p) => ({
@@ -31,7 +31,7 @@ function toFeatureCollection(pulses: PulseType[]) {
 /**
  * Heatmap under HTML markers — shows local need density (Emergency / urgency weighted).
  */
-export function PulseHeatmapLayer({ pulses }: { pulses: PulseType[] }) {
+export function PulseHeatmapLayer({ pulses }: { pulses: ClientPulseType[] }) {
 	const map = useMap();
 	const pulsesRef = useRef(pulses);
 	pulsesRef.current = pulses;
