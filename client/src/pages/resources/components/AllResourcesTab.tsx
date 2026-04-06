@@ -41,16 +41,16 @@ export const AllResourcesTab = () => {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center gap-3">
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 				<InputSearch
 					className="min-w-0 flex-1"
 					placeholder="Search resources, descriptions, or neighbours..."
 					onChange={(value) => setSearchTerm(String(value))}
 				/>
-				<div className="shrink-0">
+				<div className="shrink-0 self-end sm:self-auto">
 					<Dropdown
 						trigger={
-							<div className="rounded-full bg-accent p-2 text-white shadow-sm">
+							<div className="rounded border border-accent bg-surface px-3 py-2 text-accent shadow-sm">
 								<Filter className="size-4" />
 							</div>
 						}

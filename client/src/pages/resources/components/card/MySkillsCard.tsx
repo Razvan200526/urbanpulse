@@ -15,8 +15,8 @@ export const MySkillsCard = ({ item }: { item: ResourceWithUsersType }) => {
 	const heroImage = item.resource.imageUrls[0];
 
 	return (
-		<Card className="overflow-hidden border border-border-secondary shadow-none">
-			<div className="aspect-[4/3] border-b border-border-secondary bg-surface-secondary">
+		<Card className="overflow-hidden border border-accent shadow-none">
+			<div className="aspect-[4/3] border-b border-accent/40 bg-surface-secondary">
 				{heroImage ? (
 					<img
 						src={normalizeAssetUrl(heroImage)}
@@ -55,7 +55,7 @@ export const MySkillsCard = ({ item }: { item: ResourceWithUsersType }) => {
 					{item.resource.description || "No description provided yet."}
 				</p>
 
-				<div className="flex items-center justify-between gap-3 rounded border border-border/70 bg-surface-secondary/60 px-3 py-2">
+				<div className="flex items-center justify-between gap-3 rounded border border-accent/30 bg-surface-secondary/60 px-3 py-2">
 					<div>
 						<p className="text-xs text-muted">Recent borrowers</p>
 						<p className="text-sm font-medium text-foreground">

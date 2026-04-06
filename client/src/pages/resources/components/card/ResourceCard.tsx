@@ -14,10 +14,7 @@ export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
 	return (
-		<Card
-			key={resource.id}
-			className="border border-border-secondary shadow-none"
-		>
+		<Card key={resource.id} className="border border-accent shadow-none">
 			<Card.Header className="flex flex-row items-center justify-between">
 				<H6 className="truncate">{resource.name}</H6>
 				<Button size="sm" variant="ghost" isIconOnly radius="full">

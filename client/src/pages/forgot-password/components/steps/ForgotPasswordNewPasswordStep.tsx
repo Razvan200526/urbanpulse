@@ -1,6 +1,7 @@
+import { Button } from "@client/components/Button/Button";
 import type { InputPasswordRefType } from "@client/components/input/InputPassword";
 import { InputPassword } from "@client/components/input/InputPassword";
-import { Button, Separator } from "@heroui/react";
+import { Separator } from "@heroui/react";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
 import { useForgotPasswordStore } from "../../forgotPasswordStore";
@@ -10,7 +11,7 @@ export const ForgotPasswordNewPasswordStep = () => {
 	const passwordRef = useRef<InputPasswordRefType>(null);
 	const confirmPasswordRef = useRef<InputPasswordRefType>(null);
 	const { setStep, clear, email, otp } = useForgotPasswordStore();
-	const { mutateAsync: resetPassword } = useResetPassword();
+	const { mutateAsync: resetPassword, isPending } = useResetPassword();
 	const navigate = useNavigate();
 
 	const handleNext = async () => {
@@ -79,6 +80,7 @@ export const ForgotPasswordNewPasswordStep = () => {
 					Back
 				</Button>
 				<Button
+					isPending={isPending}
 					className="flex-1 rounded"
 					variant="primary"
 					onClick={handleNext}

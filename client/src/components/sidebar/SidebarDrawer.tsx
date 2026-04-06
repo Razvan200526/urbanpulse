@@ -11,8 +11,8 @@ export const SidebarDrawer = () => {
 		<>
 			<div
 				className={cn(
-					"flex h-dvh min-h-dvh shrink-0 flex-col items-center gap-4 border-r border-border bg-surface p-2",
-					!isOpen ? "flex" : "flex 2xl:hidden",
+					"hidden h-dvh min-h-dvh shrink-0 flex-col items-center gap-4 border-r border-border bg-surface p-2 md:flex",
+					!isOpen ? "md:flex" : "md:flex 2xl:hidden",
 				)}
 			>
 				<Tooltip delay={0} trigger={"focus"}>

@@ -27,11 +27,11 @@ export const DashboardPages = () => {
 	};
 
 	return (
-		<div className="flex h-screen flex-col bg-surface overflow-y-scroll overscroll-y-contain">
+		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
 			<Header title="Dashboard" />
 			<Separator />
 
-			<div className="min-h-0 flex-1 h-full">
+			<div className="min-h-0 flex-1 overflow-y-auto">
 				<div className="space-y-6 p-4 pb-24 sm:space-y-8 sm:p-6 sm:pb-10">
 					<SafetyCheckInBanner
 						lat={coords?.lat}
@@ -45,7 +45,7 @@ export const DashboardPages = () => {
 					</div>
 
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
-						<Card className="lg:col-span-2 shadow-none border border-border bg-surface/50">
+						<Card className="border border-accent bg-surface/50 shadow-none lg:col-span-2">
 							<Card.Header className="flex flex-col gap-3 border-b border-border/10 p-4 sm:flex-row sm:items-center sm:justify-between">
 								<div className="min-w-0">
 									<Card.Title>City Activity Overview</Card.Title>

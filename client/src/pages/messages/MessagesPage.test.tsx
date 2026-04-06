@@ -3,17 +3,54 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 const messagesState = {
 	auth: { user: { id: "user-1" } },
+	isMobile: false,
+	routeConversationId: null as string | null,
 	conversations: [] as Array<any>,
 	thread: null as any,
 	isPending: false,
 	isThreadPending: false,
-	searchParams: new URLSearchParams(),
+	navigateCalls: [] as string[],
+};
+
+const buttonProps: Array<Record<string, any>> = [];
+
+const directConversation = {
+	conversation: {
+		id: "conversation-1",
+		type: "DIRECT",
+		pulseId: null,
+		createdAt: "2026-04-04T10:00:00.000Z",
+	},
+	members: [
+		{
+			id: "user-1",
+			name: "Owner",
+			email: "owner@example.com",
+			image: null,
+		},
+		{
+			id: "user-2",
+			name: "Alex",
+			email: "alex@example.com",
+			image: null,
+		},
+	],
+	lastMessage: {
+		id: "message-1",
+		content: "See you there",
+		senderId: "user-2",
+		sentAt: "2026-04-04T10:00:00.000Z",
+	},
 };
 
 mock.module("@client/hooks/useAuth", () => ({
 	useAuth: () => ({
 		data: messagesState.auth,
 	}),
+}));
+
+mock.module("@client/hooks/useMediaQuery", () => ({
+	useIsMobile: () => messagesState.isMobile,
 }));
 
 mock.module("./hooks", () => ({
@@ -32,18 +69,26 @@ mock.module("./hooks", () => ({
 }));
 
 mock.module("react-router", () => ({
-	useSearchParams: () => [
-		messagesState.searchParams,
-		(value: Record<string, string>) => {
-			messagesState.searchParams = new URLSearchParams(value);
-		},
-	],
+	useNavigate: () => (path: string) => {
+		messagesState.navigateCalls.push(path);
+		if (path === "/messages") {
+			messagesState.routeConversationId = null;
+			return;
+		}
+
+		const match = path.match(/^\/messages\/(.+)$/);
+		messagesState.routeConversationId = match?.[1] ?? null;
+	},
+	useParams: () => ({
+		conversationId: messagesState.routeConversationId ?? undefined,
+	}),
 }));
 
 mock.module("@client/components/Button/Button", () => ({
-	Button: ({ children }: { children: React.ReactNode }) => (
-		<button>{children}</button>
-	),
+	Button: (props: Record<string, any>) => {
+		buttonProps.push(props);
+		return <button>{props.children}</button>;
+	},
 }));
 
 mock.module("@client/components/Header", () => ({
@@ -61,9 +106,6 @@ mock.module("@client/components/user/Avatar", () => ({
 }));
 
 mock.module("@heroui/react", () => ({
-	Avatar: ({ children }: { children: React.ReactNode }) => (
-		<div>{children}</div>
-	),
 	cn: (...classes: Array<string | false | null | undefined>) =>
 		classes.filter(Boolean).join(" "),
 	ScrollShadow: ({ children }: { children: React.ReactNode }) => (
@@ -73,18 +115,18 @@ mock.module("@heroui/react", () => ({
 	Toast: { toast: { danger: () => {}, success: () => {} } },
 }));
 
-const { Avatar } = await import("@heroui/react");
-Avatar.Image = ({ src }: { src?: string }) => <img src={src} alt="" />;
-
 const { MessagesPage } = await import("./MessagesPage");
 
 describe("MessagesPage", () => {
 	beforeEach(() => {
+		messagesState.isMobile = false;
+		messagesState.routeConversationId = null;
 		messagesState.isPending = false;
 		messagesState.isThreadPending = false;
-		messagesState.searchParams = new URLSearchParams();
 		messagesState.conversations = [];
 		messagesState.thread = null;
+		messagesState.navigateCalls = [];
+		buttonProps.length = 0;
 	});
 
 	test("renders a loader while conversations are loading", () => {
@@ -95,50 +137,22 @@ describe("MessagesPage", () => {
 		expect(markup).toContain("Page Loader");
 	});
 
-	test("renders the empty inbox state", () => {
+	test("renders the empty inbox state on mobile without a thread pane", () => {
+		messagesState.isMobile = true;
+
 		const markup = renderToStaticMarkup(<MessagesPage />);
 
-		expect(markup).toContain("Your DM&#x27;s");
+		expect(markup).toContain("Your messages");
 		expect(markup).toContain("It&#x27;s empty here.");
-		expect(markup).toContain("Select a conversation to start coordinating.");
+		expect(markup).not.toContain(
+			"Select a conversation to start coordinating.",
+		);
 	});
 
-	test("renders the selected conversation thread", () => {
-		messagesState.searchParams = new URLSearchParams({
-			conversationId: "conversation-1",
-		});
-		messagesState.conversations = [
-			{
-				conversation: {
-					id: "conversation-1",
-					type: "DIRECT",
-					pulseId: null,
-					createdAt: "2026-04-04T10:00:00.000Z",
-				},
-				members: [
-					{
-						id: "user-1",
-						name: "Owner",
-						email: "owner@example.com",
-						image: null,
-					},
-					{
-						id: "user-2",
-						name: "Alex",
-						email: "alex@example.com",
-						image: null,
-					},
-				],
-				lastMessage: {
-					id: "message-1",
-					content: "See you there",
-					senderId: "user-2",
-					sentAt: "2026-04-04T10:00:00.000Z",
-				},
-			},
-		];
+	test("renders the first conversation thread on desktop when no route param is present", () => {
+		messagesState.conversations = [directConversation];
 		messagesState.thread = {
-			...messagesState.conversations[0],
+			...directConversation,
 			messages: [
 				{
 					id: "message-1",
@@ -157,9 +171,87 @@ describe("MessagesPage", () => {
 
 		const markup = renderToStaticMarkup(<MessagesPage />);
 
+		expect(markup).toContain("Your messages");
 		expect(markup).toContain("Alex");
 		expect(markup).toContain("See you there");
 		expect(markup).toContain("Direct conversation");
 		expect(markup).toContain("Send");
+	});
+
+	test("renders the selected conversation route as a full-screen mobile thread", () => {
+		messagesState.isMobile = true;
+		messagesState.routeConversationId = "conversation-1";
+		messagesState.conversations = [directConversation];
+		messagesState.thread = {
+			...directConversation,
+			messages: [
+				{
+					id: "message-1",
+					content: "See you there",
+					senderId: "user-2",
+					sentAt: "2026-04-04T10:00:00.000Z",
+					sender: {
+						id: "user-2",
+						name: "Alex",
+						email: "alex@example.com",
+						image: null,
+					},
+				},
+			],
+		};
+
+		const markup = renderToStaticMarkup(<MessagesPage />);
+
+		expect(markup).toContain("Back");
+		expect(markup).toContain("Alex");
+		expect(markup).toContain("See you there");
+		expect(markup).not.toContain("Your messages");
+	});
+
+	test("renders the route-selected thread in desktop split view", () => {
+		messagesState.routeConversationId = "conversation-1";
+		messagesState.conversations = [directConversation];
+		messagesState.thread = {
+			...directConversation,
+			messages: [
+				{
+					id: "message-1",
+					content: "See you there",
+					senderId: "user-2",
+					sentAt: "2026-04-04T10:00:00.000Z",
+					sender: {
+						id: "user-2",
+						name: "Alex",
+						email: "alex@example.com",
+						image: null,
+					},
+				},
+			],
+		};
+
+		const markup = renderToStaticMarkup(<MessagesPage />);
+
+		expect(markup).toContain("Your messages");
+		expect(markup).toContain("Alex");
+		expect(markup).toContain("See you there");
+		expect(markup).toContain("Direct conversation");
+		expect(markup).not.toContain("Back");
+	});
+
+	test("returns to /messages when backing out on mobile", async () => {
+		messagesState.isMobile = true;
+		messagesState.routeConversationId = "conversation-1";
+		messagesState.conversations = [directConversation];
+		messagesState.thread = {
+			...directConversation,
+			messages: [],
+		};
+
+		renderToStaticMarkup(<MessagesPage />);
+
+		await buttonProps.find((props) => props.children === "Back")?.onPress?.();
+
+		expect(messagesState.navigateCalls).toContain("/messages");
+		expect(messagesState.routeConversationId).toBeNull();
 	});
 });

@@ -99,9 +99,10 @@ export const MySkillsTab = ({
 					placeholder="Search your uploads by name or description..."
 					onChange={(value) => setSearchTerm(String(value))}
 				/>
-				<div className="flex items-center gap-3">
+				<div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
 					<Button
 						variant="primary"
+						className="w-full sm:w-auto"
 						startContent={<PlusSquareIcon className="size-4" />}
 						onPress={onUploadClick}
 					>
@@ -109,7 +110,7 @@ export const MySkillsTab = ({
 					</Button>
 					<Dropdown
 						trigger={
-							<div className="rounded-full bg-accent p-2 text-white shadow-sm">
+							<div className="flex justify-center rounded border border-accent bg-surface px-3 py-2 text-accent shadow-sm">
 								<Filter className="size-4" />
 							</div>
 						}

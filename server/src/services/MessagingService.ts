@@ -14,7 +14,7 @@ import { notificationService } from "@server/services/NotificationService";
 import { notificationFactory } from "@server/shared/NotificationFactory";
 import { handleError } from "@server/utils/handleError";
 import { ConversationTypeEnum } from "@shared/types";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 
 type ConversationMemberView = Pick<UserType, "id" | "name" | "image" | "email">;
 
@@ -33,6 +33,41 @@ type ConversationThread = ConversationSummary & {
 };
 
 export class MessagingService {
+	private async findExactPairConversations(
+		userId: string,
+		otherUserId: string,
+		types: ConversationTypeEnum[],
+	) {
+		return await db
+			.select({
+				id: conversation.id,
+				type: conversation.type,
+				pulseId: conversation.pulseId,
+				createdAt: conversation.createdAt,
+			})
+			.from(conversation)
+			.innerJoin(
+				conversationMember,
+				eq(conversation.id, conversationMember.conversationId),
+			)
+			.where(inArray(conversation.type, types))
+			.groupBy(
+				conversation.id,
+				conversation.type,
+				conversation.pulseId,
+				conversation.createdAt,
+			)
+			.having(sql`
+				count(distinct ${conversationMember.userId}) = 2
+				and count(
+					distinct case
+						when ${conversationMember.userId} in (${userId}, ${otherUserId})
+						then ${conversationMember.userId}
+					end
+				) = 2
+			`);
+	}
+
 	private async getConversationBase(conversationId: string) {
 		const foundConversation =
 			await conversationRepository.getOne(conversationId);
@@ -85,24 +120,14 @@ export class MessagingService {
 			return null;
 		}
 
-		const [existing] = await db
-			.select({ conversationId: conversationMember.conversationId })
-			.from(conversationMember)
-			.innerJoin(
-				conversation,
-				eq(conversation.id, conversationMember.conversationId),
-			)
-			.where(
-				and(
-					eq(conversation.type, ConversationTypeEnum.Direct),
-					inArray(conversationMember.userId, [userId, otherUserId]),
-				),
-			)
-			.groupBy(conversationMember.conversationId)
-			.having(sql`count(distinct ${conversationMember.userId}) = 2`);
+		const [existing] = await this.findExactPairConversations(
+			userId,
+			otherUserId,
+			[ConversationTypeEnum.Direct],
+		);
 
 		if (existing) {
-			return await conversationRepository.getOne(existing.conversationId);
+			return await conversationRepository.getOne(existing.id);
 		}
 
 		const created = await conversationRepository.create({
@@ -124,6 +149,41 @@ export class MessagingService {
 		]);
 
 		return created;
+	}
+
+	async ensureCoordinationConversation(userId: string, otherUserId: string) {
+		if (userId === otherUserId) {
+			return null;
+		}
+
+		const [directConversation] = await this.findExactPairConversations(
+			userId,
+			otherUserId,
+			[ConversationTypeEnum.Direct],
+		);
+
+		if (directConversation) {
+			return await conversationRepository.getOne(directConversation.id);
+		}
+
+		const legacyPulseConversations = await this.findExactPairConversations(
+			userId,
+			otherUserId,
+			[ConversationTypeEnum.Pulse],
+		);
+
+		const earliestPulseConversation = legacyPulseConversations.sort((a, b) => {
+			return a.createdAt.getTime() - b.createdAt.getTime();
+		})[0];
+
+		if (earliestPulseConversation) {
+			return await conversationRepository.update(earliestPulseConversation.id, {
+				type: ConversationTypeEnum.Direct,
+				pulseId: null,
+			});
+		}
+
+		return await this.ensureDirectConversation(userId, otherUserId);
 	}
 
 	async ensurePulseConversation(pulseId: string, memberIds: string[]) {

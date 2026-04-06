@@ -68,7 +68,7 @@ export function NeighborhoodPulseFeed() {
 	};
 
 	return (
-		<Card className="shadow-none border border-border">
+		<Card className="border border-accent shadow-none">
 			<Card.Header className="flex flex-row items-center justify-between gap-2">
 				<div className="min-w-0">
 					<Card.Title className="text-lg flex items-center text-accent gap-2">

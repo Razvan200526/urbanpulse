@@ -68,7 +68,7 @@ export const ResourcesPage = () => {
 	};
 
 	return (
-		<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden relative">
+		<div className="relative flex h-[calc(100dvh)] min-w-0 w-full flex-col overflow-hidden bg-surface">
 			<Header
 				title="Skills & Resources"
 				tabs={
@@ -85,7 +85,7 @@ export const ResourcesPage = () => {
 								trigger={
 									<button
 										type="button"
-										className="flex shrink-0 items-center gap-2 rounded-2xl border border-border bg-surface-secondary/70 px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors duration-150 hover:bg-surface-secondary"
+										className="flex shrink-0 items-center gap-2 rounded border border-accent bg-surface-secondary/70 px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors duration-150 hover:bg-surface-secondary"
 									>
 										<span>Actions</span>
 										<ChevronDownIcon className="size-4 text-accent" />
@@ -128,7 +128,7 @@ export const ResourcesPage = () => {
 			</Header>
 			<Separator />
 
-			<ScrollShadow className="flex-1 p-6" size={10}>
+			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>
 				<div className="max-w-7xl mx-auto">{renderActiveTab()}</div>
 			</ScrollShadow>
 

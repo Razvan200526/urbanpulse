@@ -10,8 +10,8 @@ export const AlertsFeed = () => {
 	const selectedAlertId = useAlertsPageStore((state) => state.selectedAlertId);
 
 	return (
-		<div className="flex min-h-0 flex-col overflow-y-scroll rounded-lg border border-border bg-surface">
-			<div className="border-b border-border px-5 py-4">
+		<div className="flex min-h-0 flex-col overflow-hidden rounded border border-accent bg-surface">
+			<div className="border-b border-accent px-4 py-4 sm:px-5">
 				<H4>Your alerts</H4>
 			</div>
 			<ScrollShadow

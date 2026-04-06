@@ -11,11 +11,12 @@ import {
 	labelForNotificationType,
 	type NotificationListItem,
 } from "@client/utils/notifications";
-import { Toast } from "@heroui/react";
+import { cn, Toast } from "@heroui/react";
 import { BellDot } from "lucide-react";
 
 export const AlertCard = ({
 	notificationItem,
+	isActive = false,
 }: {
 	notificationItem: NotificationListItem;
 	isActive?: boolean;
@@ -39,31 +40,36 @@ export const AlertCard = ({
 			: labelForNotificationType(notificationType);
 
 	return (
-		<button
-			type="button"
-			onClick={() =>
-				notificationItem.notification?.id &&
-				selectAlert(notificationItem.notification.id)
-			}
-			className="w-full rounded border px-4 py-4 text-left transition-colors duration-150 ease-out cursor-pointer hover:border-accent bg-surface"
+		<article
+			className={cn(
+				"w-full cursor-pointer rounded border border-accent/40 bg-surface px-4 py-4 text-left transition-colors duration-150 ease-out",
+				isActive ? "border-accent bg-accent/5" : "hover:border-accent",
+			)}
 		>
-			<div className="flex items-start gap-4">
-				<div className="min-w-0 flex-1">
-					<div className="flex flex-wrap items-start justify-between gap-3">
-						<div className="min-w-0 flex items-center justify-start gap-2">
-							<Avatar user={notificationItem.user} />
-							<p className="truncate text-md font-semibold text-accent">
-								{notificationItem.user?.name || "System alert"}
-							</p>
+			<button
+				type="button"
+				className="w-full text-left"
+				onClick={() =>
+					notificationItem.notification?.id &&
+					selectAlert(notificationItem.notification.id)
+				}
+			>
+				<div className="flex items-start gap-4">
+					<div className="min-w-0 flex-1">
+						<div className="flex flex-wrap items-start justify-between gap-3">
+							<div className="min-w-0 flex items-center justify-start gap-2">
+								<Avatar user={notificationItem.user} />
+								<p className="truncate text-md font-semibold text-accent">
+									{notificationItem.user?.name || "System alert"}
+								</p>
+							</div>
+
+							<div className="text-xs text-muted">
+								<span>{createdAt}</span>
+							</div>
 						</div>
 
-						<div className="text-xs text-muted">
-							<span>{createdAt}</span>
-						</div>
-					</div>
-
-					<div className="flex items-center justify-between">
-						<div className="mt-5 flex items-center gap-2 text-sm text-foreground">
+						<div className="mt-4 flex items-center gap-2 text-sm text-foreground">
 							{pulseResponsePayload ? (
 								<HelpIcon className="size-6 text-accent" />
 							) : (
@@ -71,53 +77,51 @@ export const AlertCard = ({
 							)}
 							<span className="text-sm font-normal">{alertType}</span>
 						</div>
-						{pulseResponsePayload ? (
-							<div className="mt-4 flex items-center gap-2">
-								<Button
-									radius="md"
-									size="sm"
-									isDisabled={isActionPending}
-									onPress={() => {
-										acceptHelp.mutate(pulseResponsePayload, {
-											onSuccess: () =>
-												Toast.toast.success("Help offer accepted"),
-											onError: (error: Error) =>
-												Toast.toast.danger(
-													error instanceof Error
-														? error.message
-														: "Could not accept offer",
-												),
-										});
-									}}
-									className="border border-success bg-surface px-3 text-success transition-colors duration-150 ease-out hover:bg-success/10"
-								>
-									Accept
-								</Button>
-								<Button
-									variant="danger-soft"
-									radius="md"
-									size="sm"
-									isDisabled={isActionPending}
-									onPress={() => {
-										rejectHelp.mutate(pulseResponsePayload, {
-											onSuccess: () =>
-												Toast.toast.success("Help offer rejected"),
-											onError: (error: Error) =>
-												Toast.toast.danger(
-													error instanceof Error
-														? error.message
-														: "Could not reject offer",
-												),
-										});
-									}}
-								>
-									Reject
-								</Button>
-							</div>
-						) : null}
 					</div>
 				</div>
-			</div>
-		</button>
+			</button>
+			{pulseResponsePayload ? (
+				<div className="mt-4 flex flex-col gap-2 sm:flex-row">
+					<Button
+						radius="md"
+						size="sm"
+						isDisabled={isActionPending}
+						onPress={() => {
+							acceptHelp.mutate(pulseResponsePayload, {
+								onSuccess: () => Toast.toast.success("Help offer accepted"),
+								onError: (error: Error) =>
+									Toast.toast.danger(
+										error instanceof Error
+											? error.message
+											: "Could not accept offer",
+									),
+							});
+						}}
+						className="border border-success bg-surface px-3 text-success transition-colors duration-150 ease-out hover:bg-success/10"
+					>
+						Accept
+					</Button>
+					<Button
+						variant="danger-soft"
+						radius="md"
+						size="sm"
+						isDisabled={isActionPending}
+						onPress={() => {
+							rejectHelp.mutate(pulseResponsePayload, {
+								onSuccess: () => Toast.toast.success("Help offer rejected"),
+								onError: (error: Error) =>
+									Toast.toast.danger(
+										error instanceof Error
+											? error.message
+											: "Could not reject offer",
+									),
+							});
+						}}
+					>
+						Reject
+					</Button>
+				</div>
+			) : null}
+		</article>
 	);
 };

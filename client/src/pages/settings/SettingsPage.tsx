@@ -124,10 +124,10 @@ export const SettingsPage = () => {
 	}
 
 	return (
-		<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden">
+		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
 			<Header title="Settings" />
 			<Separator />
-			<ScrollShadow className="flex-1 p-6" size={10}>
+			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>
 				<div className="max-w-5xl mx-auto space-y-6">
 					<Card className="border border-accent shadow-none">
 						<Card.Header className="flex flex-col items-start gap-1">
@@ -188,14 +188,15 @@ export const SettingsPage = () => {
 								</div>
 							</div>
 						</Card.Content>
-						<Card.Footer className="justify-between p-6 pt-0">
-							<div className="text-xs flex items-center gap-2 text-accent">
+						<Card.Footer className="flex flex-col items-start gap-3 p-6 pt-0 sm:flex-row sm:items-center sm:justify-between">
+							<div className="flex items-center gap-2 text-xs text-accent">
 								<Clock3 className="size-4" />
 								Quiet hours mute non-urgent matches, but urgent emergencies can
 								still break through.
 							</div>
 							<Button
 								variant="primary"
+								className="w-full sm:w-auto"
 								onPress={saveQuietHours}
 								isPending={isSavingQuietHours}
 								isDisabled={days.length === 0}
@@ -217,7 +218,7 @@ export const SettingsPage = () => {
 						</Card.Header>
 						<Card.Content className="space-y-6 p-6">
 							<div className="rounded border border-accent/30 bg-surface-secondary/40 p-4">
-								<div className="flex items-center justify-between gap-3">
+								<div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
 									<div>
 										<p className="text-sm font-semibold text-accent">
 											Home location
@@ -275,14 +276,15 @@ export const SettingsPage = () => {
 								</div>
 							</div>
 						</Card.Content>
-						<Card.Footer className="justify-between p-6 pt-0">
-							<div className="text-xs flex items-center gap-2 text-accent">
+						<Card.Footer className="flex flex-col items-start gap-3 p-6 pt-0 sm:flex-row sm:items-center sm:justify-between">
+							<div className="flex items-center gap-2 text-xs text-accent">
 								<MapPinned className="size-4" />
 								Smart matching uses the closest fresh live location first, then
 								your saved fallback.
 							</div>
 							<Button
 								variant="primary"
+								className="w-full sm:w-auto"
 								onPress={saveAlertPreferences}
 								isPending={isSavingAlertPreferences}
 							>

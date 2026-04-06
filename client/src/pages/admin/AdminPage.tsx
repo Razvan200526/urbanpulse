@@ -140,10 +140,10 @@ export const AdminPage = () => {
 
 	if (error || !data) {
 		return (
-			<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden">
+			<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
 				<Header title="Moderation" />
 				<Separator />
-				<div className="flex-1 p-8 flex items-center justify-center">
+				<div className="flex flex-1 items-center justify-center p-4 sm:p-8">
 					<div className="flex flex-col space-y-4 items-center">
 						<AlertCircleIcon className="size-20 text-danger" />
 						<P>This page is restricted to administrators only.</P>
@@ -154,10 +154,10 @@ export const AdminPage = () => {
 	}
 
 	return (
-		<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden">
+		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
 			<Header title="Moderation" />
 			<Separator />
-			<ScrollShadow className="flex-1 p-6" size={10}>
+			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>
 				<div className="max-w-6xl mx-auto space-y-6">
 					<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 						{metricCards.map((card) => {
@@ -165,7 +165,7 @@ export const AdminPage = () => {
 							return (
 								<Card
 									key={card.key}
-									className="border border-border shadow-none"
+									className="border border-accent shadow-none"
 								>
 									<Card.Content className="p-5 flex items-center justify-between">
 										<div>
@@ -184,7 +184,7 @@ export const AdminPage = () => {
 					</div>
 
 					<div className="grid gap-6 lg:grid-cols-3">
-						<Card className="border border-border shadow-none">
+						<Card className="border border-accent shadow-none">
 							<Card.Header>
 								<Card.Title>Recent Reports</Card.Title>
 							</Card.Header>
@@ -193,7 +193,7 @@ export const AdminPage = () => {
 									data.recentReports.map((report) => (
 										<div
 											key={report.id}
-											className="rounded border border-border p-3"
+											className="rounded border border-accent/30 p-3"
 										>
 											<p className="font-medium">{report.reason}</p>
 											<p className="text-xs text-muted mt-1">
@@ -210,7 +210,7 @@ export const AdminPage = () => {
 							</Card.Content>
 						</Card>
 
-						<Card className="border border-border shadow-none">
+						<Card className="border border-accent shadow-none">
 							<Card.Header>
 								<Card.Title>Recent Pulses</Card.Title>
 							</Card.Header>
@@ -218,7 +218,7 @@ export const AdminPage = () => {
 								{data.recentPulses.map((pulse) => (
 									<div
 										key={pulse.id}
-										className="rounded border border-border p-3"
+										className="rounded border border-accent/30 p-3"
 									>
 										<p className="font-medium">{pulse.title}</p>
 										<p className="text-xs text-muted mt-1">
@@ -230,7 +230,7 @@ export const AdminPage = () => {
 							</Card.Content>
 						</Card>
 
-						<Card className="border border-border shadow-none">
+						<Card className="border border-accent shadow-none">
 							<Card.Header>
 								<Card.Title>Recent Resources</Card.Title>
 							</Card.Header>
@@ -238,7 +238,7 @@ export const AdminPage = () => {
 								{data.recentResources.map((resource) => (
 									<div
 										key={resource.id}
-										className="rounded border border-border p-3"
+										className="rounded border border-accent/30 p-3"
 									>
 										<p className="font-medium">{resource.name}</p>
 										<p className="text-xs text-muted mt-1">
@@ -251,7 +251,7 @@ export const AdminPage = () => {
 						</Card>
 					</div>
 
-					<Card className="border border-border shadow-none">
+					<Card className="border border-accent shadow-none">
 						<Card.Header>
 							<Card.Title>Moderation Queue</Card.Title>
 							<Card.Description>
@@ -268,7 +268,7 @@ export const AdminPage = () => {
 									return (
 										<div
 											key={entry.id}
-											className="rounded border border-border p-4 space-y-3"
+											className="rounded border border-accent/30 p-4 space-y-3"
 										>
 											<div className="flex flex-wrap items-start justify-between gap-3">
 												<div className="space-y-1">
@@ -304,10 +304,11 @@ export const AdminPage = () => {
 											)}
 
 											{isPendingReport ? (
-												<div className="flex flex-wrap gap-2">
+												<div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
 													<Button
 														size="sm"
 														variant="danger"
+														className="w-full sm:w-auto"
 														isPending={reviewReport.isPending}
 														onPress={() =>
 															reviewReport.mutate(
@@ -338,6 +339,7 @@ export const AdminPage = () => {
 													<Button
 														size="sm"
 														variant="primary"
+														className="w-full sm:w-auto"
 														isPending={reviewReport.isPending}
 														onPress={() =>
 															reviewReport.mutate(
@@ -369,6 +371,7 @@ export const AdminPage = () => {
 														<Button
 															size="sm"
 															variant="outline"
+															className="w-full sm:w-auto"
 															isPending={moderatePulse.isPending}
 															onPress={() =>
 																moderatePulse.mutate(
@@ -404,6 +407,7 @@ export const AdminPage = () => {
 													<Button
 														size="sm"
 														variant="outline"
+														className="w-full sm:w-auto"
 														isPending={reviewReport.isPending}
 														onPress={() =>
 															reviewReport.mutate(
@@ -445,7 +449,7 @@ export const AdminPage = () => {
 						</Card.Content>
 					</Card>
 
-					<Card className="border border-border shadow-none">
+					<Card className="border border-accent shadow-none">
 						<Card.Header>
 							<Card.Title>Duplicate Review</Card.Title>
 							<Card.Description>
@@ -457,10 +461,10 @@ export const AdminPage = () => {
 								duplicates.map((entry) => (
 									<div
 										key={`${entry.sourcePulse.id}-${entry.targetPulse.id}`}
-										className="rounded border border-border p-4 space-y-3"
+										className="rounded border border-accent/30 p-4 space-y-3"
 									>
 										<div className="grid gap-3 lg:grid-cols-2">
-											<div className="rounded border border-border/70 p-3">
+											<div className="rounded border border-accent/20 p-3">
 												<p className="text-xs uppercase tracking-wide text-muted">
 													Source pulse
 												</p>
@@ -472,7 +476,7 @@ export const AdminPage = () => {
 													{formatDate(new Date(entry.sourcePulse.createdAt))}
 												</p>
 											</div>
-											<div className="rounded border border-border/70 p-3">
+											<div className="rounded border border-accent/20 p-3">
 												<p className="text-xs uppercase tracking-wide text-muted">
 													Canonical target
 												</p>
@@ -493,6 +497,7 @@ export const AdminPage = () => {
 										<Button
 											size="sm"
 											variant="primary"
+											className="w-full sm:w-auto"
 											isPending={mergePulse.isPending}
 											onPress={() =>
 												mergePulse.mutate(
@@ -527,7 +532,7 @@ export const AdminPage = () => {
 						</Card.Content>
 					</Card>
 
-					<Card className="border border-border shadow-none">
+					<Card className="border border-accent shadow-none">
 						<Card.Header>
 							<Card.Title>User Access</Card.Title>
 							<Card.Description>
@@ -539,7 +544,7 @@ export const AdminPage = () => {
 								value={userSearch}
 								onChange={(event) => setUserSearch(event.target.value)}
 								placeholder="Search by email"
-								className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none"
+								className="w-full rounded-md border border-accent bg-background px-3 py-2 text-sm outline-none"
 							/>
 
 							<div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
@@ -548,7 +553,7 @@ export const AdminPage = () => {
 										users.map((entry) => (
 											<div
 												key={entry.id}
-												className="rounded border border-border p-4 space-y-3"
+												className="rounded border border-accent/30 p-4 space-y-3"
 											>
 												<div className="flex flex-wrap items-start justify-between gap-3">
 													<div>
@@ -567,15 +572,17 @@ export const AdminPage = () => {
 													<Button
 														size="sm"
 														variant="outline"
+														className="w-full sm:w-auto"
 														onPress={() => setSelectedUserId(entry.id)}
 													>
 														View sessions
 													</Button>
 												</div>
-												<div className="flex flex-wrap gap-2">
+												<div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
 													<Button
 														size="sm"
 														variant="primary"
+														className="w-full sm:w-auto"
 														isPending={setRole.isPending}
 														onPress={() => onRoleToggle(entry)}
 													>
@@ -586,6 +593,7 @@ export const AdminPage = () => {
 													<Button
 														size="sm"
 														variant={entry.banned ? "outline" : "danger"}
+														className="w-full sm:w-auto"
 														isPending={banUser.isPending || unbanUser.isPending}
 														onPress={() => onBanToggle(entry)}
 													>
@@ -601,7 +609,7 @@ export const AdminPage = () => {
 									)}
 								</div>
 
-								<div className="rounded border border-border p-4 space-y-3">
+								<div className="rounded border border-accent/30 p-4 space-y-3">
 									<div>
 										<p className="font-medium">Active sessions</p>
 										<p className="text-xs text-muted mt-1">
@@ -614,7 +622,7 @@ export const AdminPage = () => {
 										selectedUserSessions.map((session) => (
 											<div
 												key={session.token || session.id}
-												className="rounded border border-border/70 p-3 space-y-2"
+												className="rounded border border-accent/20 p-3 space-y-2"
 											>
 												<p className="text-xs text-muted">
 													Created:{" "}
@@ -632,6 +640,7 @@ export const AdminPage = () => {
 													<Button
 														size="sm"
 														variant="danger"
+														className="w-full sm:w-auto"
 														isPending={revokeSession.isPending}
 														onPress={() =>
 															revokeSession.mutate(

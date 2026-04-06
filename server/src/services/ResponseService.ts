@@ -64,10 +64,10 @@ export class ResponseService {
 			});
 			await this.responseRepo.declineOtherPendingForPulse(pulseId, responseId);
 			const coordinationConversation =
-				await messagingService.ensurePulseConversation(pulseId, [
+				await messagingService.ensureCoordinationConversation(
 					ownerUserId,
 					row.responderId,
-				]);
+				);
 			return {
 				accepted,
 				pulseTitle: pulse.title,

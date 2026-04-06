@@ -126,7 +126,7 @@ export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 			<div className="p-4 flex flex-col items-center justify-center gap-4">
 				<button
 					type="button"
-					className="w-full flex-col h-48 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-surface hover:bg-light transition-colors cursor-pointer relative overflow-hidden"
+					className="flex-col h-48 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-surface hover:bg-light transition-colors cursor-pointer relative overflow-hidden"
 					onDragOver={onDragOver}
 					onDrop={onDrop}
 					onClick={() => !previewUrl && inputRef.current?.click()}

@@ -64,6 +64,10 @@ export const router = createBrowserRouter([
 						element: <MessagesPage />,
 					},
 					{
+						path: "/messages/:conversationId",
+						element: <MessagesPage />,
+					},
+					{
 						path: "/admin",
 						element: <AdminPage />,
 					},

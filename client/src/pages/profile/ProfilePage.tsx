@@ -146,17 +146,17 @@ export const ProfilePage = () => {
 	}
 
 	return (
-		<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden">
+		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface w-full">
 			<Header title="Profile" />
 			<Separator />
-			<ScrollShadow className="flex-1 p-6" size={10}>
+			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>
 				<div className="mx-auto max-w-6xl space-y-6">
 					<div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.9fr)]">
 						<div className="space-y-6">
-							<Card className="border border-border shadow-none">
+							<Card className="border border-accent shadow-none">
 								<Card.Content className="space-y-6 p-6">
 									<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-										<div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+										<div className="flex flex-col gap-2 sm:flex-row sm:items-start">
 											<InputAvatar
 												value={image || profile.user.image || undefined}
 												onAvatarChange={(url) => setImage(url)}
@@ -196,7 +196,7 @@ export const ProfilePage = () => {
 												</div>
 											</div>
 										</div>
-										<div className="min-w-[220px] rounded border border-border bg-surface-secondary p-4">
+										<div className="w-full min-w-0 rounded border border-accent/40 bg-surface-secondary p-4 sm:min-w-55">
 											<p className="text-sm font-medium text-foreground">
 												Trust rating
 											</p>
@@ -213,7 +213,7 @@ export const ProfilePage = () => {
 									</div>
 
 									<div className="space-y-3 border-t border-border pt-6">
-										<div className="flex items-center justify-between gap-3">
+										<div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
 											<p className="text-sm font-semibold text-foreground">
 												Skills
 											</p>
@@ -268,10 +268,11 @@ export const ProfilePage = () => {
 												className="h-11 flex-1 rounded border border-border bg-field-background px-3 text-sm text-field-foreground outline-none transition-colors focus:border-accent"
 												placeholder="Add a skill tag like First Aid or Heavy Lifting"
 											/>
-											<div className="flex gap-3 items-center">
+											<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
 												<Button
 													size="sm"
 													variant="secondary"
+													className="w-full sm:w-auto"
 													onPress={addSkillTag}
 												>
 													Add skill
@@ -279,6 +280,7 @@ export const ProfilePage = () => {
 												<Button
 													size="sm"
 													variant="primary"
+													className="w-full sm:w-auto"
 													onPress={saveSkillTags}
 													isPending={isSavingTags}
 													startContent={<ShieldCheck className="size-4" />}
@@ -317,9 +319,10 @@ export const ProfilePage = () => {
 										</div>
 									</div>
 								</Card.Content>
-								<Card.Footer className="justify-end border-t border-border px-6 py-4">
+								<Card.Footer className="flex flex-col-reverse gap-3 border-t border-border px-6 py-4 sm:flex-row sm:justify-end">
 									<Button
 										variant="primary"
+										className="w-full sm:w-auto"
 										onPress={saveProfileDetails}
 										isPending={isSavingProfile}
 										startContent={<Save className="size-4" />}
@@ -331,7 +334,7 @@ export const ProfilePage = () => {
 						</div>
 
 						<div className="space-y-4">
-							<Card className="border border-border shadow-none">
+							<Card className="border border-accent shadow-none">
 								<Card.Header className="flex flex-row items-start gap-3">
 									<div className="rounded border border-border bg-surface-secondary p-2 text-accent">
 										<BriefcaseBusiness className="size-4" />
@@ -346,7 +349,7 @@ export const ProfilePage = () => {
 							</Card>
 
 							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-								<Card className="border border-border shadow-none">
+								<Card className="border border-accent shadow-none">
 									<Card.Content className="space-y-2 p-5">
 										<p className="text-sm text-muted">Active offers</p>
 										<p className="text-3xl font-semibold text-foreground">
@@ -359,7 +362,7 @@ export const ProfilePage = () => {
 									</Card.Content>
 								</Card>
 
-								<Card className="border border-border shadow-none">
+								<Card className="border border-accent shadow-none">
 									<Card.Content className="space-y-2 p-5">
 										<p className="text-sm text-muted">
 											Successful interactions
@@ -374,7 +377,7 @@ export const ProfilePage = () => {
 									</Card.Content>
 								</Card>
 
-								<Card className="border border-border shadow-none">
+								<Card className="border border-accent shadow-none">
 									<Card.Content className="space-y-3 p-5">
 										<div className="flex items-center gap-2 text-sm font-medium text-foreground">
 											<BadgeCheck className="size-4 text-accent" />
@@ -397,7 +400,7 @@ export const ProfilePage = () => {
 									</Card.Content>
 								</Card>
 
-								<Card className="border border-border shadow-none">
+								<Card className="border border-accent shadow-none">
 									<Card.Content className="space-y-3 p-5">
 										<div className="flex items-center gap-2 text-sm font-medium text-foreground">
 											<UserRoundCheck className="size-4 text-accent" />
@@ -432,6 +435,7 @@ export const ProfilePage = () => {
 							<AlertDialog>
 								<Button
 									variant="danger"
+									className="w-full sm:w-auto"
 									startContent={<Trash2 className="size-4" />}
 								>
 									Delete account

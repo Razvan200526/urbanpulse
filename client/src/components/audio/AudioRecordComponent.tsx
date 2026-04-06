@@ -119,7 +119,7 @@ export const AudioRecorder = ({
 			)}
 
 			{status === "recording" && (
-				<div className="flex items-center gap-3 bg-surface border border-accent rounded-full p-2 w-72 shadow-sm transition-all duration-300 ease-out animate-in fade-in zoom-in-95 h-10">
+				<div className="flex items-center gap-3 bg-surface border border-accent rounded-full p-2 mr-4 w-full shadow-sm transition-all duration-300 ease-out animate-in fade-in zoom-in-95 h-10">
 					<Tooltip delay={0}>
 						<Tooltip.Trigger>
 							<Button

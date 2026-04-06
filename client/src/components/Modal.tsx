@@ -73,7 +73,7 @@ export const Modal = (props: ModalPropsType) => {
 					>
 						<HeroModal.Dialog
 							className={cn(
-								"relative overflow-hidden border border-border-secondary bg-surface shadow-2xl",
+								"flex flex-col relative overflow-hidden border border-border-secondary bg-surface shadow-2xl",
 								isMobile
 									? "max-h-[88dvh] w-full rounded-t-sm border-x-0 border-b-0"
 									: "mx-4 w-full max-w-3xl rounded-sm",
@@ -84,7 +84,7 @@ export const Modal = (props: ModalPropsType) => {
 									<HeroModal.Heading>{header}</HeroModal.Heading>
 								</HeroModal.Header>
 							)}
-							<HeroModal.Body className="min-h-0 overflow-y-auto">
+							<HeroModal.Body className="flex-1 min-h-0 overflow-y-auto">
 								{children}
 							</HeroModal.Body>
 							{footer && (
