@@ -8,7 +8,9 @@ const sanitizeObjectName = (fileName: string) => {
 			? normalizedName.slice(0, extensionIndex)
 			: normalizedName;
 	const extension =
-		extensionIndex > 0 ? normalizedName.slice(extensionIndex).toLowerCase() : "";
+		extensionIndex > 0
+			? normalizedName.slice(extensionIndex).toLowerCase()
+			: "";
 
 	const safeBaseName =
 		baseName

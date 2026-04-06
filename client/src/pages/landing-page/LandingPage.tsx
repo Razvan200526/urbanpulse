@@ -1,6 +1,6 @@
 import { FeaturesSection } from "../components/FeaturesSection";
-import { FooterSection } from "../components/FooterSection";
 import { FloatingOrbs } from "../components/FloatingOrbs";
+import { FooterSection } from "../components/FooterSection";
 import HeroSection from "../components/HeroSection";
 import { HowItWorksSection } from "../components/HowItWorksSection";
 import { Navbar } from "../components/Navbar";

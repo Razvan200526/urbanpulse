@@ -61,7 +61,9 @@ mock.module("@client/components/user/Avatar", () => ({
 }));
 
 mock.module("@heroui/react", () => ({
-	Avatar: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	Avatar: ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	),
 	cn: (...classes: Array<string | false | null | undefined>) =>
 		classes.filter(Boolean).join(" "),
 	ScrollShadow: ({ children }: { children: React.ReactNode }) => (

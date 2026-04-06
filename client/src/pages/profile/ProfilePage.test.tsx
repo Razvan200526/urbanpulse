@@ -196,7 +196,9 @@ mock.module("@heroui/react", () => {
 			| ((props: { close: () => void }) => React.ReactNode);
 	}) => (
 		<div>
-			{typeof children === "function" ? children({ close: () => {} }) : children}
+			{typeof children === "function"
+				? children({ close: () => {} })
+				: children}
 		</div>
 	);
 	AlertDialog.Header = ({ children }: { children: React.ReactNode }) => (
@@ -289,9 +291,7 @@ describe("ProfilePage", () => {
 				image: "avatar.png",
 			},
 		]);
-		expect(updateSkillTagCalls).toEqual([
-			{ tags: ["First Aid", "Logistics"] },
-		]);
+		expect(updateSkillTagCalls).toEqual([{ tags: ["First Aid", "Logistics"] }]);
 		expect(toastSuccessCalls).toEqual([
 			"Profile updated",
 			"Skill tags updated",
@@ -307,7 +307,10 @@ describe("ProfilePage", () => {
 
 		expect(deleteAccountCalls).toEqual(["delete"]);
 		expect(toastSuccessCalls).toContain("Account deleted");
-		expect(posthogCalls).toContainEqual({ event: "account_deleted", payload: undefined });
+		expect(posthogCalls).toContainEqual({
+			event: "account_deleted",
+			payload: undefined,
+		});
 		expect(posthogResetCalls).toBe(1);
 		expect(navigateCalls).toEqual([{ path: "/", options: { replace: true } }]);
 	});

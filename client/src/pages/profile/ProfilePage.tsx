@@ -1,12 +1,12 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
-import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import { InputAvatar } from "@client/components/input/InputAvatar";
 import {
 	InputName,
 	type InputNameRefType,
 } from "@client/components/input/InputName";
 import { PageLoader } from "@client/components/PageLoader";
+import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import { H2 } from "@client/components/typography";
 import {
 	useDeleteAccount,

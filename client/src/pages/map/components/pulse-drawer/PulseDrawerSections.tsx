@@ -3,8 +3,8 @@ import { Button } from "@client/components/Button/Button";
 import { ProgressChip } from "@client/components/chips/ProgressChip";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
 import { MetaRow } from "@client/pages/map/components/MetaRow";
-import type { ClientPulseType } from "@client/utils/types";
 import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
+import type { ClientPulseType } from "@client/utils/types";
 import { Chip, cn } from "@heroui/react";
 import { formatDate } from "@shared/utils/formatDate";
 import {
@@ -193,11 +193,7 @@ export const PulseDrawerSummary = ({
 			)}
 			{pulse.imageUrls.length > 0 &&
 				pulse.imageUrls.map((url) => (
-					<img
-						key={url}
-						alt="pulse-image"
-						src={normalizeAssetUrl(url)}
-					/>
+					<img key={url} alt="pulse-image" src={normalizeAssetUrl(url)} />
 				))}
 		</div>
 	);
