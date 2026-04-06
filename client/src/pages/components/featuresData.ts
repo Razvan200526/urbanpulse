@@ -11,6 +11,7 @@ export interface Feature {
 	label: string;
 	description: string;
 	gradient: string;
+	visual: "alerts" | "map" | "response" | "local" | "feed";
 }
 
 export const features: Feature[] = [
@@ -21,6 +22,7 @@ export const features: Feature[] = [
 		description:
 			"Get instant notifications about incidents, road closures, and emergencies happening right in your neighbourhood. Never miss a critical update again.",
 		gradient: "from-(--danger)/30 via-(--warning)/20 to-transparent",
+		visual: "alerts",
 	},
 	{
 		icon: MapIcon,
@@ -29,6 +31,7 @@ export const features: Feature[] = [
 		description:
 			"See a live, interactive map of everything happening around you — powered by your neighbours and local authorities in real-time.",
 		gradient: "from-(--accent)/30 via-(--success)/20 to-transparent",
+		visual: "map",
 	},
 	{
 		icon: BoltIcon,
@@ -37,6 +40,7 @@ export const features: Feature[] = [
 		description:
 			"Connect with people nearby who can help in seconds. Report, request, or respond instantly.",
 		gradient: "from-(--success)/30 via-(--accent)/20 to-transparent",
+		visual: "response",
 	},
 	{
 		icon: LocationIcon,
@@ -45,6 +49,7 @@ export const features: Feature[] = [
 		description:
 			"Everything is scoped to your immediate area. See only what matters within walking distance.",
 		gradient: "from-(--warning)/30 via-(--danger)/20 to-transparent",
+		visual: "local",
 	},
 	{
 		icon: SignalIcon,
@@ -53,5 +58,6 @@ export const features: Feature[] = [
 		description:
 			"A continuous stream of community updates — from safety alerts to neighbourhood events.",
 		gradient: "from-(--accent)/30 via-purple-500/20 to-transparent",
+		visual: "feed",
 	},
 ];

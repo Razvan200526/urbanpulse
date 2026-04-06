@@ -27,17 +27,8 @@ const settingsState = {
 const buttonProps: Array<Record<string, any>> = [];
 const quietHoursCalls: Array<unknown> = [];
 const alertPreferenceCalls: Array<unknown> = [];
-const deleteCalls: string[] = [];
-const navigateCalls: Array<unknown> = [];
 const toastSuccessCalls: string[] = [];
 const toastDangerCalls: string[] = [];
-let confirmResult = true;
-
-mock.module("react-router", () => ({
-	useNavigate: () => (path: string, options?: unknown) => {
-		navigateCalls.push({ path, options });
-	},
-}));
 
 mock.module("@posthog/react", () => ({
 	usePostHog: () => ({
@@ -68,12 +59,6 @@ mock.module("@client/hooks/useProfileSettings", () => ({
 	useUpdateAlertPreferences: () => ({
 		mutateAsync: async (payload: unknown) => {
 			alertPreferenceCalls.push(payload);
-		},
-		isPending: false,
-	}),
-	useDeleteAccount: () => ({
-		mutateAsync: async () => {
-			deleteCalls.push("delete");
 		},
 		isPending: false,
 	}),
@@ -163,14 +148,8 @@ describe("SettingsPage", () => {
 		buttonProps.length = 0;
 		quietHoursCalls.length = 0;
 		alertPreferenceCalls.length = 0;
-		deleteCalls.length = 0;
-		navigateCalls.length = 0;
 		toastSuccessCalls.length = 0;
 		toastDangerCalls.length = 0;
-		confirmResult = true;
-		globalThis.window = {
-			confirm: () => confirmResult,
-		} as Window & typeof globalThis;
 	});
 
 	test("renders a loader while the profile is loading", () => {
@@ -181,13 +160,12 @@ describe("SettingsPage", () => {
 		expect(markup).toContain("Page Loader");
 	});
 
-	test("renders quiet hours, account details, and danger zone content", () => {
+	test("renders quiet hours, alert reach, and account details", () => {
 		const markup = renderToStaticMarkup(<SettingsPage />);
 
 		expect(markup).toContain("Quiet Hours");
 		expect(markup).toContain("Hero Alert Reach");
 		expect(markup).toContain("Account");
-		expect(markup).toContain("Danger Zone");
 		expect(markup).toContain("admin");
 		expect(markup).toContain("Verified");
 		expect(markup).toContain("Confirmed");
@@ -226,32 +204,5 @@ describe("SettingsPage", () => {
 			},
 		]);
 		expect(toastSuccessCalls).toContain("Alert preferences saved");
-	});
-
-	test("does not delete the account when confirmation is cancelled", async () => {
-		confirmResult = false;
-
-		renderToStaticMarkup(<SettingsPage />);
-
-		const deleteButton = buttonProps.find(
-			(props) => props.children === "Delete account",
-		);
-		await deleteButton?.onPress?.();
-
-		expect(deleteCalls).toEqual([]);
-		expect(navigateCalls).toEqual([]);
-	});
-
-	test("deletes the account and navigates home after confirmation", async () => {
-		renderToStaticMarkup(<SettingsPage />);
-
-		const deleteButton = buttonProps.find(
-			(props) => props.children === "Delete account",
-		);
-		await deleteButton?.onPress?.();
-
-		expect(deleteCalls).toEqual(["delete"]);
-		expect(toastSuccessCalls).toContain("Account deleted");
-		expect(navigateCalls).toEqual([{ path: "/", options: { replace: true } }]);
 	});
 });

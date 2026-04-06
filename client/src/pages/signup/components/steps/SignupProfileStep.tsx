@@ -91,12 +91,14 @@ export const SignupProfileStep = () => {
 
 			<div className="flex gap-3 pt-4 justify-between">
 				<Button
+					size="sm"
 					startContent={<ChevronLeftIcon className="size-4" />}
 					onPress={() => handleBack()}
 				>
 					Back
 				</Button>
 				<Button
+					size="sm"
 					endContent={<ChevronRightIcon className="size-4" />}
 					onClick={handleNext}
 					isPending={isPending}

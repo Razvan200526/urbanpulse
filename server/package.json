@@ -27,7 +27,7 @@
 		"db:studio": "bunx --bun drizzle-kit studio --config=drizzle.config.ts",
 		"test": "bun test",
 		"test:repositories": "bun test",
-		"test:services": "SKIP_TEST_DB_SETUP=1 bun test ./test/services",
+		"test:services": "bun run ./scripts/run-service-tests.ts",
 		"test:db:up": "docker compose -f ../docker-compose.test.yaml up -d --wait",
 		"test:db:down": "docker compose -f ../docker-compose.test.yaml down"
 	},

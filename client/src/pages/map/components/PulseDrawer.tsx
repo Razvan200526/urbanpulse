@@ -35,19 +35,19 @@ const PULSE_TYPE_CONFIG: Record<
 		icon: SignalIcon,
 		label: "Emergency",
 		accent: "text-danger",
-		badgeBg: `bg-danger border-danger text-danger`,
+		badgeBg: `bg-danger/10 border-danger text-danger`,
 	},
 	[PulseEnum.Skill]: {
 		icon: Wrench,
 		label: "Skill",
 		accent: "text-accent",
-		badgeBg: `bg-blue border-blue text-accent`,
+		badgeBg: `bg-blue/10 border-blue text-accent`,
 	},
 	[PulseEnum.Item]: {
 		icon: PackageIcon,
 		label: "Item",
 		accent: "text-primary",
-		badgeBg: `bg-primary border-primary text-primary`,
+		badgeBg: `bg-primary/10 border-primary text-primary`,
 	},
 };
 

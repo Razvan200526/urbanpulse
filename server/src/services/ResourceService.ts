@@ -149,6 +149,24 @@ export class ResourceService {
 		}
 	}
 
+	async getResourcesByUserId(userId: string, filter: FilterResourceType) {
+		try {
+			const options =
+				filter === "All"
+					? { userId }
+					: {
+							userId,
+							availability: filter,
+						};
+
+			const res = await this.resourceRepo.getByOptions(options);
+			return await this.mapResourcesWithUsers(res);
+		} catch (error) {
+			handleError(error);
+			return null;
+		}
+	}
+
 	/**
 	 * Updates a resource by its ID.
 	 * @param id The ID of the resource to update.

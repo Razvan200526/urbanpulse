@@ -10,6 +10,7 @@ import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import type { TabItemType } from "@client/components/tabs/Tabs";
 import { H3 } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
+import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import { Separator, Toast, Tooltip } from "@heroui/react";
 import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
 import { PaperclipIcon, XIcon } from "lucide-react";
@@ -42,6 +43,19 @@ export const UploadResourceModal = ({
 	const [availability, setAvailability] = useState<string>("Available");
 	const [imageUrls, setImageUrls] = useState<string[]>([]);
 
+	const resetForm = () => {
+		setResourceType("Skill");
+		setAvailability("Available");
+		setImageUrls([]);
+		nameRef.current?.setValue("");
+		descriptionRef.current?.setValue("");
+	};
+
+	const closeModal = () => {
+		resetForm();
+		modalRef.current?.close();
+	};
+
 	const handleUpload = async () => {
 		const { success, data, error } = isCreateResourceReqValid({
 			userId: user?.user.id || "",
@@ -52,15 +66,15 @@ export const UploadResourceModal = ({
 		});
 		if (error) {
 			Toast.toast.danger("Invalid resource data");
-			modalRef.current?.close();
 			return;
 		}
 		if (success) {
 			const response = await uploadResource(data);
-			Toast.toast.success(response?.message);
-			modalRef.current?.close();
+			if (response?.message) {
+				Toast.toast.success(response.message);
+			}
+			closeModal();
 		}
-		modalRef.current?.close();
 	};
 
 	return (
@@ -74,11 +88,7 @@ export const UploadResourceModal = ({
 			}
 			footer={
 				<div className="w-full flex items-center justify-end gap-4">
-					<Button
-						variant="danger"
-						size="sm"
-						onPress={() => modalRef.current?.close()}
-					>
+					<Button variant="danger" size="sm" onPress={closeModal}>
 						Cancel
 					</Button>
 					<Button variant="primary" size="sm" onPress={handleUpload}>
@@ -127,7 +137,7 @@ export const UploadResourceModal = ({
 								className="relative w-16 h-16 rounded overflow-hidden border border-border mt-2"
 							>
 								<img
-									src={url}
+									src={normalizeAssetUrl(url)}
 									alt={`upload-${url}`}
 									className="w-full h-full object-cover"
 								/>

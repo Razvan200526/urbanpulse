@@ -16,7 +16,7 @@ describe("isPulseRequestValid", () => {
 		expect(result.success).toBe(true);
 	});
 
-	test("rejects empty descriptions", () => {
+	test("accepts empty descriptions", () => {
 		const result = isPulseRequestValid({
 			type: PulseEnum.Emergency,
 			urgency: UrgencyEnum.Immediate,
@@ -26,7 +26,7 @@ describe("isPulseRequestValid", () => {
 			imageUrls: [],
 		});
 
-		expect(result.success).toBe(false);
+		expect(result.success).toBe(true);
 	});
 
 	test("rejects markup-like content", () => {

@@ -56,7 +56,7 @@ export const AppDrawer = ({
 
 	return (
 		<Drawer>
-			{trigger && <Drawer.Trigger>{trigger}</Drawer.Trigger>}
+			{trigger}
 			<Drawer.Backdrop
 				variant={backdrop}
 				isOpen={isOpen}

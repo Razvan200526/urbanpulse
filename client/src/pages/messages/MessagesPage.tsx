@@ -99,9 +99,8 @@ export const MessagesPage = () => {
 						size={8}
 					>
 						{!conversations || conversations.length === 0 ? (
-							<div className="flex min-h-56 items-center justify-center rounded-lg border border-dashed border-border px-4 text-sm text-muted">
-								No conversations yet. Accepted helpers and direct outreach will
-								show up here.
+							<div className="h-full flex items-center justify-center text-muted text-sm flex-wrap">
+								It's empty here.
 							</div>
 						) : (
 							<div className="space-y-2">

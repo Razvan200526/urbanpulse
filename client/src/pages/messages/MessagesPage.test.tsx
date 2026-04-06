@@ -61,14 +61,18 @@ mock.module("@client/components/user/Avatar", () => ({
 }));
 
 mock.module("@heroui/react", () => ({
+	Avatar: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	cn: (...classes: Array<string | false | null | undefined>) =>
+		classes.filter(Boolean).join(" "),
 	ScrollShadow: ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	),
 	Separator: () => <hr />,
 	Toast: { toast: { danger: () => {}, success: () => {} } },
-	cn: (...classes: Array<string | false | null | undefined>) =>
-		classes.filter(Boolean).join(" "),
 }));
+
+const { Avatar } = await import("@heroui/react");
+Avatar.Image = ({ src }: { src?: string }) => <img src={src} alt="" />;
 
 const { MessagesPage } = await import("./MessagesPage");
 
@@ -93,9 +97,7 @@ describe("MessagesPage", () => {
 		const markup = renderToStaticMarkup(<MessagesPage />);
 
 		expect(markup).toContain("Your DM&#x27;s");
-		expect(markup).toContain(
-			"No conversations yet. Accepted helpers and direct outreach will show up here.",
-		);
+		expect(markup).toContain("It&#x27;s empty here.");
 		expect(markup).toContain("Select a conversation to start coordinating.");
 	});
 

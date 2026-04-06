@@ -4,7 +4,6 @@ import { PageLoader } from "@client/components/PageLoader";
 import { H6 } from "@client/components/typography";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import {
-	useDeleteAccount,
 	useUpdateAlertPreferences,
 	useUpdateQuietHours,
 	useUserProfile,
@@ -12,16 +11,14 @@ import {
 import { Card, ScrollShadow, Separator, Toast } from "@heroui/react";
 import { usePostHog } from "@posthog/react";
 import type { GeoPoint } from "@shared/types";
-import { AlertTriangle, Clock3, MapPinned, Radar, Trash2 } from "lucide-react";
+import { Clock3, MapPinned, Radar } from "lucide-react";
 import { useEffect, useId, useState } from "react";
-import { useNavigate } from "react-router";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 type Weekday = (typeof weekdays)[number];
 
 export const SettingsPage = () => {
 	const posthog = usePostHog();
-	const navigate = useNavigate();
 	const { data: profile, isPending } = useUserProfile();
 	const { mutateAsync: updateQuietHours, isPending: isSavingQuietHours } =
 		useUpdateQuietHours();
@@ -29,8 +26,6 @@ export const SettingsPage = () => {
 		mutateAsync: updateAlertPreferences,
 		isPending: isSavingAlertPreferences,
 	} = useUpdateAlertPreferences();
-	const { mutateAsync: deleteAccount, isPending: isDeletingAccount } =
-		useDeleteAccount();
 	const {
 		coords,
 		refresh: refreshLocation,
@@ -124,27 +119,6 @@ export const SettingsPage = () => {
 		});
 	};
 
-	const handleDeleteAccount = async () => {
-		const confirmed = window.confirm(
-			"Delete your UrbanPulse account and associated data? This cannot be undone.",
-		);
-		if (!confirmed) {
-			return;
-		}
-
-		try {
-			await deleteAccount();
-			posthog?.capture("account_deleted");
-			posthog?.reset();
-			Toast.toast.success("Account deleted");
-			navigate("/", { replace: true });
-		} catch (error) {
-			Toast.toast.danger(
-				error instanceof Error ? error.message : "Failed to delete account",
-			);
-		}
-	};
-
 	if (isPending || !profile) {
 		return <PageLoader />;
 	}
@@ -157,9 +131,7 @@ export const SettingsPage = () => {
 				<div className="max-w-5xl mx-auto space-y-6">
 					<Card className="border border-accent shadow-none">
 						<Card.Header className="flex flex-col items-start gap-1">
-							<Card.Title>
-								<H6>Quiet Hours</H6>
-							</Card.Title>
+							<Card.Title>Quiet Hours</Card.Title>
 							<Card.Description className="text-sm">
 								Suppress non-urgent hero alerts during the times you specify.
 							</Card.Description>
@@ -353,34 +325,6 @@ export const SettingsPage = () => {
 									{profile.user.emailVerified ? "Confirmed" : "Unconfirmed"}
 								</p>
 							</div>
-						</Card.Content>
-					</Card>
-
-					<Card className="border border-danger/30 bg-danger/5 shadow-none">
-						<Card.Header className="flex flex-col items-start gap-1">
-							<Card.Title>Danger Zone</Card.Title>
-							<Card.Description>
-								Delete your account and remove your UrbanPulse data from the
-								app.
-							</Card.Description>
-						</Card.Header>
-						<Card.Content className="p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-							<div className="text-sm text-muted flex items-start gap-3">
-								<AlertTriangle className="size-5 text-danger shrink-0 mt-0.5" />
-								<span>
-									Account deletion removes your profile and cascades through the
-									app data model. Make sure you really want to do this before
-									continuing.
-								</span>
-							</div>
-							<Button
-								variant="danger"
-								onPress={handleDeleteAccount}
-								isPending={isDeletingAccount}
-								startContent={<Trash2 className="size-4" />}
-							>
-								Delete account
-							</Button>
 						</Card.Content>
 					</Card>
 				</div>

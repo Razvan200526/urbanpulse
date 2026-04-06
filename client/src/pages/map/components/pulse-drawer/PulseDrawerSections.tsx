@@ -4,6 +4,7 @@ import { ProgressChip } from "@client/components/chips/ProgressChip";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
 import { MetaRow } from "@client/pages/map/components/MetaRow";
 import type { ClientPulseType } from "@client/utils/types";
+import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import { Chip, cn } from "@heroui/react";
 import { formatDate } from "@shared/utils/formatDate";
 import {
@@ -74,8 +75,8 @@ const renderVerificationBadges = (pulse: ClientPulseType) => {
 					className={cn(
 						"inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium",
 						pulse.isVerified
-							? "border-success bg-success text-success"
-							: "border-success bg-success text-muted",
+							? "border-success bg-success/10 text-success"
+							: "border-muted bg-muted/10 text-muted",
 					)}
 				>
 					<ShieldCheckIcon className="size-3" />
@@ -111,7 +112,7 @@ export const PulseDrawerHeader = ({
 					{renderVerificationBadges(pulse)}
 				</div>
 
-				<p className="leading-snug tracking-tight text-foreground">
+				<p className="leading-snug tracking-tight text-accent font-semibold">
 					{pulse.title}
 				</p>
 
@@ -185,8 +186,19 @@ export const PulseDrawerSummary = ({
 			</div>
 
 			{pulse.audioUrl && (
-				<CustomPlayer mediaBlobUrl={pulse.audioUrl} showButtons={false} />
+				<CustomPlayer
+					mediaBlobUrl={normalizeAssetUrl(pulse.audioUrl)}
+					showButtons={false}
+				/>
 			)}
+			{pulse.imageUrls.length > 0 &&
+				pulse.imageUrls.map((url) => (
+					<img
+						key={url}
+						alt="pulse-image"
+						src={normalizeAssetUrl(url)}
+					/>
+				))}
 		</div>
 	);
 };

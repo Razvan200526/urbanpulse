@@ -1,6 +1,6 @@
 import { AppDrawer } from "@client/components/AppDrawer";
+import { Button } from "@client/components/Button/Button";
 import { Link } from "@client/components/Link";
-import { Button } from "@heroui/react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -70,18 +70,20 @@ export const Navbar = () => {
 								{link.label}
 							</Link>
 						))}
-						<button
-							type="button"
+						<Button
+							radius="full"
+							variant="ghost"
+							isIconOnly
 							onClick={toggleTheme}
-							className="p-2 rounded-full hover:bg-default transition-colors cursor-pointer"
 							aria-label="Toggle theme"
-						>
-							{isDark ? (
-								<SunIcon className="size-5 text-(--foreground)" />
-							) : (
-								<MoonIcon className="size-5 text-(--foreground)" />
-							)}
-						</button>
+							startContent={
+								isDark ? (
+									<SunIcon className="size-5 text-foreground" />
+								) : (
+									<MoonIcon className="size-5 text-foreground" />
+								)
+							}
+						/>
 						<Button
 							className="rounded"
 							variant="primary"

@@ -162,20 +162,30 @@ bun run build
 
 ## Testing
 
-Repository tests run against a real Postgres test database started through Docker.
+Testing is workspace-based locally, matching the CI workflow rather than repo-root `bun test`.
 
-From `server/`, plain `bun test` handles the lifecycle automatically:
+Client verification:
+
+```bash
+bun run --cwd client test
+bun run --cwd client type-check
+bun run --cwd client build
+```
+
+Server tests run against a real Postgres test database started through Docker. From
+`server/`, plain `bun test` manages the repository-test lifecycle automatically, and
+`test:services` now uses the same DB-backed setup for service tests that call
+`resetDatabase`:
 
 ```bash
 cd server
 bun test
+bun run test:services
 ```
 
-Helpful server test scripts:
+Helpful server DB scripts:
 
 ```bash
-bun run test:repositories
-bun run test:services
 bun run test:db:up
 bun run test:db:down
 ```

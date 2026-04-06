@@ -1,7 +1,8 @@
 import { useUploadImage } from "@client/hooks/uploadHooks";
-import { Button, Toast } from "@heroui/react";
+import { Toast } from "@heroui/react";
 import { PlusSquareIcon, UploadCloud, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
+import { Button } from "./Button/Button";
 import { Modal } from "./Modal";
 import { H4 } from "./typography";
 

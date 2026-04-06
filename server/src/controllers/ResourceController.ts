@@ -1,4 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
+import type { Variables } from "@server/app";
 import { resourceService } from "@server/services/ResourceService";
 import { logger } from "@server/utils/Logger";
 import {
@@ -11,7 +12,7 @@ import { upgradeWebSocket } from "hono/bun";
 import { z } from "zod";
 
 //implement a way to retrieve the resources that are close to the user maybe
-export const resourceController = new Hono()
+export const resourceController = new Hono<{ Variables: Variables }>()
 	.basePath("/resources")
 	.get("/", zValidator("query", getResourcesSchema), async (c) => {
 		const { filter } = c.req.valid("query");
@@ -32,6 +33,34 @@ export const resourceController = new Hono()
 			},
 			201,
 		);
+	})
+	.get("/mine", zValidator("query", getResourcesSchema), async (c) => {
+		const session = c.get("session");
+		if (!session) {
+			return c.json(
+				{ success: false, message: "Unauthorized", data: null },
+				401,
+			);
+		}
+
+		const { filter } = c.req.valid("query");
+		const resources = await resourceService.getResourcesByUserId(
+			session.userId,
+			filter,
+		);
+
+		if (!resources) {
+			return c.json(
+				{ success: false, message: "No resources found", data: null },
+				404,
+			);
+		}
+
+		return c.json({
+			success: true,
+			message: "Your resources retrieved successfully",
+			data: resources,
+		});
 	})
 	.get("/:resourceId", zValidator("param", getOneResourceSchema), async (c) => {
 		const { resourceId } = c.req.param();

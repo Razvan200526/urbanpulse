@@ -10,7 +10,7 @@ export const NavMenu = ({ isMinimize = false }) => {
 			<ScrollShadow isEnabled={true} className="flex-1 w-full" size={8}>
 				<ul
 					className={cn(
-						"flex flex-col gap-1",
+						"flex flex-col",
 						isMinimize ? "items-center justify-center" : "px-1",
 					)}
 				>
