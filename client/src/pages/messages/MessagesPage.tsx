@@ -76,7 +76,7 @@ export const MessagesPage = () => {
 
 	useEffect(() => {
 		setDraft("");
-	}, [effectiveConversationId]);
+	}, []);
 
 	const openConversation = (conversationId: string) => {
 		navigate(`/messages/${conversationId}`);

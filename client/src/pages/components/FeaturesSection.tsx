@@ -1,5 +1,4 @@
 import { H2 } from "@client/components/typography";
-import { Chip } from "@heroui/react";
 import type { Easing } from "motion/react";
 import { motion } from "motion/react";
 import { FeatureCard } from "./FeatureCard";
