@@ -129,7 +129,9 @@ export class MessagingService {
 			return false;
 		}
 
-		const linkedPulse = await pulseRepository.getOne(params.conversation.pulseId);
+		const linkedPulse = await pulseRepository.getOne(
+			params.conversation.pulseId,
+		);
 		if (!linkedPulse || linkedPulse.userId !== params.viewerUserId) {
 			return false;
 		}
@@ -264,24 +266,24 @@ export class MessagingService {
 		const summaries = await Promise.all(
 			conversations.map(async (entry) => {
 				const base = await this.getConversationBase(entry.id);
-					if (!base) {
-						return null;
-					}
+				if (!base) {
+					return null;
+				}
 
-					if (
-						await this.isHiddenSelfAuthoredPulseConversation({
-							viewerUserId: userId,
-							conversation: entry,
-							members: base.members,
-							messages: base.messages,
-						})
-					) {
-						return null;
-					}
-
-					return {
+				if (
+					await this.isHiddenSelfAuthoredPulseConversation({
+						viewerUserId: userId,
 						conversation: entry,
 						members: base.members,
+						messages: base.messages,
+					})
+				) {
+					return null;
+				}
+
+				return {
+					conversation: entry,
+					members: base.members,
 					lastMessage: base.messages.at(-1) ?? null,
 				};
 			}),
@@ -302,22 +304,22 @@ export class MessagingService {
 		}
 
 		const base = await this.getConversationBase(conversationId);
-			if (!base) {
-				return null;
-			}
+		if (!base) {
+			return null;
+		}
 
-			if (
-				await this.isHiddenSelfAuthoredPulseConversation({
-					viewerUserId: userId,
-					conversation: base.conversation,
-					members: base.members,
-					messages: base.messages,
-				})
-			) {
-				return null;
-			}
+		if (
+			await this.isHiddenSelfAuthoredPulseConversation({
+				viewerUserId: userId,
+				conversation: base.conversation,
+				members: base.members,
+				messages: base.messages,
+			})
+		) {
+			return null;
+		}
 
-			const senderIds = base.messages.map((entry) => entry.senderId);
+		const senderIds = base.messages.map((entry) => entry.senderId);
 		const senderRows =
 			senderIds.length === 0
 				? []

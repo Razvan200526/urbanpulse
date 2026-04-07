@@ -138,4 +138,113 @@ describe("NotificationService", () => {
 			],
 		);
 	});
+
+	test("filters self-authored hero alerts from notification history", async () => {
+		const service = new NotificationService();
+		const items = [
+			{
+				notification: {
+					type: "HERO_ALERT",
+					payload: {
+						pulseId: "pulse-1",
+						pulse: buildPulse({ userId: "owner-1" }),
+					},
+				},
+				user: null,
+			},
+		];
+
+		spyOn(
+			(service as any).notificationRepo,
+			"getNotificationsWithUsersByUserId",
+		).mockResolvedValue(items as any);
+
+		await expect(service.getNotificationsWithUsers("owner-1")).resolves.toEqual(
+			[],
+		);
+	});
+
+	test("keeps hero alerts authored by other users in notification history", async () => {
+		const service = new NotificationService();
+		const items = [
+			{
+				notification: {
+					type: "HERO_ALERT",
+					payload: {
+						pulseId: "pulse-1",
+						pulse: buildPulse({ userId: "other-user" }),
+					},
+				},
+				user: null,
+			},
+		];
+
+		spyOn(
+			(service as any).notificationRepo,
+			"getNotificationsWithUsersByUserId",
+		).mockResolvedValue(items as any);
+
+		await expect(service.getNotificationsWithUsers("owner-1")).resolves.toEqual(
+			items,
+		);
+	});
+
+	test("keeps direct owner notifications even when they reference the owner's pulse", async () => {
+		const service = new NotificationService();
+		const items = [
+			{
+				notification: {
+					type: "PULSE_CONFIRMED",
+					payload: {
+						pulseId: "pulse-1",
+						confirmationCount: 3,
+						pulse: buildPulse({ userId: "owner-1" }),
+					},
+				},
+				user: null,
+			},
+		];
+
+		spyOn(
+			(service as any).notificationRepo,
+			"getNotificationsWithUsersByUserId",
+		).mockResolvedValue(items as any);
+
+		await expect(service.getNotificationsWithUsers("owner-1")).resolves.toEqual(
+			items,
+		);
+	});
+
+	test("does not broadcast hero alerts back to the pulse owner", async () => {
+		const service = new NotificationService();
+		const notifyUsersSpy = spyOn(service, "notifyUsers").mockResolvedValue(
+			undefined,
+		);
+		spyOn(heroAlertMatchingService, "matchPulse").mockResolvedValue([
+			{
+				user: { id: "owner-1" },
+				matchedTags: ["First Aid"],
+				distanceMeters: 12,
+				usedLiveLocation: true,
+				quietHoursBypassed: false,
+			} as any,
+			{
+				user: { id: "viewer-1" },
+				matchedTags: ["First Aid"],
+				distanceMeters: 42,
+				usedLiveLocation: true,
+				quietHoursBypassed: false,
+			} as any,
+		]);
+
+		await service.broadcastToNearbyUsers(buildPulse({ userId: "owner-1" }));
+
+		expect(notifyUsersSpy).toHaveBeenCalledTimes(1);
+		expect(notifyUsersSpy).toHaveBeenCalledWith(
+			["viewer-1"],
+			expect.objectContaining({
+				channelName: "notifications:broadcast",
+			}),
+		);
+	});
 });
