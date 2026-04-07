@@ -445,7 +445,7 @@ export const ProfilePage = () => {
 									isKeyboardDismissDisabled
 								>
 									<AlertDialog.Container placement="center" size="sm">
-										<AlertDialog.Dialog className="mx-4 w-full max-w-md rounded border border-danger/20 bg-surface">
+										<AlertDialog.Dialog className="mx-4 w-full max-w-md rounded border border-danger-soft-hover bg-surface">
 											{(dialog) => (
 												<>
 													<AlertDialog.Header className="items-start border-b border-border px-5 py-4">

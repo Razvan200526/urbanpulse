@@ -21,6 +21,9 @@ describe("ResourceRepository", () => {
 			userId: owner.id,
 			name: "Generator",
 			availability: "Available",
+			position: { x: 26.1025, y: 44.4268 } as any,
+			resourceType: "Item",
+			locationLabel: "Bucharest",
 			imageUrls: [],
 		});
 
@@ -85,7 +88,10 @@ describe("ResourceRepository", () => {
 			startAt: new Date("2025-01-04T00:00:00.000Z"),
 		});
 
-		const resources = await resourceRepository.getAll();
+		const resources = await resourceRepository.getFilteredResources({
+			filter: "All",
+			radiusMeters: 2000,
+		});
 		expect(resources).toHaveLength(1);
 		expect(resources[0]?.transactions).toHaveLength(3);
 		expect(
@@ -100,5 +106,65 @@ describe("ResourceRepository", () => {
 			name: "Borrower",
 			image: "avatar.png",
 		});
+	});
+
+	test("filters resources by availability, type, and radius", async () => {
+		const owner = await createUser();
+		const nearbyItem = await createResource({
+			userId: owner.id,
+			name: "Nearby generator",
+			availability: "Available",
+			resourceType: "Item",
+			position: { x: 26.1025, y: 44.4268 } as any,
+		});
+		await createResource({
+			userId: owner.id,
+			name: "Nearby first aid",
+			availability: "Available",
+			resourceType: "Skill",
+			position: { x: 26.1026, y: 44.4268 } as any,
+		});
+		await createResource({
+			userId: owner.id,
+			name: "Far generator",
+			availability: "Unavailable",
+			resourceType: "Item",
+			position: { x: 27.1025, y: 45.4268 } as any,
+		});
+
+		const resources = await resourceRepository.getFilteredResources({
+			filter: "Available",
+			type: "Item",
+			lat: 44.4268,
+			long: 26.1025,
+			radiusMeters: 500,
+		});
+
+		expect(resources.map((item) => item.id)).toEqual([nearbyItem.id]);
+	});
+
+	test("orders distance-filtered resources from nearest to farthest", async () => {
+		const owner = await createUser();
+		const far = await createResource({
+			userId: owner.id,
+			name: "Far resource",
+			position: { x: 26.1425, y: 44.4268 } as any,
+			resourceType: "Item",
+		});
+		const near = await createResource({
+			userId: owner.id,
+			name: "Near resource",
+			position: { x: 26.1026, y: 44.4268 } as any,
+			resourceType: "Item",
+		});
+
+		const resources = await resourceRepository.getFilteredResources({
+			filter: "All",
+			lat: 44.4268,
+			long: 26.1025,
+			radiusMeters: 5000,
+		});
+
+		expect(resources.map((item) => item.id)).toEqual([near.id, far.id]);
 	});
 });

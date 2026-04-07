@@ -5,6 +5,7 @@ import {
 	PulseUploadStateEnum,
 	type ReportStatusEnum,
 	type ResourceAvailabilityType,
+	type ResourceItemType,
 	type ResponseStatusEnum,
 	type NotificationType as SharedNotificationType,
 	type TransactionStatusEnum,
@@ -272,19 +273,30 @@ export const report = pgTable("report", {
 	createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 
-export const resource = pgTable("resources", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	userId: text("userId")
-		.notNull()
-		.references(() => user.id, { onDelete: "cascade" }),
-	name: text("name").notNull(),
-	description: text("description"),
-	availability: text("availability")
-		.$type<ResourceAvailabilityType>()
-		.notNull(),
-	imageUrls: text("imageUrls").array().notNull().default(sql`'{}'::text[]`),
-	createdAt: timestamp("createdAt").notNull().defaultNow(),
-});
+export const resource = pgTable(
+	"resources",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: text("userId")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		name: text("name").notNull(),
+		description: text("description"),
+		availability: text("availability")
+			.$type<ResourceAvailabilityType>()
+			.notNull(),
+		position: geometry("location", {
+			type: "point",
+			mode: "xy",
+			srid: 4326,
+		}).notNull(),
+		locationLabel: text("locationLabel"),
+		resourceType: text("resourceType").$type<ResourceItemType>().notNull(),
+		imageUrls: text("imageUrls").array().notNull().default(sql`'{}'::text[]`),
+		createdAt: timestamp("createdAt").notNull().defaultNow(),
+	},
+	(t) => [index("resource_spatial_index").using("gist", t.position)],
+);
 
 export const skill = pgTable("skill", {
 	id: uuid("id").defaultRandom().primaryKey(),

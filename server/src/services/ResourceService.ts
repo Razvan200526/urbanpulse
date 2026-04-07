@@ -19,7 +19,12 @@ import { socketManager } from "@server/services/SocketManager";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
 import { type FilterResourceType, TransactionStatusEnum } from "@shared/types";
-import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
+import type { GetResourceQuery } from "@shared/validators/resources/isGetResourcesQueryValid";
+import {
+	type CreateResourcePayload,
+	isCreateResourceReqValid,
+} from "@shared/validators/resources/isResourceValid";
+import { locationService } from "./LocationService";
 
 export class ResourceService {
 	private resourceRepo: ResourceRepository;
@@ -63,7 +68,8 @@ export class ResourceService {
 	 * @returns {Promise<ResourceType | null>} The created resource, or null if the creation failed.
 	 */
 	async createResource(
-		data: Partial<ResourceType>,
+		userId: string,
+		data: CreateResourcePayload,
 	): Promise<ResourceType | null> {
 		const result = isCreateResourceReqValid(data);
 
@@ -71,8 +77,24 @@ export class ResourceService {
 			handleError(result.error);
 			return null;
 		}
+		const resourceData = {
+			...result.data,
+			userId,
+		};
+		if (!result.data.locationLabel) {
+			try {
+				const locationLabel = await locationService.getAddressByCoords(
+					resourceData.position,
+				);
+				if (locationLabel) {
+					resourceData.locationLabel = locationLabel;
+				}
+			} catch (error) {
+				handleError(error);
+			}
+		}
 		try {
-			return await this.resourceRepo.create(result.data);
+			return await this.resourceRepo.create(resourceData);
 		} catch (e) {
 			handleError(e);
 			return null;
@@ -130,18 +152,12 @@ export class ResourceService {
 
 	/**
 	 *
-	 * @param filter Takes in the availability filter
+	 * @param query Takes in the query with filters
 	 * @returns A list of resources filtered by the availability status.
 	 */
-	async getFilteredResources(filter: FilterResourceType) {
+	async getFilteredResources(query: GetResourceQuery) {
 		try {
-			if (filter === "All") {
-				return await this.getAllResources();
-			}
-
-			const res = await this.resourceRepo.getByOptions({
-				availability: filter,
-			});
+			const res = await this.resourceRepo.getFilteredResources(query);
 			return await this.mapResourcesWithUsers(res);
 		} catch (error) {
 			handleError(error);

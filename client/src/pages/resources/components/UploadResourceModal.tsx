@@ -10,8 +10,10 @@ import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import type { TabItemType } from "@client/components/tabs/Tabs";
 import { H3 } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
+import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import { Separator, Toast, Tooltip } from "@heroui/react";
+import type { ResourceAvailabilityType, ResourceItemType } from "@shared/types";
 import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
 import { PaperclipIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
@@ -20,7 +22,7 @@ import { useUploadResource } from "../hooks";
 const resourceTypeItems: TabItemType[] = [
 	{ label: "Skill", key: "Skill" },
 	{ label: "Item", key: "Item" },
-	{ label: "Space", key: "Space" },
+	{ label: "Location", key: "Location" },
 ];
 
 const availabilityItems: TabItemType[] = [
@@ -34,13 +36,15 @@ export const UploadResourceModal = ({
 	modalRef: React.RefObject<ModalRefType | null>;
 }) => {
 	const { data: user } = useAuth();
+	const { coords, isLoading: isLocationLoading } = useGetGeolocation();
 	const nameRef = useRef<InputNameRefType>(null);
 	const descriptionRef = useRef<TextAreaRefType>(null);
 	const { mutateAsync: uploadResource } = useUploadResource(
 		user?.user.id || "",
 	);
-	const [resourceType, setResourceType] = useState<string>("Skill");
-	const [availability, setAvailability] = useState<string>("Available");
+	const [resourceType, setResourceType] = useState<ResourceItemType>("Skill");
+	const [availability, setAvailability] =
+		useState<ResourceAvailabilityType>("Available");
 	const [imageUrls, setImageUrls] = useState<string[]>([]);
 
 	const resetForm = () => {
@@ -57,11 +61,26 @@ export const UploadResourceModal = ({
 	};
 
 	const handleUpload = async () => {
+		if (!user?.user.id) {
+			Toast.toast.danger("You need to be signed in to upload a resource.");
+			return;
+		}
+
+		if (!coords) {
+			Toast.toast.danger(
+				isLocationLoading
+					? "Location is still loading. Please try again."
+					: "Location is required. Please enable geolocation in the browser.",
+			);
+			return;
+		}
+
 		const { success, data, error } = isCreateResourceReqValid({
-			userId: user?.user.id || "",
 			name: nameRef.current?.getValue(),
 			description: descriptionRef.current?.getValue(),
 			availability,
+			resourceType,
+			position: { x: coords.long, y: coords.lat },
 			imageUrls,
 		});
 		if (error) {
@@ -104,14 +123,16 @@ export const UploadResourceModal = ({
 					label="Resource Type"
 					items={resourceTypeItems}
 					selectedKey={resourceType}
-					onSelectionChange={setResourceType}
+					onSelectionChange={(key) => setResourceType(key as ResourceItemType)}
 				/>
 
 				<ResponsiveChoiceField
 					label="Availability"
 					items={availabilityItems}
 					selectedKey={availability}
-					onSelectionChange={setAvailability}
+					onSelectionChange={(key) =>
+						setAvailability(key as ResourceAvailabilityType)
+					}
 				/>
 
 				<InputName

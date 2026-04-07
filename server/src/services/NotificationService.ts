@@ -95,6 +95,32 @@ export class NotificationService {
 		return JSON.parse(JSON.stringify(pulse)) as Record<string, unknown>;
 	}
 
+	private isSelfAuthoredPulseBroadcastNotification(
+		item: {
+			notification: {
+				type?: string | null;
+				payload?: unknown;
+			} | null;
+		},
+		userId: string,
+	) {
+		const type = item.notification?.type;
+		if (type !== "HERO_ALERT" && type !== "PULSE_UPDATED") {
+			return false;
+		}
+
+		const payload =
+			item.notification?.payload && typeof item.notification.payload === "object"
+				? (item.notification.payload as Record<string, unknown>)
+				: null;
+		const pulse =
+			payload?.pulse && typeof payload.pulse === "object"
+				? (payload.pulse as Record<string, unknown>)
+				: null;
+
+		return pulse?.userId === userId;
+	}
+
 	/**
 	 * Normalizes the provided date to UTC day start.
 	 * @param {Date} date - Source date.
@@ -236,8 +262,15 @@ export class NotificationService {
 	async getNotificationsWithUsers(userId?: string) {
 		try {
 			if (userId) {
+				const notifications =
+					await this.notificationRepo.getNotificationsWithUsersByUserId(userId);
+				const visibleNotifications = notifications.filter(
+					(item) =>
+						!this.isSelfAuthoredPulseBroadcastNotification(item, userId),
+				);
+
 				return await this.annotateActionableNotifications(
-					await this.notificationRepo.getNotificationsWithUsersByUserId(userId),
+					visibleNotifications,
 				);
 			}
 			return await this.annotateActionableNotifications(
@@ -257,6 +290,10 @@ export class NotificationService {
 		const serializedPulse = this.toSocketSafePulse(pulseData);
 
 		for (const match of matches) {
+			if (match.user.id === pulseData.userId) {
+				continue;
+			}
+
 			const broadcastData = this.notificationFactory.create({
 				type: "HERO_ALERT",
 				payload: {

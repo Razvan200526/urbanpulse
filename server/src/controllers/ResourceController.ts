@@ -6,17 +6,17 @@ import {
 	getOneResourceSchema,
 	getResourcesSchema,
 } from "@shared/validators/resources/isGetResourcesQueryValid";
+import { resourceSchema } from "@shared/validators/resources/isResourceValid";
 import { transactionRequestSchema } from "@shared/validators/transactions/isTransactionRequestValid";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
 import { z } from "zod";
 
-//implement a way to retrieve the resources that are close to the user maybe
 export const resourceController = new Hono<{ Variables: Variables }>()
 	.basePath("/resources")
 	.get("/", zValidator("query", getResourcesSchema), async (c) => {
-		const { filter } = c.req.valid("query");
-		const resources = await resourceService.getFilteredResources(filter);
+		const query = c.req.valid("query");
+		const resources = await resourceService.getFilteredResources(query);
 
 		if (!resources) {
 			return c.json(
@@ -98,9 +98,19 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 			});
 		},
 	)
-	.post("/", async (c) => {
-		const body = await c.req.json();
-		const newResource = await resourceService.createResource(body);
+	.post("/", zValidator("json", resourceSchema), async (c) => {
+		const session = c.get("session");
+		if (!session) {
+			return c.json(
+				{ success: false, message: "Unauthorized", data: null },
+				401,
+			);
+		}
+		const body = await c.req.valid("json");
+		const newResource = await resourceService.createResource(
+			session.userId,
+			body,
+		);
 		if (!newResource) {
 			return c.json(
 				{

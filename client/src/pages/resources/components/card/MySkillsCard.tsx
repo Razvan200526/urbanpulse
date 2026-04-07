@@ -16,22 +16,15 @@ export const MySkillsCard = ({ item }: { item: ResourceWithUsersType }) => {
 
 	return (
 		<Card className="overflow-hidden border border-accent shadow-none">
-			<div className="aspect-[4/3] border-b border-accent/40 bg-surface-secondary">
-				{heroImage ? (
+			{heroImage ? (
+				<div className="aspect-4/3 border-b border-accent/40 bg-surface-secondary">
 					<img
 						src={normalizeAssetUrl(heroImage)}
 						alt={item.resource.name}
 						className="h-full w-full object-cover"
 					/>
-				) : (
-					<div className="flex h-full items-center justify-center text-muted">
-						<div className="flex items-center gap-2 text-sm">
-							<ImageIcon className="size-4" />
-							<span>No photo added</span>
-						</div>
-					</div>
-				)}
-			</div>
+				</div>
+			) : null}
 
 			<Card.Header className="flex flex-col items-start gap-3">
 				<div className="flex w-full items-start justify-between gap-3">
@@ -69,8 +62,6 @@ export const MySkillsCard = ({ item }: { item: ResourceWithUsersType }) => {
 					</div>
 				</div>
 			</Card.Content>
-
-			<Separator />
 
 			<Card.Footer className="flex items-center justify-end py-3">
 				<Button variant="primary" onPress={() => setIsDrawerOpen(true)}>
