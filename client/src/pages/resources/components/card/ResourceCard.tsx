@@ -10,8 +10,12 @@ import type { ResourceWithUsersType } from "../../resourceResponses";
 import { ResourceDetailsDrawer } from "./ResourceDetailsDrawer";
 
 export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {
-	const { resource, recentUsers, author } = item;
+	const { resource, recentUsers, author, reviewSummary } = item;
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const reviewText =
+		reviewSummary.count > 0
+			? `${(reviewSummary.averageRating ?? 0).toFixed(1)} (${reviewSummary.count} review${reviewSummary.count === 1 ? "" : "s"})`
+			: "No reviews yet";
 
 	return (
 		<Card key={resource.id} className="border border-accent shadow-none">
@@ -34,9 +38,11 @@ export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {
 				</div>
 
 				<div className="flex items-center gap-1 mt-2">
-					<Star className="h-3 w-3 text-warning fill-warning" />
+					<Star
+						className={`h-3 w-3 text-warning ${reviewSummary.count > 0 ? "fill-warning" : ""}`}
+					/>
 					<span className="text-xs text-foreground/30 ml-1">
-						(120+ reviews)
+						{reviewText}
 					</span>
 				</div>
 			</Card.Content>

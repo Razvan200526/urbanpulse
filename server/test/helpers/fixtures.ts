@@ -313,3 +313,37 @@ export async function createTransaction(
 
 	return requireInsertedRow(rows);
 }
+
+export async function createResourceReview(
+	overrides: Partial<typeof schema.resourceReview.$inferInsert> = {},
+) {
+	const resourceId = overrides.resourceId ?? (await createResource()).id;
+	const reviewerId = overrides.reviewerId ?? (await createUser()).id;
+	const revieweeId = overrides.revieweeId ?? (await createUser()).id;
+	const transactionId =
+		overrides.transactionId ??
+		(
+			await createTransaction({
+				resourceId,
+				borrowerId: reviewerId,
+				lenderId: revieweeId,
+				status: TransactionStatusEnum.Completed,
+				endAt: nextDate(),
+			})
+		).id;
+	const rows = await db
+		.insert(schema.resourceReview)
+		.values({
+			transactionId,
+			resourceId,
+			reviewerId,
+			revieweeId,
+			rating: 5,
+			comment: "Helpful handoff",
+			createdAt: nextDate(),
+			...overrides,
+		})
+		.returning();
+
+	return requireInsertedRow(rows);
+}

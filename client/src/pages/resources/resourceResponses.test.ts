@@ -23,12 +23,14 @@ describe("resource response helpers", () => {
 				},
 				author: null,
 				recentUsers: [],
+				reviewSummary: { averageRating: 4.5, count: 2 },
 			},
 		];
 
 		const [result] = normalizeResources(items);
 
 		expect(result?.resource.createdAt).toBeInstanceOf(Date);
+		expect(result?.reviewSummary).toEqual({ averageRating: 4.5, count: 2 });
 	});
 
 	test("prefers explicit error text when present", () => {

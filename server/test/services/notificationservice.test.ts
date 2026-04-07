@@ -95,6 +95,37 @@ describe("NotificationService", () => {
 		);
 	});
 
+	test("broadcastPulseUpdated reaches connected viewers before location sync", async () => {
+		const service = new NotificationService();
+		const unsyncedConnection = {
+			userId: "viewer-1",
+			ws: { send: mock() },
+		} as any;
+		const sendAndSaveSpy = spyOn(service, "sendAndSaveData").mockResolvedValue(
+			undefined,
+		);
+
+		spyOn(socketManager, "getConnectionsForUser").mockReturnValue([]);
+		spyOn(socketManager, "getAllConnections").mockReturnValue([
+			unsyncedConnection,
+		]);
+		spyOn(
+			(service as any).locationService,
+			"getNearbyConnections",
+		).mockReturnValue([]);
+		spyOn(heroAlertMatchingService, "matchPulse").mockResolvedValue([]);
+
+		await service.broadcastPulseUpdated(buildPulse());
+
+		expect(sendAndSaveSpy).toHaveBeenCalledWith(
+			[unsyncedConnection],
+			expect.objectContaining({
+				channelName: "notifications:pulse_updated",
+			}),
+			false,
+		);
+	});
+
 	test("marks handled pulse response notifications as non-actionable", async () => {
 		const service = new NotificationService();
 		const items = [
@@ -246,5 +277,98 @@ describe("NotificationService", () => {
 				channelName: "notifications:broadcast",
 			}),
 		);
+	});
+
+	test("sends persisted notification data once per user across multiple connections", async () => {
+		const service = new NotificationService();
+		const firstConnection = {
+			userId: "user-1",
+			ws: { send: mock() },
+		} as any;
+		const secondConnection = {
+			userId: "user-1",
+			ws: { send: mock() },
+		} as any;
+		const persistedNotification = {
+			id: "notification-1",
+			userId: "user-1",
+			type: "TRANSACTION",
+			payload: { transactionId: "transaction-1" },
+			read: false,
+			createdAt: new Date("2025-01-01T00:00:00.000Z"),
+		} as any;
+
+		spyOn(socketManager, "getConnectionsForUser").mockReturnValue([
+			firstConnection,
+			secondConnection,
+		]);
+		const createSpy = spyOn(service, "createNotification").mockResolvedValue(
+			persistedNotification,
+		);
+
+		await service.notifyUsers(
+			["user-1", "user-1"],
+			{
+				success: true,
+				channelName: "notifications:transaction",
+				data: {
+					type: "TRANSACTION",
+					payload: { transactionId: "transaction-1" },
+				},
+				message: "Transaction updated",
+			},
+			true,
+		);
+
+		expect(createSpy).toHaveBeenCalledTimes(1);
+		for (const connection of [firstConnection, secondConnection]) {
+			expect(connection.ws.send).toHaveBeenCalledTimes(1);
+			expect(JSON.parse(connection.ws.send.mock.calls[0][0])).toEqual(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						notification: expect.objectContaining({
+							id: persistedNotification.id,
+							userId: persistedNotification.userId,
+							type: persistedNotification.type,
+							payload: persistedNotification.payload,
+						}),
+					}),
+				}),
+			);
+		}
+	});
+
+	test("persists notifications for offline users", async () => {
+		const service = new NotificationService();
+		const createSpy = spyOn(service, "createNotification").mockResolvedValue({
+			id: "notification-1",
+			userId: "offline-user",
+			type: "TRANSACTION",
+			payload: { transactionId: "transaction-1" },
+			read: false,
+			createdAt: new Date("2025-01-01T00:00:00.000Z"),
+		} as any);
+
+		spyOn(socketManager, "getConnectionsForUser").mockReturnValue([]);
+
+		await service.notifyUsers(
+			["offline-user"],
+			{
+				success: true,
+				channelName: "notifications:transaction",
+				data: {
+					type: "TRANSACTION",
+					payload: { transactionId: "transaction-1" },
+				},
+				message: "Transaction updated",
+			},
+			true,
+		);
+
+		expect(createSpy).toHaveBeenCalledWith({
+			userId: "offline-user",
+			type: "TRANSACTION",
+			payload: { transactionId: "transaction-1" },
+		});
 	});
 });

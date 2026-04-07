@@ -7,7 +7,10 @@ import {
 	getResourcesSchema,
 } from "@shared/validators/resources/isGetResourcesQueryValid";
 import { resourceSchema } from "@shared/validators/resources/isResourceValid";
-import { transactionRequestSchema } from "@shared/validators/transactions/isTransactionRequestValid";
+import {
+	resourceReviewSchema,
+	transactionRequestSchema,
+} from "@shared/validators/transactions/isTransactionRequestValid";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
 import { z } from "zod";
@@ -62,22 +65,6 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 			data: resources,
 		});
 	})
-	.get("/:resourceId", zValidator("param", getOneResourceSchema), async (c) => {
-		const { resourceId } = c.req.param();
-		const resource = await resourceService.getResourceById(resourceId);
-		if (!resource) {
-			return c.json({
-				message: "Failed to get resource",
-				data: null,
-				success: false,
-			});
-		}
-		return c.json({
-			message: "Resource retrieved successfully",
-			data: resource,
-			success: true,
-		});
-	})
 	.get(
 		"/:resourceId/author",
 		zValidator("param", getOneResourceSchema),
@@ -98,6 +85,42 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 			});
 		},
 	)
+	.get(
+		"/:resourceId/transaction/mine",
+		zValidator("param", getOneResourceSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+
+			const { resourceId } = c.req.param();
+			const result = await resourceService.getResourceTransactionForBorrower(
+				resourceId,
+				session.userId,
+			);
+			return c.json(result, result.success ? 200 : 500);
+		},
+	)
+	.get("/:resourceId", zValidator("param", getOneResourceSchema), async (c) => {
+		const { resourceId } = c.req.param();
+		const resource = await resourceService.getResourceById(resourceId);
+		if (!resource) {
+			return c.json({
+				message: "Failed to get resource",
+				data: null,
+				success: false,
+			});
+		}
+		return c.json({
+			message: "Resource retrieved successfully",
+			data: resource,
+			success: true,
+		});
+	})
 	.post("/", zValidator("json", resourceSchema), async (c) => {
 		const session = c.get("session");
 		if (!session) {
@@ -131,9 +154,17 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 		);
 	})
 	.get("/transaction/pending", async (c) => {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ success: false, error: "Unauthorized" }, 401);
+		}
+
 		const { userId } = c.req.query();
 		if (!userId) {
 			return c.json({ success: false, error: "Missing userId" }, 400);
+		}
+		if (userId !== session.userId) {
+			return c.json({ success: false, error: "Forbidden" }, 403);
 		}
 
 		const result = await resourceService.getPendingRequests(userId);
@@ -148,14 +179,52 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 			}),
 		),
 		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json({ success: false, error: "Unauthorized" }, 401);
+			}
+
 			const { transactionId } = c.req.param();
 			const body = c.req.valid("json");
 
 			const result = await resourceService.respondToRequest(
 				transactionId,
 				body.accept,
+				session.userId,
 			);
 			return c.json(result, result.success ? 200 : 500);
+		},
+	)
+	.post("/transaction/:transactionId/complete", async (c) => {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ success: false, error: "Unauthorized" }, 401);
+		}
+
+		const { transactionId } = c.req.param();
+		const result = await resourceService.completeResourceTransaction(
+			transactionId,
+			session.userId,
+		);
+		return c.json(result, result.success ? 200 : 500);
+	})
+	.post(
+		"/transaction/:transactionId/review",
+		zValidator("json", resourceReviewSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json({ success: false, error: "Unauthorized" }, 401);
+			}
+
+			const { transactionId } = c.req.param();
+			const body = c.req.valid("json");
+			const result = await resourceService.submitResourceReview(
+				transactionId,
+				session.userId,
+				body,
+			);
+			return c.json(result, result.success ? 201 : 500);
 		},
 	)
 	.get(

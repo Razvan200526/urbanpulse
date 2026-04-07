@@ -66,6 +66,27 @@ mock.module("./hooks", () => ({
 			return { message: "Resource created successfully" };
 		},
 	}),
+	useSubmitResourceReview: () => ({
+		mutateAsync: async () => undefined,
+		isPending: false,
+	}),
+	useGetPendingRequests: () => ({ data: [] }),
+	useRespondToRequest: () => ({
+		mutateAsync: async () => undefined,
+		isPending: false,
+	}),
+	useRequestBorrow: () => ({
+		mutate: () => undefined,
+		isPending: false,
+	}),
+	useGetResourceTransaction: () => ({
+		data: null,
+		isLoading: false,
+	}),
+	useCompleteResourceTransaction: () => ({
+		mutateAsync: async () => null,
+		isPending: false,
+	}),
 }));
 
 mock.module("@client/components/Header", () => ({
@@ -210,6 +231,7 @@ mock.module("@client/components/TextArea", () => ({
 
 mock.module("@client/components/typography", () => ({
 	H3: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
+	H6: ({ children }: { children: React.ReactNode }) => <h6>{children}</h6>,
 }));
 
 mock.module("@client/utils/normalizeAssetUrl", () => ({
@@ -226,8 +248,27 @@ mock.module("@heroui/react", () => {
 	Tooltip.Content = ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	);
+	const Card = ({ children }: { children: React.ReactNode }) => (
+		<section>{children}</section>
+	);
+	Card.Header = ({ children }: { children: React.ReactNode }) => (
+		<header>{children}</header>
+	);
+	Card.Content = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Card.Footer = ({ children }: { children: React.ReactNode }) => (
+		<footer>{children}</footer>
+	);
 
 	return {
+		Chip: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+		Drawer: {
+			Footer: ({ children }: { children: React.ReactNode }) => (
+				<footer>{children}</footer>
+			),
+		},
+		Card,
 		ScrollShadow: ({ children }: { children: React.ReactNode }) => (
 			<div>{children}</div>
 		),

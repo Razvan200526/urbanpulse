@@ -1,18 +1,28 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
+import { ChevronRightIcon } from "@client/components/icons/ChevronRight";
 import { PageLoader } from "@client/components/PageLoader";
 import { H4 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
 import { useAuth } from "@client/hooks/useAuth";
 import { useIsMobile } from "@client/hooks/useMediaQuery";
 import { ScrollShadow, Separator, Toast } from "@heroui/react";
-import { ArrowLeft, MessagesSquareIcon, SendHorizonal } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+	Check,
+	CheckCheck,
+	MessagesSquareIcon,
+	SendHorizonal,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import {
+	type ConversationMemberView,
 	type ConversationSummary,
+	type MessageDeliveryStatus,
+	sendConversationTypingState,
 	useConversationList,
 	useConversationThread,
+	useMessageSocketEvents,
 	useSendConversationMessage,
 } from "./hooks";
 
@@ -42,6 +52,25 @@ function conversationOtherMember(
 	return otherMembers[0] ?? conversation.members[0] ?? null;
 }
 
+function MessageDeliveryMark({ status }: { status: MessageDeliveryStatus }) {
+	const label =
+		status === "read"
+			? "Read"
+			: status === "delivered"
+				? "Delivered"
+				: "Sent, not delivered yet";
+	const Icon = status === "sent" ? Check : CheckCheck;
+
+	return (
+		<span
+			title={label}
+			className={status === "read" ? "text-secondary-text" : "opacity-80"}
+		>
+			<Icon className="size-3.5" />
+		</span>
+	);
+}
+
 export const MessagesPage = () => {
 	const { data: auth } = useAuth();
 	const isMobile = useIsMobile();
@@ -65,6 +94,13 @@ export const MessagesPage = () => {
 	const { mutateAsync: sendMessage, isPending: isSending } =
 		useSendConversationMessage();
 	const [draft, setDraft] = useState("");
+	const { typingUserIds } = useMessageSocketEvents({
+		conversationId: effectiveConversationId,
+		currentUserId: auth?.user.id,
+	});
+	const typingResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const isTypingRef = useRef(false);
+	const typingConversationRef = useRef<string | null>(null);
 
 	const selectedConversation = useMemo(
 		() =>
@@ -74,9 +110,42 @@ export const MessagesPage = () => {
 		[conversations, effectiveConversationId],
 	);
 
+	const typingMembers = useMemo(() => {
+		if (!thread) {
+			return [];
+		}
+
+		return typingUserIds
+			.map((userId) => thread.members.find((member) => member.id === userId))
+			.filter((member): member is ConversationMemberView => Boolean(member));
+	}, [thread, typingUserIds]);
+
+	const stopTyping = useCallback(
+		(conversationId = typingConversationRef.current) => {
+			if (typingResetRef.current) {
+				clearTimeout(typingResetRef.current);
+				typingResetRef.current = null;
+			}
+
+			if (!conversationId || !isTypingRef.current) {
+				return;
+			}
+
+			sendConversationTypingState(conversationId, false);
+			isTypingRef.current = false;
+			typingConversationRef.current = null;
+		},
+		[],
+	);
+
 	useEffect(() => {
+		stopTyping();
 		setDraft("");
-	}, []);
+	}, [effectiveConversationId, stopTyping]);
+
+	useEffect(() => {
+		return () => stopTyping();
+	}, [stopTyping]);
 
 	const openConversation = (conversationId: string) => {
 		navigate(`/messages/${conversationId}`);
@@ -92,6 +161,7 @@ export const MessagesPage = () => {
 		}
 
 		try {
+			stopTyping();
 			await sendMessage({
 				conversationId: effectiveConversationId,
 				content: draft.trim(),
@@ -102,6 +172,37 @@ export const MessagesPage = () => {
 				error instanceof Error ? error.message : "Failed to send message",
 			);
 		}
+	};
+
+	const handleDraftChange = (value: string) => {
+		setDraft(value);
+
+		if (!effectiveConversationId) {
+			return;
+		}
+
+		if (!value.trim()) {
+			stopTyping();
+			return;
+		}
+
+		if (
+			!isTypingRef.current ||
+			typingConversationRef.current !== effectiveConversationId
+		) {
+			stopTyping();
+			sendConversationTypingState(effectiveConversationId, true);
+			isTypingRef.current = true;
+			typingConversationRef.current = effectiveConversationId;
+		}
+
+		if (typingResetRef.current) {
+			clearTimeout(typingResetRef.current);
+		}
+
+		typingResetRef.current = setTimeout(() => {
+			stopTyping(effectiveConversationId);
+		}, 1500);
 	};
 
 	if (isPending) {
@@ -194,20 +295,27 @@ export const MessagesPage = () => {
 							<Button
 								variant="ghost"
 								size="sm"
+								radius="full"
+								isIconOnly
+								aria-label="Back to messages"
 								onPress={closeConversation}
-								startContent={<ArrowLeft className="size-4" />}
-							>
-								Back
-							</Button>
+								startContent={
+									<ChevronRightIcon className="size-4 rotate-180 text-accent" />
+								}
+							/>
 						) : null}
 						<div className="min-w-0">
-							<H4 className="truncate text-base font-semibold text-foreground">
+							<H4 className="truncate font-semibold text-accent text-base">
 								{conversationTitle(selectedConversation, auth?.user.id)}
 							</H4>
 							<p className="mt-1 text-sm text-muted">
-								{thread.conversation.type === "PULSE"
-									? "Pulse coordination thread"
-									: "Direct conversation"}
+								{typingMembers.length > 0
+									? `${typingMembers.map((member) => member.name).join(", ")} ${
+											typingMembers.length === 1 ? "is" : "are"
+										} typing...`
+									: thread.conversation.type === "PULSE"
+										? "Pulse coordination thread"
+										: "Direct conversation"}
 							</p>
 						</div>
 					</div>
@@ -233,19 +341,26 @@ export const MessagesPage = () => {
 										<div
 											className={`max-w-[85%] rounded px-4 py-3 sm:max-w-xl ${
 												isOwn
-													? "bg-accent text-white"
+													? "bg-accent/30 text-accent"
 													: "bg-surface-secondary text-foreground"
 											}`}
 										>
-											<p className="text-xs font-medium opacity-80">
-												{isOwn ? "You" : entry.sender?.name || "Neighbor"}
-											</p>
-											<p className="mt-2 whitespace-pre-wrap text-sm">
+											<p className="mt-1 whitespace-pre-wrap text-sm">
 												{entry.content}
 											</p>
-											<p className="mt-2 text-[11px] opacity-75">
-												{new Date(entry.sentAt).toLocaleString()}
-											</p>
+											<div className="mt-2 flex items-center justify-end gap-1 text-[11px] opacity-75">
+												<span>
+													{new Date(entry.sentAt).toLocaleTimeString([], {
+														hour: "2-digit",
+														minute: "2-digit",
+													})}
+												</span>
+												{isOwn ? (
+													<MessageDeliveryMark
+														status={entry.deliveryStatus ?? "sent"}
+													/>
+												) : null}
+											</div>
 										</div>
 									</div>
 								);
@@ -258,8 +373,8 @@ export const MessagesPage = () => {
 					<div className="flex flex-col gap-3 sm:flex-row">
 						<textarea
 							value={draft}
-							onChange={(event) => setDraft(event.target.value)}
-							placeholder="Write a secure logistics message…"
+							onChange={(event) => handleDraftChange(event.target.value)}
+							placeholder="Say hello..."
 							className="min-h-20 flex-1 rounded-sm border border-border bg-surface px-3 py-3 text-sm outline-none transition-colors focus:border-accent"
 						/>
 						<Button

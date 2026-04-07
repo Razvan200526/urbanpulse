@@ -12,8 +12,11 @@ export class LocationService {
 	 * @param pos
 	 * @returns Active connections near the provided position.
 	 */
-	public getNearbyConnections(pos: { x: number; y: number }): UserConnection[] {
-		return socketManager.getConnectionsInRange(pos, 500);
+	public getNearbyConnections(
+		pos: { x: number; y: number },
+		radiusInMeters = 500,
+	): UserConnection[] {
+		return socketManager.getConnectionsInRange(pos, radiusInMeters);
 	}
 
 	async getAddressByCoords(pos: { x: number; y: number }) {

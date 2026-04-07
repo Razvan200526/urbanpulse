@@ -6,17 +6,20 @@ import {
 	type NotificationPayload,
 	notificationListItemSchema,
 	notificationsPayloadSchema,
+	pulseNotificationSchema,
 	pulseResponseNotificationPayloadSchema,
 } from "@client/utils/notifications";
+import { syncPulseInCache } from "@client/utils/pulseCache";
 import { Toast } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import { backend } from "client/sdk/backend";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 const notificationSocketDataSchema = z.object({
 	type: z.string(),
 	payload: z.record(z.string(), z.unknown()),
+	notification: notificationListItemSchema.shape.notification.optional(),
 });
 
 const fetchNotifications = async () => {
@@ -39,10 +42,11 @@ const prependNotification = (
 	currentUserId: string,
 	payload: NotificationPayload,
 	type: string,
+	notification?: NotificationListItem["notification"],
 ) => {
 	const parsed = parseValueWithSchema(
 		{
-			notification: {
+			notification: notification ?? {
 				id: crypto.randomUUID(),
 				userId: currentUserId,
 				type,
@@ -57,8 +61,51 @@ const prependNotification = (
 
 	queryClient.setQueryData<NotificationListItem[]>(
 		["notifications", currentUserId],
-		(old) => (old ? [parsed, ...old] : [parsed]),
+		(old) => [
+			parsed,
+			...(old ?? []).filter(
+				(item) => item.notification?.id !== parsed.notification?.id,
+			),
+		],
 	);
+};
+
+const prependSocketNotification = (
+	currentUserId: string,
+	parsed: z.infer<typeof notificationSocketDataSchema>,
+) => {
+	prependNotification(
+		currentUserId,
+		parsed.payload,
+		parsed.type,
+		parsed.notification,
+	);
+};
+
+const syncPulseNotification = (data: unknown) => {
+	const parsed = parseValueWithSchema(
+		data,
+		pulseNotificationSchema,
+		"Failed to process pulse notification",
+	);
+
+	if (!parsed.payload.pulse) {
+		invalidatePulseQueries();
+		return parsed;
+	}
+
+	syncPulseInCache(parsed.payload.pulse);
+	return parsed;
+};
+
+export const useNotificationSocketOpen = () => {
+	const [isOpen, setIsOpen] = useState(() => backend.notifications.isOpen);
+
+	useEffect(() => {
+		return backend.notifications.on("status", setIsOpen);
+	}, []);
+
+	return isOpen;
 };
 
 export const useNotifications = (userId: string) => {
@@ -87,21 +134,21 @@ export const useNotifications = (userId: string) => {
 						"Failed to process live notification",
 					);
 
-					invalidatePulseQueries();
-					prependNotification(userId, parsed.payload, parsed.type);
-					Toast.toast.success(response.message);
+					syncPulseNotification(response.data);
+					prependSocketNotification(userId, parsed);
+					queryClient.invalidateQueries({
+						queryKey: ["dashboard", "overview"],
+					});
+					Toast.toast.success(response.message || "Nearby pulse alert");
 					return;
 				}
 
 				if (response.channelName === "notifications:pulse_updated") {
-					invalidatePulseQueries();
+					syncPulseNotification(response.data);
 					return;
 				}
 
 				if (response.channelName === "notifications:pulse_response") {
-					queryClient.invalidateQueries({
-						queryKey: ["notifications", userId],
-					});
 					invalidatePulseQueries();
 
 					const parsed = parseValueWithSchema(
@@ -115,6 +162,10 @@ export const useNotifications = (userId: string) => {
 						"Failed to process help offer",
 					);
 
+					prependSocketNotification(userId, parsed);
+					queryClient.invalidateQueries({
+						queryKey: ["dashboard", "overview"],
+					});
 					useHelpOfferUiStore.getState().show({
 						pulseId: actionPayload.pulseId,
 						responseId: actionPayload.responseId,
@@ -125,21 +176,35 @@ export const useNotifications = (userId: string) => {
 				}
 
 				if (response.channelName === "notifications:help_accepted") {
-					queryClient.invalidateQueries({
-						queryKey: ["notifications", userId],
-					});
+					const parsed = parseValueWithSchema(
+						response.data,
+						notificationSocketDataSchema,
+						"Failed to process accepted help notification",
+					);
+
+					prependSocketNotification(userId, parsed);
 					queryClient.invalidateQueries({
 						queryKey: ["messages", "conversations"],
+					});
+					queryClient.invalidateQueries({
+						queryKey: ["dashboard", "overview"],
 					});
 					Toast.toast.success(response.message || "Your help was accepted");
 					return;
 				}
 
 				if (response.channelName === "notifications:pulse_confirmed") {
-					queryClient.invalidateQueries({
-						queryKey: ["notifications", userId],
-					});
+					const parsed = parseValueWithSchema(
+						response.data,
+						notificationSocketDataSchema,
+						"Failed to process pulse confirmation",
+					);
+
+					prependSocketNotification(userId, parsed);
 					invalidatePulseQueries();
+					queryClient.invalidateQueries({
+						queryKey: ["dashboard", "overview"],
+					});
 					Toast.toast.success(
 						response.message || "Your pulse has been verified",
 					);
@@ -147,21 +212,39 @@ export const useNotifications = (userId: string) => {
 				}
 
 				if (response.channelName === "notifications:message") {
+					const parsed = parseValueWithSchema(
+						response.data,
+						notificationSocketDataSchema,
+						"Failed to process message notification",
+					);
+
+					prependSocketNotification(userId, parsed);
 					queryClient.invalidateQueries({
 						queryKey: ["messages", "conversations"],
 					});
 					queryClient.invalidateQueries({
-						queryKey: ["notifications", userId],
+						queryKey: ["dashboard", "overview"],
 					});
 					Toast.toast.success(response.message || "New message");
 					return;
 				}
 
 				if (response.channelName === "notifications:transaction") {
+					const parsed = parseValueWithSchema(
+						response.data,
+						notificationSocketDataSchema,
+						"Failed to process transaction notification",
+					);
+
+					prependSocketNotification(userId, parsed);
 					queryClient.invalidateQueries({
 						queryKey: ["pending", "requests", userId],
 					});
-					Toast.toast.success(response.message || "New borrow request!");
+					queryClient.invalidateQueries({ queryKey: ["resources"] });
+					queryClient.invalidateQueries({
+						queryKey: ["dashboard", "overview"],
+					});
+					Toast.toast.success(response.message || "Resource request updated");
 				}
 			},
 		);

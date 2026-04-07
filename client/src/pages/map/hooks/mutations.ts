@@ -1,16 +1,13 @@
 import { hono, queryClient } from "@client/lib/api/client";
 import { parseApiData } from "@client/lib/api/parse";
+import { syncPulseInCache } from "@client/utils/pulseCache";
 import { clientPulseSchema } from "@client/utils/types";
 import { Toast } from "@heroui/react";
 import type { PulseRequestType } from "@shared/validators/pulses/isPulseRequestValid";
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
 import { useMutation } from "@tanstack/react-query";
 import posthog from "posthog-js";
-import {
-	parsePulseMutationResponse,
-	sendPulseSocketMessage,
-	syncPulseInCache,
-} from "./shared";
+import { parsePulseMutationResponse, sendPulseSocketMessage } from "./shared";
 
 type PulseResponseMutationInput = {
 	pulseId: string;
