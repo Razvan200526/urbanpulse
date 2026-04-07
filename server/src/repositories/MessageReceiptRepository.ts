@@ -1,5 +1,5 @@
 import { db } from "@server/db";
-import { messageReceipt, type MessageReceiptType } from "@server/db/schema";
+import { type MessageReceiptType, messageReceipt } from "@server/db/schema";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 
 export class MessageReceiptRepository {

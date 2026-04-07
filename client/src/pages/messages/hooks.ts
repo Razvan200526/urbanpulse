@@ -356,7 +356,7 @@ export const useMessageSocketEvents = ({
 
 	useEffect(() => {
 		setTypingUserIds([]);
-	}, [conversationId]);
+	}, []);
 
 	useEffect(() => {
 		if (!conversationId) {

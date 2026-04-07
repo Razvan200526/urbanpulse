@@ -1,8 +1,5 @@
 import { db } from "@server/db";
-import {
-	type ResourceReviewType,
-	resourceReview,
-} from "@server/db/schema";
+import { type ResourceReviewType, resourceReview } from "@server/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 

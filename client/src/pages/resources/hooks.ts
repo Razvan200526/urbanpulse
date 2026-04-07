@@ -10,8 +10,8 @@ import posthog from "posthog-js";
 import {
 	getApiErrorMessage,
 	type MutationResponse,
-	normalizeResourceTransaction,
 	normalizeResources,
+	normalizeResourceTransaction,
 	type PendingRequestItem,
 	type ResourceReviewItem,
 	type ResourceTransactionItem,
@@ -230,17 +230,20 @@ export const useRequestBorrow = (userId: string) => {
 	});
 };
 
-export const useGetResourceTransaction = (resourceId: string, userId: string) => {
+export const useGetResourceTransaction = (
+	resourceId: string,
+	userId: string,
+) => {
 	return useQuery({
 		queryKey: ["resources", "transaction", "mine", resourceId, userId],
 		queryFn: async () => {
-			const response =
-				await hono.api.resources[":resourceId"].transaction.mine.$get({
-					param: { resourceId },
-				});
-			const res = (await response.json()) as MutationResponse<
-				ResourceTransactionItem | null
-			>;
+			const response = await hono.api.resources[
+				":resourceId"
+			].transaction.mine.$get({
+				param: { resourceId },
+			});
+			const res =
+				(await response.json()) as MutationResponse<ResourceTransactionItem | null>;
 			if (!res.success) {
 				Toast.toast.danger(
 					getApiErrorMessage(res, "Failed to get resource transaction"),
@@ -267,9 +270,8 @@ export const useCompleteResourceTransaction = (userId: string) => {
 			].complete.$post({
 				param: { transactionId },
 			});
-			const res = (await response.json()) as MutationResponse<
-				ResourceTransactionItem
-			>;
+			const res =
+				(await response.json()) as MutationResponse<ResourceTransactionItem>;
 			if (!res.success || !res.data) {
 				Toast.toast.danger(
 					res.success
@@ -310,7 +312,8 @@ export const useSubmitResourceReview = (userId: string) => {
 				param: { transactionId },
 				json: { rating, comment },
 			});
-			const res = (await response.json()) as MutationResponse<ResourceReviewItem>;
+			const res =
+				(await response.json()) as MutationResponse<ResourceReviewItem>;
 			if (!res.success || !res.data) {
 				Toast.toast.danger(
 					res.success

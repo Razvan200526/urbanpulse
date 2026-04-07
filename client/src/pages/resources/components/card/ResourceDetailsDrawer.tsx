@@ -42,9 +42,7 @@ export function ResourceDetailsDrawer({
 	const [reviewTransactionId, setReviewTransactionId] = useState<string | null>(
 		null,
 	);
-	const { mutate: requestBorrow, isPending } = useRequestBorrow(
-		userId,
-	);
+	const { mutate: requestBorrow, isPending } = useRequestBorrow(userId);
 	const { data: pendingRequests = [] } = useGetPendingRequests(
 		isOwner ? userId : "",
 	);
@@ -251,10 +249,7 @@ export function ResourceDetailsDrawer({
 													variant="primary"
 													isPending={isResponding}
 													onPress={() =>
-														handleRespondToRequest(
-															request.transaction.id,
-															true,
-														)
+														handleRespondToRequest(request.transaction.id, true)
 													}
 												>
 													Accept

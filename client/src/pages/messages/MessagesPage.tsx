@@ -141,7 +141,7 @@ export const MessagesPage = () => {
 	useEffect(() => {
 		stopTyping();
 		setDraft("");
-	}, [effectiveConversationId, stopTyping]);
+	}, [stopTyping]);
 
 	useEffect(() => {
 		return () => stopTyping();

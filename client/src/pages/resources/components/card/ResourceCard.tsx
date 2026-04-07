@@ -41,9 +41,7 @@ export const ResourceCard = ({ item }: { item: ResourceWithUsersType }) => {
 					<Star
 						className={`h-3 w-3 text-warning ${reviewSummary.count > 0 ? "fill-warning" : ""}`}
 					/>
-					<span className="text-xs text-foreground/30 ml-1">
-						{reviewText}
-					</span>
+					<span className="text-xs text-foreground/30 ml-1">{reviewText}</span>
 				</div>
 			</Card.Content>
 

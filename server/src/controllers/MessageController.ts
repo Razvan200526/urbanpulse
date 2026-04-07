@@ -1,8 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import { authMiddleware } from "@server/middleware/authMiddleware";
+import auth from "@server/services/auth/AuthService";
 import { messageSocketManager } from "@server/services/MessageSocketManager";
 import { messagingService } from "@server/services/MessagingService";
-import auth from "@server/services/auth/AuthService";
 import { handleError } from "@server/utils/handleError";
 import {
 	conversationIdParamSchema,

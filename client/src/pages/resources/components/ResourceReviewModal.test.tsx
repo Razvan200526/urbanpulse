@@ -61,7 +61,9 @@ mock.module("@client/hooks/useAuth", () => ({
 }));
 
 mock.module("@heroui/react", () => ({
-	Chip: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+	Chip: ({ children }: { children: React.ReactNode }) => (
+		<span>{children}</span>
+	),
 	Drawer: {
 		Footer: ({ children }: { children: React.ReactNode }) => (
 			<footer>{children}</footer>

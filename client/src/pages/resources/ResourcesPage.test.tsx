@@ -262,7 +262,9 @@ mock.module("@heroui/react", () => {
 	);
 
 	return {
-		Chip: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+		Chip: ({ children }: { children: React.ReactNode }) => (
+			<span>{children}</span>
+		),
 		Drawer: {
 			Footer: ({ children }: { children: React.ReactNode }) => (
 				<footer>{children}</footer>

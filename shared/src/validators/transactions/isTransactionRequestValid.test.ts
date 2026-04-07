@@ -29,9 +29,7 @@ describe("isResourceReviewReqValid", () => {
 	});
 
 	test("rejects missing and out-of-range ratings", () => {
-		expect(isResourceReviewReqValid({ comment: "Useful" }).success).toBe(
-			false,
-		);
+		expect(isResourceReviewReqValid({ comment: "Useful" }).success).toBe(false);
 		expect(isResourceReviewReqValid({ rating: 0 }).success).toBe(false);
 		expect(isResourceReviewReqValid({ rating: 6 }).success).toBe(false);
 	});

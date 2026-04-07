@@ -79,7 +79,7 @@ export const ResourceReviewModal = ({
 			}
 		>
 			<div className="p-4 flex flex-col gap-5">
-				<div className="flex items-center gap-2" aria-label="Rating">
+				<div className="flex items-center gap-2">
 					{[1, 2, 3, 4, 5].map((value) => (
 						<Button
 							key={value}
