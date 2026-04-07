@@ -10,6 +10,7 @@ import {
 import { conversationMemberRepository } from "@server/repositories/ConversationMemberRepository";
 import { conversationRepository } from "@server/repositories/ConversationRepository";
 import { messageRepository } from "@server/repositories/MessageRepository";
+import { pulseRepository } from "@server/repositories/PulseRepository";
 import { notificationService } from "@server/services/NotificationService";
 import { notificationFactory } from "@server/shared/NotificationFactory";
 import { handleError } from "@server/utils/handleError";
@@ -113,6 +114,32 @@ export class MessagingService {
 			conversationId,
 			userId,
 		);
+	}
+
+	private async isHiddenSelfAuthoredPulseConversation(params: {
+		viewerUserId: string;
+		conversation: ConversationType;
+		members: ConversationMemberView[];
+		messages: MessageType[];
+	}) {
+		if (
+			params.conversation.type !== ConversationTypeEnum.Pulse ||
+			!params.conversation.pulseId
+		) {
+			return false;
+		}
+
+		const linkedPulse = await pulseRepository.getOne(params.conversation.pulseId);
+		if (!linkedPulse || linkedPulse.userId !== params.viewerUserId) {
+			return false;
+		}
+
+		const hasOtherMember = params.members.some(
+			(member) => member.id !== params.viewerUserId,
+		);
+		const hasMessages = params.messages.length > 0;
+
+		return !hasOtherMember && !hasMessages;
 	}
 
 	async ensureDirectConversation(userId: string, otherUserId: string) {
@@ -237,13 +264,24 @@ export class MessagingService {
 		const summaries = await Promise.all(
 			conversations.map(async (entry) => {
 				const base = await this.getConversationBase(entry.id);
-				if (!base) {
-					return null;
-				}
+					if (!base) {
+						return null;
+					}
 
-				return {
-					conversation: entry,
-					members: base.members,
+					if (
+						await this.isHiddenSelfAuthoredPulseConversation({
+							viewerUserId: userId,
+							conversation: entry,
+							members: base.members,
+							messages: base.messages,
+						})
+					) {
+						return null;
+					}
+
+					return {
+						conversation: entry,
+						members: base.members,
 					lastMessage: base.messages.at(-1) ?? null,
 				};
 			}),
@@ -264,11 +302,22 @@ export class MessagingService {
 		}
 
 		const base = await this.getConversationBase(conversationId);
-		if (!base) {
-			return null;
-		}
+			if (!base) {
+				return null;
+			}
 
-		const senderIds = base.messages.map((entry) => entry.senderId);
+			if (
+				await this.isHiddenSelfAuthoredPulseConversation({
+					viewerUserId: userId,
+					conversation: base.conversation,
+					members: base.members,
+					messages: base.messages,
+				})
+			) {
+				return null;
+			}
+
+			const senderIds = base.messages.map((entry) => entry.senderId);
 		const senderRows =
 			senderIds.length === 0
 				? []

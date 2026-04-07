@@ -13,9 +13,7 @@ const validPayload: CreateResourcePayload = {
 	imageUrls: [],
 };
 
-function buildResource(
-	overrides: Partial<ResourceType> = {},
-): ResourceType {
+function buildResource(overrides: Partial<ResourceType> = {}): ResourceType {
 	return {
 		id: "11111111-1111-1111-1111-111111111111",
 		userId: "owner-1",

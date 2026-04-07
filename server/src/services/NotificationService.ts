@@ -110,7 +110,8 @@ export class NotificationService {
 		}
 
 		const payload =
-			item.notification?.payload && typeof item.notification.payload === "object"
+			item.notification?.payload &&
+			typeof item.notification.payload === "object"
 				? (item.notification.payload as Record<string, unknown>)
 				: null;
 		const pulse =
@@ -269,9 +270,7 @@ export class NotificationService {
 						!this.isSelfAuthoredPulseBroadcastNotification(item, userId),
 				);
 
-				return await this.annotateActionableNotifications(
-					visibleNotifications,
-				);
+				return await this.annotateActionableNotifications(visibleNotifications);
 			}
 			return await this.annotateActionableNotifications(
 				await this.notificationRepo.getNotificationsWithUsers(),
