@@ -16,6 +16,14 @@ export class ConversationRepository implements IRepository<ConversationType> {
 		return db.select().from(conversation);
 	}
 
+	async findByPulseId(pulseId: string): Promise<ConversationType | null> {
+		const [result] = await db
+			.select()
+			.from(conversation)
+			.where(eq(conversation.pulseId, pulseId as any));
+		return result || null;
+	}
+
 	async create(
 		data: Partial<ConversationType>,
 	): Promise<ConversationType | null> {

@@ -27,7 +27,7 @@
 		"fmt": "biome format . --write",
 		"lint:check": "biome check . --write",
 		"prepare": "husky",
-		"start": "bun run server/dist/index.js"
+		"start": "cd server && bun run start:prod"
 	},
 	"keywords": [
 		"bun",
@@ -47,7 +47,7 @@
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"hono": "^4.12.9",
+		"hono": "^4.12.10",
 		"vite-tsconfig-paths": "^6.1.1"
 	}
 }

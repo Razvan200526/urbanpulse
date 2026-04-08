@@ -2,142 +2,256 @@ import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const messagesState = {
-	user: { user: { id: "user-1" } },
-	requests: [] as Array<any>,
-	isLoading: false,
+	auth: { user: { id: "user-1" } },
+	isMobile: false,
+	routeConversationId: null as string | null,
+	conversations: [] as Array<any>,
+	thread: null as any,
+	isPending: false,
+	isThreadPending: false,
+	navigateCalls: [] as string[],
+};
+
+const buttonProps: Array<Record<string, any>> = [];
+
+const directConversation = {
+	conversation: {
+		id: "conversation-1",
+		type: "DIRECT",
+		pulseId: null,
+		createdAt: "2026-04-04T10:00:00.000Z",
+	},
+	members: [
+		{
+			id: "user-1",
+			name: "Owner",
+			email: "owner@example.com",
+			image: null,
+		},
+		{
+			id: "user-2",
+			name: "Alex",
+			email: "alex@example.com",
+			image: null,
+		},
+	],
+	lastMessage: {
+		id: "message-1",
+		content: "See you there",
+		senderId: "user-2",
+		sentAt: "2026-04-04T10:00:00.000Z",
+	},
 };
 
 mock.module("@client/hooks/useAuth", () => ({
 	useAuth: () => ({
-		data: messagesState.user,
+		data: messagesState.auth,
 	}),
 }));
 
-mock.module("../resources/hooks", () => ({
-	useGetPendingRequests: () => ({
-		data: messagesState.requests,
-		isLoading: messagesState.isLoading,
+mock.module("@client/hooks/useMediaQuery", () => ({
+	useIsMobile: () => messagesState.isMobile,
+}));
+
+mock.module("./hooks", () => ({
+	useConversationList: () => ({
+		data: messagesState.conversations,
+		isPending: messagesState.isPending,
+	}),
+	useConversationThread: () => ({
+		data: messagesState.thread,
+		isPending: messagesState.isThreadPending,
+	}),
+	useSendConversationMessage: () => ({
+		mutateAsync: async () => messagesState.thread,
+		isPending: false,
 	}),
 }));
 
-mock.module("../../components/Button/Button", () => ({
-	Button: ({ children }: { children: React.ReactNode }) => (
-		<button>{children}</button>
-	),
+mock.module("react-router", () => ({
+	useNavigate: () => (path: string) => {
+		messagesState.navigateCalls.push(path);
+		if (path === "/messages") {
+			messagesState.routeConversationId = null;
+			return;
+		}
+
+		const match = path.match(/^\/messages\/(.+)$/);
+		messagesState.routeConversationId = match?.[1] ?? null;
+	},
+	useParams: () => ({
+		conversationId: messagesState.routeConversationId ?? undefined,
+	}),
 }));
 
-mock.module("../../components/typography", () => ({
-	H3: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
+mock.module("@client/components/Button/Button", () => ({
+	Button: (props: Record<string, any>) => {
+		buttonProps.push(props);
+		return <button>{props.children}</button>;
+	},
 }));
 
-mock.module("../../components/user/Avatar", () => ({
-	Avatar: ({ user }: { user: { name?: string } | null }) => (
+mock.module("@client/components/Header", () => ({
+	Header: ({ title }: { title: string }) => <h1>{title}</h1>,
+}));
+
+mock.module("@client/components/PageLoader", () => ({
+	PageLoader: () => <div>Page Loader</div>,
+}));
+
+mock.module("@client/components/user/Avatar", () => ({
+	Avatar: ({ user }: { user?: { name?: string } | null }) => (
 		<div>{user?.name || "Avatar"}</div>
 	),
 }));
 
-mock.module("@heroui/react", () => {
-	const Table = ({ children }: { children: React.ReactNode }) => (
-		<table>{children}</table>
-	);
-	Table.ScrollContainer = ({ children }: { children: React.ReactNode }) => (
+mock.module("@heroui/react", () => ({
+	cn: (...classes: Array<string | false | null | undefined>) =>
+		classes.filter(Boolean).join(" "),
+	ScrollShadow: ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
-	);
-	Table.Content = ({ children }: { children: React.ReactNode }) => (
-		<div>{children}</div>
-	);
-	Table.Header = ({ children }: { children: React.ReactNode }) => (
-		<div>{children}</div>
-	);
-	Table.Body = ({ children }: { children: React.ReactNode }) => (
-		<div>{children}</div>
-	);
-	Table.Column = ({ children }: { children: React.ReactNode }) => (
-		<span>{children}</span>
-	);
-	Table.Row = ({ children }: { children: React.ReactNode }) => (
-		<div>{children}</div>
-	);
-	Table.Cell = ({ children }: { children: React.ReactNode }) => (
-		<div>{children}</div>
-	);
-
-	return {
-		Spinner: () => <div>Spinner</div>,
-		Table,
-	};
-});
-
-mock.module("./components/RespondRequestModal", () => ({
-	RespondRequestModal: ({
-		transactionId,
-		action,
-	}: {
-		transactionId: string | null;
-		action: string | null;
-	}) => (
-		<div>
-			Respond Modal:{transactionId ?? "none"}:{action ?? "none"}
-		</div>
 	),
+	Separator: () => <hr />,
+	Toast: { toast: { danger: () => {}, success: () => {} } },
 }));
 
 const { MessagesPage } = await import("./MessagesPage");
 
 describe("MessagesPage", () => {
 	beforeEach(() => {
-		messagesState.user = { user: { id: "user-1" } };
-		messagesState.requests = [];
-		messagesState.isLoading = false;
+		messagesState.isMobile = false;
+		messagesState.routeConversationId = null;
+		messagesState.isPending = false;
+		messagesState.isThreadPending = false;
+		messagesState.conversations = [];
+		messagesState.thread = null;
+		messagesState.navigateCalls = [];
+		buttonProps.length = 0;
 	});
 
-	test("renders a loader while pending requests are loading", () => {
-		messagesState.isLoading = true;
+	test("renders a loader while conversations are loading", () => {
+		messagesState.isPending = true;
 
 		const markup = renderToStaticMarkup(<MessagesPage />);
 
-		expect(markup).toContain("Pending Borrow Requests");
-		expect(markup).toContain("Spinner");
+		expect(markup).toContain("Page Loader");
 	});
 
-	test("renders an empty state when there are no requests", () => {
-		const markup = renderToStaticMarkup(<MessagesPage />);
-
-		expect(markup).toContain("No pending borrow requests right now.");
-		expect(markup).toContain("Respond Modal:none:none");
-	});
-
-	test("renders pending request rows with fallback labels", () => {
-		messagesState.requests = [
-			{
-				transaction: {
-					id: "transaction-1",
-					startAt: "2026-03-31T10:00:00.000Z",
-				},
-				resource: {
-					name: "Generator",
-				},
-				borrower: {
-					name: "Alex",
-				},
-			},
-			{
-				transaction: {
-					id: "transaction-2",
-					startAt: "2026-03-31T12:00:00.000Z",
-				},
-				resource: null,
-				borrower: null,
-			},
-		];
+	test("renders the empty inbox state on mobile without a thread pane", () => {
+		messagesState.isMobile = true;
 
 		const markup = renderToStaticMarkup(<MessagesPage />);
 
-		expect(markup).toContain("Generator");
+		expect(markup).toContain("Your messages");
+		expect(markup).toContain("It&#x27;s empty here.");
+		expect(markup).not.toContain(
+			"Select a conversation to start coordinating.",
+		);
+	});
+
+	test("renders the first conversation thread on desktop when no route param is present", () => {
+		messagesState.conversations = [directConversation];
+		messagesState.thread = {
+			...directConversation,
+			messages: [
+				{
+					id: "message-1",
+					content: "See you there",
+					senderId: "user-2",
+					sentAt: "2026-04-04T10:00:00.000Z",
+					sender: {
+						id: "user-2",
+						name: "Alex",
+						email: "alex@example.com",
+						image: null,
+					},
+				},
+			],
+		};
+
+		const markup = renderToStaticMarkup(<MessagesPage />);
+
+		expect(markup).toContain("Your messages");
 		expect(markup).toContain("Alex");
-		expect(markup).toContain("Unknown Resource");
-		expect(markup).toContain("Unknown");
-		expect(markup).toContain("Accept");
-		expect(markup).toContain("Reject");
+		expect(markup).toContain("See you there");
+		expect(markup).toContain("Direct conversation");
+		expect(markup).toContain("Send");
+	});
+
+	test("renders the selected conversation route as a full-screen mobile thread", () => {
+		messagesState.isMobile = true;
+		messagesState.routeConversationId = "conversation-1";
+		messagesState.conversations = [directConversation];
+		messagesState.thread = {
+			...directConversation,
+			messages: [
+				{
+					id: "message-1",
+					content: "See you there",
+					senderId: "user-2",
+					sentAt: "2026-04-04T10:00:00.000Z",
+					sender: {
+						id: "user-2",
+						name: "Alex",
+						email: "alex@example.com",
+						image: null,
+					},
+				},
+			],
+		};
+
+		const markup = renderToStaticMarkup(<MessagesPage />);
+
+		expect(markup).toContain("Back");
+		expect(markup).toContain("Alex");
+		expect(markup).toContain("See you there");
+		expect(markup).not.toContain("Your messages");
+	});
+
+	test("renders the route-selected thread in desktop split view", () => {
+		messagesState.routeConversationId = "conversation-1";
+		messagesState.conversations = [directConversation];
+		messagesState.thread = {
+			...directConversation,
+			messages: [
+				{
+					id: "message-1",
+					content: "See you there",
+					senderId: "user-2",
+					sentAt: "2026-04-04T10:00:00.000Z",
+					sender: {
+						id: "user-2",
+						name: "Alex",
+						email: "alex@example.com",
+						image: null,
+					},
+				},
+			],
+		};
+
+		const markup = renderToStaticMarkup(<MessagesPage />);
+
+		expect(markup).toContain("Your messages");
+		expect(markup).toContain("Alex");
+		expect(markup).toContain("See you there");
+		expect(markup).toContain("Direct conversation");
+		expect(markup).not.toContain("Back");
+	});
+
+	test("returns to /messages when backing out on mobile", async () => {
+		messagesState.isMobile = true;
+		messagesState.routeConversationId = "conversation-1";
+		messagesState.conversations = [directConversation];
+		messagesState.thread = {
+			...directConversation,
+			messages: [],
+		};
+
+		renderToStaticMarkup(<MessagesPage />);
+
+		await buttonProps.find((props) => props.children === "Back")?.onPress?.();
+
+		expect(messagesState.navigateCalls).toContain("/messages");
+		expect(messagesState.routeConversationId).toBeNull();
 	});
 });

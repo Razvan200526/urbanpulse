@@ -3,6 +3,7 @@ import type {
 	TransactionType,
 	UserType,
 } from "@server/db/schema";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import {
 	type ResourceRepository,
 	resourceRepository,
@@ -25,6 +26,7 @@ export class ResourceService {
 	private resourceRepo: ResourceRepository;
 	private userRepo: UserRepository;
 	private transactionRepo: TransactionRepository;
+	private cache = cacheManager;
 
 	constructor() {
 		this.resourceRepo = resourceRepository;
@@ -85,12 +87,18 @@ export class ResourceService {
 	 * @returns {Promise<ResourceType | null>} The resource, or null if not found.
 	 */
 	async getResourceById(id: string): Promise<ResourceType | null> {
-		try {
-			return await this.resourceRepo.getOne(id);
-		} catch (error) {
-			handleError(error);
-			return null;
-		}
+		return await this.cache.getOrSet(
+			id,
+			async () => {
+				try {
+					return await this.resourceRepo.getOne(id);
+				} catch (error) {
+					handleError(error);
+					return null;
+				}
+			},
+			{ namespace: "resource", ttl: 600 }
+		);
 	}
 
 	/**
@@ -147,6 +155,31 @@ export class ResourceService {
 			handleError(error);
 			return null;
 		}
+	}
+
+	async getResourcesByUserId(userId: string, filter: FilterResourceType) {
+		const cacheKey = `${userId}:${filter}`;
+		return await this.cache.getOrSet(
+			cacheKey,
+			async () => {
+				try {
+					const options =
+						filter === "All"
+							? { userId }
+							: {
+									userId,
+									availability: filter,
+								};
+
+					const res = await this.resourceRepo.getByOptions(options);
+					return await this.mapResourcesWithUsers(res);
+				} catch (error) {
+					handleError(error);
+					return null;
+				}
+			},
+			{ namespace: "resource", ttl: 600 }
+		);
 	}
 
 	/**

@@ -1,14 +1,18 @@
-import { authClient } from "@client/main";
+import { authClient } from "@client/lib/api/client";
 import { useQuery } from "@tanstack/react-query";
+
+export const authQueryKey = ["auth"] as const;
+
+export const fetchAuthSession = async () => {
+	const { data } = await authClient.getSession();
+	return data;
+};
 
 export const useAuth = () => {
 	return useQuery({
-		queryKey: ["auth"],
-		queryFn: async () => {
-			const { data } = await authClient.getSession();
-			return data;
-		},
-		staleTime: 60_000,
+		queryKey: authQueryKey,
+		queryFn: fetchAuthSession,
+		staleTime: 50_000,
 		retry: false,
 	});
 };

@@ -4,16 +4,29 @@ import {
 	InputName,
 	type InputNameRefType,
 } from "@client/components/input/InputName";
+import { ResponsiveChoiceField } from "@client/components/input/ResponsiveChoiceField";
 import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
-import { Tabs } from "@client/components/tabs/Tabs";
-import { H3, Label } from "@client/components/typography";
+import type { TabItemType } from "@client/components/tabs/Tabs";
+import { H3 } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
+import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import { Separator, Toast, Tooltip } from "@heroui/react";
 import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
 import { PaperclipIcon, XIcon } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useUploadResource } from "../hooks";
+
+const resourceTypeItems: TabItemType[] = [
+	{ label: "Skill", key: "Skill" },
+	{ label: "Item", key: "Item" },
+	{ label: "Space", key: "Space" },
+];
+
+const availabilityItems: TabItemType[] = [
+	{ label: "Available", key: "Available" },
+	{ label: "Unavailable", key: "Unavailable" },
+];
 
 export const UploadResourceModal = ({
 	modalRef,
@@ -30,22 +43,18 @@ export const UploadResourceModal = ({
 	const [availability, setAvailability] = useState<string>("Available");
 	const [imageUrls, setImageUrls] = useState<string[]>([]);
 
-	const resourceTypeItems = useMemo(
-		() => [
-			{ label: "Skill", key: "Skill" },
-			{ label: "Item", key: "Item" },
-			{ label: "Space", key: "Space" },
-		],
-		[],
-	);
+	const resetForm = () => {
+		setResourceType("Skill");
+		setAvailability("Available");
+		setImageUrls([]);
+		nameRef.current?.setValue("");
+		descriptionRef.current?.setValue("");
+	};
 
-	const availabilityItems = useMemo(
-		() => [
-			{ label: "Available", key: "Available" },
-			{ label: "Unavailable", key: "Unavailable" },
-		],
-		[],
-	);
+	const closeModal = () => {
+		resetForm();
+		modalRef.current?.close();
+	};
 
 	const handleUpload = async () => {
 		const { success, data, error } = isCreateResourceReqValid({
@@ -57,15 +66,15 @@ export const UploadResourceModal = ({
 		});
 		if (error) {
 			Toast.toast.danger("Invalid resource data");
-			modalRef.current?.close();
 			return;
 		}
 		if (success) {
 			const response = await uploadResource(data);
-			Toast.toast.success(response?.message);
-			modalRef.current?.close();
+			if (response?.message) {
+				Toast.toast.success(response.message);
+			}
+			closeModal();
 		}
-		modalRef.current?.close();
 	};
 
 	return (
@@ -79,11 +88,7 @@ export const UploadResourceModal = ({
 			}
 			footer={
 				<div className="w-full flex items-center justify-end gap-4">
-					<Button
-						variant="danger"
-						size="sm"
-						onPress={() => modalRef.current?.close()}
-					>
+					<Button variant="danger" size="sm" onPress={closeModal}>
 						Cancel
 					</Button>
 					<Button variant="primary" size="sm" onPress={handleUpload}>
@@ -95,27 +100,19 @@ export const UploadResourceModal = ({
 			<div className="p-4 flex flex-col space-y-5">
 				<Separator variant="tertiary" />
 
-				<div className="flex flex-col gap-2">
-					<Label className="text-accent font-semibold text-sm">
-						Resource Type
-					</Label>
-					<Tabs
-						items={resourceTypeItems}
-						selectedKey={resourceType}
-						onSelectionChange={(key) => setResourceType(key as string)}
-					/>
-				</div>
+				<ResponsiveChoiceField
+					label="Resource Type"
+					items={resourceTypeItems}
+					selectedKey={resourceType}
+					onSelectionChange={setResourceType}
+				/>
 
-				<div className="flex flex-col gap-2">
-					<Label className="text-accent font-semibold text-sm">
-						Availability
-					</Label>
-					<Tabs
-						items={availabilityItems}
-						selectedKey={availability}
-						onSelectionChange={(key) => setAvailability(key as string)}
-					/>
-				</div>
+				<ResponsiveChoiceField
+					label="Availability"
+					items={availabilityItems}
+					selectedKey={availability}
+					onSelectionChange={setAvailability}
+				/>
 
 				<InputName
 					ref={nameRef}
@@ -140,7 +137,7 @@ export const UploadResourceModal = ({
 								className="relative w-16 h-16 rounded overflow-hidden border border-border mt-2"
 							>
 								<img
-									src={url}
+									src={normalizeAssetUrl(url)}
 									alt={`upload-${url}`}
 									className="w-full h-full object-cover"
 								/>

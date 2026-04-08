@@ -21,6 +21,14 @@ describe("notification helpers", () => {
 				pulseId: "pulse-1",
 			}),
 		).toBeNull();
+
+		expect(
+			getPulseResponseActionPayload({
+				pulseId: "pulse-1",
+				responseId: "response-1",
+				isActionable: false,
+			}),
+		).toBeNull();
 	});
 
 	test("summarizes pulse response notifications", () => {

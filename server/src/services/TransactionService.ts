@@ -1,4 +1,5 @@
 import type { TransactionType } from "@server/db/schema";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import {
 	type TransactionRepository,
 	transactionRepository,
@@ -8,6 +9,7 @@ import { isTransactionRequestValid } from "@shared/validators/isTransactionValid
 
 export class TransactionService {
 	private transactionRepo: TransactionRepository;
+	private cache = cacheManager;
 
 	constructor() {
 		this.transactionRepo = transactionRepository;

@@ -1,7 +1,8 @@
 import { Button } from "@client/components/Button/Button";
+import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
-import { queryClient } from "@client/main";
+import { queryClient } from "@client/lib/api/client";
 import { useRetrievePulses } from "@client/pages/map/hooks";
 import { Card, ScrollShadow } from "@heroui/react";
 import { PulseEnum, PulseStatusEnum, UrgencyEnum } from "@shared/types";
@@ -9,7 +10,6 @@ import { TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { sortPulsesForFeed } from "../sortPulsesForFeed";
-import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { PulseList } from "./PulseList";
 
 export function NeighborhoodPulseFeed() {
@@ -32,7 +32,6 @@ export function NeighborhoodPulseFeed() {
 	const enabled = !!user?.user.id && coords != null && !geoError;
 	const retrievePayload = useMemo(
 		() => ({
-			userId: user?.user.id || "",
 			position: { x: coords?.long ?? 0, y: coords?.lat ?? 0 },
 			radius,
 			...(typeFilter !== "ALL" ? { type: typeFilter } : {}),
@@ -46,7 +45,6 @@ export function NeighborhoodPulseFeed() {
 			statusFilter,
 			typeFilter,
 			urgencyFilter,
-			user?.user.id,
 		],
 	);
 
@@ -58,7 +56,9 @@ export function NeighborhoodPulseFeed() {
 	} = useRetrievePulses(retrievePayload, enabled);
 
 	const sorted = useMemo(() => {
-		const raw = pulsesRes?.data ?? [];
+		const raw = (pulsesRes?.data ?? []).map((pulse) => {
+			return { ...pulse, createdAt: new Date(pulse.createdAt) };
+		});
 		return sortPulsesForFeed(raw);
 	}, [pulsesRes?.data]);
 
@@ -68,7 +68,7 @@ export function NeighborhoodPulseFeed() {
 	};
 
 	return (
-		<Card className="shadow-none border border-border">
+		<Card className="border border-accent shadow-none">
 			<Card.Header className="flex flex-row items-center justify-between gap-2">
 				<div className="min-w-0">
 					<Card.Title className="text-lg flex items-center text-accent gap-2">

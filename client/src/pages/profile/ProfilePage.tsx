@@ -1,38 +1,65 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { InputAvatar } from "@client/components/input/InputAvatar";
-import { PageLoader } from "@client/components/PageLoader";
 import {
+	InputName,
+	type InputNameRefType,
+} from "@client/components/input/InputName";
+import { PageLoader } from "@client/components/PageLoader";
+import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
+import { H2 } from "@client/components/typography";
+import {
+	useDeleteAccount,
 	useUpdateSkillTags,
 	useUpdateUserProfile,
 	useUserProfile,
 } from "@client/hooks/useProfileSettings";
 import { useFilterResources } from "@client/pages/resources/hooks";
-import { Card, Chip, ScrollShadow, Separator, Toast } from "@heroui/react";
+import {
+	AlertDialog,
+	Card,
+	Chip,
+	ScrollShadow,
+	Separator,
+	Toast,
+} from "@heroui/react";
+import { usePostHog } from "@posthog/react";
 import {
 	BadgeCheck,
+	BriefcaseBusiness,
 	HandHelping,
+	MailCheck,
 	Save,
 	ShieldCheck,
-	Sparkles,
+	Trash2,
+	UserRoundCheck,
 } from "lucide-react";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
 export const ProfilePage = () => {
+	const posthog = usePostHog();
+	const navigate = useNavigate();
 	const { data: profile, isPending } = useUserProfile();
 	const { mutateAsync: updateProfile, isPending: isSavingProfile } =
 		useUpdateUserProfile();
 	const { mutateAsync: updateSkillTags, isPending: isSavingTags } =
 		useUpdateSkillTags();
+	const { mutateAsync: deleteAccount, isPending: isDeletingAccount } =
+		useDeleteAccount();
 	const { data: resources } = useFilterResources("All");
 
-	const [name, setName] = useState("");
-	const [bio, setBio] = useState("");
-	const [image, setImage] = useState<string | null>(null);
-	const [skillTags, setSkillTags] = useState<string[]>([]);
+	const [name, setName] = useState(profile?.user.name ?? "");
+	const [bio, setBio] = useState(profile?.user.bio ?? "");
+	const [image, setImage] = useState<string | null>(
+		profile?.user.image ?? null,
+	);
+	const [skillTags, setSkillTags] = useState<string[]>(
+		profile?.skillTags ?? [],
+	);
 	const [draftTag, setDraftTag] = useState("");
-	const displayNameId = useId();
-	const bioId = useId();
+	const nameRef = useRef<InputNameRefType>(null);
+	const bioRef = useRef<TextAreaRefType>(null);
 
 	useEffect(() => {
 		if (!profile) return;
@@ -40,6 +67,8 @@ export const ProfilePage = () => {
 		setBio(profile.user.bio || "");
 		setImage(profile.user.image);
 		setSkillTags(profile.skillTags);
+		nameRef.current?.setValue(profile.user.name || "");
+		bioRef.current?.setValue(profile.user.bio || "");
 	}, [profile]);
 
 	const offerCount = useMemo(() => {
@@ -47,6 +76,11 @@ export const ProfilePage = () => {
 			(item) => item.resource.userId === profile?.user.id,
 		).length;
 	}, [profile?.user.id, resources]);
+	const trustScore = Math.round(profile?.user.trustScore ?? 0);
+	const trustRating = Math.min(5, Number((trustScore / 20).toFixed(1)));
+	const successfulInteractions = profile?.user.successfulInteractions ?? 0;
+	const isIdentityVerified = Boolean(profile?.user.isVerified);
+	const isEmailVerified = Boolean(profile?.user.emailVerified);
 
 	const addSkillTag = () => {
 		const cleaned = draftTag.trim();
@@ -61,12 +95,17 @@ export const ProfilePage = () => {
 
 	const saveProfileDetails = async () => {
 		try {
+			const nextName = nameRef.current?.getValue().trim() ?? name.trim();
+			const nextBio = bioRef.current?.getValue().trim() ?? bio.trim();
 			await updateProfile({
-				name: name.trim(),
-				bio: bio.trim(),
+				name: nextName,
+				bio: nextBio,
 				image,
 			});
+			setName(nextName);
+			setBio(nextBio);
 			Toast.toast.success("Profile updated");
+			posthog?.capture("profile_updated");
 		} catch (error) {
 			Toast.toast.danger(
 				error instanceof Error ? error.message : "Failed to update profile",
@@ -76,12 +115,29 @@ export const ProfilePage = () => {
 
 	const saveSkillTags = async () => {
 		try {
-			await updateSkillTags(skillTags);
+			await updateSkillTags({ tags: skillTags });
 			Toast.toast.success("Skill tags updated");
+			posthog?.capture("skill_tags_updated", { tag_count: skillTags.length });
 		} catch (error) {
 			Toast.toast.danger(
 				error instanceof Error ? error.message : "Failed to update skill tags",
 			);
+		}
+	};
+
+	const handleDeleteAccount = async () => {
+		try {
+			await deleteAccount();
+			posthog?.capture("account_deleted");
+			posthog?.reset();
+			Toast.toast.success("Account deleted");
+			navigate("/", { replace: true });
+			return true;
+		} catch (error) {
+			Toast.toast.danger(
+				error instanceof Error ? error.message : "Failed to delete account",
+			);
+			return false;
 		}
 	};
 
@@ -90,181 +146,350 @@ export const ProfilePage = () => {
 	}
 
 	return (
-		<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden">
+		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface w-full">
 			<Header title="Profile" />
 			<Separator />
-			<ScrollShadow className="flex-1 p-6" size={10}>
-				<div className="max-w-6xl mx-auto grid gap-6 lg:grid-cols-[320px,1fr]">
-					<Card className="border border-border shadow-none h-fit">
-						<Card.Content className="p-6 flex flex-col items-center text-center gap-4">
-							<InputAvatar
-								value={image || undefined}
-								onAvatarChange={(url) => setImage(url)}
-							/>
-							<div>
-								<h2 className="text-xl font-semibold text-foreground">
-									{profile.user.name}
-								</h2>
-								<p className="text-sm text-muted">{profile.user.email}</p>
+			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>
+				<div className="mx-auto max-w-6xl space-y-6">
+					<div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.9fr)]">
+						<div className="space-y-6">
+							<Card className="border border-accent shadow-none">
+								<Card.Content className="space-y-6 p-6">
+									<div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+										<div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+											<InputAvatar
+												value={image || profile.user.image || undefined}
+												onAvatarChange={(url) => setImage(url)}
+											/>
+											<div className="space-y-3">
+												<div className="space-y-1">
+													<H2>{name || profile.user.name}</H2>
+													<p className="text-sm text-muted">
+														{profile.user.email}
+													</p>
+												</div>
+												<div className="flex flex-wrap gap-2">
+													<Chip
+														color={isEmailVerified ? "success" : "default"}
+														variant="soft"
+														size="sm"
+													>
+														<Chip.Label className="flex items-center gap-2">
+															<MailCheck className="size-3" />
+															{isEmailVerified
+																? "Email confirmed"
+																: "Email unconfirmed"}
+														</Chip.Label>
+													</Chip>
+													<Chip
+														color={isIdentityVerified ? "accent" : "default"}
+														variant="soft"
+														size="sm"
+													>
+														<Chip.Label className="flex items-center gap-2">
+															<UserRoundCheck className="size-3" />
+															{isIdentityVerified
+																? "Identity verified"
+																: "Identity review pending"}
+														</Chip.Label>
+													</Chip>
+												</div>
+											</div>
+										</div>
+										<div className="w-full min-w-0 rounded border border-accent/40 bg-surface-secondary p-4 sm:min-w-55">
+											<p className="text-sm font-medium text-foreground">
+												Trust rating
+											</p>
+											<div className="mt-3 flex items-end justify-between gap-4">
+												<p className="text-4xl font-semibold leading-none text-foreground">
+													{trustRating.toFixed(1)}
+												</p>
+												<div className="text-right text-sm text-muted">
+													<p>Based on your current trust score</p>
+													<p>{trustScore} internal points</p>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div className="space-y-3 border-t border-border pt-6">
+										<div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+											<p className="text-sm font-semibold text-foreground">
+												Skills
+											</p>
+											<p className="text-sm text-muted">
+												Keep these current so neighbours can find the right help
+												faster.
+											</p>
+										</div>
+										<div className="flex flex-wrap gap-2">
+											{skillTags.length > 0 ? (
+												skillTags.map((tag) => (
+													<Chip
+														key={tag}
+														color="accent"
+														variant="soft"
+														className="rounded-full p-1"
+													>
+														<Chip.Label className="flex items-center gap-1">
+															<HandHelping className="size-3" />
+															{tag}
+															<button
+																type="button"
+																className="text-xs text-muted transition-colors hover:text-danger"
+																onClick={() =>
+																	setSkillTags((prev) =>
+																		prev.filter((entry) => entry !== tag),
+																	)
+																}
+															>
+																Remove
+															</button>
+														</Chip.Label>
+													</Chip>
+												))
+											) : (
+												<p className="text-sm text-muted">
+													No skill tags added yet.
+												</p>
+											)}
+										</div>
+
+										<div className="flex flex-col gap-3 md:flex-row">
+											<input
+												value={draftTag}
+												onChange={(e) => setDraftTag(e.target.value)}
+												onKeyDown={(e) => {
+													if (e.key === "Enter") {
+														e.preventDefault();
+														addSkillTag();
+													}
+												}}
+												className="h-11 flex-1 rounded border border-border bg-field-background px-3 text-sm text-field-foreground outline-none transition-colors focus:border-accent"
+												placeholder="Add a skill tag like First Aid or Heavy Lifting"
+											/>
+											<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+												<Button
+													size="sm"
+													variant="secondary"
+													className="w-full sm:w-auto"
+													onPress={addSkillTag}
+												>
+													Add skill
+												</Button>
+												<Button
+													size="sm"
+													variant="primary"
+													className="w-full sm:w-auto"
+													onPress={saveSkillTags}
+													isPending={isSavingTags}
+													startContent={<ShieldCheck className="size-4" />}
+												>
+													Save skills
+												</Button>
+											</div>
+										</div>
+									</div>
+
+									<div className="grid gap-4 border-t border-border pt-6">
+										<div className="space-y-2">
+											<InputName
+												ref={nameRef}
+												label="Display name"
+												initialValue={name}
+												showIcon={false}
+												required={false}
+												onChange={(value) => setName(value)}
+												placeholder="Your name"
+											/>
+										</div>
+										<div className="space-y-2">
+											<TextArea
+												ref={bioRef}
+												label="Bio"
+												initialValue={bio}
+												required={false}
+												showIcon={false}
+												minRows={5}
+												maxRows={8}
+												onChange={(event) => setBio(event.target.value)}
+												inputWrapperClassname="min-h-40 rounded border-border bg-field-background px-3 py-3 text-sm text-field-foreground"
+												placeholder="Tell neighbours how you like to help."
+											/>
+										</div>
+									</div>
+								</Card.Content>
+								<Card.Footer className="flex flex-col-reverse gap-3 border-t border-border px-6 py-4 sm:flex-row sm:justify-end">
+									<Button
+										variant="primary"
+										className="w-full sm:w-auto"
+										onPress={saveProfileDetails}
+										isPending={isSavingProfile}
+										startContent={<Save className="size-4" />}
+									>
+										Save profile
+									</Button>
+								</Card.Footer>
+							</Card>
+						</div>
+
+						<div className="space-y-4">
+							<Card className="border border-accent shadow-none">
+								<Card.Header className="flex flex-row items-start gap-3">
+									<div className="rounded border border-border bg-surface-secondary p-2 text-accent">
+										<BriefcaseBusiness className="size-4" />
+									</div>
+									<div className="space-y-1">
+										<Card.Title>Profile summary</Card.Title>
+										<Card.Description>
+											Only live UrbanPulse account signals appear here.
+										</Card.Description>
+									</div>
+								</Card.Header>
+							</Card>
+
+							<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+								<Card className="border border-accent shadow-none">
+									<Card.Content className="space-y-2 p-5">
+										<p className="text-sm text-muted">Active offers</p>
+										<p className="text-3xl font-semibold text-foreground">
+											{offerCount}
+										</p>
+										<p className="text-sm text-muted">
+											Offer{offerCount === 1 ? "" : "s"} currently listed from
+											your account.
+										</p>
+									</Card.Content>
+								</Card>
+
+								<Card className="border border-accent shadow-none">
+									<Card.Content className="space-y-2 p-5">
+										<p className="text-sm text-muted">
+											Successful interactions
+										</p>
+										<p className="text-3xl font-semibold text-foreground">
+											{successfulInteractions}
+										</p>
+										<p className="text-sm text-muted">
+											Completed help interaction
+											{successfulInteractions === 1 ? "" : "s"} recorded so far.
+										</p>
+									</Card.Content>
+								</Card>
+
+								<Card className="border border-accent shadow-none">
+									<Card.Content className="space-y-3 p-5">
+										<div className="flex items-center gap-2 text-sm font-medium text-foreground">
+											<BadgeCheck className="size-4 text-accent" />
+											Account verification
+										</div>
+										<div className="space-y-2 text-sm text-muted">
+											<p>
+												Identity:{" "}
+												<span className="font-medium text-foreground">
+													{isIdentityVerified ? "Verified" : "Pending"}
+												</span>
+											</p>
+											<p>
+												Email:{" "}
+												<span className="font-medium text-foreground">
+													{isEmailVerified ? "Confirmed" : "Unconfirmed"}
+												</span>
+											</p>
+										</div>
+									</Card.Content>
+								</Card>
+
+								<Card className="border border-accent shadow-none">
+									<Card.Content className="space-y-3 p-5">
+										<div className="flex items-center gap-2 text-sm font-medium text-foreground">
+											<UserRoundCheck className="size-4 text-accent" />
+											Account role
+										</div>
+										<p className="text-2xl font-semibold capitalize text-foreground">
+											{profile.user.role ?? "user"}
+										</p>
+										<p className="text-sm text-muted">
+											This role reflects your current UrbanPulse permissions.
+										</p>
+									</Card.Content>
+								</Card>
 							</div>
-							<div className="flex flex-wrap justify-center gap-2">
-								<Chip color="accent" variant="soft" size="sm">
-									<Chip.Label className="flex items-center gap-1">
-										<Sparkles className="size-3" />
-										Trust {Math.round(profile.user.trustScore ?? 0)}
-									</Chip.Label>
-								</Chip>
-								<Chip
-									color={profile.user.isVerified ? "success" : "default"}
-									variant="soft"
-									size="sm"
+						</div>
+					</div>
+
+					<Card className="border border-danger/30 shadow-none">
+						<Card.Header className="flex flex-col items-start gap-1">
+							<Card.Title>Delete account</Card.Title>
+							<Card.Description>
+								Remove your profile and the personal data attached to this
+								account.
+							</Card.Description>
+						</Card.Header>
+						<Card.Content className="flex flex-col gap-4 border-t border-border px-6 py-5 md:flex-row md:items-center md:justify-between">
+							<p className="max-w-3xl text-sm text-muted">
+								This permanently deletes your UrbanPulse account, profile data,
+								and any dependent records tied to your identity. This action
+								cannot be undone.
+							</p>
+							<AlertDialog>
+								<Button
+									variant="danger"
+									className="w-full sm:w-auto"
+									startContent={<Trash2 className="size-4" />}
 								>
-									<Chip.Label className="flex items-center gap-1">
-										<BadgeCheck className="size-3" />
-										{profile.user.isVerified
-											? "Verified neighbour"
-											: "Verification pending"}
-									</Chip.Label>
-								</Chip>
-							</div>
-							<div className="grid grid-cols-2 gap-3 w-full">
-								<div className="rounded border border-border p-3 text-left">
-									<p className="text-xs uppercase tracking-wide text-muted">
-										Offers
-									</p>
-									<p className="text-lg font-semibold">{offerCount}</p>
-								</div>
-								<div className="rounded border border-border p-3 text-left">
-									<p className="text-xs uppercase tracking-wide text-muted">
-										Successful help
-									</p>
-									<p className="text-lg font-semibold">
-										{profile.user.successfulInteractions ?? 0}
-									</p>
-								</div>
-							</div>
+									Delete account
+								</Button>
+								<AlertDialog.Backdrop
+									isDismissable={false}
+									isKeyboardDismissDisabled
+								>
+									<AlertDialog.Container placement="center" size="sm">
+										<AlertDialog.Dialog className="mx-4 w-full max-w-md rounded border border-danger/20 bg-surface">
+											{(dialog) => (
+												<>
+													<AlertDialog.Header className="items-start border-b border-border px-5 py-4">
+														<AlertDialog.Icon status="danger" />
+														<AlertDialog.Heading>
+															Delete your account?
+														</AlertDialog.Heading>
+													</AlertDialog.Header>
+													<AlertDialog.Body className="px-5 py-4 text-sm text-muted">
+														<p>
+															Deleting your account removes your profile,
+															skills, and account-linked activity from
+															UrbanPulse. If you continue, your data cannot be
+															restored.
+														</p>
+													</AlertDialog.Body>
+													<AlertDialog.Footer className="border-t border-border px-5 py-4">
+														<Button
+															variant="tertiary"
+															onPress={() => dialog.close()}
+														>
+															Keep account
+														</Button>
+														<Button
+															variant="danger"
+															onPress={async () => {
+																const deleted = await handleDeleteAccount();
+																if (deleted) {
+																	dialog.close();
+																}
+															}}
+															isPending={isDeletingAccount}
+														>
+															Delete my data
+														</Button>
+													</AlertDialog.Footer>
+												</>
+											)}
+										</AlertDialog.Dialog>
+									</AlertDialog.Container>
+								</AlertDialog.Backdrop>
+							</AlertDialog>
 						</Card.Content>
 					</Card>
-
-					<div className="space-y-6">
-						<Card className="border border-border shadow-none">
-							<Card.Header className="flex flex-col items-start gap-1">
-								<Card.Title>Identity</Card.Title>
-								<Card.Description>
-									Keep your UrbanPulse profile accurate so neighbours know who
-									they are helping.
-								</Card.Description>
-							</Card.Header>
-							<Card.Content className="p-6 space-y-4">
-								<div className="space-y-1">
-									<label
-										htmlFor={displayNameId}
-										className="text-sm font-semibold text-accent"
-									>
-										Display name
-									</label>
-									<input
-										id={displayNameId}
-										value={name}
-										onChange={(e) => setName(e.target.value)}
-										className="w-full rounded border border-accent bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
-										placeholder="Your name"
-									/>
-								</div>
-								<div className="space-y-1">
-									<label
-										htmlFor={bioId}
-										className="text-sm font-semibold text-accent"
-									>
-										Bio
-									</label>
-									<textarea
-										id={bioId}
-										value={bio}
-										onChange={(e) => setBio(e.target.value)}
-										className="min-h-36 w-full rounded border border-accent bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
-										placeholder="Tell neighbours how you like to help."
-									/>
-								</div>
-							</Card.Content>
-							<Card.Footer className="justify-end p-6 pt-0">
-								<Button
-									variant="primary"
-									onPress={saveProfileDetails}
-									isPending={isSavingProfile}
-									startContent={<Save className="size-4" />}
-								>
-									Save profile
-								</Button>
-							</Card.Footer>
-						</Card>
-
-						<Card className="border border-border shadow-none">
-							<Card.Header className="flex flex-col items-start gap-1">
-								<Card.Title>Skill Tags</Card.Title>
-								<Card.Description>
-									These tags power discovery and future hero-alert matching.
-								</Card.Description>
-							</Card.Header>
-							<Card.Content className="p-6 space-y-4">
-								<div className="flex flex-wrap gap-2">
-									{skillTags.length > 0 ? (
-										skillTags.map((tag) => (
-											<Chip key={tag} color="accent" variant="soft" size="sm">
-												<Chip.Label className="flex items-center gap-2">
-													<HandHelping className="size-3" />
-													{tag}
-													<button
-														type="button"
-														className="text-xs text-muted hover:text-danger"
-														onClick={() =>
-															setSkillTags((prev) =>
-																prev.filter((entry) => entry !== tag),
-															)
-														}
-													>
-														Remove
-													</button>
-												</Chip.Label>
-											</Chip>
-										))
-									) : (
-										<p className="text-sm text-muted">
-											No skill tags added yet.
-										</p>
-									)}
-								</div>
-
-								<div className="flex flex-col gap-3 sm:flex-row">
-									<input
-										value={draftTag}
-										onChange={(e) => setDraftTag(e.target.value)}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												e.preventDefault();
-												addSkillTag();
-											}
-										}}
-										className="flex-1 rounded border border-accent bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
-										placeholder="Add a skill tag like First Aid or Heavy Lifting"
-									/>
-									<Button variant="outline" onPress={addSkillTag}>
-										Add tag
-									</Button>
-								</div>
-							</Card.Content>
-							<Card.Footer className="justify-end p-6 pt-0">
-								<Button
-									variant="primary"
-									onPress={saveSkillTags}
-									isPending={isSavingTags}
-									startContent={<ShieldCheck className="size-4" />}
-								>
-									Save skill tags
-								</Button>
-							</Card.Footer>
-						</Card>
-					</div>
 				</div>
 			</ScrollShadow>
 		</div>

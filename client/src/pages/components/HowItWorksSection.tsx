@@ -77,7 +77,7 @@ export const HowItWorksSection = () => {
 					variants={fadeInUp}
 					className="flex flex-col gap-3 mb-20"
 				>
-					<H2 className="text-(--foreground) text-3xl md:text-5xl font-bold leading-tight tracking-tight max-w-xl">
+					<H2 className="text-primary text-3xl md:text-5xl font-bold leading-tight tracking-tight max-w-xl">
 						Get started in{" "}
 						<span className="text-transparent bg-clip-text bg-linear-to-r from-primary via-fuchsia-400 to-secondary">
 							three simple steps

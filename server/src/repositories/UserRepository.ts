@@ -2,7 +2,7 @@ import { db } from "@server/db";
 import type { UserType } from "@server/db/schema";
 import { user } from "@server/db/schema";
 import type { UserConditionOptions } from "@server/repositories/types";
-import { and, eq, gte, lt } from "drizzle-orm";
+import { and, eq, gte, lt, ne, or, sql } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class UserRepository implements IRepository<UserType> {
@@ -71,6 +71,31 @@ export class UserRepository implements IRepository<UserType> {
 			.select()
 			.from(user)
 			.where(filters.length > 0 ? and(...filters) : undefined);
+	}
+
+	async getPotentialHelpersNearPosition(params: {
+		position: { x: number; y: number };
+		maxRadiusMeters: number;
+		excludeUserId?: string;
+	}): Promise<UserType[]> {
+		const { position, maxRadiusMeters, excludeUserId } = params;
+		const center = sql`ST_SetSRID(ST_MakePoint(${position.x}, ${position.y}), 4326)::geography`;
+
+		const filters = [
+			or(
+				sql`${user.lastKnownLocation} IS NOT NULL AND ST_DWithin(${user.lastKnownLocation}::geography, ${center}, ${maxRadiusMeters})`,
+				sql`${user.homeLocation} IS NOT NULL AND ST_DWithin(${user.homeLocation}::geography, ${center}, ${maxRadiusMeters})`,
+			),
+		];
+
+		if (excludeUserId) {
+			filters.push(ne(user.id, excludeUserId));
+		}
+
+		return await db
+			.select()
+			.from(user)
+			.where(and(...filters));
 	}
 }
 

@@ -55,6 +55,21 @@ mock.module("@client/components/Header", () => ({
 	),
 }));
 
+mock.module("@client/components/Dropdown", () => ({
+	Dropdown: ({
+		trigger,
+		items,
+	}: {
+		trigger: React.ReactNode;
+		items: Array<{ label: React.ReactNode }>;
+	}) => (
+		<div>
+			{trigger}
+			<div>{items.map((item) => item.label).join(" | ")}</div>
+		</div>
+	),
+}));
+
 mock.module("@client/components/tabs/Tabs", () => ({
 	Tabs: ({ selectedKey }: { selectedKey: string }) => (
 		<div>Active Tab: {selectedKey}</div>

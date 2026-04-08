@@ -18,16 +18,16 @@ mock.module("../components/HowItWorksSection", () => ({
 	HowItWorksSection: () => <div>Landing How It Works</div>,
 }));
 
-mock.module("../components/CTASection", () => ({
-	CTASection: () => <div>Landing CTA</div>,
-}));
-
 mock.module("../components/FloatingOrbs", () => ({
 	FloatingOrbs: () => <div>Floating Orbs</div>,
 }));
 
 mock.module("../components/ParticleField", () => ({
 	ParticleField: () => <div>Particle Field</div>,
+}));
+
+mock.module("../components/FooterSection", () => ({
+	FooterSection: () => <div>Landing Footer</div>,
 }));
 
 const { LandingPage } = await import("./LandingPage");
@@ -42,6 +42,6 @@ describe("LandingPage", () => {
 		expect(markup).toContain("Landing Hero");
 		expect(markup).toContain("Landing Features");
 		expect(markup).toContain("Landing How It Works");
-		expect(markup).toContain("Landing CTA");
+		expect(markup).toContain("Landing Footer");
 	});
 });

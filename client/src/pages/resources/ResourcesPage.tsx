@@ -1,10 +1,14 @@
 import { Button } from "@client/components/Button/Button";
+import {
+	Dropdown,
+	type DropdownItemDataType,
+} from "@client/components/Dropdown";
 import { Header } from "@client/components/Header";
 import { RequestIcon } from "@client/components/icons/RequestIcon";
 import type { ModalRefType } from "@client/components/Modal";
 import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
 import { ScrollShadow, Separator } from "@heroui/react";
-import { PlusSquareIcon } from "lucide-react";
+import { ChevronDownIcon, PlusSquareIcon } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
@@ -31,6 +35,23 @@ export const ResourcesPage = () => {
 		parseAsString.withDefault("resources"),
 	);
 
+	const mobileActionItems: DropdownItemDataType[] = [
+		{
+			key: "upload",
+			label: "Upload",
+			icon: <PlusSquareIcon className="size-4 text-accent" />,
+			labelClassName: "text-foreground",
+			onAction: () => uploadModalRef.current?.open(),
+		},
+		{
+			key: "request",
+			label: "Request",
+			icon: <RequestIcon className="size-4 text-accent" />,
+			labelClassName: "text-foreground",
+			onAction: () => navigate("/map"),
+		},
+	];
+
 	const renderActiveTab = () => {
 		switch (activeTab) {
 			case "my-skills":
@@ -47,19 +68,45 @@ export const ResourcesPage = () => {
 	};
 
 	return (
-		<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden relative">
+		<div className="relative flex h-[calc(100dvh)] min-w-0 w-full flex-col overflow-hidden bg-surface">
 			<Header
 				title="Skills & Resources"
 				tabs={
-					<Tabs
-						items={tabItems}
-						selectedKey={activeTab}
-						onSelectionChange={(k) => setActiveTab(k as string)}
-						className="max-w-md ml-2"
-					/>
+					<div className="w-full">
+						<div className="flex items-center justify-between gap-3 md:hidden">
+							<Tabs
+								items={tabItems}
+								selectedKey={activeTab}
+								onSelectionChange={(k) => setActiveTab(k as string)}
+								className="min-w-0 flex-1"
+							/>
+							<Dropdown
+								placement="bottom end"
+								trigger={
+									<button
+										type="button"
+										className="flex shrink-0 items-center gap-2 rounded border border-accent bg-surface-secondary/70 px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors duration-150 hover:bg-surface-secondary"
+									>
+										<span>Actions</span>
+										<ChevronDownIcon className="size-4 text-accent" />
+									</button>
+								}
+								items={mobileActionItems}
+							/>
+						</div>
+						<div className="hidden md:block">
+							<Tabs
+								items={tabItems}
+								selectedKey={activeTab}
+								onSelectionChange={(k) => setActiveTab(k as string)}
+								className="max-w-md ml-2"
+							/>
+						</div>
+					</div>
 				}
 				dropdown={
 					<Button
+						className="hidden md:inline-flex"
 						size="md"
 						variant="primary"
 						startContent={<RequestIcon className="size-4" />}
@@ -70,6 +117,7 @@ export const ResourcesPage = () => {
 				}
 			>
 				<Button
+					className="hidden md:inline-flex"
 					size="md"
 					variant="primary"
 					startContent={<PlusSquareIcon className="size-4" />}
@@ -80,7 +128,7 @@ export const ResourcesPage = () => {
 			</Header>
 			<Separator />
 
-			<ScrollShadow className="flex-1 p-6" size={10}>
+			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>
 				<div className="max-w-7xl mx-auto">{renderActiveTab()}</div>
 			</ScrollShadow>
 

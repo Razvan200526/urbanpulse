@@ -25,7 +25,7 @@ mock.module("react-router", () => ({
 	},
 }));
 
-mock.module("@client/main", () => ({
+mock.module("@client/lib/api/client", () => ({
 	queryClient: {
 		invalidateQueries: (payload: unknown) => {
 			invalidateCalls.push(payload);
@@ -160,7 +160,7 @@ describe("DashboardPages", () => {
 		expect(markup).toContain("Urgent:2");
 		expect(markup).toContain("Chart Points: 1");
 		expect(markup).toContain("Neighborhood Pulse Feed");
-		expect(markup).toContain("Local emergency");
+		expect(markup).toContain("City Activity Overview");
 	});
 
 	test("passes geoReady=false to the safety banner when geolocation is unavailable", () => {
@@ -188,10 +188,10 @@ describe("DashboardPages", () => {
 		renderToStaticMarkup(<DashboardPages />);
 
 		const openMapButton = buttonProps.find(
-			(props) => props.children === "Open map",
+			(props) => props.children === "Refresh",
 		);
 		openMapButton?.onPress?.();
 
-		expect(navigateCalls).toEqual(["/map"]);
+		expect(navigateCalls).toEqual([]);
 	});
 });

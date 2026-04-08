@@ -22,6 +22,37 @@ import { upgradeWebSocket } from "hono/bun";
 export const pulseController = new Hono()
 	.basePath("/pulse")
 	.use(authMiddleware)
+	.get("/:id", zValidator("param", pulseIdParamSchema), async (c) => {
+		const session = await auth.api.getSession({
+			headers: c.req.raw.headers,
+		});
+		if (!session) {
+			return c.json(
+				{ success: false, message: "Unauthorized", data: null },
+				401,
+			);
+		}
+
+		const { id } = c.req.valid("param");
+		const pulse = await pulseService.getPulseById(id);
+		if (!pulse) {
+			return c.json(
+				{ success: false, message: "Pulse not found", data: null },
+				404,
+			);
+		}
+
+		const serialized = await pulseService.serializePulseForViewer(pulse, {
+			id: session.user.id,
+			role: session.user.role ?? "user",
+		});
+
+		return c.json({
+			success: true,
+			message: "Pulse retrieved",
+			data: serialized,
+		});
+	})
 	.patch(
 		"/:id",
 		zValidator("param", pulseIdParamSchema),
@@ -49,7 +80,7 @@ export const pulseController = new Hono()
 					404,
 				);
 			}
-			notificationService.broadcastPulseUpdated(updated);
+			await notificationService.broadcastPulseUpdated(updated);
 			return c.json({
 				success: true,
 				message: "Pulse updated",
@@ -136,6 +167,7 @@ export const pulseController = new Hono()
 				pulseTitle: result.pulseTitle,
 				ownerName,
 				responseId: result.accepted.id,
+				conversationId: result.conversationId,
 			});
 			return c.json({
 				success: true,
@@ -262,13 +294,17 @@ export const pulseController = new Hono()
 	)
 	.get(
 		"/",
-		upgradeWebSocket(async () => {
+		upgradeWebSocket((c) => {
+			const viewer = c.get("user");
 			return {
 				onOpen: () => {},
 				onMessage: async (event, ws) => {
 					try {
 						const data = JSON.parse(event.data.toString());
-						const response = await pulseService.handleSocketMessage(data);
+						const response = await pulseService.handleSocketMessage(
+							data,
+							viewer,
+						);
 						ws.send(JSON.stringify(response));
 					} catch (e) {
 						if (e instanceof SyntaxError) {

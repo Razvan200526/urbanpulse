@@ -7,29 +7,22 @@ import "@fontsource/montserrat/600.css";
 import "@fontsource/montserrat/700.css";
 import "@fontsource/montserrat/800.css";
 import "@fontsource/montserrat/900.css";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { client } from "@server/client.ts";
-import { createAuthClient } from "better-auth/client";
-import { emailOTPClient } from "better-auth/client/plugins";
+import { PostHogProvider } from "@posthog/react";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
+import posthog from "posthog-js";
 import { RouterProvider } from "react-router";
 import { RootProvider } from "./components/RootProvider.tsx";
+import { queryClient } from "./lib/api/client";
 import { router } from "./router.tsx";
 
-export const hono = client(import.meta.env.VITE_SERVER_URL, {
-	init: {
-		credentials: "include",
-	},
+posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN, {
+	api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+	defaults: "2026-01-30",
 });
-
-export const authClient = createAuthClient({
-	baseURL: import.meta.env.VITE_SERVER_URL,
-	plugins: [emailOTPClient()],
-});
-export const queryClient = new QueryClient({});
 
 const rootElement = document.getElementById("root");
 
@@ -39,12 +32,14 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 root.render(
 	<StrictMode>
-		<QueryClientProvider client={queryClient}>
-			<RootProvider>
-				<NuqsAdapter>
-					<RouterProvider router={router} />
-				</NuqsAdapter>
-			</RootProvider>
-		</QueryClientProvider>
+		<PostHogProvider client={posthog}>
+			<QueryClientProvider client={queryClient}>
+				<RootProvider>
+					<NuqsAdapter>
+						<RouterProvider router={router} />
+					</NuqsAdapter>
+				</RootProvider>
+			</QueryClientProvider>
+		</PostHogProvider>
 	</StrictMode>,
 );

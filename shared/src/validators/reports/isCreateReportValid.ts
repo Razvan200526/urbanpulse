@@ -1,8 +1,9 @@
+import { createSafePlainTextSchema } from "@shared/validators/createSafePlainTextSchema";
 import * as z from "zod";
 
 export const createReportSchema = z
 	.object({
-		reason: z.string().trim().min(5).max(500),
+		reason: createSafePlainTextSchema(5, 500),
 		targetUserId: z.string().min(1).nullable().optional(),
 		targetPulseId: z.string().uuid().nullable().optional(),
 	})

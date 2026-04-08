@@ -1,1 +1,1 @@
-bun fmt && bun lint
+bunx --bun @biomejs/biome check . --write && bun fmt && bun lint

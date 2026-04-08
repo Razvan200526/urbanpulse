@@ -1,11 +1,17 @@
 import { Card } from "@heroui/react";
 import { Icon } from "@iconify/react";
+import { usePostHog } from "@posthog/react";
 import { useState } from "react";
 import { Button } from "./Button/Button";
 import { H3, H6 } from "./typography";
 
 export const ErrorFallback = ({ error }: { error: unknown }) => {
+	const posthog = usePostHog();
 	const [showDetails, setShowDetails] = useState(false);
+
+	if (error) {
+		posthog?.captureException(error);
+	}
 
 	const handleReload = () => {
 		window.location.reload();

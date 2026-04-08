@@ -1,13 +1,18 @@
 import { getMailer } from "@server/mailers/getMailer";
 import { OTPMail } from "@server/mailers/templates/OTPMail";
+import { getAllowedOrigins } from "@server/utils/getAllowedOrigins";
 import { logger } from "@server/utils/Logger";
+import { userAdditionalFields } from "@shared/auth/userAdditionalFields";
 import bcrypt from "bcryptjs";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { emailOTP, openAPI } from "better-auth/plugins";
+import { admin } from "better-auth/plugins/admin";
+import { emailOTP } from "better-auth/plugins/email-otp";
 import { db } from "../../db";
 import { account, session, user, verification } from "../../db/schema";
-import { signUpPlugin } from "./plugins/signUpPlugin";
+import { getAuthCookieAttributes } from "./getAuthCookieAttributes";
+
+const defaultCookieAttributes = getAuthCookieAttributes(Bun.env.NODE_ENV);
 
 export const auth = betterAuth({
 	appName: "UrbanPulse",
@@ -42,50 +47,14 @@ export const auth = betterAuth({
 			image: "image",
 			name: "name",
 		},
-		additionalFields: {
-			role: {
-				type: "string",
-				required: false,
-				defaultValue: "user",
-				input: false,
-			},
-			bio: {
-				type: "string",
-				required: false,
-			},
-			trustScore: {
-				type: "number",
-				required: false,
-				defaultValue: 0,
-				input: false,
-			},
-			successfulInteractions: {
-				type: "number",
-				required: false,
-				defaultValue: 0,
-				input: false,
-			},
-			isVerified: {
-				type: "boolean",
-				required: false,
-				defaultValue: false,
-				input: false,
-			},
-			rememberMe: {
-				type: "boolean",
-				required: false,
-				defaultValue: false,
-			},
-		},
+		additionalFields: userAdditionalFields,
 	},
 	advanced: {
-		defaultCookieAttributes: {
-			httpOnly: true,
-			secure: true,
-		},
+		defaultCookieAttributes,
+		useSecureCookies: Bun.env.NODE_ENV === "production",
 	},
 	baseURL: Bun.env.BETTER_AUTH_URL,
-	trustedOrigins: [Bun.env.SERVER_URL, Bun.env.CLIENT_URL],
+	trustedOrigins: getAllowedOrigins(),
 	session: {
 		expiresIn: 60 * 60 * 24 * 30,
 		updateAge: 60 * 60 * 24,
@@ -106,6 +75,8 @@ export const auth = betterAuth({
 	},
 	emailAndPassword: {
 		enabled: true,
+		minPasswordLength: 8,
+		maxPasswordLength: 128,
 		password: {
 			hash: async (password: string) => {
 				return bcrypt.hash(password, 10);
@@ -114,27 +85,35 @@ export const auth = betterAuth({
 				return await bcrypt.compare(password, hash);
 			},
 		},
-		requireEmailVerification: false,
+		requireEmailVerification: true,
+		revokeSessionsOnPasswordReset: true,
 		autoSignIn: true,
+		customSyntheticUser: ({ coreFields, additionalFields, id }) => ({
+			...coreFields,
+			role: "user",
+			banned: false,
+			banReason: null,
+			banExpires: null,
+			...additionalFields,
+			id,
+		}),
 	},
 	cookieCache: {
 		enabled: true,
 		strategy: "jwe",
 	},
 	rateLimit: {
-		max: 5,
+		max: 2000,
 		window: 60 * 1000,
 	},
 	plugins: [
-		signUpPlugin(),
-		openAPI(),
+		admin(),
 		emailOTP({
 			storeOTP: "hashed",
 			otpLength: 6,
 			expiresIn: 300,
 			allowedAttempts: 5,
 			sendVerificationOnSignUp: true,
-			// overrideDefaultEmailVerification: true,
 			sendVerificationOTP: async ({ email, otp, type }) => {
 				if (type === "email-verification") {
 					const targetEmail = email.trim();

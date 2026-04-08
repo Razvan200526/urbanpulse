@@ -5,7 +5,10 @@ import { rateLimiter } from "hono-rate-limiter";
 import { adminController } from "./controllers/AdminController";
 import { authController } from "./controllers/AuthController";
 import { avatarController } from "./controllers/AvatarController";
+import { conversationController } from "./controllers/ConversationController";
 import { dashboardController } from "./controllers/DashboardController";
+import { healthController } from "./controllers/HealthController";
+import { messageController } from "./controllers/MessageController";
 import { notificationController } from "./controllers/NotificationController";
 import { pulseController } from "./controllers/PulseController";
 import { reportController } from "./controllers/ReportController";
@@ -13,28 +16,19 @@ import { resourceController } from "./controllers/ResourceController";
 import { uploadController } from "./controllers/UploadController";
 import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
+import type { UserType } from "./db/schema";
 import { authMiddleware } from "./middleware/authMiddleware";
 import type auth from "./services/auth/AuthService";
-import { healthController } from "./controllers/HealthController";
+import { getCorsOrigin } from "./utils/getAllowedOrigins";
 export type Variables = {
-	user: typeof auth.$Infer.Session.user | null;
+	user: UserType | null;
 	session: typeof auth.$Infer.Session.session | null;
 };
 export const app = new Hono<{ Variables: Variables }>()
 	.use(
-		rateLimiter({
-			windowMs: 60 * 1000,
-			limit: 1000,
-			keyGenerator: (c) => c.req.header("x-forwarded-for") ?? "",
-		}),
-	)
-	.use(authMiddleware)
-	.use(logger())
-	.basePath("/api")
-	.use(
 		"/*",
 		cors({
-			origin: [Bun.env.CLIENT_URL],
+			origin: (origin) => getCorsOrigin(origin),
 			allowHeaders: ["Content-Type", "Authorization"],
 			allowMethods: [
 				"POST",
@@ -50,11 +44,23 @@ export const app = new Hono<{ Variables: Variables }>()
 			credentials: true,
 		}),
 	)
+	.use(
+		rateLimiter({
+			windowMs: 60 * 1000,
+			limit: 1000,
+			keyGenerator: (c) => c.req.header("x-forwarded-for") ?? "",
+		}),
+	)
+	.use(authMiddleware)
+	.use(logger())
+	.basePath("/api")
 	.route("/", healthController)
 	.route("/", authController)
 	.route("/", userController)
 	.route("/", avatarController)
+	.route("/", conversationController)
 	.route("/", pulseController)
+	.route("/", messageController)
 	.route("/", notificationController)
 	.route("/", reportController)
 	.route("/", resourceController)

@@ -1,3 +1,4 @@
+import { useIsMobile } from "@client/hooks/useMediaQuery";
 import { cn, Modal as HeroModal, type ModalProps } from "@heroui/react";
 import { useImperativeHandle, useState } from "react";
 
@@ -32,6 +33,7 @@ export const Modal = (props: ModalPropsType) => {
 
 	const [internalIsOpen, setInternalIsOpen] = useState(false);
 	const isOpen = controlledIsOpen ?? internalIsOpen;
+	const isMobile = useIsMobile();
 
 	const handleOpenChange = (open: boolean) => {
 		setInternalIsOpen(open);
@@ -60,15 +62,36 @@ export const Modal = (props: ModalPropsType) => {
 					onOpenChange={handleOpenChange}
 					variant={backdrop ?? "opaque"}
 				>
-					<HeroModal.Container className={cn("items-center p-20", className)}>
-						<HeroModal.Dialog className="border border-border-secondary">
+					<HeroModal.Container
+						placement={isMobile ? "bottom" : "center"}
+						scroll="inside"
+						className={cn(
+							"px-0 pt-6 pb-0 md:p-6",
+							isMobile ? "items-end" : "items-center",
+							className,
+						)}
+					>
+						<HeroModal.Dialog
+							className={cn(
+								"flex flex-col relative overflow-hidden border border-border-secondary bg-surface shadow-2xl",
+								isMobile
+									? "max-h-[88dvh] w-full rounded-t-sm border-x-0 border-b-0"
+									: "mx-4 w-full max-w-3xl rounded-sm",
+							)}
+						>
 							{header && (
-								<HeroModal.Header>
+								<HeroModal.Header className="border-b border-border/60 px-4 pt-5 pb-4 pr-14 md:px-6 md:pt-6">
 									<HeroModal.Heading>{header}</HeroModal.Heading>
 								</HeroModal.Header>
 							)}
-							<HeroModal.Body>{children}</HeroModal.Body>
-							{footer && <HeroModal.Footer>{footer}</HeroModal.Footer>}
+							<HeroModal.Body className="flex-1 min-h-0 overflow-y-auto">
+								{children}
+							</HeroModal.Body>
+							{footer && (
+								<HeroModal.Footer className="border-t border-border/60 bg-surface/95 px-4 py-4 backdrop-blur md:px-6 md:py-5">
+									{footer}
+								</HeroModal.Footer>
+							)}
 						</HeroModal.Dialog>
 					</HeroModal.Container>
 				</HeroModal.Backdrop>

@@ -61,7 +61,6 @@ export const MapComponent = ({
 
 	useEffect(() => {
 		if (!mapInstance) return;
-
 		mapInstance.flyTo({
 			center: [centerLng, centerLat],
 			zoom,

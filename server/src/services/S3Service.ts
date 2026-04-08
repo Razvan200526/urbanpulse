@@ -1,5 +1,37 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
+const sanitizeObjectName = (fileName: string) => {
+	const normalizedName = fileName.trim().replace(/^.*[\\/]/, "");
+	const extensionIndex = normalizedName.lastIndexOf(".");
+	const baseName =
+		extensionIndex > 0
+			? normalizedName.slice(0, extensionIndex)
+			: normalizedName;
+	const extension =
+		extensionIndex > 0
+			? normalizedName.slice(extensionIndex).toLowerCase()
+			: "";
+
+	const safeBaseName =
+		baseName
+			.normalize("NFKD")
+			.replace(/[^\w.-]+/g, "-")
+			.replace(/-+/g, "-")
+			.replace(/^-|-$/g, "")
+			.toLowerCase() || "file";
+
+	const safeExtension = extension.replace(/[^.\w-]+/g, "");
+	return `${safeBaseName}${safeExtension}`;
+};
+
+const encodeObjectKeyForUrl = (key: string) =>
+	key
+		.split("/")
+		.map((segment, index) =>
+			index === 0 ? segment : encodeURIComponent(segment),
+		)
+		.join("/");
+
 /**
  * Singleton service that allows read/write pipeline for files to Cloudflare R2 storage.
  * These buckets are used to store user uploaded files and generate urls and storing them in the db
@@ -43,6 +75,15 @@ export class StorageService {
 		return Bun.env.R2_DOMAIN;
 	}
 
+	private buildPublicUrl(key: string) {
+		const bucketUrl = this.getImageBucket();
+		const normalizedBucketUrl = bucketUrl.endsWith("/")
+			? bucketUrl
+			: `${bucketUrl}/`;
+
+		return `${normalizedBucketUrl}${encodeObjectKeyForUrl(key)}`;
+	}
+
 	/**
 	 *
 	 * @param file
@@ -51,7 +92,7 @@ export class StorageService {
 	 * @returns The url of the uploaded avatar
 	 */
 	async uploadAvatar(file: File): Promise<string> {
-		const key = `avatars/${Date.now()}-${file.name}`;
+		const key = `avatars/${Date.now()}-${sanitizeObjectName(file.name)}`;
 		this.setBucket("urbanpulse");
 
 		const command = new PutObjectCommand({
@@ -62,8 +103,7 @@ export class StorageService {
 		});
 
 		await this.S3Client.send(command);
-		const bucketUrl = this.getAvatarBucket();
-		return `${bucketUrl}${key}`;
+		return this.buildPublicUrl(key);
 	}
 
 	/**
@@ -74,7 +114,7 @@ export class StorageService {
 	 * @returns The url of the uploaded image
 	 */
 	async uploadImage(file: File): Promise<string> {
-		const key = `images/${Date.now()}-${file.name}`;
+		const key = `images/${Date.now()}-${sanitizeObjectName(file.name)}`;
 		this.setBucket("urbanpulse");
 
 		const command = new PutObjectCommand({
@@ -85,12 +125,11 @@ export class StorageService {
 		});
 
 		await this.S3Client.send(command);
-		const bucketUrl = this.getImageBucket();
-		return `${bucketUrl}${key}`;
+		return this.buildPublicUrl(key);
 	}
 
 	async uploadAudioFile(file: File): Promise<string> {
-		const key = `audio/${Date.now()}-${file.name}`;
+		const key = `audio/${Date.now()}-${sanitizeObjectName(file.name)}`;
 		this.setBucket("urbanpulse");
 
 		const command = new PutObjectCommand({
@@ -101,8 +140,7 @@ export class StorageService {
 		});
 
 		await this.S3Client.send(command);
-		const bucketUrl = this.getImageBucket();
-		return `${bucketUrl}${key}`;
+		return this.buildPublicUrl(key);
 	}
 }
 

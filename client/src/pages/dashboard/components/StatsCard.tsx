@@ -10,10 +10,7 @@ export const StatsCard = ({ stat }: { stat: StatType }) => {
 				: "text-danger";
 
 	return (
-		<Card
-			key={stat.title}
-			className="p-4 shadow-none border border-border-secondary"
-		>
+		<Card key={stat.title} className="border border-accent p-4 shadow-none">
 			<Card.Header className="flex flex-row items-center justify-between pb-2 space-y-0">
 				<Card.Title className="text-sm font-semibold text-accent">
 					{stat.title}

@@ -12,11 +12,13 @@ import {
 	type UserRepository,
 	userRepository,
 } from "@server/repositories/UserRepository";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import type { Last7DaysUserCounts } from "@server/services/types";
 import { logger } from "@server/utils/Logger";
 import { isEmailValid } from "@shared/validators/isEmailValid";
 import type { SignUpInfoType } from "@shared/validators/isSignUpInfoValid";
 import type {
+	AlertPreferencesUpdateType,
 	QuietHoursUpsertType,
 	SkillTagsUpdateType,
 	UserProfileUpdateType,
@@ -33,13 +35,21 @@ type UserProfileView = {
 		days: string[];
 	} | null;
 	skillTags: string[];
+	alertPreferences: {
+		homeLocation: { x: number; y: number } | null;
+		lastKnownLocation: { x: number; y: number } | null;
+		lastKnownLocationUpdatedAt: string | null;
+		heroAlertRadiusMeters: number;
+	};
 };
+
+import CacheManager from "./cache/CacheManager";
 
 export class UserService {
 	private readonly userRepo: UserRepository;
 	private readonly quietHoursRepo: QuietHoursRepository;
 	private readonly skillRepo: SkillRepository;
-
+private cache = cacheManager;
 	constructor() {
 		this.userRepo = userRepository;
 		this.quietHoursRepo = quietHoursRepository;
@@ -92,22 +102,39 @@ export class UserService {
 		};
 	}
 
-	async getProfile(userId: string): Promise<UserProfileView | null> {
-		const user = await this.userRepo.getOne(userId);
-		if (!user) {
-			return null;
-		}
-
-		const [quietHours, skills] = await Promise.all([
-			this.quietHoursRepo.findByUserId(userId),
-			this.skillRepo.getByUserId(userId),
-		]);
-
+	private formatAlertPreferences(user: UserType) {
 		return {
-			user,
-			quietHours: this.formatQuietHours(quietHours),
-			skillTags: skills.map((entry: SkillType) => entry.tag),
+			homeLocation: user.homeLocation ?? null,
+			lastKnownLocation: user.lastKnownLocation ?? null,
+			lastKnownLocationUpdatedAt:
+				user.lastKnownLocationUpdatedAt?.toISOString() ?? null,
+			heroAlertRadiusMeters: user.heroAlertRadiusMeters ?? 500,
 		};
+	}
+
+	async getProfile(userId: string): Promise<UserProfileView | null> {
+		return await this.cache.getOrSet(
+			`${userId}:profile`,
+			async () => {
+				const user = await this.userRepo.getOne(userId);
+				if (!user) {
+					return null;
+				}
+
+				const [quietHours, skills] = await Promise.all([
+					this.quietHoursRepo.findByUserId(userId),
+					this.skillRepo.getByUserId(userId),
+				]);
+
+				return {
+					user,
+					quietHours: this.formatQuietHours(quietHours),
+					skillTags: skills.map((entry: SkillType) => entry.tag),
+					alertPreferences: this.formatAlertPreferences(user),
+				};
+			},
+			{ namespace: "profile", ttl: 1800 }
+		);
 	}
 
 	/**
@@ -272,6 +299,39 @@ export class UserService {
 				: await this.quietHoursRepo.create(data);
 
 			return this.formatQuietHours(quietHours);
+		} catch (error) {
+			logger.exception(error as Error);
+			return null;
+		}
+	}
+
+	async updateAlertPreferences(
+		userId: string,
+		payload: AlertPreferencesUpdateType,
+	) {
+		try {
+			const updated = await this.userRepo.update(userId, {
+				homeLocation: payload.homeLocation,
+				heroAlertRadiusMeters: payload.heroAlertRadiusMeters,
+				updatedAt: new Date(),
+			});
+			return this.formatAlertPreferences(updated);
+		} catch (error) {
+			logger.exception(error as Error);
+			return null;
+		}
+	}
+
+	async updateLastKnownLocation(
+		userId: string,
+		location: { x: number; y: number },
+	) {
+		try {
+			return await this.userRepo.update(userId, {
+				lastKnownLocation: location,
+				lastKnownLocationUpdatedAt: new Date(),
+				updatedAt: new Date(),
+			});
 		} catch (error) {
 			logger.exception(error as Error);
 			return null;

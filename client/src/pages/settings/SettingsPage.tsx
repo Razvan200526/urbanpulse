@@ -2,30 +2,41 @@ import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { PageLoader } from "@client/components/PageLoader";
 import { H6 } from "@client/components/typography";
+import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import {
-	useDeleteAccount,
+	useUpdateAlertPreferences,
 	useUpdateQuietHours,
 	useUserProfile,
 } from "@client/hooks/useProfileSettings";
 import { Card, ScrollShadow, Separator, Toast } from "@heroui/react";
-import { AlertTriangle, Clock3, Trash2 } from "lucide-react";
+import { usePostHog } from "@posthog/react";
+import type { GeoPoint } from "@shared/types";
+import { Clock3, MapPinned, Radar } from "lucide-react";
 import { useEffect, useId, useState } from "react";
-import { useNavigate } from "react-router";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 type Weekday = (typeof weekdays)[number];
 
 export const SettingsPage = () => {
-	const navigate = useNavigate();
+	const posthog = usePostHog();
 	const { data: profile, isPending } = useUserProfile();
 	const { mutateAsync: updateQuietHours, isPending: isSavingQuietHours } =
 		useUpdateQuietHours();
-	const { mutateAsync: deleteAccount, isPending: isDeletingAccount } =
-		useDeleteAccount();
+	const {
+		mutateAsync: updateAlertPreferences,
+		isPending: isSavingAlertPreferences,
+	} = useUpdateAlertPreferences();
+	const {
+		coords,
+		refresh: refreshLocation,
+		isLoading: isLocating,
+	} = useGetGeolocation();
 	const [startTime, setStartTime] = useState("22:00");
 	const [endTime, setEndTime] = useState("06:00");
 	const startTimeId = useId();
 	const endTimeId = useId();
+	const [homeLocation, setHomeLocation] = useState<GeoPoint | null>(null);
+	const [heroAlertRadiusMeters, setHeroAlertRadiusMeters] = useState(500);
 	const [days, setDays] = useState<Weekday[]>([
 		"Mon",
 		"Tue",
@@ -40,6 +51,12 @@ export const SettingsPage = () => {
 		setEndTime(profile.quietHours.endTime);
 		setDays(profile.quietHours.days as Weekday[]);
 	}, [profile?.quietHours]);
+
+	useEffect(() => {
+		if (!profile?.alertPreferences) return;
+		setHomeLocation(profile.alertPreferences.homeLocation);
+		setHeroAlertRadiusMeters(profile.alertPreferences.heroAlertRadiusMeters);
+	}, [profile?.alertPreferences]);
 
 	const toggleDay = (day: Weekday) => {
 		setDays((prev) =>
@@ -57,6 +74,11 @@ export const SettingsPage = () => {
 				days,
 			});
 			Toast.toast.success("Quiet hours saved");
+			posthog?.capture("quiet_hours_saved", {
+				start_time: startTime,
+				end_time: endTime,
+				days,
+			});
 		} catch (error) {
 			Toast.toast.danger(
 				error instanceof Error ? error.message : "Failed to save quiet hours",
@@ -64,23 +86,37 @@ export const SettingsPage = () => {
 		}
 	};
 
-	const handleDeleteAccount = async () => {
-		const confirmed = window.confirm(
-			"Delete your UrbanPulse account and associated data? This cannot be undone.",
-		);
-		if (!confirmed) {
+	const saveAlertPreferences = async () => {
+		try {
+			await updateAlertPreferences({
+				homeLocation,
+				heroAlertRadiusMeters,
+			});
+			Toast.toast.success("Alert preferences saved");
+			posthog?.capture("alert_preferences_saved", {
+				hero_alert_radius_meters: heroAlertRadiusMeters,
+				has_home_location: Boolean(homeLocation),
+			});
+		} catch (error) {
+			Toast.toast.danger(
+				error instanceof Error
+					? error.message
+					: "Failed to save alert preferences",
+			);
+		}
+	};
+
+	const syncHomeLocationFromDevice = () => {
+		refreshLocation();
+		if (!coords) {
+			Toast.toast.danger("Current device location is not ready yet");
 			return;
 		}
 
-		try {
-			await deleteAccount();
-			Toast.toast.success("Account deleted");
-			navigate("/", { replace: true });
-		} catch (error) {
-			Toast.toast.danger(
-				error instanceof Error ? error.message : "Failed to delete account",
-			);
-		}
+		setHomeLocation({
+			x: coords.long,
+			y: coords.lat,
+		});
 	};
 
 	if (isPending || !profile) {
@@ -88,16 +124,14 @@ export const SettingsPage = () => {
 	}
 
 	return (
-		<div className="flex flex-col h-[calc(100dvh)] bg-surface overflow-hidden">
+		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
 			<Header title="Settings" />
 			<Separator />
-			<ScrollShadow className="flex-1 p-6" size={10}>
+			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>
 				<div className="max-w-5xl mx-auto space-y-6">
 					<Card className="border border-accent shadow-none">
 						<Card.Header className="flex flex-col items-start gap-1">
-							<Card.Title>
-								<H6>Quiet Hours</H6>
-							</Card.Title>
+							<Card.Title>Quiet Hours</Card.Title>
 							<Card.Description className="text-sm">
 								Suppress non-urgent hero alerts during the times you specify.
 							</Card.Description>
@@ -154,19 +188,107 @@ export const SettingsPage = () => {
 								</div>
 							</div>
 						</Card.Content>
-						<Card.Footer className="justify-between p-6 pt-0">
-							<div className="text-xs flex items-center gap-2 text-accent">
+						<Card.Footer className="flex flex-col items-start gap-3 p-6 pt-0 sm:flex-row sm:items-center sm:justify-between">
+							<div className="flex items-center gap-2 text-xs text-accent">
 								<Clock3 className="size-4" />
-								Current pulse discovery radius remains focused on nearby
-								activity.
+								Quiet hours mute non-urgent matches, but urgent emergencies can
+								still break through.
 							</div>
 							<Button
 								variant="primary"
+								className="w-full sm:w-auto"
 								onPress={saveQuietHours}
 								isPending={isSavingQuietHours}
 								isDisabled={days.length === 0}
 							>
-								Save
+								Save quiet hours
+							</Button>
+						</Card.Footer>
+					</Card>
+
+					<Card className="border border-accent shadow-none">
+						<Card.Header className="flex flex-col items-start gap-1">
+							<Card.Title>
+								<H6>Hero Alert Reach</H6>
+							</Card.Title>
+							<Card.Description className="text-sm">
+								Choose the saved location and alert radius used when UrbanPulse
+								matches you to nearby requests.
+							</Card.Description>
+						</Card.Header>
+						<Card.Content className="space-y-6 p-6">
+							<div className="rounded border border-accent/30 bg-surface-secondary/40 p-4">
+								<div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+									<div>
+										<p className="text-sm font-semibold text-accent">
+											Home location
+										</p>
+										<p className="mt-1 text-sm text-foreground/80">
+											{homeLocation
+												? `${homeLocation.y.toFixed(4)}, ${homeLocation.x.toFixed(4)}`
+												: "No saved fallback location yet"}
+										</p>
+									</div>
+									<Button
+										variant="secondary"
+										size="sm"
+										onPress={syncHomeLocationFromDevice}
+										isPending={isLocating}
+										startContent={<MapPinned className="size-4" />}
+									>
+										Use current location
+									</Button>
+								</div>
+								<p className="mt-3 text-xs text-muted">
+									Live device location is still synced in the background.
+									UrbanPulse falls back to this saved point when no fresh live
+									location is available.
+								</p>
+								{profile.alertPreferences.lastKnownLocation && (
+									<p className="mt-2 text-xs text-accent/80">
+										Last live sync:{" "}
+										{profile.alertPreferences.lastKnownLocation.y.toFixed(4)},{" "}
+										{profile.alertPreferences.lastKnownLocation.x.toFixed(4)}
+									</p>
+								)}
+							</div>
+
+							<div className="space-y-3">
+								<div className="flex items-center gap-2 text-sm font-semibold text-accent">
+									<Radar className="size-4" />
+									Hero alert radius
+								</div>
+								<div className="flex flex-wrap gap-2">
+									{[300, 500, 1000, 2000, 5000].map((value) => (
+										<Button
+											key={value}
+											size="sm"
+											variant={
+												heroAlertRadiusMeters === value
+													? "primary"
+													: "secondary"
+											}
+											onPress={() => setHeroAlertRadiusMeters(value)}
+										>
+											{value >= 1000 ? `${value / 1000} km` : `${value} m`}
+										</Button>
+									))}
+								</div>
+							</div>
+						</Card.Content>
+						<Card.Footer className="flex flex-col items-start gap-3 p-6 pt-0 sm:flex-row sm:items-center sm:justify-between">
+							<div className="flex items-center gap-2 text-xs text-accent">
+								<MapPinned className="size-4" />
+								Smart matching uses the closest fresh live location first, then
+								your saved fallback.
+							</div>
+							<Button
+								variant="primary"
+								className="w-full sm:w-auto"
+								onPress={saveAlertPreferences}
+								isPending={isSavingAlertPreferences}
+							>
+								Save alert preferences
 							</Button>
 						</Card.Footer>
 					</Card>
@@ -205,34 +327,6 @@ export const SettingsPage = () => {
 									{profile.user.emailVerified ? "Confirmed" : "Unconfirmed"}
 								</p>
 							</div>
-						</Card.Content>
-					</Card>
-
-					<Card className="border border-danger/30 bg-danger/5 shadow-none">
-						<Card.Header className="flex flex-col items-start gap-1">
-							<Card.Title>Danger Zone</Card.Title>
-							<Card.Description>
-								Delete your account and remove your UrbanPulse data from the
-								app.
-							</Card.Description>
-						</Card.Header>
-						<Card.Content className="p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-							<div className="text-sm text-muted flex items-start gap-3">
-								<AlertTriangle className="size-5 text-danger shrink-0 mt-0.5" />
-								<span>
-									Account deletion removes your profile and cascades through the
-									app data model. Make sure you really want to do this before
-									continuing.
-								</span>
-							</div>
-							<Button
-								variant="danger"
-								onPress={handleDeleteAccount}
-								isPending={isDeletingAccount}
-								startContent={<Trash2 className="size-4" />}
-							>
-								Delete account
-							</Button>
 						</Card.Content>
 					</Card>
 				</div>

@@ -147,7 +147,7 @@ export const ImageCropper = ({
 				</div>
 			}
 		>
-			<div className="rounded bg-light p-4 flex">
+			<div className="rounded bg-light flex">
 				<ReactCrop
 					className="rounded border border-border"
 					crop={crop}

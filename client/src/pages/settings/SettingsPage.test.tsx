@@ -14,22 +14,35 @@ const settingsState = {
 			endTime: "06:00",
 			days: ["Mon", "Tue", "Wed"],
 		},
+		alertPreferences: {
+			homeLocation: null,
+			lastKnownLocation: null,
+			lastKnownLocationUpdatedAt: null,
+			heroAlertRadiusMeters: 500,
+		},
 	},
 	isPending: false,
 };
 
 const buttonProps: Array<Record<string, any>> = [];
 const quietHoursCalls: Array<unknown> = [];
-const deleteCalls: string[] = [];
-const navigateCalls: Array<unknown> = [];
+const alertPreferenceCalls: Array<unknown> = [];
 const toastSuccessCalls: string[] = [];
 const toastDangerCalls: string[] = [];
-let confirmResult = true;
 
-mock.module("react-router", () => ({
-	useNavigate: () => (path: string, options?: unknown) => {
-		navigateCalls.push({ path, options });
-	},
+mock.module("@posthog/react", () => ({
+	usePostHog: () => ({
+		capture: () => {},
+		reset: () => {},
+	}),
+}));
+
+mock.module("@client/hooks/useGetGeolocation", () => ({
+	useGetGeolocation: () => ({
+		coords: { lat: 44.43, long: 26.1 },
+		refresh: () => {},
+		isLoading: false,
+	}),
 }));
 
 mock.module("@client/hooks/useProfileSettings", () => ({
@@ -43,9 +56,9 @@ mock.module("@client/hooks/useProfileSettings", () => ({
 		},
 		isPending: false,
 	}),
-	useDeleteAccount: () => ({
-		mutateAsync: async () => {
-			deleteCalls.push("delete");
+	useUpdateAlertPreferences: () => ({
+		mutateAsync: async (payload: unknown) => {
+			alertPreferenceCalls.push(payload);
 		},
 		isPending: false,
 	}),
@@ -103,6 +116,8 @@ mock.module("@heroui/react", () => {
 		),
 		Separator: () => <hr />,
 		Toast,
+		cn: (...classes: Array<string | false | null | undefined>) =>
+			classes.filter(Boolean).join(" "),
 	};
 });
 
@@ -123,17 +138,18 @@ describe("SettingsPage", () => {
 				endTime: "06:00",
 				days: ["Mon", "Tue", "Wed"],
 			},
+			alertPreferences: {
+				homeLocation: null,
+				lastKnownLocation: null,
+				lastKnownLocationUpdatedAt: null,
+				heroAlertRadiusMeters: 500,
+			},
 		};
 		buttonProps.length = 0;
 		quietHoursCalls.length = 0;
-		deleteCalls.length = 0;
-		navigateCalls.length = 0;
+		alertPreferenceCalls.length = 0;
 		toastSuccessCalls.length = 0;
 		toastDangerCalls.length = 0;
-		confirmResult = true;
-		globalThis.window = {
-			confirm: () => confirmResult,
-		} as Window & typeof globalThis;
 	});
 
 	test("renders a loader while the profile is loading", () => {
@@ -144,12 +160,12 @@ describe("SettingsPage", () => {
 		expect(markup).toContain("Page Loader");
 	});
 
-	test("renders quiet hours, account details, and danger zone content", () => {
+	test("renders quiet hours, alert reach, and account details", () => {
 		const markup = renderToStaticMarkup(<SettingsPage />);
 
 		expect(markup).toContain("Quiet Hours");
+		expect(markup).toContain("Hero Alert Reach");
 		expect(markup).toContain("Account");
-		expect(markup).toContain("Danger Zone");
 		expect(markup).toContain("admin");
 		expect(markup).toContain("Verified");
 		expect(markup).toContain("Confirmed");
@@ -173,30 +189,20 @@ describe("SettingsPage", () => {
 		expect(toastSuccessCalls).toContain("Quiet hours saved");
 	});
 
-	test("does not delete the account when confirmation is cancelled", async () => {
-		confirmResult = false;
-
+	test("saves alert preferences with the current defaults", async () => {
 		renderToStaticMarkup(<SettingsPage />);
 
-		const deleteButton = buttonProps.find(
-			(props) => props.children === "Delete account",
+		const saveButton = buttonProps.find(
+			(props) => props.children === "Save alert preferences",
 		);
-		await deleteButton?.onPress?.();
+		await saveButton?.onPress?.();
 
-		expect(deleteCalls).toEqual([]);
-		expect(navigateCalls).toEqual([]);
-	});
-
-	test("deletes the account and navigates home after confirmation", async () => {
-		renderToStaticMarkup(<SettingsPage />);
-
-		const deleteButton = buttonProps.find(
-			(props) => props.children === "Delete account",
-		);
-		await deleteButton?.onPress?.();
-
-		expect(deleteCalls).toEqual(["delete"]);
-		expect(toastSuccessCalls).toContain("Account deleted");
-		expect(navigateCalls).toEqual([{ path: "/", options: { replace: true } }]);
+		expect(alertPreferenceCalls).toEqual([
+			{
+				homeLocation: null,
+				heroAlertRadiusMeters: 500,
+			},
+		]);
+		expect(toastSuccessCalls).toContain("Alert preferences saved");
 	});
 });

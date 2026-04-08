@@ -2,7 +2,7 @@ import { Card, Separator, Skeleton } from "@heroui/react";
 
 export const ResourceCardSkeleton = () => {
 	return (
-		<Card className="border border-border-secondary shadow-none">
+		<Card className="border border-accent shadow-none">
 			<Card.Header className="flex flex-row items-center justify-between">
 				<Skeleton className="w-32 h-5 rounded-md" />{" "}
 				<Skeleton className="w-8 h-8 rounded-full" />{" "}

@@ -5,8 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bunx --bun vite",
-		"build": "tsc -b && bunx --bun vite build",
-		"preview": "bunx --bun vite preview --host",
+		"build": "bunx --bun vite build",
+		"preview": "bunx --bun vite preview --host 0.0.0.0 --port ${PORT:-4173} --strictPort",
 		"start": "bun run preview",
 		"start:prod": "bun run preview",
 		"lint": "bunx --bun biome check src",
@@ -20,6 +20,7 @@
 		"@heroui/react": "^3.0.1",
 		"@heroui/styles": "^3.0.1",
 		"@iconify/react": "^6.0.2",
+		"@posthog/react": "^1.8.3",
 		"@tailwindcss/vite": "^4.2.2",
 		"@tanstack/react-query": "^5.96.1",
 		"better-auth": "^1.5.6",

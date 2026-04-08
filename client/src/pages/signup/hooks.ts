@@ -1,6 +1,10 @@
-import { authClient, hono } from "@client/main";
+import { authQueryKey, fetchAuthSession } from "@client/hooks/useAuth";
+import { authClient, hono, queryClient } from "@client/lib/api/client";
 import { Toast } from "@heroui/react";
+import { isSignUpInfoValid } from "@shared/validators/isSignUpInfoValid";
 import { useMutation } from "@tanstack/react-query";
+import posthog from "posthog-js";
+import { buildSignUpPayload } from "./signUpPayload";
 import type { SignUpDataType } from "./signUpStore";
 
 export const useVerifyEmail = () => {
@@ -24,20 +28,31 @@ export const useSignUp = () => {
 	return useMutation({
 		mutationKey: ["signup"],
 		mutationFn: async (data: SignUpDataType) => {
+			const payload = buildSignUpPayload(data);
+			if (!isSignUpInfoValid(payload)) {
+				Toast.toast.danger("Please complete your profile before signing up.");
+				return null;
+			}
+
 			const result = await authClient.signUp.email({
-				email: data.email,
-				password: data.password,
-				image: data.image,
-				name: data.name,
-				// @ts-expect-error - Custom field handled by our custom signUp plugin
-				bio: data.bio,
+				email: payload.email,
+				password: payload.password,
+				image: payload.image,
+				name: payload.name,
+				bio: payload.bio,
 			});
+
 			if (!result.data?.user || result.error) {
 				Toast.toast.danger(
 					result.error?.message || "Sign up failed,try again later",
 				);
+				return null;
 			}
-			return result;
+			posthog.capture("user_signed_up", {
+				email: payload.email,
+				name: payload.name,
+			});
+			return result.data.user;
 		},
 	});
 };
@@ -58,7 +73,25 @@ export const useVerifyOTP = () => {
 				Toast.toast.danger("Could not verify OTP");
 				return;
 			}
-			return data.user;
+
+			await queryClient.invalidateQueries({ queryKey: authQueryKey });
+			const session = await queryClient.fetchQuery({
+				queryKey: authQueryKey,
+				queryFn: fetchAuthSession,
+			});
+
+			if (!session?.user) {
+				Toast.toast.danger("Email verified, but your session was not created.");
+				return;
+			}
+
+			posthog.identify(session.user.id, {
+				email: session.user.email,
+				name: session.user.name,
+			});
+			posthog.capture("email_verified");
+
+			return session.user;
 		},
 	});
 };

@@ -1,4 +1,5 @@
-import { authClient } from "@client/main";
+import { authQueryKey } from "@client/hooks/useAuth";
+import { authClient, queryClient } from "@client/lib/api/client";
 import { useMutation } from "@tanstack/react-query";
 import {
 	Bell,
@@ -9,6 +10,7 @@ import {
 	ShieldAlert,
 	Wrench,
 } from "lucide-react";
+import posthog from "posthog-js";
 
 export const useSideBarItems = () => {
 	const mainItems = [
@@ -67,6 +69,11 @@ export const useSignOut = () => {
 		mutationKey: ["sign-out"],
 		mutationFn: async () => {
 			return await authClient.signOut();
+		},
+		onSuccess: async () => {
+			posthog.capture("user_signed_out");
+			posthog.reset();
+			await queryClient.invalidateQueries({ queryKey: authQueryKey });
 		},
 	});
 };

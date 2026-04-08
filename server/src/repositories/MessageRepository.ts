@@ -1,6 +1,6 @@
 import { db } from "@server/db";
 import { type MessageType, message } from "@server/db/schema";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class MessageRepository implements IRepository<MessageType> {
@@ -14,6 +14,14 @@ export class MessageRepository implements IRepository<MessageType> {
 
 	async getAll(): Promise<MessageType[]> {
 		return db.select().from(message);
+	}
+
+	async getByConversationId(conversationId: string): Promise<MessageType[]> {
+		return await db
+			.select()
+			.from(message)
+			.where(eq(message.conversationId, conversationId as any))
+			.orderBy(asc(message.sentAt));
 	}
 
 	async create(data: Partial<MessageType>): Promise<MessageType | null> {

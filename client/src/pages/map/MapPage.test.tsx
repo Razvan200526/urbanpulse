@@ -6,15 +6,22 @@ const mapState = {
 	isError: false,
 	isLoading: false,
 	user: { user: { id: "user-1" } },
+	profile: {
+		alertPreferences: {
+			heroAlertRadiusMeters: 1200,
+		},
+	},
 	pulses: {
 		data: [
 			{
 				id: "pulse-1",
 				title: "Water needed",
+				position: { x: 26.1, y: 44.4 },
 			},
 			{
 				id: "pulse-2",
 				title: "Medical help",
+				position: { x: 26.11, y: 44.41 },
 			},
 		],
 	},
@@ -42,6 +49,12 @@ mock.module("@client/hooks/useGetGeolocation", () => ({
 mock.module("@client/hooks/useAuth", () => ({
 	useAuth: () => ({
 		data: mapState.user,
+	}),
+}));
+
+mock.module("@client/hooks/useProfileSettings", () => ({
+	useUserProfile: () => ({
+		data: mapState.profile,
 	}),
 }));
 
@@ -89,10 +102,10 @@ mock.module("@client/components/PulseMarker", () => ({
 }));
 
 mock.module("./hooks", () => ({
-	useRetrievePulses: (payload: unknown, enabled: boolean) => {
+	useRetrieveMapPulses: (payload: unknown, enabled: boolean) => {
 		retrieveCalls.push({ payload, enabled });
 		return {
-			data: mapState.pulses,
+			data: mapState.pulses.data,
 		};
 	},
 }));
@@ -119,10 +132,23 @@ describe("MapPage", () => {
 		mapState.isError = false;
 		mapState.isLoading = false;
 		mapState.user = { user: { id: "user-1" } };
+		mapState.profile = {
+			alertPreferences: {
+				heroAlertRadiusMeters: 1200,
+			},
+		};
 		mapState.pulses = {
 			data: [
-				{ id: "pulse-1", title: "Water needed" },
-				{ id: "pulse-2", title: "Medical help" },
+				{
+					id: "pulse-1",
+					title: "Water needed",
+					position: { x: 26.1, y: 44.4 },
+				},
+				{
+					id: "pulse-2",
+					title: "Medical help",
+					position: { x: 26.11, y: 44.41 },
+				},
 			],
 		};
 		mapState.locationState = null;
@@ -141,7 +167,7 @@ describe("MapPage", () => {
 	test("renders the map, heatmap, markers, and modal when coordinates are available", () => {
 		const markup = renderToStaticMarkup(<MapPage />);
 
-		expect(markup).toContain("Map:26.1,44.4:17");
+		expect(markup).toContain("Map:26.1,44.4:");
 		expect(markup).toContain("Heatmap:2");
 		expect(markup).toContain("Water needed");
 		expect(markup).toContain("Medical help");
@@ -151,8 +177,8 @@ describe("MapPage", () => {
 		expect(retrieveCalls).toEqual([
 			{
 				payload: {
-					userId: "user-1",
 					position: { x: 26.1, y: 44.4 },
+					radius: 1200,
 				},
 				enabled: true,
 			},

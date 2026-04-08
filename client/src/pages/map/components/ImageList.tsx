@@ -1,4 +1,5 @@
 import { Button } from "@client/components/Button/Button";
+import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import { XSquareIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -12,7 +13,7 @@ export const ImageList = ({ imageUrls }: { imageUrls: string[] }) => {
 					className="relative w-16 h-16 shrink-0 rounded overflow-hidden border border-border"
 				>
 					<img
-						src={url}
+						src={normalizeAssetUrl(url)}
 						alt={`upload-${url}`}
 						className="w-full h-full object-cover"
 					/>

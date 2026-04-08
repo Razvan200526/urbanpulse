@@ -1,5 +1,6 @@
+import { AppDrawer } from "@client/components/AppDrawer";
+import { Button } from "@client/components/Button/Button";
 import { Link } from "@client/components/Link";
-import { Button, Drawer } from "@heroui/react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
@@ -69,18 +70,20 @@ export const Navbar = () => {
 								{link.label}
 							</Link>
 						))}
-						<button
-							type="button"
+						<Button
+							radius="full"
+							variant="ghost"
+							isIconOnly
 							onClick={toggleTheme}
-							className="p-2 rounded-full hover:bg-default transition-colors cursor-pointer"
 							aria-label="Toggle theme"
-						>
-							{isDark ? (
-								<SunIcon className="size-5 text-(--foreground)" />
-							) : (
-								<MoonIcon className="size-5 text-(--foreground)" />
-							)}
-						</button>
+							startContent={
+								isDark ? (
+									<SunIcon className="size-5 text-foreground" />
+								) : (
+									<MoonIcon className="size-5 text-foreground" />
+								)
+							}
+						/>
 						<Button
 							className="rounded"
 							variant="primary"
@@ -106,49 +109,47 @@ export const Navbar = () => {
 							)}
 						</Button>
 
-						<Drawer>
-							<Button variant="ghost" isIconOnly className="rounded-full">
-								<MenuIcon className="size-6" />
-							</Button>
-
-							<Drawer.Backdrop>
-								<Drawer.Content placement="top" className="w-full">
-									<Drawer.Dialog className="bg-background border-b border-border">
-										<Drawer.Handle />
-										<Drawer.CloseTrigger />
-										<Drawer.Header>
-											<Drawer.Heading className="text-(--foreground)">
-												Menu
-											</Drawer.Heading>
-										</Drawer.Header>
-
-										<Drawer.Body>
-											<div className="flex flex-col gap-4 py-2">
-												{navLinks.map((link) => (
-													<a
-														key={link.href}
-														href={link.href}
-														className="text-base font-medium text-(--foreground) no-underline"
-													>
-														{link.label}
-													</a>
-												))}
-											</div>
-										</Drawer.Body>
-
-										<Drawer.Footer>
-											<Button
-												variant="primary"
-												className="w-full rounded"
-												onClick={() => navigate("/signup")}
-											>
-												Sign Up
-											</Button>
-										</Drawer.Footer>
-									</Drawer.Dialog>
-								</Drawer.Content>
-							</Drawer.Backdrop>
-						</Drawer>
+						<AppDrawer
+							trigger={
+								<Button variant="ghost" isIconOnly className="rounded-full">
+									<MenuIcon className="size-6" />
+								</Button>
+							}
+							placement="top"
+							mobilePlacement="top"
+							backdrop="opaque"
+							header={
+								<div className="border-b border-border px-4 py-4">
+									<h2 className="text-foreground">Menu</h2>
+								</div>
+							}
+							footer={
+								<div className="border-t border-border px-4 py-4">
+									<Button
+										variant="primary"
+										className="w-full rounded"
+										onClick={() => navigate("/signup")}
+									>
+										Sign Up
+									</Button>
+								</div>
+							}
+							contentClassName="w-full"
+							dialogClassName="bg-background"
+							bodyClassName="px-4 py-4"
+						>
+							<div className="flex flex-col gap-4 py-2">
+								{navLinks.map((link) => (
+									<a
+										key={link.href}
+										href={link.href}
+										className="text-base font-medium text-(--foreground) no-underline"
+									>
+										{link.label}
+									</a>
+								))}
+							</div>
+						</AppDrawer>
 					</div>
 				</div>
 			</div>

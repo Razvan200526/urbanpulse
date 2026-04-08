@@ -1,6 +1,6 @@
-import * as z from "zod";
+import { createSafePlainTextSchema } from "@shared/validators/createSafePlainTextSchema";
 
-export const nameSchema = z.string().min(1).max(50);
+export const nameSchema = createSafePlainTextSchema(1, 100);
 
 export const isNameValid = (name: unknown) => {
 	return nameSchema.safeParse(name).success;

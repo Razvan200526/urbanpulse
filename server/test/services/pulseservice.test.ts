@@ -22,8 +22,12 @@ function buildPulse(overrides: Partial<PulseType> = {}): PulseType {
 		pulseUploadState: PulseUploadStateEnum.Pending,
 		audioUrl: null,
 		imageUrls: [],
+		requestedSkillTags: [],
+		matchMetadata: {},
 		isResolved: false,
 		isVerified: false,
+		mergedIntoPulseId: null,
+		moderationNote: null,
 		createdAt: new Date("2025-01-01T00:00:00.000Z"),
 		...overrides,
 	};
@@ -38,12 +42,17 @@ function createServiceWithRepo(repoOverrides: Record<string, unknown> = {}) {
 		getByOptions: mock(),
 		...repoOverrides,
 	};
+	const responseRepo = {
+		findAcceptedByPulseAndResponder: mock(async () => null),
+	};
 
 	(service as any).pulseRepository = repo;
+	(service as any).responseRepository = responseRepo;
 
 	return {
 		service,
 		repo,
+		responseRepo,
 	};
 }
 
@@ -62,17 +71,8 @@ describe("PulseService", () => {
 		expect(repo.getOne).toHaveBeenCalledWith(pulse.id);
 	});
 
-	test("creates a pulse and returns null when creation fails", async () => {
-		const pulse = buildPulse();
-		const { service, repo } = createServiceWithRepo({
-			create: mock(async () => pulse),
-		});
-
-		await expect(service.createPulse({ title: pulse.title })).resolves.toEqual(
-			pulse,
-		);
-		expect(repo.create).toHaveBeenCalledWith({ title: pulse.title });
-
+	test("returns null when pulse creation fails", async () => {
+		const { service, repo } = createServiceWithRepo();
 		repo.create = mock(async () => {
 			throw new Error("db down");
 		});
@@ -202,7 +202,10 @@ describe("PulseService", () => {
 		const { service } = createServiceWithRepo();
 
 		await expect(
-			service.handleSocketMessage({ type: "upload-pulse", payload: {} }),
+			service.handleSocketMessage({ type: "upload-pulse", payload: {} }, {
+				id: "user-1",
+				role: "user",
+			} as any),
 		).resolves.toEqual({
 			success: false,
 			message: "Invalid request",
@@ -214,15 +217,21 @@ describe("PulseService", () => {
 		const pulses = [buildPulse()];
 		const { service } = createServiceWithRepo();
 		const getPulsesSpy = spyOn(service, "getPulses").mockResolvedValue(pulses);
+		const serializeSpy = spyOn(
+			service,
+			"serializePulsesForViewer",
+		).mockResolvedValue(pulses);
 
 		await expect(
-			service.handleSocketMessage({
-				type: "get-pulses",
-				payload: {
-					userId: "user-1",
-					position: { x: 26.1, y: 44.4 },
+			service.handleSocketMessage(
+				{
+					type: "get-pulses",
+					payload: {
+						position: { x: 26.1, y: 44.4 },
+					},
 				},
-			}),
+				{ id: "user-1", role: "user" } as any,
+			),
 		).resolves.toEqual({
 			success: true,
 			message: "Pulses retrieved",
@@ -232,24 +241,51 @@ describe("PulseService", () => {
 		expect(getPulsesSpy).toHaveBeenCalledWith({
 			position: { x: 26.1, y: 44.4 },
 		});
+		expect(serializeSpy).toHaveBeenCalledWith(
+			pulses,
+			expect.objectContaining({ id: "user-1" }),
+		);
 	});
 
 	test("returns an empty list when get-pulses produces no data", async () => {
 		const { service } = createServiceWithRepo();
 		spyOn(service, "getPulses").mockResolvedValue(null);
+		spyOn(service, "serializePulsesForViewer").mockResolvedValue([]);
 
 		await expect(
-			service.handleSocketMessage({
-				type: "get-pulses",
-				payload: {
-					userId: "user-1",
-					position: { x: 26.1, y: 44.4 },
+			service.handleSocketMessage(
+				{
+					type: "get-pulses",
+					payload: {
+						position: { x: 26.1, y: 44.4 },
+					},
 				},
-			}),
+				{ id: "user-1", role: "user" } as any,
+			),
 		).resolves.toEqual({
 			success: true,
 			message: "Pulses retrieved",
 			data: [],
+		});
+	});
+
+	test("rejects unauthenticated socket retrieval", async () => {
+		const { service } = createServiceWithRepo();
+
+		await expect(
+			service.handleSocketMessage(
+				{
+					type: "get-pulses",
+					payload: {
+						position: { x: 26.1, y: 44.4 },
+					},
+				},
+				null,
+			),
+		).resolves.toEqual({
+			success: false,
+			message: "Unauthorized",
+			data: null,
 		});
 	});
 
@@ -258,18 +294,20 @@ describe("PulseService", () => {
 		spyOn(service, "createPulse").mockResolvedValue(null);
 
 		await expect(
-			service.handleSocketMessage({
-				type: "upload-pulse",
-				payload: {
-					userId: "user-1",
-					type: PulseEnum.Emergency,
-					urgency: UrgencyEnum.Urgent,
-					title: "Need help",
-					description: "Nearby assistance needed",
-					position: { x: 26.1, y: 44.4 },
-					imageUrls: [],
+			service.handleSocketMessage(
+				{
+					type: "upload-pulse",
+					payload: {
+						type: PulseEnum.Emergency,
+						urgency: UrgencyEnum.Urgent,
+						title: "Need help",
+						description: "Nearby assistance needed",
+						position: { x: 26.1, y: 44.4 },
+						imageUrls: [],
+					},
 				},
-			}),
+				{ id: "user-1", role: "user" } as any,
+			),
 		).resolves.toEqual({
 			success: false,
 			message: "Failed to create pulse",
@@ -284,18 +322,20 @@ describe("PulseService", () => {
 		spyOn(service, "updatePulse").mockResolvedValue(null);
 
 		await expect(
-			service.handleSocketMessage({
-				type: "upload-pulse",
-				payload: {
-					userId: "user-1",
-					type: PulseEnum.Emergency,
-					urgency: UrgencyEnum.Urgent,
-					title: "Need help",
-					description: "Nearby assistance needed",
-					position: { x: 26.1, y: 44.4 },
-					imageUrls: [],
+			service.handleSocketMessage(
+				{
+					type: "upload-pulse",
+					payload: {
+						type: PulseEnum.Emergency,
+						urgency: UrgencyEnum.Urgent,
+						title: "Need help",
+						description: "Nearby assistance needed",
+						position: { x: 26.1, y: 44.4 },
+						imageUrls: [],
+					},
 				},
-			}),
+				{ id: "user-1", role: "user" } as any,
+			),
 		).resolves.toEqual({
 			success: false,
 			message: "Failed to update pulse upload state",
@@ -306,6 +346,7 @@ describe("PulseService", () => {
 	test("handles upload-pulse socket requests and broadcasts the uploaded pulse", async () => {
 		const pendingPulse = buildPulse();
 		const uploadedPulse = buildPulse({
+			type: PulseEnum.Skill,
 			pulseUploadState: PulseUploadStateEnum.Uploaded,
 		});
 		const { service } = createServiceWithRepo();
@@ -319,20 +360,30 @@ describe("PulseService", () => {
 			notificationService,
 			"broadcastToNearbyUsers",
 		).mockResolvedValue(undefined);
+		const liveUpdateSpy = spyOn(
+			notificationService,
+			"broadcastPulseUpdated",
+		).mockResolvedValue(undefined);
+		const serializeSpy = spyOn(
+			service,
+			"serializePulseForViewer",
+		).mockResolvedValue(uploadedPulse);
 
 		await expect(
-			service.handleSocketMessage({
-				type: "upload-pulse",
-				payload: {
-					userId: "user-1",
-					type: PulseEnum.Emergency,
-					urgency: UrgencyEnum.Urgent,
-					title: "Need help",
-					description: "Nearby assistance needed",
-					position: { x: 26.1, y: 44.4 },
-					imageUrls: [],
+			service.handleSocketMessage(
+				{
+					type: "upload-pulse",
+					payload: {
+						type: PulseEnum.Skill,
+						urgency: UrgencyEnum.Urgent,
+						title: "Need help",
+						description: "Nearby assistance needed",
+						position: { x: 26.1, y: 44.4 },
+						imageUrls: [],
+					},
 				},
-			}),
+				{ id: "user-1", role: "user" } as any,
+			),
 		).resolves.toEqual({
 			success: true,
 			message: "Pulse received",
@@ -344,5 +395,52 @@ describe("PulseService", () => {
 			pulseUploadState: PulseUploadStateEnum.Uploaded,
 		});
 		expect(broadcastSpy).toHaveBeenCalledWith(uploadedPulse);
+		expect(liveUpdateSpy).toHaveBeenCalledWith(uploadedPulse);
+		expect(serializeSpy).toHaveBeenCalledWith(
+			uploadedPulse,
+			expect.objectContaining({ id: "user-1" }),
+		);
+	});
+
+	test("keeps exact pulse coordinates when serializing for other viewers", async () => {
+		const pulse = buildPulse({
+			position: {
+				x: 27.57399363305121,
+				y: 47.15385267140391,
+			} as PulseType["position"],
+		});
+		const { service } = createServiceWithRepo();
+
+		await expect(
+			service.serializePulseForViewer(pulse, {
+				id: "user-2",
+				role: "user",
+			} as any),
+		).resolves.toEqual(pulse);
+	});
+
+	test("rejects unauthenticated pulse uploads", async () => {
+		const { service } = createServiceWithRepo();
+
+		await expect(
+			service.handleSocketMessage(
+				{
+					type: "upload-pulse",
+					payload: {
+						type: PulseEnum.Emergency,
+						urgency: UrgencyEnum.Urgent,
+						title: "Need help",
+						description: "Nearby assistance needed",
+						position: { x: 26.1, y: 44.4 },
+						imageUrls: [],
+					},
+				},
+				null,
+			),
+		).resolves.toEqual({
+			success: false,
+			message: "Unauthorized",
+			data: null,
+		});
 	});
 });

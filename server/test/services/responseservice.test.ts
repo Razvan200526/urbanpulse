@@ -50,4 +50,70 @@ describe("ResponseService", () => {
 			ResponseStatusEnum.Pending,
 		);
 	});
+
+	test("reuses the same coordination conversation when the same responder is accepted on different pulses", async () => {
+		const owner = await createUser();
+		const responder = await createUser();
+		const firstPulse = await createPulse({ userId: owner.id });
+		const secondPulse = await createPulse({ userId: owner.id });
+		const firstResponse = await createResponse({
+			pulseId: firstPulse.id,
+			responderId: responder.id,
+			status: ResponseStatusEnum.Pending,
+		});
+		const secondResponse = await createResponse({
+			pulseId: secondPulse.id,
+			responderId: responder.id,
+			status: ResponseStatusEnum.Pending,
+		});
+
+		const firstAccepted = await responseService.acceptHelpOffer(
+			owner.id,
+			firstPulse.id,
+			firstResponse.id,
+		);
+		const secondAccepted = await responseService.acceptHelpOffer(
+			owner.id,
+			secondPulse.id,
+			secondResponse.id,
+		);
+
+		expect(firstAccepted?.conversationId).toBeTruthy();
+		expect(secondAccepted?.conversationId).toBe(firstAccepted?.conversationId);
+	});
+
+	test("creates separate coordination conversations for different responders", async () => {
+		const owner = await createUser();
+		const firstResponder = await createUser();
+		const secondResponder = await createUser();
+		const firstPulse = await createPulse({ userId: owner.id });
+		const secondPulse = await createPulse({ userId: owner.id });
+		const firstResponse = await createResponse({
+			pulseId: firstPulse.id,
+			responderId: firstResponder.id,
+			status: ResponseStatusEnum.Pending,
+		});
+		const secondResponse = await createResponse({
+			pulseId: secondPulse.id,
+			responderId: secondResponder.id,
+			status: ResponseStatusEnum.Pending,
+		});
+
+		const firstAccepted = await responseService.acceptHelpOffer(
+			owner.id,
+			firstPulse.id,
+			firstResponse.id,
+		);
+		const secondAccepted = await responseService.acceptHelpOffer(
+			owner.id,
+			secondPulse.id,
+			secondResponse.id,
+		);
+
+		expect(firstAccepted?.conversationId).toBeTruthy();
+		expect(secondAccepted?.conversationId).toBeTruthy();
+		expect(secondAccepted?.conversationId).not.toBe(
+			firstAccepted?.conversationId,
+		);
+	});
 });

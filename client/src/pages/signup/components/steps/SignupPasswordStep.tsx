@@ -79,12 +79,14 @@ export const SignupPasswordStep = () => {
 
 			<div className="flex items-center justify-between pt-4">
 				<Button
+					size="sm"
 					startContent={<ChevronLeftIcon className="size-4" />}
 					onClick={handleBack}
 				>
 					Back
 				</Button>
 				<Button
+					size="sm"
 					endContent={<ChevronRightIcon className="size-4" />}
 					onClick={handleNext}
 				>

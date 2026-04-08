@@ -1,7 +1,8 @@
 import { useUploadImage } from "@client/hooks/uploadHooks";
-import { Button, Toast } from "@heroui/react";
+import { Toast } from "@heroui/react";
 import { PlusSquareIcon, UploadCloud, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
+import { Button } from "./Button/Button";
 import { Modal } from "./Modal";
 import { H4 } from "./typography";
 
@@ -125,7 +126,7 @@ export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 			<div className="p-4 flex flex-col items-center justify-center gap-4">
 				<button
 					type="button"
-					className="w-full flex-col h-48 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-surface hover:bg-light transition-colors cursor-pointer relative overflow-hidden"
+					className="flex-col h-48 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-surface hover:bg-light transition-colors cursor-pointer relative overflow-hidden"
 					onDragOver={onDragOver}
 					onDrop={onDrop}
 					onClick={() => !previewUrl && inputRef.current?.click()}

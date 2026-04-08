@@ -2,6 +2,7 @@ import {
 	cn,
 	Button as HeroButton,
 	type ButtonProps as HeroButtonProps,
+	Spinner,
 } from "@heroui/react";
 
 export type ButtonProps = Omit<
@@ -44,11 +45,12 @@ export const Button = ({
 
 		return (
 			<>
-				{startContent && (
+				{!props.isPending && startContent && (
 					<span className="flex shrink-0 items-center justify-center">
 						{startContent}
 					</span>
 				)}
+				{props.isPending && <Spinner className="text-white" />}
 				{content}
 				{endContent && (
 					<span className="flex shrink-0 items-center justify-center">

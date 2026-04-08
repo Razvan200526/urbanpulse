@@ -12,7 +12,7 @@ export class PrimaryMailer implements Mailer {
 	async send({ to, subject, html }: SendMailParams) {
 		try {
 			const { data, error } = await this.resend.emails.send({
-				from: "Urban Pulse",
+				from: "noreply@xenra.tech",
 				to,
 				subject,
 				html,

@@ -1,4 +1,4 @@
-import { hono } from "@client/main";
+import { hono } from "@client/lib/api/client";
 import { useMutation } from "@tanstack/react-query";
 
 export const useUploadAvatar = () => {

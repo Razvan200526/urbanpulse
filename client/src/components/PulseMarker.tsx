@@ -1,5 +1,5 @@
 import { PulseDrawer } from "@client/pages/map/components/PulseDrawer";
-import type { PulseType } from "@server/db/schema";
+import type { ClientPulseType } from "@client/utils/types";
 import { PulseEnum } from "@shared/types";
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
@@ -27,7 +27,7 @@ const colorClasses: Record<
 	},
 };
 
-export const PulseMarker = ({ pulse }: { pulse: PulseType }) => {
+export const PulseMarker = ({ pulse }: { pulse: ClientPulseType }) => {
 	const map = useMap();
 	const markerRef = useRef<mapboxgl.Marker | null>(null);
 	const el = useRef(document.createElement("div"));

@@ -2,7 +2,7 @@ import { HelpOfferSnackbar } from "@client/components/notifications/HelpOfferSna
 import { useAuth } from "@client/hooks/useAuth";
 import { useLocationSync } from "@client/hooks/useLocationSync";
 import { useNotifications } from "@client/hooks/useNotifications";
-import { cn, Toast } from "@heroui/react";
+import { cn } from "@heroui/react";
 import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
 import { PageLoader } from "./PageLoader";
@@ -12,11 +12,11 @@ import { useAppSidebarStore } from "./sidebar/sidebarStore";
 import { useThemeStore } from "./sidebar/store";
 
 export const AuthLayout = () => {
-	const { data: user, isError, isPending } = useAuth();
+	const { data: user, isPending } = useAuth();
 	const { theme } = useThemeStore();
 	const { isOpen } = useAppSidebarStore();
 
-	useNotifications(user?.user.id);
+	useNotifications(user?.user.id || "");
 	useLocationSync();
 
 	useEffect(() => {
@@ -27,24 +27,27 @@ export const AuthLayout = () => {
 		return <PageLoader />;
 	}
 
-	if (isError || (!isPending && !user)) {
-		Toast.toast.danger("An error occurred while authenticating.");
+	if (!user) {
 		return <Navigate to="/signin" replace />;
 	}
 
 	return (
-		<div className="w-full min-h-dvh flex flex-row font-medium bg-background">
+		<div className="flex min-h-dvh w-full overflow-hidden bg-background font-medium">
 			<HelpOfferSnackbar />
 			<SidebarDrawer />
 			<div
 				className={cn(
-					"border-r border-border relative w-64 shrink-0 flex-col gap-8 p-2 transition-all duration-300 ease-in-out",
+					"relative hidden h-full w-64 shrink-0 self-start border-r border-border bg-surface p-2 transition-all duration-300 ease-in-out 2xl:flex",
 					!isOpen ? "hidden" : "hidden 2xl:flex",
 				)}
 			>
 				<Sidebar />
 			</div>
-			<div className={cn("flex-1 min-h-dvh font-normal overflow-auto")}>
+			<div
+				className={cn(
+					"flex min-h-dvh min-w-0 flex-1 overflow-hidden font-normal",
+				)}
+			>
 				<Outlet />
 			</div>
 		</div>

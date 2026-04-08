@@ -18,7 +18,7 @@ const MemberCard = ({ member }: { member: NetworkMember }) => {
 	const navigate = useNavigate();
 
 	return (
-		<Card className="border border-border-secondary shadow-none hover:border-accent transition-colors duration-150">
+		<Card className="border border-accent shadow-none transition-colors duration-150 hover:bg-accent/5">
 			<Card.Header className="flex flex-row items-center gap-3">
 				<Avatar user={member.author} />
 				<div className="flex flex-col gap-0.5 min-w-0">
@@ -116,7 +116,7 @@ export const NetworkTab = () => {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div>
 					<p className="text-sm font-medium text-foreground">
 						People sharing in your network

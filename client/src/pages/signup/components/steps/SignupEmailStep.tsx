@@ -42,6 +42,7 @@ export const SignupEmailStep = () => {
 			<div className="pt-2 flex items-center justify-end">
 				<Button
 					variant="primary"
+					size="sm"
 					onPress={() => handleNext()}
 					isPending={isPending}
 					endContent={<ChevronRightIcon className="size-4" />}

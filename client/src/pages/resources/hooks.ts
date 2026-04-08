@@ -1,8 +1,10 @@
-import { hono, queryClient } from "@client/main";
+import { hono, queryClient } from "@client/lib/api/client";
 import type { ClientUserType } from "@client/utils/types";
 import { Toast } from "@heroui/react";
 import type { FilterResourceType } from "@shared/types";
+import type { ResourceType as CreateResourceInput } from "@shared/validators/resources/isResourceValid";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import posthog from "posthog-js";
 import {
 	getApiErrorMessage,
 	type MutationResponse,
@@ -16,12 +18,7 @@ export type { ResourceWithUsersType } from "./resourceResponses";
 export const useUploadResource = (userId: string) => {
 	return useMutation({
 		mutationKey: ["upload", "resource", userId],
-		mutationFn: async (resource: {
-			userId: string;
-			availability: string;
-			name: string;
-			description: string;
-		}) => {
+		mutationFn: async (resource: CreateResourceInput) => {
 			const response = await hono.api.resources.$post({ json: resource });
 			const res = (await response.json()) as MutationResponse<unknown>;
 			if (!res.success || !res.data) {
@@ -34,9 +31,12 @@ export const useUploadResource = (userId: string) => {
 			}
 			return res;
 		},
-		onSuccess: () => {
+		onSuccess: (_, resource) => {
 			queryClient.invalidateQueries({
 				queryKey: ["resources"],
+			});
+			posthog.capture("resource_uploaded", {
+				availability: resource.availability,
 			});
 		},
 	});
@@ -117,11 +117,12 @@ export const useRespondToRequest = (userId: string) => {
 			}
 			return res;
 		},
-		onSuccess: () => {
+		onSuccess: (_, { accept }) => {
 			queryClient.invalidateQueries({
 				queryKey: ["pending", "requests", userId],
 			});
 			Toast.toast.success("Responded successfully");
+			posthog.capture("borrow_request_responded", { accepted: accept });
 		},
 	});
 };
@@ -165,8 +166,9 @@ export const useRequestBorrow = (userId: string) => {
 				});
 			});
 		},
-		onSuccess: (data: { message?: string }) => {
+		onSuccess: (data: { message?: string }, { resourceId }) => {
 			Toast.toast.success(data.message || "Borrow request sent!");
+			posthog.capture("borrow_requested", { resource_id: resourceId });
 		},
 		onError: (error: Error) => {
 			Toast.toast.danger(error.message);
@@ -187,6 +189,29 @@ export const useFilterResources = (filter: FilterResourceType) => {
 					res.success
 						? "Failed to retrieve resources"
 						: getApiErrorMessage(res, "Failed to retrieve resources"),
+				);
+				return [];
+			}
+			return normalizeResources(res.data);
+		},
+	});
+};
+
+export const useMyResources = (filter: FilterResourceType) => {
+	return useQuery({
+		queryKey: ["resources", "mine", filter],
+		queryFn: async () => {
+			const response = await hono.api.resources.mine.$get({
+				query: { filter },
+			});
+			const res = (await response.json()) as MutationResponse<
+				ResourceWithUsersApiItem[]
+			>;
+			if (!res.success || !res.data) {
+				Toast.toast.danger(
+					res.success
+						? "Failed to retrieve your resources"
+						: getApiErrorMessage(res, "Failed to retrieve your resources"),
 				);
 				return [];
 			}

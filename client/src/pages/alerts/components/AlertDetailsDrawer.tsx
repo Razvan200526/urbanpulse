@@ -1,5 +1,10 @@
+import { AppDrawer } from "@client/components/AppDrawer";
 import { Button } from "@client/components/Button/Button";
+import { BellIcon } from "@client/components/icons/BellIcon";
+import { CloseIcon } from "@client/components/icons/CloseIcon";
+import { H4 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
+import { useIsMobile } from "@client/hooks/useMediaQuery";
 import {
 	useAcceptHelpOffer,
 	useRejectHelpOffer,
@@ -9,18 +14,11 @@ import {
 	labelForNotificationType,
 	type NotificationListItem,
 	type NotificationPayload,
-	summarizeNotificationPayload,
 } from "@client/utils/notifications";
 import { ScrollShadow, Toast } from "@heroui/react";
-import {
-	Activity,
-	AlertTriangle,
-	Clock3,
-	MapPinned,
-	Siren,
-	UserRoundCheck,
-} from "lucide-react";
+import { Activity, AlertTriangle, MessagesSquareIcon } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router";
 import { useAlertsPageData } from "../hooks";
 import { useAlertsPageStore } from "../store";
 
@@ -29,20 +27,6 @@ const isRecord = (
 ): value is Record<string, unknown> =>
 	value !== null && typeof value === "object";
 
-const formatLabel = (value: string) =>
-	value
-		.replace(/([A-Z])/g, " $1")
-		.replace(/[_-]/g, " ")
-		.trim();
-
-const formatValue = (value: unknown) => {
-	if (value == null) return "Not available";
-	if (typeof value === "string" || typeof value === "number")
-		return String(value);
-	if (typeof value === "boolean") return value ? "Yes" : "No";
-	return JSON.stringify(value);
-};
-
 const getSeverityLabel = (item: NotificationListItem | null) => {
 	const payload = item?.notification?.payload;
 	if (typeof payload?.type === "string") return payload.type;
@@ -50,28 +34,6 @@ const getSeverityLabel = (item: NotificationListItem | null) => {
 	if (item?.notification?.type === "PULSE_RESPONSE_ACCEPTED") return "Resolved";
 	if (item?.notification?.type === "PULSE_CONFIRMED") return "Verified";
 	return "Alert";
-};
-
-const getLocationLabel = (payload: NotificationPayload) => {
-	if (!isRecord(payload)) {
-		return "Live coordinates are not available for this alert.";
-	}
-
-	const rawLocation = payload.location;
-	if (typeof rawLocation === "string") return rawLocation;
-
-	if (
-		rawLocation &&
-		typeof rawLocation === "object" &&
-		"x" in rawLocation &&
-		"y" in rawLocation &&
-		typeof rawLocation.x === "number" &&
-		typeof rawLocation.y === "number"
-	) {
-		return `${rawLocation.y.toFixed(4)}, ${rawLocation.x.toFixed(4)}`;
-	}
-
-	return "Neighborhood map position linked to the selected pulse.";
 };
 
 const buildDataPoints = (item: NotificationListItem | null) => {
@@ -100,65 +62,45 @@ const buildDataPoints = (item: NotificationListItem | null) => {
 	];
 };
 
-const buildNotes = (item: NotificationListItem | null) => {
-	const payload = item?.notification?.payload;
-	if (!payload) return [];
-	const summary = summarizeNotificationPayload(
-		item?.notification?.type || "",
-		payload,
-	);
-	const notes = [
-		{
-			label: item?.user?.name || "System",
-			value:
-				item?.user?.email || summary || "Event logged in the alerts queue.",
-		},
-	];
-
-	if (summary) {
-		notes.push({
-			label: "Summary",
-			value: summary,
-		});
-	}
-
-	if (isRecord(payload)) {
-		for (const [key, value] of Object.entries(payload).slice(0, 4)) {
-			notes.push({
-				label: formatLabel(key),
-				value: formatValue(value),
-			});
-		}
-	}
-
-	return notes;
-};
-
 export const AlertDetailsDrawer = () => {
+	const navigate = useNavigate();
+	const isMobile = useIsMobile();
 	const { filteredNotifications } = useAlertsPageData();
 	const selectedAlertId = useAlertsPageStore((state) => state.selectedAlertId);
 	const selectAlert = useAlertsPageStore((state) => state.selectAlert);
+	const clearSelection = useAlertsPageStore((state) => state.clearSelection);
 	const acceptHelp = useAcceptHelpOffer();
 	const rejectHelp = useRejectHelpOffer();
 
 	const selectedItem = useMemo(() => {
-		return (
+		const matchingItem =
 			filteredNotifications.find(
 				(item) => item.notification?.id === selectedAlertId,
-			) ??
-			filteredNotifications[0] ??
-			null
-		);
-	}, [filteredNotifications, selectedAlertId]);
+			) ?? null;
+
+		if (matchingItem) {
+			return matchingItem;
+		}
+
+		if (isMobile) {
+			return null;
+		}
+
+		return filteredNotifications[0] ?? null;
+	}, [filteredNotifications, isMobile, selectedAlertId]);
 
 	useEffect(() => {
-		if (!selectedAlertId && selectedItem?.notification?.id) {
+		if (!isMobile && !selectedAlertId && selectedItem?.notification?.id) {
 			selectAlert(selectedItem.notification.id);
 		}
-	}, [selectedAlertId, selectedItem, selectAlert]);
+	}, [isMobile, selectedAlertId, selectedItem, selectAlert]);
 
 	const notificationType = selectedItem?.notification?.type || "";
 	const payload = selectedItem?.notification?.payload ?? null;
+	const acceptedConversationId =
+		isRecord(payload) && typeof payload.conversationId === "string"
+			? payload.conversationId
+			: null;
 	const pulseResponsePayload = getPulseResponseActionPayload(
 		notificationType === "PULSE_RESPONSE" ? payload : null,
 	);
@@ -166,192 +108,173 @@ export const AlertDetailsDrawer = () => {
 		? new Date(selectedItem.notification.createdAt).toLocaleString()
 		: "Unknown time";
 	const severityLabel = getSeverityLabel(selectedItem);
-	const notes = buildNotes(selectedItem);
 	const dataPoints = buildDataPoints(selectedItem);
 
-	return (
-		<div className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-surface">
-			<div className="border-b border-border px-5 py-4">
-				<h2 className="text-[1.05rem] font-semibold text-foreground">
-					Alert Details - {severityLabel}
-				</h2>
+	const detailsBody = !selectedItem ? (
+		<div className="flex h-full min-h-96 items-center justify-center rounded border border-dashed border-accent/40 bg-surface-secondary/35 p-8 text-sm text-muted">
+			Select an alert to inspect its pulse details.
+		</div>
+	) : (
+		<div className="space-y-4">
+			<div className="overflow-hidden rounded border border-accent/50 bg-surface">
+				<div className="flex items-center gap-2 border-b border-accent/40 px-4 py-4 text-[1.05rem] font-semibold text-foreground">
+					<AlertTriangle className="size-5 text-danger" />
+					<span>
+						{severityLabel} Alert - {selectedItem.user?.name || "System"}
+					</span>
+				</div>
+				<div className="flex items-center gap-4 px-4 py-4">
+					<Avatar user={selectedItem.user} />
+					<div className="min-w-0">
+						<p className="truncate text-lg font-semibold text-foreground">
+							{selectedItem.user?.name || "System"}
+						</p>
+						<div className="mt-2 text-sm text-muted">
+							<span>{createdAt}</span>
+						</div>
+					</div>
+				</div>
 			</div>
 
+			<div className="rounded border border-accent/40 bg-surface-secondary p-4">
+				<div className="flex items-center gap-2 text-[1.05rem] font-semibold text-foreground">
+					<Activity className="size-5 text-accent" />
+					<span>Vitals &amp; Data</span>
+				</div>
+				<div className="mt-4 space-y-3">
+					{dataPoints.map((point) => (
+						<div
+							key={point.label}
+							className="flex items-center justify-between rounded border border-accent/20 bg-surface px-3 py-2"
+						>
+							<span className="text-sm text-muted">{point.label}</span>
+							<span className="text-right text-sm font-medium text-foreground">
+								{point.value}
+							</span>
+						</div>
+					))}
+				</div>
+				<p className="mt-4 text-sm text-muted">
+					{isRecord(payload)
+						? `Data readings: ${Object.keys(payload).length} structured fields`
+						: "Data readings: limited payload"}
+				</p>
+			</div>
+
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+				{pulseResponsePayload ? (
+					<>
+						<Button
+							size="md"
+							isDisabled={acceptHelp.isPending || rejectHelp.isPending}
+							onPress={() => {
+								acceptHelp.mutate(pulseResponsePayload, {
+									onSuccess: () => Toast.toast.success("Help offer accepted"),
+									onError: (error: Error) =>
+										Toast.toast.danger(
+											error instanceof Error
+												? error.message
+												: "Could not accept offer",
+										),
+								});
+							}}
+							className="border border-success bg-surface text-success hover:bg-success/10"
+						>
+							Accept
+						</Button>
+						<Button
+							size="md"
+							variant="danger-soft"
+							isDisabled={acceptHelp.isPending || rejectHelp.isPending}
+							onPress={() => {
+								rejectHelp.mutate(pulseResponsePayload, {
+									onSuccess: () => Toast.toast.success("Help offer rejected"),
+									onError: (error: Error) =>
+										Toast.toast.danger(
+											error instanceof Error
+												? error.message
+												: "Could not reject offer",
+										),
+								});
+							}}
+						>
+							Reject
+						</Button>
+					</>
+				) : (
+					<Button
+						radius="md"
+						className="border border-accent/60 bg-accent text-accent-foreground"
+						startContent={<MessagesSquareIcon className="size-4" />}
+						onPress={() => {
+							if (acceptedConversationId) {
+								navigate(`/messages/${acceptedConversationId}`);
+							}
+						}}
+						isDisabled={!acceptedConversationId}
+					>
+						{acceptedConversationId ? "Open Chat" : "Resolve Alert"}
+					</Button>
+				)}
+			</div>
+		</div>
+	);
+
+	if (isMobile) {
+		return (
+			<AppDrawer
+				isOpen={Boolean(selectedItem)}
+				onOpenChange={(open) => {
+					if (!open) {
+						clearSelection();
+					}
+				}}
+				backdrop="opaque"
+				placement="right"
+				mobilePlacement="bottom"
+				dialogClassName="border-accent bg-surface"
+				bodyClassName="p-0"
+				header={
+					<div className="border-b border-accent px-4 py-4">
+						<div className="flex items-center justify-between gap-3">
+							<div className="flex items-center gap-2 text-accent">
+								<BellIcon className="size-5" />
+								<H4>Alert Details</H4>
+							</div>
+							<Button
+								variant="ghost"
+								isIconOnly
+								radius="full"
+								className="text-accent"
+								onPress={clearSelection}
+								startContent={<CloseIcon className="size-4" />}
+							/>
+						</div>
+					</div>
+				}
+			>
+				<ScrollShadow
+					size={8}
+					hideScrollBar
+					className="min-h-0 max-h-[78dvh] overflow-y-auto px-4 py-4"
+				>
+					{detailsBody}
+				</ScrollShadow>
+			</AppDrawer>
+		);
+	}
+
+	return (
+		<div className="hidden min-h-0 flex-col overflow-hidden rounded border border-accent bg-surface xl:flex">
+			<header className="border-b border-accent px-5 py-4">
+				<H4>Alert Details - {severityLabel}</H4>
+			</header>
 			<ScrollShadow
 				size={8}
 				hideScrollBar
 				className="min-h-0 flex-1 overflow-y-auto px-5 py-5"
 			>
-				{!selectedItem ? (
-					<div className="flex h-full min-h-96 items-center justify-center rounded-lg border border-dashed border-border bg-surface-secondary/35 p-8 text-sm text-muted">
-						Select an alert to inspect its pulse details.
-					</div>
-				) : (
-					<div className="space-y-4">
-						<div className="overflow-hidden rounded-lg border border-border bg-[linear-gradient(180deg,rgba(119,82,198,0.26),rgba(23,18,36,0.88))]">
-							<div className="flex items-center gap-2 border-b border-white/6 px-4 py-4 text-[1.05rem] font-semibold text-foreground">
-								<AlertTriangle className="size-5 text-danger" />
-								<span>
-									{severityLabel} Alert - {selectedItem.user?.name || "System"}
-								</span>
-							</div>
-							<div className="flex items-center gap-4 px-4 py-4">
-								<Avatar user={selectedItem.user} />
-								<div className="min-w-0">
-									<p className="truncate text-lg font-semibold text-foreground">
-										{selectedItem.user?.name || "System"}
-									</p>
-									<p className="truncate text-sm text-muted">
-										{selectedItem.user?.email || "No sender email"}
-									</p>
-									<div className="mt-2 flex items-center gap-2 text-sm text-muted">
-										<Clock3 className="size-4" />
-										<span>{createdAt}</span>
-									</div>
-								</div>
-							</div>
-						</div>
-
-						<div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-							<div className="overflow-hidden rounded-lg border border-border bg-surface-secondary/55">
-								<div className="relative min-h-46 overflow-hidden border-b border-border">
-									<div className="absolute inset-0 flex items-center justify-center">
-										<div className="relative">
-											<span className="absolute left-1/2 top-1/2 block size-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-danger/50 blur-md" />
-											<MapPinned className="relative size-10 text-accent" />
-										</div>
-									</div>
-								</div>
-								<div className="px-4 py-3 text-sm text-muted">
-									<span className="font-semibold text-foreground">
-										Location:
-									</span>{" "}
-									{getLocationLabel(payload)}
-								</div>
-							</div>
-
-							<div className="rounded-lg border border-border bg-surface-secondary/55 p-4">
-								<div className="flex items-center gap-2 text-[1.05rem] font-semibold text-foreground">
-									<Activity className="size-5 text-accent" />
-									<span>Vitals &amp; Data</span>
-								</div>
-								<div className="mt-4 space-y-3">
-									{dataPoints.map((point) => (
-										<div
-											key={point.label}
-											className="flex items-center justify-between rounded border border-white/6 bg-black/10 px-3 py-2"
-										>
-											<span className="text-sm text-muted">{point.label}</span>
-											<span className="text-sm font-medium text-foreground">
-												{point.value}
-											</span>
-										</div>
-									))}
-								</div>
-								<p className="mt-4 text-sm text-muted">
-									{isRecord(payload)
-										? `Data readings: ${Object.keys(payload).length} structured fields`
-										: "Data readings: limited payload"}
-								</p>
-							</div>
-						</div>
-
-						<div className="grid gap-4 md:grid-cols-2">
-							{pulseResponsePayload ? (
-								<>
-									<Button
-										radius="md"
-										isDisabled={acceptHelp.isPending || rejectHelp.isPending}
-										onPress={() => {
-											acceptHelp.mutate(pulseResponsePayload, {
-												onSuccess: () =>
-													Toast.toast.success("Help offer accepted"),
-												onError: (error: Error) =>
-													Toast.toast.danger(
-														error instanceof Error
-															? error.message
-															: "Could not accept offer",
-													),
-											});
-										}}
-										className="h-12 border border-accent/60 bg-accent text-accent-foreground"
-									>
-										Accept
-									</Button>
-									<Button
-										radius="md"
-										isDisabled={acceptHelp.isPending || rejectHelp.isPending}
-										onPress={() => {
-											rejectHelp.mutate(pulseResponsePayload, {
-												onSuccess: () =>
-													Toast.toast.success("Help offer rejected"),
-												onError: (error: Error) =>
-													Toast.toast.danger(
-														error instanceof Error
-															? error.message
-															: "Could not reject offer",
-													),
-											});
-										}}
-										className="h-12 border border-accent/60 bg-transparent text-accent"
-									>
-										Reject
-									</Button>
-								</>
-							) : (
-								<>
-									<Button
-										radius="md"
-										className="h-12 border border-accent/60 bg-accent text-accent-foreground"
-									>
-										Resolve Alert
-									</Button>
-									<Button
-										radius="md"
-										className="h-12 border border-accent/60 bg-transparent text-accent"
-										isDisabled
-									>
-										Assign to Responder
-									</Button>
-								</>
-							)}
-						</div>
-
-						<div className="rounded-lg border border-border bg-surface-secondary/55 p-4">
-							<div className="flex items-center gap-2 text-[1.05rem] font-semibold text-foreground">
-								<UserRoundCheck className="size-5 text-accent" />
-								<span>History &amp; Notes</span>
-							</div>
-							<div className="mt-4 space-y-4">
-								{notes.map((note, index) => (
-									<div key={`${note.label}`} className="flex gap-3">
-										<div className="flex flex-col items-center">
-											<span className="mt-1 block size-3 rounded-full bg-accent" />
-											{index < notes.length - 1 ? (
-												<span className="mt-2 block min-h-8 w-px bg-border" />
-											) : null}
-										</div>
-										<div className="min-w-0">
-											<p className="text-sm font-semibold text-foreground">
-												{note.label}
-											</p>
-											<p className="wrap-break-word text-sm text-muted">
-												{note.value}
-											</p>
-										</div>
-									</div>
-								))}
-							</div>
-						</div>
-
-						<div className="flex items-center gap-2 text-xs text-muted">
-							<Siren className="size-4" />
-							<span>
-								{labelForNotificationType(notificationType)} view active
-							</span>
-						</div>
-					</div>
-				)}
+				{detailsBody}
 			</ScrollShadow>
 		</div>
 	);

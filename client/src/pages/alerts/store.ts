@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type AlertsFilter = "All alerts" | "Action needed" | "Updates";
+export type AlertsFilter = "all" | "actionable" | "updates";
 
 type AlertsPageStore = {
 	filter: AlertsFilter;
@@ -11,7 +11,7 @@ type AlertsPageStore = {
 };
 
 export const useAlertsPageStore = create<AlertsPageStore>((set) => ({
-	filter: "All alerts",
+	filter: "all",
 	selectedAlertId: null,
 	setFilter: (filter) => set({ filter }),
 	selectAlert: (selectedAlertId) => set({ selectedAlertId }),

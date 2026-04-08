@@ -26,21 +26,48 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core";
 
-export const user = pgTable("user", {
-	id: text("id").primaryKey(),
-	name: text("name").notNull(),
-	email: text("email").notNull().unique(),
-	emailVerified: boolean("emailVerified").notNull(),
-	image: text("image"),
-	createdAt: timestamp("createdAt").notNull(),
-	updatedAt: timestamp("updatedAt").notNull(),
-	role: text("role").default("user"),
-	bio: text("bio"),
-	trustScore: doublePrecision("trustScore").default(0),
-	successfulInteractions: integer("successfulInteractions").default(0),
-	isVerified: boolean("isVerified").default(false),
-	rememberMe: boolean("rememberMe").default(false),
-});
+export const user = pgTable(
+	"user",
+	{
+		id: text("id").primaryKey(),
+		name: text("name").notNull(),
+		email: text("email").notNull().unique(),
+		emailVerified: boolean("emailVerified").notNull(),
+		image: text("image"),
+		createdAt: timestamp("createdAt").notNull(),
+		updatedAt: timestamp("updatedAt").notNull(),
+		role: text("role").default("user"),
+		bio: text("bio"),
+		trustScore: doublePrecision("trustScore").default(0),
+		successfulInteractions: integer("successfulInteractions").default(0),
+		isVerified: boolean("isVerified").default(false),
+		rememberMe: boolean("rememberMe").default(false),
+		banned: boolean("banned").default(false),
+		banReason: text("banReason"),
+		banExpires: timestamp("banExpires"),
+		homeLocation: geometry("homeLocation", {
+			type: "point",
+			mode: "xy",
+			srid: 4326,
+		}),
+		lastKnownLocation: geometry("lastKnownLocation", {
+			type: "point",
+			mode: "xy",
+			srid: 4326,
+		}),
+		lastKnownLocationUpdatedAt: timestamp("lastKnownLocationUpdatedAt"),
+		heroAlertRadiusMeters: integer("heroAlertRadiusMeters")
+			.notNull()
+			.default(500),
+	},
+	(t) => [
+		index("user_home_location_spatial_index").using("gist", t.homeLocation),
+		index("user_last_known_location_spatial_index").using(
+			"gist",
+			t.lastKnownLocation,
+		),
+	],
+);
 
 export const session = pgTable("session", {
 	id: text("id").primaryKey(),
@@ -50,6 +77,7 @@ export const session = pgTable("session", {
 	updatedAt: timestamp("updatedAt").notNull(),
 	ipAddress: text("ipAddress"),
 	userAgent: text("userAgent"),
+	impersonatedBy: text("impersonatedBy"),
 	userId: text("userId")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
@@ -94,7 +122,7 @@ export const pulse = pgTable(
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
 		urgency: text("urgency").$type<UrgencyEnum>().notNull(),
-		title: varchar("title", { length: 30 }).notNull(),
+		title: varchar("title", { length: 100 }).notNull(),
 		description: text("description"),
 		position: geometry("location", {
 			type: "point",
@@ -111,8 +139,18 @@ export const pulse = pgTable(
 			.default(PulseUploadStateEnum.Pending),
 		audioUrl: text("audioUrl"),
 		imageUrls: text("imageUrls").array().notNull().default(sql`'{}'::text[]`),
+		requestedSkillTags: text("requestedSkillTags")
+			.array()
+			.notNull()
+			.default(sql`'{}'::text[]`),
+		matchMetadata: jsonb("matchMetadata")
+			.$type<Record<string, unknown>>()
+			.notNull()
+			.default(sql`'{}'::jsonb`),
 		isResolved: boolean("isResolved").notNull().default(false),
 		isVerified: boolean("isVerified"),
+		mergedIntoPulseId: uuid("mergedIntoPulseId"),
+		moderationNote: text("moderationNote"),
 		createdAt: timestamp("createdAt").notNull().defaultNow(),
 	},
 	(t) => [index("spatial_index").using("gist", t.position)],
