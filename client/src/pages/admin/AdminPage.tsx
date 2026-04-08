@@ -140,7 +140,7 @@ export const AdminPage = () => {
 
 	if (error || !data) {
 		return (
-			<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
+			<div className="flex h-[calc(100dvh)] w-full flex-col overflow-hidden bg-surface">
 				<Header title="Moderation" />
 				<Separator />
 				<div className="flex flex-1 items-center justify-center p-4 sm:p-8">
@@ -154,7 +154,7 @@ export const AdminPage = () => {
 	}
 
 	return (
-		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
+		<div className="flex h-[calc(100dvh)] w-full flex-col overflow-hidden bg-surface">
 			<Header title="Moderation" />
 			<Separator />
 			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>

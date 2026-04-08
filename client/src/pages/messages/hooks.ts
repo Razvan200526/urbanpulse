@@ -104,12 +104,15 @@ const syncConversationThread = (thread: ConversationThread) => {
 			}
 
 			const summary = toConversationSummary(thread);
-			return [
-				summary,
-				...old.filter(
-					(entry) => entry.conversation.id !== thread.conversation.id,
-				),
-			];
+			if (
+				old.some((entry) => entry.conversation.id === thread.conversation.id)
+			) {
+				return old.map((entry) =>
+					entry.conversation.id === thread.conversation.id ? summary : entry,
+				);
+			}
+
+			return [...old, summary];
 		},
 	);
 };

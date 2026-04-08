@@ -5,6 +5,7 @@ import { useDashboardOverview } from "@client/hooks/useDashboardOverview";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { queryClient } from "@client/lib/api/client";
 import { Card, Separator } from "@heroui/react";
+import { Skeleton } from "boneyard-js/react";
 import { Chart } from "./components/Chart";
 import { getDashboardStats } from "./components/dashboardStats";
 import { NeighborhoodPulseFeed } from "./components/NeighborhoodPulseFeed";
@@ -12,7 +13,12 @@ import { SafetyCheckInBanner } from "./components/SafetyCheckInBanner";
 import { StatsCard } from "./components/StatsCard";
 
 export const DashboardPages = () => {
-	const { data: overview, refetch, isFetching } = useDashboardOverview();
+	const {
+		data: overview,
+		refetch,
+		isFetching,
+		isPending: isOverviewPending,
+	} = useDashboardOverview();
 	const {
 		coords,
 		isLoading: geoLoading,
@@ -40,7 +46,25 @@ export const DashboardPages = () => {
 					/>
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
 						{stats.map((stat) => (
-							<StatsCard key={stat.title} stat={stat} />
+							<Skeleton
+								key={stat.title}
+								name={`dashboard-stat-${stat.title.toLowerCase().replace(/\s+/g, "-")}`}
+								loading={isOverviewPending}
+								fallback={
+									<Card className="border border-accent p-4 shadow-none">
+										<Card.Header className="flex flex-row items-center justify-between pb-2 space-y-0">
+											<div className="h-4 w-32 rounded bg-surface-secondary animate-pulse" />
+											<div className="size-4 rounded bg-surface-secondary animate-pulse" />
+										</Card.Header>
+										<Card.Content>
+											<div className="h-7 w-16 rounded bg-surface-secondary animate-pulse" />
+											<div className="mt-2 h-3 w-36 rounded bg-surface-secondary animate-pulse" />
+										</Card.Content>
+									</Card>
+								}
+							>
+								<StatsCard stat={stat} />
+							</Skeleton>
 						))}
 					</div>
 

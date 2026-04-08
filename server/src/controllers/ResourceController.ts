@@ -7,7 +7,10 @@ import {
 	getOneResourceSchema,
 	getResourcesSchema,
 } from "@shared/validators/resources/isGetResourcesQueryValid";
-import { resourceSchema } from "@shared/validators/resources/isResourceValid";
+import {
+	resourceSchema,
+	resourceUpdateSchema,
+} from "@shared/validators/resources/isResourceValid";
 import {
 	resourceReviewSchema,
 	transactionRequestSchema,
@@ -154,6 +157,45 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 			201,
 		);
 	})
+	.patch(
+		"/:resourceId",
+		zValidator("param", getOneResourceSchema),
+		zValidator("json", resourceUpdateSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+
+			const { resourceId } = c.req.valid("param");
+			const body = c.req.valid("json");
+			const updatedResource = await resourceService.updateResource(
+				resourceId,
+				session.userId,
+				body,
+			);
+
+			if (!updatedResource) {
+				return c.json(
+					{
+						success: false,
+						message: "Failed to update resource",
+						data: null,
+					},
+					400,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message: "Resource updated successfully",
+				data: updatedResource,
+			});
+		},
+	)
 	.get("/transaction/pending", async (c) => {
 		const session = c.get("session");
 		if (!session) {

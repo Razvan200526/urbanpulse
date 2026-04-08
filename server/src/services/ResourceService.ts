@@ -27,6 +27,8 @@ import type { GetResourceQuery } from "@shared/validators/resources/isGetResourc
 import {
 	type CreateResourcePayload,
 	isCreateResourceReqValid,
+	isUpdateResourceReqValid,
+	type UpdateResourcePayload,
 } from "@shared/validators/resources/isResourceValid";
 import {
 	isResourceReviewReqValid,
@@ -243,9 +245,25 @@ export class ResourceService {
 	 * @param data The data to update.
 	 * @returns
 	 */
-	async updateResource(id: string, data: Partial<ResourceType>) {
+	async updateResource(
+		resourceId: string,
+		userId: string,
+		data: UpdateResourcePayload,
+	) {
 		try {
-			return await this.resourceRepo.update(id, data);
+			const resource = await this.resourceRepo.getOne(resourceId);
+			if (!resource || resource.userId !== userId) {
+				logger.error("Unauthorized");
+				return null;
+			}
+
+			const result = isUpdateResourceReqValid(data);
+			if (!result.success) {
+				handleError(result.error);
+				return null;
+			}
+
+			return await this.resourceRepo.update(resourceId, result.data);
 		} catch (error) {
 			handleError(error);
 			return null;

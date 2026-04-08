@@ -9,7 +9,10 @@ import { locationService } from "@server/services/LocationService";
 import { notificationService } from "@server/services/NotificationService";
 import { ResourceService } from "@server/services/ResourceService";
 import { TransactionStatusEnum } from "@shared/types";
-import type { CreateResourcePayload } from "@shared/validators/resources/isResourceValid";
+import type {
+	CreateResourcePayload,
+	UpdateResourcePayload,
+} from "@shared/validators/resources/isResourceValid";
 
 const validPayload: CreateResourcePayload = {
 	name: "Community room",
@@ -17,6 +20,14 @@ const validPayload: CreateResourcePayload = {
 	availability: "Available",
 	resourceType: "Location",
 	position: { x: 26.1, y: 44.4 },
+	imageUrls: [],
+};
+
+const validUpdatePayload: UpdateResourcePayload = {
+	name: "Updated community room",
+	description: "A shared room with new booking details",
+	availability: "Unavailable",
+	resourceType: "Location",
 	imageUrls: [],
 };
 
@@ -237,6 +248,38 @@ describe("ResourceService", () => {
 			...validPayload,
 			userId: "owner-1",
 		});
+	});
+
+	test("updates resource metadata for the owner", async () => {
+		const resource = buildResource({ userId: "owner-1" });
+		const { service, resourceRepo } = createServiceForTransactions({
+			resource,
+		});
+
+		await expect(
+			service.updateResource(resource.id, "owner-1", validUpdatePayload),
+		).resolves.toEqual(
+			expect.objectContaining({
+				id: resource.id,
+				...validUpdatePayload,
+			}),
+		);
+		expect(resourceRepo.update).toHaveBeenCalledWith(
+			resource.id,
+			validUpdatePayload,
+		);
+	});
+
+	test("rejects resource metadata updates from non-owners", async () => {
+		const resource = buildResource({ userId: "owner-1" });
+		const { service, resourceRepo } = createServiceForTransactions({
+			resource,
+		});
+
+		await expect(
+			service.updateResource(resource.id, "other-user", validUpdatePayload),
+		).resolves.toBeNull();
+		expect(resourceRepo.update).not.toHaveBeenCalled();
 	});
 
 	test("persists a borrow request notification for the lender", async () => {

@@ -14,6 +14,22 @@ mock.module("@client/components/chips/AvaiabilityChip", () => ({
 	AvailabilityChip: ({ status }: { status: string }) => <span>{status}</span>,
 }));
 
+mock.module("@client/components/Dropdown", () => ({
+	Dropdown: ({
+		items,
+	}: {
+		items: Array<{ key: string; label: React.ReactNode }>;
+	}) => (
+		<div>
+			{items.map((item) => (
+				<button key={item.key} type="button">
+					{item.label}
+				</button>
+			))}
+		</div>
+	),
+}));
+
 mock.module("@client/components/typography", () => ({
 	H6: ({ children }: { children: React.ReactNode }) => <h6>{children}</h6>,
 }));
@@ -46,6 +62,16 @@ mock.module("@heroui/react", () => {
 
 mock.module("./ResourceDetailsDrawer", () => ({
 	ResourceDetailsDrawer: () => <div>Details drawer</div>,
+}));
+
+mock.module("./EditResourceModal", () => ({
+	EditResourceModal: () => <div>Resource modal</div>,
+}));
+
+mock.module("../../hooks", () => ({
+	useDeleteResource: () => ({
+		mutateAsync: async () => undefined,
+	}),
 }));
 
 const { ResourceCard } = await import("./ResourceCard");
@@ -109,5 +135,19 @@ describe("ResourceCard", () => {
 		);
 
 		expect(markup).toContain("4.5 (2 reviews)");
+	});
+
+	test("shows owner actions only to the resource owner", () => {
+		const ownerMarkup = renderToStaticMarkup(
+			<ResourceCard item={buildItem()} isOwner />,
+		);
+		const visitorMarkup = renderToStaticMarkup(
+			<ResourceCard item={buildItem()} isOwner={false} />,
+		);
+
+		expect(ownerMarkup).toContain("Edit");
+		expect(ownerMarkup).toContain("Delete");
+		expect(visitorMarkup).not.toContain("Edit");
+		expect(visitorMarkup).not.toContain("Delete");
 	});
 });

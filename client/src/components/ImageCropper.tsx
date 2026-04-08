@@ -1,14 +1,15 @@
 import { useUploadAvatar, useUploadImage } from "@client/hooks/uploadHooks";
 import { Button, Toast } from "@heroui/react";
 import { dataURLtoFile } from "@shared/utils/index";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactCrop, { type Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import { Modal } from "./Modal";
+import { Modal, type ModalRefType } from "./Modal";
 import { H4 } from "./typography";
 
 export type ImageCropperPropsType = {
 	image: string;
+	modalRef: React.RefObject<ModalRefType | null>;
 	onClose: () => void;
 	onSave: (url: string) => void;
 	type?: "avatar" | "cover" | "image";
@@ -16,6 +17,7 @@ export type ImageCropperPropsType = {
 
 export const ImageCropper = ({
 	image,
+	modalRef,
 	onClose,
 	onSave,
 	type = "avatar",
@@ -31,11 +33,14 @@ export const ImageCropper = ({
 		height: type === "avatar" ? 325 : 128,
 	});
 
-	const [isOpen, setIsOpen] = useState(true);
 	const [isLoading, setIsLoading] = useState(false);
 
 	const isAvatar = type === "avatar";
 	const isImage = type === "image";
+
+	useEffect(() => {
+		modalRef.current?.open();
+	}, [modalRef]);
 
 	const getCroppedImg = (
 		image: HTMLImageElement,
@@ -105,7 +110,7 @@ export const ImageCropper = ({
 
 			Toast.toast.success("Image uploaded successfully");
 			onSave(response.data.url);
-			setIsOpen(false);
+			modalRef.current?.close();
 		}
 	};
 
@@ -113,10 +118,7 @@ export const ImageCropper = ({
 		<>
 			<Button
 				variant="danger-soft"
-				onPress={() => {
-					setIsOpen(false);
-					onClose();
-				}}
+				onPress={() => modalRef.current?.close()}
 				isDisabled={isLoading}
 			>
 				Cancel
@@ -133,9 +135,8 @@ export const ImageCropper = ({
 
 	return (
 		<Modal
-			isOpen={isOpen}
+			modalRef={modalRef}
 			onOpenChange={(open) => {
-				setIsOpen(open);
 				if (!open) {
 					onClose();
 				}

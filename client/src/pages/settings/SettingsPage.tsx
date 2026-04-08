@@ -124,7 +124,7 @@ export const SettingsPage = () => {
 	}
 
 	return (
-		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
+		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface w-full">
 			<Header title="Settings" />
 			<Separator />
 			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>

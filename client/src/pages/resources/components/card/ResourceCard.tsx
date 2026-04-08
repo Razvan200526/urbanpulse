@@ -4,49 +4,48 @@ import {
 	Dropdown,
 	type DropdownItemDataType,
 } from "@client/components/Dropdown";
+import type { ModalRefType } from "@client/components/Modal";
 import { H6 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
 import { Card, Separator } from "@heroui/react";
 import { formatDate } from "@shared/utils/formatDate";
 import { EditIcon, MoreVertical, Star, Trash2Icon } from "lucide-react";
-import { useState } from "react";
-import { useDeleteResource } from "../../hooks";
+import { useRef, useState } from "react";
 import type { ResourceWithUsersType } from "../../resourceResponses";
+import { DeleteResourceModal } from "./DeleteResourceModal";
+import { EditResourceModal } from "./EditResourceModal";
 import { ResourceDetailsDrawer } from "./ResourceDetailsDrawer";
 
 export const ResourceCard = ({
 	item,
-	isOwner,
+	isOwner = false,
 }: {
 	item: ResourceWithUsersType;
-	isOwner: boolean;
+	isOwner?: boolean;
 }) => {
-	const { mutateAsync: deleteResource } = useDeleteResource();
 	const { resource, recentUsers, author, reviewSummary } = item;
-
-	const dropdownItems: DropdownItemDataType[] = [
-		{
-			key: "edit",
-			label: "Edit",
-			icon: <EditIcon className="size-4 text-accent" />,
-			className: "text-accent hover:bg-accent/10",
-			labelClassName: "text-accent",
-		},
-		...(isOwner
-			? [
-					{
-						key: "delete",
-						label: "Delete",
-						icon: <Trash2Icon className="size-4 text-danger" />,
-						onAction: async () => {
-							await deleteResource(resource.id);
-						},
-						className: "text-danger hover:bg-danger/10",
-						labelClassName: "text-danger",
-					},
-				]
-			: []),
-	];
+	const modalRef = useRef<ModalRefType | null>(null);
+	const deleteModalRef = useRef<ModalRefType | null>(null);
+	const dropdownItems: DropdownItemDataType[] = isOwner
+		? [
+				{
+					key: "edit",
+					label: "Edit",
+					icon: <EditIcon className="size-4 text-accent" />,
+					onAction: () => modalRef.current?.open(),
+					className: "text-accent hover:bg-accent/10",
+					labelClassName: "text-accent",
+				},
+				{
+					key: "delete",
+					label: "Delete",
+					icon: <Trash2Icon className="size-4 text-danger" />,
+					onAction: () => deleteModalRef.current?.open(),
+					className: "text-danger hover:bg-danger/10",
+					labelClassName: "text-danger",
+				},
+			]
+		: [];
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const reviewText =
 		reviewSummary.count > 0
@@ -57,14 +56,16 @@ export const ResourceCard = ({
 		<Card key={resource.id} className="border border-accent shadow-none">
 			<Card.Header className="flex flex-row items-center justify-between">
 				<H6 className="truncate">{resource.name}</H6>
-				<Dropdown
-					trigger={
-						<div className="rounded-full hover:bg-accent/10 p-2 transition-colors duration-150 ease-out">
-							<MoreVertical className="size-4 text-accent" />
-						</div>
-					}
-					items={dropdownItems}
-				/>
+				{dropdownItems.length > 0 && (
+					<Dropdown
+						trigger={
+							<div className="rounded-full p-2 transition-colors duration-150 ease-out hover:bg-accent/10">
+								<MoreVertical className="size-4 text-accent" />
+							</div>
+						}
+						items={dropdownItems}
+					/>
+				)}
 			</Card.Header>
 
 			<Card.Content className="space-y-3">
@@ -105,6 +106,12 @@ export const ResourceCard = ({
 				isOpen={isDrawerOpen}
 				onOpenChange={setIsDrawerOpen}
 			/>
+			{modalRef && (
+				<EditResourceModal resource={resource} modalRef={modalRef} />
+			)}
+			{deleteModalRef && (
+				<DeleteResourceModal resource={resource} modalRef={deleteModalRef} />
+			)}
 		</Card>
 	);
 };

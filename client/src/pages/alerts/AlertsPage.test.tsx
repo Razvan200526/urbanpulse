@@ -7,6 +7,9 @@ const alertsState = {
 	isPending: false,
 	acceptPending: false,
 	rejectPending: false,
+	isMobile: false,
+	routeNotificationId: null as string | null,
+	navigateCalls: [] as string[],
 };
 
 const buttonProps: Array<Record<string, any>> = [];
@@ -16,7 +19,25 @@ const toastSuccessCalls: string[] = [];
 const toastDangerCalls: string[] = [];
 
 mock.module("react-router", () => ({
-	useNavigate: () => () => {},
+	useNavigate: () => (path: string) => {
+		alertsState.navigateCalls.push(path);
+
+		if (path === "/alerts") {
+			alertsState.routeNotificationId = null;
+			return;
+		}
+
+		const match = path.match(/^\/alerts\/(.+)$/);
+		alertsState.routeNotificationId =
+			match?.[1] ?? alertsState.routeNotificationId;
+	},
+	useParams: () => ({
+		notificationId: alertsState.routeNotificationId ?? undefined,
+	}),
+}));
+
+mock.module("@client/hooks/useMediaQuery", () => ({
+	useIsMobile: () => alertsState.isMobile,
 }));
 
 mock.module("@client/hooks/useAuth", () => ({
@@ -168,6 +189,13 @@ mock.module("@heroui/react", () => {
 	Chip.Label = ({ children }: { children: React.ReactNode }) => (
 		<span>{children}</span>
 	);
+	const Skeleton = ({
+		children,
+		...props
+	}: {
+		children?: React.ReactNode;
+		[key: string]: unknown;
+	}) => <div {...props}>{children}</div>;
 	const Drawer = ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	);
@@ -200,6 +228,7 @@ mock.module("@heroui/react", () => {
 		Drawer,
 		Modal,
 		ProgressCircle: () => <div>Progress Circle</div>,
+		Skeleton,
 		ScrollShadow: ({ children }: { children: React.ReactNode }) => (
 			<div>{children}</div>
 		),
@@ -213,6 +242,7 @@ mock.module("@heroui/react", () => {
 });
 
 const { AlertsPage } = await import("./AlertsPage");
+const { useAlertsPageStore } = await import("./store");
 
 describe("AlertsPage", () => {
 	beforeEach(() => {
@@ -220,19 +250,25 @@ describe("AlertsPage", () => {
 		alertsState.isPending = false;
 		alertsState.acceptPending = false;
 		alertsState.rejectPending = false;
+		alertsState.isMobile = false;
+		alertsState.routeNotificationId = null;
+		alertsState.navigateCalls = [];
 		buttonProps.length = 0;
 		acceptCalls.length = 0;
 		rejectCalls.length = 0;
 		toastSuccessCalls.length = 0;
 		toastDangerCalls.length = 0;
+		useAlertsPageStore.setState({ filter: "all" });
 	});
 
-	test("renders a loading indicator while notifications are loading", () => {
+	test("renders loading skeletons while notifications are loading", () => {
 		alertsState.isPending = true;
 
 		const markup = renderToStaticMarkup(<AlertsPage />);
 
-		expect(markup).toContain("Progress Circle");
+		expect(markup).toContain('aria-label="Loading alerts"');
+		expect(markup).toContain('aria-label="Loading alert details"');
+		expect(markup).not.toContain("No alerts yet.");
 	});
 
 	test("renders an empty state when there are no alerts", () => {
@@ -299,5 +335,43 @@ describe("AlertsPage", () => {
 			"Help offer accepted",
 			"Help offer rejected",
 		]);
+	});
+
+	test("renders the route-selected alert details from the url parameter", () => {
+		alertsState.routeNotificationId = "notification-2";
+		alertsState.notifications = [
+			{
+				notification: {
+					id: "notification-1",
+					type: "PULSE_RESPONSE",
+					payload: {
+						pulseId: "pulse-1",
+						responseId: "response-1",
+						pulseTitle: "Need help",
+						responderName: "Ana",
+					},
+				},
+				user: {
+					name: "Ana",
+					email: "ana@example.com",
+				},
+			},
+			{
+				notification: {
+					id: "notification-2",
+					type: "HERO_ALERT",
+					payload: {
+						type: "Emergency",
+						description: "Flood warning",
+					},
+				},
+				user: null,
+			},
+		];
+
+		const markup = renderToStaticMarkup(<AlertsPage />);
+
+		expect(markup).toContain("Emergency Alert - System");
+		expect(markup).toContain("Resolve Alert");
 	});
 });

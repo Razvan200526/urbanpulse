@@ -8,14 +8,14 @@ import { ResponsiveChoiceField } from "@client/components/input/ResponsiveChoice
 import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import type { TabItemType } from "@client/components/tabs/Tabs";
-import { H3 } from "@client/components/typography";
+import { H3, H4 } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
-import { Separator, Toast, Tooltip } from "@heroui/react";
+import { Toast, Tooltip } from "@heroui/react";
 import type { ResourceAvailabilityType, ResourceItemType } from "@shared/types";
 import { isCreateResourceReqValid } from "@shared/validators/resources/isResourceValid";
-import { PaperclipIcon, XIcon } from "lucide-react";
+import { PaperclipIcon, UploadCloudIcon, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { useUploadResource } from "../hooks";
 
@@ -100,8 +100,11 @@ export const UploadResourceModal = ({
 		<Modal
 			modalRef={modalRef}
 			header={
-				<header className="flex flex-col items-start justify-start">
-					<H3>Upload Resource</H3>
+				<header className="flex flex-col items-start justify-start space-y-2">
+					<div className="flex items-center gap-2">
+						<UploadCloudIcon className="size-5 text-accent" />
+						<H4>Upload</H4>
+					</div>
 					<p className="text-muted text-sm">Contribute to the community</p>
 				</header>
 			}
@@ -117,10 +120,8 @@ export const UploadResourceModal = ({
 			}
 		>
 			<div className="p-4 flex flex-col space-y-5">
-				<Separator variant="tertiary" />
-
 				<ResponsiveChoiceField
-					label="Resource Type"
+					label="Type"
 					items={resourceTypeItems}
 					selectedKey={resourceType}
 					onSelectionChange={(key) => setResourceType(key as ResourceItemType)}
@@ -201,7 +202,6 @@ export const UploadResourceModal = ({
 						)}
 					/>
 				</div>
-				<Separator variant="tertiary" />
 			</div>
 		</Modal>
 	);

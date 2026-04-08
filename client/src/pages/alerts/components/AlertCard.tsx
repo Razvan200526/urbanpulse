@@ -1,7 +1,6 @@
 import { Button } from "@client/components/Button/Button";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
 import { Avatar } from "@client/components/user/Avatar";
-import { useAlertsPageStore } from "@client/pages/alerts/store";
 import {
 	useAcceptHelpOffer,
 	useRejectHelpOffer,
@@ -13,6 +12,7 @@ import {
 } from "@client/utils/notifications";
 import { Chip, cn, Toast } from "@heroui/react";
 import { BellDot } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export const AlertCard = ({
 	notificationItem,
@@ -21,9 +21,9 @@ export const AlertCard = ({
 	notificationItem: NotificationListItem;
 	isActive?: boolean;
 }) => {
+	const navigate = useNavigate();
 	const acceptHelp = useAcceptHelpOffer();
 	const rejectHelp = useRejectHelpOffer();
-	const selectAlert = useAlertsPageStore((state) => state.selectAlert);
 
 	const notificationType = notificationItem.notification?.type || "";
 	const payload = notificationItem.notification?.payload ?? null;
@@ -38,56 +38,63 @@ export const AlertCard = ({
 		typeof payload?.type === "string"
 			? payload.type
 			: labelForNotificationType(notificationType);
+	const cardContent = (
+		<div className="flex items-start gap-3">
+			<Avatar user={notificationItem.user} />
+
+			<div className="min-w-0 flex-1 space-y-3">
+				<div className="flex min-w-0 items-start justify-between gap-3">
+					<div className="min-w-0">
+						<p className="truncate text-md font-semibold text-accent">
+							{notificationItem.user?.name || "System alert"}
+						</p>
+					</div>
+
+					<div className="shrink-0 text-right text-xs text-muted">
+						<span>{createdAt}</span>
+					</div>
+				</div>
+
+				<div className="flex items-center gap-2 text-sm text-foreground">
+					<Chip className="rounded border border-accent bg-accent/10 p-1">
+						<Chip.Label className="flex items-center justify-center gap-1">
+							{pulseResponsePayload ? (
+								<HelpIcon className="size-6 text-accent" />
+							) : (
+								<BellDot className="size-4 text-accent" />
+							)}
+							<span className="text-xs font-semibold text-accent">
+								{alertType}
+							</span>
+						</Chip.Label>
+					</Chip>
+				</div>
+			</div>
+		</div>
+	);
 
 	return (
 		<article
 			className={cn(
-				"w-full rounded border border-border bg-surface px-4 py-4 text-left transition-colors duration-150 ease-out",
+				"w-full rounded border border-border bg-surface px-4 py-4 text-left transition-colors duration-150 ease-out my-1",
 				isActive ? "border-accent bg-accent/5" : "hover:border-accent",
 			)}
 		>
 			<button
 				type="button"
-				className="w-full text-left cursor-pointer"
-				onClick={() =>
-					notificationItem.notification?.id &&
-					selectAlert(notificationItem.notification.id)
-				}
+				className="w-full cursor-pointer text-left"
+				onClick={() => {
+					const notificationId = notificationItem.notification?.id;
+
+					if (notificationId) {
+						navigate(`/alerts/${notificationId}`);
+					}
+				}}
 			>
-				<div className="flex items-start gap-4">
-					<div className="min-w-0 flex-1">
-						<div className="flex flex-wrap items-start justify-between gap-3">
-							<div className="min-w-0 flex items-center justify-start gap-2">
-								<Avatar user={notificationItem.user} />
-								<p className="truncate text-md font-semibold text-accent">
-									{notificationItem.user?.name || "System alert"}
-								</p>
-							</div>
-
-							<div className="text-xs text-muted">
-								<span>{createdAt}</span>
-							</div>
-						</div>
-
-						<div className="mt-4 flex items-center gap-2 text-sm text-foreground">
-							<Chip className="rounded-full p-1 bg-accent/10 border border-accent">
-								<Chip.Label className="flex items-center justify-center gap-1">
-									{pulseResponsePayload ? (
-										<HelpIcon className="size-6 text-accent" />
-									) : (
-										<BellDot className="size-4 text-accent" />
-									)}
-									<span className="text-xs font-semibold text-accent">
-										{alertType}
-									</span>
-								</Chip.Label>
-							</Chip>
-						</div>
-					</div>
-				</div>
+				{cardContent}
 			</button>
 			{pulseResponsePayload ? (
-				<div className="mt-4 flex flex-col gap-2 sm:flex-row">
+				<div className="mt-4 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:justify-end">
 					<Button
 						radius="md"
 						size="sm"

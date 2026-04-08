@@ -261,12 +261,14 @@ describe("ProfilePage", () => {
 		expect(markup).toContain("Profile");
 		expect(markup).toContain("Daria");
 		expect(markup).toContain("daria@example.com");
-		expect(markup).toContain("Trust rating");
-		expect(markup).toContain("4.1");
-		expect(markup).toContain("82 internal points");
+		expect(markup).toContain("4.1/10");
 		expect(markup).toContain("Email confirmed");
+		expect(markup).toContain("Skills");
+		expect(markup).toContain("First Aid");
+		expect(markup).toContain("Logistics");
 		expect(markup).toContain("Active offers");
 		expect(markup).toContain("Successful interactions");
+		expect(markup).toContain("Account role");
 		expect(markup).toContain("Delete account");
 		expect(markup).toContain("Delete my data");
 		expect(markup).toContain("Input Avatar");

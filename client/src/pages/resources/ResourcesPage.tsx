@@ -8,7 +8,7 @@ import { RequestIcon } from "@client/components/icons/RequestIcon";
 import type { ModalRefType } from "@client/components/Modal";
 import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
 import { ScrollShadow, Separator } from "@heroui/react";
-import { ChevronDownIcon, PlusSquareIcon } from "lucide-react";
+import { ChevronDownIcon, PlusSquareIcon, UploadCloud } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
@@ -117,7 +117,7 @@ export const ResourcesPage = () => {
 					className="hidden md:inline-flex"
 					size="md"
 					variant="primary"
-					startContent={<PlusSquareIcon className="size-4" />}
+					startContent={<UploadCloud className="size-4" />}
 					onPress={() => uploadModalRef.current?.open()}
 				>
 					Upload

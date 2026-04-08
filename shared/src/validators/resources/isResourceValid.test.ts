@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { isCreateResourceReqValid } from "./isResourceValid";
+import {
+	isCreateResourceReqValid,
+	isUpdateResourceReqValid,
+} from "./isResourceValid";
 
 const validPayload = {
 	name: "Community ladder",
@@ -58,5 +61,19 @@ describe("isCreateResourceReqValid", () => {
 				position: { x: 26.1, y: 91 },
 			}).success,
 		).toBe(false);
+	});
+});
+
+describe("isUpdateResourceReqValid", () => {
+	test("accepts editable resource fields without position", () => {
+		const result = isUpdateResourceReqValid({
+			name: "Community ladder",
+			description: "A taller ladder for nearby repair work",
+			availability: "Unavailable",
+			resourceType: "Item",
+			imageUrls: ["https://example.com/ladder.jpg"],
+		});
+
+		expect(result.success).toBe(true);
 	});
 });

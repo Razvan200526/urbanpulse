@@ -89,6 +89,10 @@ mock.module("react-router", () => ({
 	}),
 }));
 
+mock.module("boneyard-js/react", () => ({
+	Skeleton: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 mock.module("@client/components/Button/Button", () => ({
 	Button: (props: Record<string, any>) => {
 		buttonProps.push(props);
@@ -104,6 +108,10 @@ mock.module("@client/components/PageLoader", () => ({
 	PageLoader: () => <div>Page Loader</div>,
 }));
 
+mock.module("@client/components/input/InputMessage", () => ({
+	InputMessage: () => <button>Send</button>,
+}));
+
 mock.module("@client/components/user/Avatar", () => ({
 	Avatar: ({ user }: { user?: { name?: string } | null }) => (
 		<div>{user?.name || "Avatar"}</div>
@@ -113,6 +121,14 @@ mock.module("@client/components/user/Avatar", () => ({
 mock.module("@heroui/react", () => ({
 	cn: (...classes: Array<string | false | null | undefined>) =>
 		classes.filter(Boolean).join(" "),
+	Card: Object.assign(
+		({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+		{
+			Content: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+		},
+	),
 	ScrollShadow: ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	),
@@ -155,7 +171,7 @@ describe("MessagesPage", () => {
 		);
 	});
 
-	test("renders the first conversation thread on desktop when no route param is present", () => {
+	test("renders the desktop list and empty prompt before first conversation navigation effect", () => {
 		messagesState.conversations = [directConversation];
 		messagesState.thread = {
 			...directConversation,
@@ -180,8 +196,8 @@ describe("MessagesPage", () => {
 		expect(markup).toContain("Your messages");
 		expect(markup).toContain("Alex");
 		expect(markup).toContain("See you there");
-		expect(markup).toContain("Direct conversation");
-		expect(markup).toContain("Send");
+		expect(markup).toContain("Select a conversation to start coordinating.");
+		expect(markup).not.toContain("Send");
 	});
 
 	test("renders the selected conversation route as a full-screen mobile thread", () => {

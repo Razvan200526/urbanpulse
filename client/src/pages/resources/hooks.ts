@@ -3,7 +3,10 @@ import type { ClientUserType } from "@client/utils/types";
 import { Toast } from "@heroui/react";
 import type { FilterResourceType } from "@shared/types";
 import type { GetResourceQuery } from "@shared/validators/resources/isGetResourcesQueryValid";
-import type { CreateResourcePayload } from "@shared/validators/resources/isResourceValid";
+import type {
+	CreateResourcePayload,
+	UpdateResourcePayload,
+} from "@shared/validators/resources/isResourceValid";
 import type { ResourceReviewPayload } from "@shared/validators/transactions/isTransactionRequestValid";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import posthog from "posthog-js";
@@ -34,6 +37,10 @@ type ResourceQueryParams = {
 	long?: string;
 	radiusMeters?: string;
 	type?: GetResourceQuery["type"];
+};
+
+type UpdateResourceVariables = UpdateResourcePayload & {
+	resourceId: string;
 };
 
 const normalizeResourceFilterCriteria = (
@@ -83,7 +90,19 @@ export const useDeleteResource = () => {
 			}
 			return res;
 		},
-		onSuccess: (_, resourceId) => {
+		onSuccess: (response, resourceId) => {
+			if (!response?.success) {
+				return;
+			}
+
+			queryClient.setQueriesData({ queryKey: ["resources"] }, (old) => {
+				if (!Array.isArray(old)) {
+					return old;
+				}
+
+				return old.filter((item) => item?.resource?.id !== resourceId);
+			});
+			queryClient.invalidateQueries({ queryKey: ["resources"] });
 			queryClient.invalidateQueries({
 				queryKey: ["retrieve", "resources", resourceId],
 			});
@@ -117,6 +136,43 @@ export const useUploadResource = (userId: string) => {
 		},
 	});
 };
+
+export const useUpdateResource = () => {
+	return useMutation({
+		mutationKey: ["update", "resource"],
+		mutationFn: async ({
+			resourceId,
+			...resource
+		}: UpdateResourceVariables) => {
+			const response = await hono.api.resources[":resourceId"].$patch({
+				param: { resourceId },
+				json: resource,
+			});
+			const res = (await response.json()) as MutationResponse<unknown>;
+			if (!res.success || !res.data) {
+				const message = res.success
+					? "Failed to update resource"
+					: getApiErrorMessage(res, "Failed to update resource");
+				Toast.toast.danger(message);
+				throw new Error(message);
+			}
+			return res;
+		},
+		onSuccess: (_, resource) => {
+			queryClient.invalidateQueries({ queryKey: ["resources"] });
+			queryClient.invalidateQueries({
+				queryKey: ["retrieve", "resources", resource.resourceId],
+			});
+			Toast.toast.success("Resource updated");
+			posthog.capture("resource_updated", {
+				resource_id: resource.resourceId,
+				availability: resource.availability,
+				resource_type: resource.resourceType,
+			});
+		},
+	});
+};
+
 export const useGetResourceAuthor = (resourceId: string) => {
 	return useQuery({
 		queryKey: ["author", resourceId],

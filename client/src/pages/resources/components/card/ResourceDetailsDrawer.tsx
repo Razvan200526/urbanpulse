@@ -5,6 +5,7 @@ import type { ModalRefType } from "@client/components/Modal";
 import { Avatar } from "@client/components/user/Avatar";
 import { useAuth } from "@client/hooks/useAuth";
 import { MetaRow } from "@client/pages/map/components/MetaRow";
+import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import type { ClientUserType } from "@client/utils/types";
 import { Chip, Drawer } from "@heroui/react";
 import { TransactionStatusEnum } from "@shared/types";
@@ -27,6 +28,65 @@ interface ResourceDetailsDrawerProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 }
+
+type ResourceImageShowcaseProps = {
+	imageUrls: string[];
+	resourceName: string;
+};
+
+const ResourceImageShowcase = ({
+	imageUrls,
+	resourceName,
+}: ResourceImageShowcaseProps) => {
+	if (imageUrls.length === 0) {
+		return (
+			<div className="rounded border border-border bg-surface p-4">
+				<p className="mb-2 text-sm font-semibold text-accent">Photos</p>
+				<p className="text-sm italic text-muted">No photos added.</p>
+			</div>
+		);
+	}
+
+	const [primaryImage, ...supportingImages] = imageUrls;
+
+	return (
+		<div className="rounded border border-border bg-surface p-4">
+			<div className="mb-3 flex items-center justify-between gap-3">
+				<p className="text-sm font-semibold text-accent">Photos</p>
+				<span className="text-xs text-muted">
+					{imageUrls.length} {imageUrls.length === 1 ? "photo" : "photos"}
+				</span>
+			</div>
+
+			<div className="overflow-hidden rounded border border-border bg-surface-secondary">
+				<img
+					src={normalizeAssetUrl(primaryImage)}
+					alt={`${resourceName} view 1`}
+					className="aspect-4/3 w-full object-cover"
+					loading="lazy"
+				/>
+			</div>
+
+			{supportingImages.length > 0 && (
+				<div className="mt-2 grid grid-cols-3 gap-2">
+					{supportingImages.map((url, index) => (
+						<div
+							key={`${url}:${index.toString()}`}
+							className="overflow-hidden rounded border border-border bg-surface-secondary"
+						>
+							<img
+								src={normalizeAssetUrl(url)}
+								alt={`${resourceName} view ${index + 2}`}
+								className="aspect-square w-full object-cover"
+								loading="lazy"
+							/>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+};
 
 export function ResourceDetailsDrawer({
 	item,
@@ -290,6 +350,10 @@ export function ResourceDetailsDrawer({
 							</div>
 						</MetaRow>
 					</div>
+					<ResourceImageShowcase
+						imageUrls={resource.imageUrls}
+						resourceName={resource.name}
+					/>
 				</div>
 			</AppDrawer>
 			<ResourceReviewModal
