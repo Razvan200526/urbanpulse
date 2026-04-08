@@ -8,7 +8,7 @@ import { ResponsiveChoiceField } from "@client/components/input/ResponsiveChoice
 import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import type { TabItemType } from "@client/components/tabs/Tabs";
-import { H3, H4 } from "@client/components/typography";
+import { H4 } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";

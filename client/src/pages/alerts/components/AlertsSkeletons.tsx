@@ -38,7 +38,7 @@ export const AlertsFeedSkeleton = ({ count = 5 }: { count?: number }) => {
 		<>
 			{Array.from({ length: count }).map((_, index) => (
 				<AlertCardSkeleton
-					key={`alert-skeleton-${index}`}
+					key={`alert-skeleton-${index.toString()}`}
 					withActions={index % 2 === 0}
 				/>
 			))}
@@ -48,7 +48,7 @@ export const AlertsFeedSkeleton = ({ count = 5 }: { count?: number }) => {
 
 export const AlertDetailsSkeleton = () => {
 	return (
-		<div aria-label="Loading alert details" className="space-y-4">
+		<div className="space-y-4">
 			<div className="overflow-hidden rounded border border-border bg-surface">
 				<div className="flex items-center gap-2 border-b border-border px-4 py-4">
 					<Skeleton className="size-5 rounded-md" />
@@ -72,7 +72,7 @@ export const AlertDetailsSkeleton = () => {
 				<div className="mt-4 space-y-3">
 					{Array.from({ length: 3 }).map((_, index) => (
 						<div
-							key={`details-row-skeleton-${index}`}
+							key={`details-row-skeleton-${index.toString()}`}
 							className="flex items-center justify-between rounded border border-accent-soft-hover bg-surface px-3 py-2"
 						>
 							<Skeleton className="h-4 w-20 rounded-md" />

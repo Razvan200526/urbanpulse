@@ -1,9 +1,9 @@
 import type { InputNameRefType } from "@client/components/input/InputName";
 import type { TextAreaRefType } from "@client/components/TextArea";
 import {
+	type UserProfilePayload,
 	useUpdateSkillTags,
 	useUpdateUserProfile,
-	type UserProfilePayload,
 } from "@client/hooks/useProfileSettings";
 import { Toast } from "@heroui/react";
 import { usePostHog } from "@posthog/react";

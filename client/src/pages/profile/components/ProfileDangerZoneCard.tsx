@@ -63,15 +63,12 @@ export const ProfileDangerZoneCard = () => {
 										<AlertDialog.Body className="px-5 py-4 text-sm text-muted">
 											<p>
 												Deleting your account removes your profile, skills, and
-												account-linked activity from UrbanPulse. If you continue,
-												your data cannot be restored.
+												account-linked activity from UrbanPulse. If you
+												continue, your data cannot be restored.
 											</p>
 										</AlertDialog.Body>
 										<AlertDialog.Footer className="border-t border-border px-5 py-4">
-											<Button
-												variant="tertiary"
-												onPress={() => dialog.close()}
-											>
+											<Button variant="tertiary" onPress={() => dialog.close()}>
 												Keep account
 											</Button>
 											<Button

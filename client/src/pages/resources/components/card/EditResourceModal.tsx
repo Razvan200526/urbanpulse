@@ -14,7 +14,7 @@ import { Toast } from "@heroui/react";
 import type { ResourceAvailabilityType, ResourceItemType } from "@shared/types";
 import { isUpdateResourceReqValid } from "@shared/validators/resources/isResourceValid";
 import { EditIcon, PaperclipIcon, XIcon } from "lucide-react";
-import { type RefObject, useEffect, useRef, useState } from "react";
+import { type RefObject, useRef, useState } from "react";
 import { useUpdateResource } from "../../hooks";
 import type { ResourceWithUsersType } from "../../resourceResponses";
 

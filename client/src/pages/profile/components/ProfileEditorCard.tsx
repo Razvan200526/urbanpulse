@@ -2,10 +2,10 @@ import { Button } from "@client/components/Button/Button";
 import type { UserProfilePayload } from "@client/hooks/useProfileSettings";
 import { Card } from "@heroui/react";
 import { Save } from "lucide-react";
+import { useProfileEditor } from "../useProfileEditor";
+import { ProfileDetailsFields } from "./ProfileDetailsFields";
 import { ProfileIdentitySection } from "./ProfileIdentitySection";
 import { ProfileSkillsSection } from "./ProfileSkillsSection";
-import { ProfileDetailsFields } from "./ProfileDetailsFields";
-import { useProfileEditor } from "../useProfileEditor";
 
 export const ProfileEditorCard = ({
 	profile,

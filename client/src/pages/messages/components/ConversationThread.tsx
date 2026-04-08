@@ -25,7 +25,6 @@ export const ConversationThread = ({
 	thread,
 	typingMembers: _typingMembers,
 	onBack,
-	onDraftChange,
 	onSend,
 }: {
 	conversationId: string | null;

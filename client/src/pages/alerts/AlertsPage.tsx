@@ -142,7 +142,9 @@ export const AlertsPage = () => {
 						onClose={() => navigate("/alerts")}
 						selectedItem={selectedItem}
 						isPending={isPending}
-						isOpen={Boolean(selectedItem) || (isPending && Boolean(notificationId))}
+						isOpen={
+							Boolean(selectedItem) || (isPending && Boolean(notificationId))
+						}
 					/>
 				</section>
 			</div>
