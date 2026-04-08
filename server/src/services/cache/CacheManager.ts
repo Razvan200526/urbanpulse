@@ -186,7 +186,13 @@ class CacheManager {
     const key = this.buildKey(identifier, "rate");
     const current = await this.redis.incr(key);
 
-    //
+    if (current === null) {
+      return {
+        allowed: false,
+        remaining: 0,
+      };
+    }
+
     if (current === 1) {
       await this.redis.setex(key, windowSeconds, String(current));
     }

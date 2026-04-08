@@ -1,6 +1,6 @@
 // redisClient.ts
 import { RedisClient as BunRedisClient } from "bun";
-
+import { logger } from "@server/utils/Logger";
 class RedisClient {
   private client: BunRedisClient;
   private subscriber: BunRedisClient | null = null;
@@ -19,13 +19,13 @@ class RedisClient {
 
     this.client.onconnect = () => {
       this.isConnected = true;
-      console.log("Connected");
+      logger.info("Connected");
     };
 
     this.client.onclose = (err) => {
       this.isConnected = false;
-      if (err) console.error("Disconnected with error:", err);
-      else console.log("Disconnected");
+      if (err) logger.exception(err);
+      else logger.info("Disconnected");
     };
   }
 
@@ -44,8 +44,9 @@ class RedisClient {
     try {
       await this.client.connect();
     } catch (err) {
-      console.error("Failed to connect:", err);
-      throw err;
+        if(err instanceof Error)
+      logger.exception(err);
+      
     }
   }
 
@@ -53,7 +54,7 @@ class RedisClient {
     this.subscriber?.close();
     this.client.close();
     this.isConnected = false;
-    console.log("Connection closed");
+    logger.info("Connection closed");
   }
 
   //Core Options
@@ -62,7 +63,8 @@ class RedisClient {
     try {
       return await this.client.get(key);
     } catch (err) {
-      console.error(`GET error for key "${key}":`, err);
+      if(err instanceof Error)
+      logger.exception(err);
       return null;
     }
   }
@@ -71,8 +73,8 @@ class RedisClient {
     try {
       await this.client.set(key, value);
     } catch (err) {
-      console.error(`SET error for key "${key}":`, err);
-      throw err;
+      if(err instanceof Error)
+      logger.exception(err);
     }
   }
 
@@ -80,8 +82,8 @@ class RedisClient {
     try {
       await this.client.set(key, value, "EX", ttl);
     } catch (err) {
-      console.error(`SETEX error for key "${key}":`, err);
-      throw err;
+      if(err instanceof Error)
+      logger.exception(err);
     }
   }
 
@@ -89,8 +91,8 @@ class RedisClient {
     try {
       await this.client.del(key);
     } catch (err) {
-      console.error(` DEL error for key "${key}":`, err);
-      throw err;
+      if(err instanceof Error)
+      logger.exception(err);
     }
   }
 
@@ -98,17 +100,19 @@ class RedisClient {
     try {
       return await this.client.keys(pattern);
     } catch (err) {
-      console.error(`KEYS error for pattern "${pattern}":`, err);
+      if(err instanceof Error)
+      logger.exception(err);
       return [];
     }
   }
 
-  async incr(key: string): Promise<number> {
+  async incr(key: string): Promise<number|null> {
     try {
       return await this.client.incr(key);
     } catch (err) {
-      console.error(`INCR error for key "${key}":`, err);
-      throw err;
+      if(err instanceof Error)
+      logger.exception(err);
+      return null;
     }
   }
 
@@ -120,8 +124,8 @@ class RedisClient {
       this.subscriber = await this.client.duplicate();
       await this.subscriber.subscribe(channel, callback);
     } catch (err) {
-      console.error(`SUBSCRIBE error for channel "${channel}":`, err);
-      throw err;
+      if(err instanceof Error)
+      logger.exception(err);
     }
   }
 
