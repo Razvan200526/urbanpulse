@@ -257,9 +257,14 @@ export class ResourceService {
 	 * @param id The ID of the resource to delete.
 	 * @returns True if the deletion was successful, false otherwise.
 	 */
-	async deleteResource(id: string): Promise<boolean> {
+	async deleteResource(resourceId: string, userId: string): Promise<boolean> {
+		const resource = await this.resourceRepo.getOne(resourceId);
+		if (resource?.userId !== userId) {
+			logger.error("Unauthorized");
+			return false;
+		}
 		try {
-			await this.resourceRepo.delete(id);
+			await this.resourceRepo.delete(resourceId);
 			return true;
 		} catch (error) {
 			handleError(error);

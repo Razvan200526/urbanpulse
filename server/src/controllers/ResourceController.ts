@@ -2,6 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import type { Variables } from "@server/app";
 import { resourceService } from "@server/services/ResourceService";
 import { logger } from "@server/utils/Logger";
+import { deleteResourceSchema } from "@shared/validators/resources/isDeleteResourceValid";
 import {
 	getOneResourceSchema,
 	getResourcesSchema,
@@ -129,7 +130,7 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 				401,
 			);
 		}
-		const body = await c.req.valid("json");
+		const body = c.req.valid("json");
 		const newResource = await resourceService.createResource(
 			session.userId,
 			body,
@@ -287,4 +288,33 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 				},
 			};
 		}),
+	)
+	.delete(
+		"/:resourceId",
+		zValidator("param", deleteResourceSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json({ success: false, error: "Unauthorized" }, 401);
+			}
+
+			const { resourceId } = c.req.valid("param");
+
+			const result = await resourceService.deleteResource(
+				resourceId,
+				session.userId,
+			);
+
+			if (!result) {
+				return c.json(
+					{ success: false, message: "Failed to delete resource" },
+					400,
+				);
+			}
+
+			return c.json(
+				{ success: true, message: "Resource deleted successfully" },
+				200,
+			);
+		},
 	);

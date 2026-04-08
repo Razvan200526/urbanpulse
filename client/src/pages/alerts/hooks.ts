@@ -6,7 +6,9 @@ import { useAlertsPageStore } from "./store";
 
 export const useAlertsPageData = () => {
 	const { data: user } = useAuth();
-	const { data: notifications, isPending } = useNotifications(user?.user.id);
+	const { data: notifications, isPending } = useNotifications(
+		user?.user.id || "",
+	);
 	const filter = useAlertsPageStore((state) => state.filter);
 
 	const allNotifications = notifications ?? [];

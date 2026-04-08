@@ -11,7 +11,7 @@ import {
 	labelForNotificationType,
 	type NotificationListItem,
 } from "@client/utils/notifications";
-import { cn, Toast } from "@heroui/react";
+import { Chip, cn, Toast } from "@heroui/react";
 import { BellDot } from "lucide-react";
 
 export const AlertCard = ({
@@ -42,13 +42,13 @@ export const AlertCard = ({
 	return (
 		<article
 			className={cn(
-				"w-full cursor-pointer rounded border border-accent/40 bg-surface px-4 py-4 text-left transition-colors duration-150 ease-out",
+				"w-full rounded border border-border bg-surface px-4 py-4 text-left transition-colors duration-150 ease-out",
 				isActive ? "border-accent bg-accent/5" : "hover:border-accent",
 			)}
 		>
 			<button
 				type="button"
-				className="w-full text-left"
+				className="w-full text-left cursor-pointer"
 				onClick={() =>
 					notificationItem.notification?.id &&
 					selectAlert(notificationItem.notification.id)
@@ -70,12 +70,18 @@ export const AlertCard = ({
 						</div>
 
 						<div className="mt-4 flex items-center gap-2 text-sm text-foreground">
-							{pulseResponsePayload ? (
-								<HelpIcon className="size-6 text-accent" />
-							) : (
-								<BellDot className="size-4 text-accent" />
-							)}
-							<span className="text-sm font-normal">{alertType}</span>
+							<Chip className="rounded-full p-1 bg-accent/10 border border-accent">
+								<Chip.Label className="flex items-center justify-center gap-1">
+									{pulseResponsePayload ? (
+										<HelpIcon className="size-6 text-accent" />
+									) : (
+										<BellDot className="size-4 text-accent" />
+									)}
+									<span className="text-xs font-semibold text-accent">
+										{alertType}
+									</span>
+								</Chip.Label>
+							</Chip>
 						</div>
 					</div>
 				</div>

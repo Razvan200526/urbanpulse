@@ -65,6 +65,32 @@ const toResourceQueryParams = (
 	return query;
 };
 
+export const useDeleteResource = () => {
+	return useMutation({
+		mutationKey: ["delete", "resource"],
+		mutationFn: async (resourceId: string) => {
+			const response = await hono.api.resources[":resourceId"].$delete({
+				param: { resourceId },
+			});
+			const res = (await response.json()) as MutationResponse<unknown>;
+			if (!res.success) {
+				Toast.toast.danger(
+					res.success
+						? "Failed to delete resource"
+						: getApiErrorMessage(res, "Failed to delete resource"),
+				);
+				return;
+			}
+			return res;
+		},
+		onSuccess: (_, resourceId) => {
+			queryClient.invalidateQueries({
+				queryKey: ["retrieve", "resources", resourceId],
+			});
+		},
+	});
+};
+
 export const useUploadResource = (userId: string) => {
 	return useMutation({
 		mutationKey: ["upload", "resource", userId],

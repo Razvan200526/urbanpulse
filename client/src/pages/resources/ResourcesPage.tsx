@@ -83,13 +83,10 @@ export const ResourcesPage = () => {
 							<Dropdown
 								placement="bottom end"
 								trigger={
-									<button
-										type="button"
-										className="flex shrink-0 items-center gap-2 rounded border border-accent bg-surface-secondary/70 px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors duration-150 hover:bg-surface-secondary"
-									>
+									<div className="flex shrink-0 items-center gap-2 rounded border border-accent bg-surface-secondary/70 px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors duration-150 hover:bg-surface-secondary">
 										<span>Actions</span>
 										<ChevronDownIcon className="size-4 text-accent" />
-									</button>
+									</div>
 								}
 								items={mobileActionItems}
 							/>
