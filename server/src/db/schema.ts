@@ -5,6 +5,7 @@ import {
 	PulseUploadStateEnum,
 	type ReportStatusEnum,
 	type ResourceAvailabilityType,
+	type ResourceItemType,
 	type ResponseStatusEnum,
 	type NotificationType as SharedNotificationType,
 	type TransactionStatusEnum,
@@ -22,6 +23,7 @@ import {
 	text,
 	time,
 	timestamp,
+	uniqueIndex,
 	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
@@ -185,6 +187,28 @@ export const message = pgTable("message", {
 	sentAt: timestamp("sentAt").notNull().defaultNow(),
 });
 
+export const messageReceipt = pgTable(
+	"message_receipt",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		messageId: uuid("messageId")
+			.notNull()
+			.references(() => message.id, { onDelete: "cascade" }),
+		userId: text("userId")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		deliveredAt: timestamp("deliveredAt"),
+		readAt: timestamp("readAt"),
+	},
+	(t) => [
+		uniqueIndex("message_receipt_message_user_unique").on(
+			t.messageId,
+			t.userId,
+		),
+		index("message_receipt_user_message_index").on(t.userId, t.messageId),
+	],
+);
+
 export const notification = pgTable("notification", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	userId: text("userId")
@@ -272,19 +296,30 @@ export const report = pgTable("report", {
 	createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 
-export const resource = pgTable("resources", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	userId: text("userId")
-		.notNull()
-		.references(() => user.id, { onDelete: "cascade" }),
-	name: text("name").notNull(),
-	description: text("description"),
-	availability: text("availability")
-		.$type<ResourceAvailabilityType>()
-		.notNull(),
-	imageUrls: text("imageUrls").array().notNull().default(sql`'{}'::text[]`),
-	createdAt: timestamp("createdAt").notNull().defaultNow(),
-});
+export const resource = pgTable(
+	"resources",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: text("userId")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		name: text("name").notNull(),
+		description: text("description"),
+		availability: text("availability")
+			.$type<ResourceAvailabilityType>()
+			.notNull(),
+		position: geometry("location", {
+			type: "point",
+			mode: "xy",
+			srid: 4326,
+		}).notNull(),
+		locationLabel: text("locationLabel"),
+		resourceType: text("resourceType").$type<ResourceItemType>().notNull(),
+		imageUrls: text("imageUrls").array().notNull().default(sql`'{}'::text[]`),
+		createdAt: timestamp("createdAt").notNull().defaultNow(),
+	},
+	(t) => [index("resource_spatial_index").using("gist", t.position)],
+);
 
 export const skill = pgTable("skill", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -310,6 +345,26 @@ export const transaction = pgTable("transaction", {
 	endAt: timestamp("endAt"),
 });
 
+export const resourceReview = pgTable("resource_review", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	transactionId: uuid("transactionId")
+		.notNull()
+		.unique()
+		.references(() => transaction.id, { onDelete: "cascade" }),
+	resourceId: uuid("resourceId")
+		.notNull()
+		.references(() => resource.id, { onDelete: "cascade" }),
+	reviewerId: text("reviewerId")
+		.notNull()
+		.references(() => user.id, { onDelete: "cascade" }),
+	revieweeId: text("revieweeId")
+		.notNull()
+		.references(() => user.id, { onDelete: "cascade" }),
+	rating: integer("rating").notNull(),
+	comment: text("comment"),
+	createdAt: timestamp("createdAt").notNull().defaultNow(),
+});
+
 // --- Relations ---
 
 export const usersRelations = relations(user, ({ many }) => ({
@@ -321,6 +376,7 @@ export const usersRelations = relations(user, ({ many }) => ({
 	quietHours: many(quietHours),
 	conversations: many(conversationMember),
 	messages: many(message),
+	messageReceipts: many(messageReceipt),
 	notifications: many(notification),
 	pulseConfirmations: many(pulseConfirmation),
 	responses: many(pulseResponse),
@@ -330,6 +386,8 @@ export const usersRelations = relations(user, ({ many }) => ({
 		relationName: "borrowedTransactions",
 	}),
 	lentTransactions: many(transaction, { relationName: "lentTransactions" }),
+	reviewsWritten: many(resourceReview, { relationName: "reviewsWritten" }),
+	reviewsReceived: many(resourceReview, { relationName: "reviewsReceived" }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -377,12 +435,21 @@ export const conversationMemberRelations = relations(
 	}),
 );
 
-export const messageRelations = relations(message, ({ one }) => ({
+export const messageRelations = relations(message, ({ one, many }) => ({
 	conversation: one(conversation, {
 		fields: [message.conversationId],
 		references: [conversation.id],
 	}),
 	sender: one(user, { fields: [message.senderId], references: [user.id] }),
+	receipts: many(messageReceipt),
+}));
+
+export const messageReceiptRelations = relations(messageReceipt, ({ one }) => ({
+	message: one(message, {
+		fields: [messageReceipt.messageId],
+		references: [message.id],
+	}),
+	user: one(user, { fields: [messageReceipt.userId], references: [user.id] }),
 }));
 
 export const notificationRelations = relations(notification, ({ one }) => ({
@@ -457,6 +524,7 @@ export const reportRelations = relations(report, ({ one }) => ({
 export const resourceRelations = relations(resource, ({ one, many }) => ({
 	user: one(user, { fields: [resource.userId], references: [user.id] }),
 	transactions: many(transaction),
+	reviews: many(resourceReview),
 }));
 
 export const skillRelations = relations(skill, ({ one }) => ({
@@ -478,6 +546,31 @@ export const transactionRelations = relations(transaction, ({ one }) => ({
 		references: [user.id],
 		relationName: "lentTransactions",
 	}),
+	review: one(resourceReview, {
+		fields: [transaction.id],
+		references: [resourceReview.transactionId],
+	}),
+}));
+
+export const resourceReviewRelations = relations(resourceReview, ({ one }) => ({
+	resource: one(resource, {
+		fields: [resourceReview.resourceId],
+		references: [resource.id],
+	}),
+	transaction: one(transaction, {
+		fields: [resourceReview.transactionId],
+		references: [transaction.id],
+	}),
+	reviewer: one(user, {
+		fields: [resourceReview.reviewerId],
+		references: [user.id],
+		relationName: "reviewsWritten",
+	}),
+	reviewee: one(user, {
+		fields: [resourceReview.revieweeId],
+		references: [user.id],
+		relationName: "reviewsReceived",
+	}),
 }));
 
 export type UserType = InferSelectModel<typeof user>;
@@ -490,6 +583,7 @@ export type ConversationMemberType = InferSelectModel<
 	typeof conversationMember
 >;
 export type MessageType = InferSelectModel<typeof message>;
+export type MessageReceiptType = InferSelectModel<typeof messageReceipt>;
 export type NotificationType = InferSelectModel<typeof notification>;
 export type PetAlertType = InferSelectModel<typeof petAlert>;
 export type PetMatchType = InferSelectModel<typeof petMatch>;
@@ -498,5 +592,6 @@ export type PulseResponseType = InferSelectModel<typeof pulseResponse>;
 export type QuietHoursType = InferSelectModel<typeof quietHours>;
 export type ReportType = InferSelectModel<typeof report>;
 export type ResourceType = InferSelectModel<typeof resource>;
+export type ResourceReviewType = InferSelectModel<typeof resourceReview>;
 export type SkillType = InferSelectModel<typeof skill>;
 export type TransactionType = InferSelectModel<typeof transaction>;

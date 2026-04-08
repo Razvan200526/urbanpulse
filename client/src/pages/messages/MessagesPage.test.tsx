@@ -9,6 +9,7 @@ const messagesState = {
 	thread: null as any,
 	isPending: false,
 	isThreadPending: false,
+	typingUserIds: [] as string[],
 	navigateCalls: [] as string[],
 };
 
@@ -62,10 +63,14 @@ mock.module("./hooks", () => ({
 		data: messagesState.thread,
 		isPending: messagesState.isThreadPending,
 	}),
+	useMessageSocketEvents: () => ({
+		typingUserIds: messagesState.typingUserIds,
+	}),
 	useSendConversationMessage: () => ({
 		mutateAsync: async () => messagesState.thread,
 		isPending: false,
 	}),
+	sendConversationTypingState: () => {},
 }));
 
 mock.module("react-router", () => ({
@@ -99,6 +104,10 @@ mock.module("@client/components/PageLoader", () => ({
 	PageLoader: () => <div>Page Loader</div>,
 }));
 
+mock.module("@client/components/input/InputMessage", () => ({
+	InputMessage: () => <button>Send</button>,
+}));
+
 mock.module("@client/components/user/Avatar", () => ({
 	Avatar: ({ user }: { user?: { name?: string } | null }) => (
 		<div>{user?.name || "Avatar"}</div>
@@ -108,6 +117,14 @@ mock.module("@client/components/user/Avatar", () => ({
 mock.module("@heroui/react", () => ({
 	cn: (...classes: Array<string | false | null | undefined>) =>
 		classes.filter(Boolean).join(" "),
+	Card: Object.assign(
+		({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+		{
+			Content: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+		},
+	),
 	ScrollShadow: ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	),
@@ -125,6 +142,7 @@ describe("MessagesPage", () => {
 		messagesState.isThreadPending = false;
 		messagesState.conversations = [];
 		messagesState.thread = null;
+		messagesState.typingUserIds = [];
 		messagesState.navigateCalls = [];
 		buttonProps.length = 0;
 	});
@@ -149,7 +167,7 @@ describe("MessagesPage", () => {
 		);
 	});
 
-	test("renders the first conversation thread on desktop when no route param is present", () => {
+	test("renders the desktop list and empty prompt before first conversation navigation effect", () => {
 		messagesState.conversations = [directConversation];
 		messagesState.thread = {
 			...directConversation,
@@ -174,8 +192,8 @@ describe("MessagesPage", () => {
 		expect(markup).toContain("Your messages");
 		expect(markup).toContain("Alex");
 		expect(markup).toContain("See you there");
-		expect(markup).toContain("Direct conversation");
-		expect(markup).toContain("Send");
+		expect(markup).toContain("Select a conversation to start coordinating.");
+		expect(markup).not.toContain("Send");
 	});
 
 	test("renders the selected conversation route as a full-screen mobile thread", () => {
@@ -202,7 +220,7 @@ describe("MessagesPage", () => {
 
 		const markup = renderToStaticMarkup(<MessagesPage />);
 
-		expect(markup).toContain("Back");
+		expect(buttonProps.some((props) => props.isIconOnly)).toBe(true);
 		expect(markup).toContain("Alex");
 		expect(markup).toContain("See you there");
 		expect(markup).not.toContain("Your messages");
@@ -249,9 +267,38 @@ describe("MessagesPage", () => {
 
 		renderToStaticMarkup(<MessagesPage />);
 
-		await buttonProps.find((props) => props.children === "Back")?.onPress?.();
+		await buttonProps.find((props) => props.isIconOnly)?.onPress?.();
 
 		expect(messagesState.navigateCalls).toContain("/messages");
 		expect(messagesState.routeConversationId).toBeNull();
+	});
+
+	test("renders typing state and read receipts in the active thread", () => {
+		messagesState.routeConversationId = "conversation-1";
+		messagesState.conversations = [directConversation];
+		messagesState.typingUserIds = ["user-2"];
+		messagesState.thread = {
+			...directConversation,
+			messages: [
+				{
+					id: "message-1",
+					content: "See you there",
+					senderId: "user-1",
+					sentAt: "2026-04-04T10:00:00.000Z",
+					deliveryStatus: "read",
+					sender: {
+						id: "user-1",
+						name: "Owner",
+						email: "owner@example.com",
+						image: null,
+					},
+				},
+			],
+		};
+
+		const markup = renderToStaticMarkup(<MessagesPage />);
+
+		expect(markup).toContain("Alex is typing...");
+		expect(markup).toContain('aria-label="Read"');
 	});
 });

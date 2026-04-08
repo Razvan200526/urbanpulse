@@ -268,6 +268,9 @@ export async function createResource(
 			name: nextToken("resource"),
 			description: "Repository test resource",
 			availability: "Available",
+			position: { x: 26.1025, y: 44.4268 } as any,
+			resourceType: "Item",
+			locationLabel: "Bucharest",
 			imageUrls: [],
 			createdAt: nextDate(),
 			...overrides,
@@ -304,6 +307,40 @@ export async function createTransaction(
 			status: TransactionStatusEnum.Pending,
 			startAt: nextDate(),
 			endAt: null,
+			...overrides,
+		})
+		.returning();
+
+	return requireInsertedRow(rows);
+}
+
+export async function createResourceReview(
+	overrides: Partial<typeof schema.resourceReview.$inferInsert> = {},
+) {
+	const resourceId = overrides.resourceId ?? (await createResource()).id;
+	const reviewerId = overrides.reviewerId ?? (await createUser()).id;
+	const revieweeId = overrides.revieweeId ?? (await createUser()).id;
+	const transactionId =
+		overrides.transactionId ??
+		(
+			await createTransaction({
+				resourceId,
+				borrowerId: reviewerId,
+				lenderId: revieweeId,
+				status: TransactionStatusEnum.Completed,
+				endAt: nextDate(),
+			})
+		).id;
+	const rows = await db
+		.insert(schema.resourceReview)
+		.values({
+			transactionId,
+			resourceId,
+			reviewerId,
+			revieweeId,
+			rating: 5,
+			comment: "Helpful handoff",
+			createdAt: nextDate(),
 			...overrides,
 		})
 		.returning();

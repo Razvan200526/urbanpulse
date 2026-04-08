@@ -17,7 +17,7 @@ export type DropdownItemDataType = {
 	icon?: ReactNode;
 	endContent?: ReactNode;
 	subMenu?: DropdownItemDataType[];
-	onAction?: () => void;
+	onAction?: () => void | Promise<void>;
 };
 
 interface DropdownProps {

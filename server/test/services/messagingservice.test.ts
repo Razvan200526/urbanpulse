@@ -4,6 +4,7 @@ import { ConversationTypeEnum } from "@shared/types";
 import {
 	createConversation,
 	createConversationMember,
+	createMessage,
 	createPulse,
 	createUser,
 } from "../helpers/fixtures";
@@ -65,6 +66,125 @@ describe("MessagingService", () => {
 			content: "I should not be able to send this.",
 		});
 		expect(outsiderAttempt).toBeNull();
+	});
+
+	test("tracks delivered and read receipts for conversation messages", async () => {
+		const owner = await createUser();
+		const responder = await createUser();
+		const conversation = await createConversation({
+			type: ConversationTypeEnum.Direct,
+		});
+		await createConversationMember({
+			conversationId: conversation.id,
+			userId: owner.id,
+		});
+		await createConversationMember({
+			conversationId: conversation.id,
+			userId: responder.id,
+		});
+
+		const sent = await messagingService.sendMessage({
+			conversationId: conversation.id,
+			senderId: owner.id,
+			content: "Meet me near the building entrance.",
+		});
+
+		expect(sent?.thread.messages[0]?.deliveryStatus).toBe("sent");
+
+		const receiptUpdates = await messagingService.markConversationRead({
+			conversationId: conversation.id,
+			userId: responder.id,
+		});
+
+		expect(receiptUpdates).toEqual([
+			{
+				messageId: sent?.message.id,
+				senderId: owner.id,
+				deliveryStatus: "read",
+			},
+		]);
+
+		const ownerThread = await messagingService.getConversationThread(
+			owner.id,
+			conversation.id,
+		);
+		expect(ownerThread?.messages[0]?.deliveryStatus).toBe("read");
+	});
+
+	test("hides empty self-authored pulse conversations from the owner", async () => {
+		const owner = await createUser();
+		const pulse = await createPulse({ userId: owner.id });
+		const conversation = await createConversation({
+			type: ConversationTypeEnum.Pulse,
+			pulseId: pulse.id,
+		});
+		await createConversationMember({
+			conversationId: conversation.id,
+			userId: owner.id,
+		});
+
+		const conversations = await messagingService.listConversationsForUser(
+			owner.id,
+		);
+		const thread = await messagingService.getConversationThread(
+			owner.id,
+			conversation.id,
+		);
+
+		expect(conversations).toHaveLength(0);
+		expect(thread).toBeNull();
+	});
+
+	test("keeps self-authored pulse conversations once another neighbor participates", async () => {
+		const owner = await createUser();
+		const responder = await createUser();
+		const pulse = await createPulse({ userId: owner.id });
+		const conversation = await createConversation({
+			type: ConversationTypeEnum.Pulse,
+			pulseId: pulse.id,
+		});
+		await createConversationMember({
+			conversationId: conversation.id,
+			userId: owner.id,
+		});
+		await createConversationMember({
+			conversationId: conversation.id,
+			userId: responder.id,
+		});
+
+		const conversations = await messagingService.listConversationsForUser(
+			owner.id,
+		);
+
+		expect(conversations).toHaveLength(1);
+		expect(conversations[0]?.conversation.id).toBe(conversation.id);
+	});
+
+	test("keeps self-authored pulse conversations once they have messages", async () => {
+		const owner = await createUser();
+		const pulse = await createPulse({ userId: owner.id });
+		const conversation = await createConversation({
+			type: ConversationTypeEnum.Pulse,
+			pulseId: pulse.id,
+		});
+		await createConversationMember({
+			conversationId: conversation.id,
+			userId: owner.id,
+		});
+		await createMessage({
+			conversationId: conversation.id,
+			senderId: owner.id,
+			content: "Adding context for helpers.",
+		});
+
+		const conversations = await messagingService.listConversationsForUser(
+			owner.id,
+		);
+
+		expect(conversations).toHaveLength(1);
+		expect(conversations[0]?.lastMessage?.content).toBe(
+			"Adding context for helpers.",
+		);
 	});
 
 	test("reuses a legacy two-member pulse conversation for coordination and converts it to direct", async () => {

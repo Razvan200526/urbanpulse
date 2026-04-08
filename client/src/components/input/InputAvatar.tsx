@@ -1,7 +1,8 @@
 import { Avatar } from "@heroui/react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { ImageCropper } from "../ImageCropper";
 import { UserIcon } from "../icons/UserIcon";
+import type { ModalRefType } from "../Modal";
 
 export type InputAvatarPropsType = {
 	value?: string;
@@ -13,6 +14,7 @@ export const InputAvatar = ({
 	onAvatarChange,
 }: InputAvatarPropsType) => {
 	const id = useId();
+	const cropperModalRef = useRef<ModalRefType | null>(null);
 	const [avatarUrl, setAvatarUrl] = useState<string | undefined>(value);
 	const [imageToCrop, setImageToCrop] = useState<string | undefined>(undefined);
 
@@ -66,6 +68,7 @@ export const InputAvatar = ({
 			{imageToCrop ? (
 				<ImageCropper
 					image={imageToCrop}
+					modalRef={cropperModalRef}
 					onClose={() => setImageToCrop(undefined)}
 					onSave={(url: string) => {
 						setAvatarUrl(url);

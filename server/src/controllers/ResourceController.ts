@@ -2,21 +2,28 @@ import { zValidator } from "@hono/zod-validator";
 import type { Variables } from "@server/app";
 import { resourceService } from "@server/services/ResourceService";
 import { logger } from "@server/utils/Logger";
+import { deleteResourceSchema } from "@shared/validators/resources/isDeleteResourceValid";
 import {
 	getOneResourceSchema,
 	getResourcesSchema,
 } from "@shared/validators/resources/isGetResourcesQueryValid";
-import { transactionRequestSchema } from "@shared/validators/transactions/isTransactionRequestValid";
+import {
+	resourceSchema,
+	resourceUpdateSchema,
+} from "@shared/validators/resources/isResourceValid";
+import {
+	resourceReviewSchema,
+	transactionRequestSchema,
+} from "@shared/validators/transactions/isTransactionRequestValid";
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
 import { z } from "zod";
 
-//implement a way to retrieve the resources that are close to the user maybe
 export const resourceController = new Hono<{ Variables: Variables }>()
 	.basePath("/resources")
 	.get("/", zValidator("query", getResourcesSchema), async (c) => {
-		const { filter } = c.req.valid("query");
-		const resources = await resourceService.getFilteredResources(filter);
+		const query = c.req.valid("query");
+		const resources = await resourceService.getFilteredResources(query);
 
 		if (!resources) {
 			return c.json(
@@ -62,22 +69,6 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 			data: resources,
 		});
 	})
-	.get("/:resourceId", zValidator("param", getOneResourceSchema), async (c) => {
-		const { resourceId } = c.req.param();
-		const resource = await resourceService.getResourceById(resourceId);
-		if (!resource) {
-			return c.json({
-				message: "Failed to get resource",
-				data: null,
-				success: false,
-			});
-		}
-		return c.json({
-			message: "Resource retrieved successfully",
-			data: resource,
-			success: true,
-		});
-	})
 	.get(
 		"/:resourceId/author",
 		zValidator("param", getOneResourceSchema),
@@ -98,9 +89,55 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 			});
 		},
 	)
-	.post("/", async (c) => {
-		const body = await c.req.json();
-		const newResource = await resourceService.createResource(body);
+	.get(
+		"/:resourceId/transaction/mine",
+		zValidator("param", getOneResourceSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+
+			const { resourceId } = c.req.param();
+			const result = await resourceService.getResourceTransactionForBorrower(
+				resourceId,
+				session.userId,
+			);
+			return c.json(result, result.success ? 200 : 500);
+		},
+	)
+	.get("/:resourceId", zValidator("param", getOneResourceSchema), async (c) => {
+		const { resourceId } = c.req.param();
+		const resource = await resourceService.getResourceById(resourceId);
+		if (!resource) {
+			return c.json({
+				message: "Failed to get resource",
+				data: null,
+				success: false,
+			});
+		}
+		return c.json({
+			message: "Resource retrieved successfully",
+			data: resource,
+			success: true,
+		});
+	})
+	.post("/", zValidator("json", resourceSchema), async (c) => {
+		const session = c.get("session");
+		if (!session) {
+			return c.json(
+				{ success: false, message: "Unauthorized", data: null },
+				401,
+			);
+		}
+		const body = c.req.valid("json");
+		const newResource = await resourceService.createResource(
+			session.userId,
+			body,
+		);
 		if (!newResource) {
 			return c.json(
 				{
@@ -120,10 +157,57 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 			201,
 		);
 	})
+	.patch(
+		"/:resourceId",
+		zValidator("param", getOneResourceSchema),
+		zValidator("json", resourceUpdateSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+
+			const { resourceId } = c.req.valid("param");
+			const body = c.req.valid("json");
+			const updatedResource = await resourceService.updateResource(
+				resourceId,
+				session.userId,
+				body,
+			);
+
+			if (!updatedResource) {
+				return c.json(
+					{
+						success: false,
+						message: "Failed to update resource",
+						data: null,
+					},
+					400,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message: "Resource updated successfully",
+				data: updatedResource,
+			});
+		},
+	)
 	.get("/transaction/pending", async (c) => {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ success: false, error: "Unauthorized" }, 401);
+		}
+
 		const { userId } = c.req.query();
 		if (!userId) {
 			return c.json({ success: false, error: "Missing userId" }, 400);
+		}
+		if (userId !== session.userId) {
+			return c.json({ success: false, error: "Forbidden" }, 403);
 		}
 
 		const result = await resourceService.getPendingRequests(userId);
@@ -138,14 +222,52 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 			}),
 		),
 		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json({ success: false, error: "Unauthorized" }, 401);
+			}
+
 			const { transactionId } = c.req.param();
 			const body = c.req.valid("json");
 
 			const result = await resourceService.respondToRequest(
 				transactionId,
 				body.accept,
+				session.userId,
 			);
 			return c.json(result, result.success ? 200 : 500);
+		},
+	)
+	.post("/transaction/:transactionId/complete", async (c) => {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ success: false, error: "Unauthorized" }, 401);
+		}
+
+		const { transactionId } = c.req.param();
+		const result = await resourceService.completeResourceTransaction(
+			transactionId,
+			session.userId,
+		);
+		return c.json(result, result.success ? 200 : 500);
+	})
+	.post(
+		"/transaction/:transactionId/review",
+		zValidator("json", resourceReviewSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json({ success: false, error: "Unauthorized" }, 401);
+			}
+
+			const { transactionId } = c.req.param();
+			const body = c.req.valid("json");
+			const result = await resourceService.submitResourceReview(
+				transactionId,
+				session.userId,
+				body,
+			);
+			return c.json(result, result.success ? 201 : 500);
 		},
 	)
 	.get(
@@ -208,4 +330,33 @@ export const resourceController = new Hono<{ Variables: Variables }>()
 				},
 			};
 		}),
+	)
+	.delete(
+		"/:resourceId",
+		zValidator("param", deleteResourceSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json({ success: false, error: "Unauthorized" }, 401);
+			}
+
+			const { resourceId } = c.req.valid("param");
+
+			const result = await resourceService.deleteResource(
+				resourceId,
+				session.userId,
+			);
+
+			if (!result) {
+				return c.json(
+					{ success: false, message: "Failed to delete resource" },
+					400,
+				);
+			}
+
+			return c.json(
+				{ success: true, message: "Resource deleted successfully" },
+				200,
+			);
+		},
 	);

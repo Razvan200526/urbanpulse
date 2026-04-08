@@ -9,7 +9,10 @@ import {
 } from "@server/db/schema";
 import { conversationMemberRepository } from "@server/repositories/ConversationMemberRepository";
 import { conversationRepository } from "@server/repositories/ConversationRepository";
+import { messageReceiptRepository } from "@server/repositories/MessageReceiptRepository";
 import { messageRepository } from "@server/repositories/MessageRepository";
+import { pulseRepository } from "@server/repositories/PulseRepository";
+import { messageSocketManager } from "@server/services/MessageSocketManager";
 import { notificationService } from "@server/services/NotificationService";
 import { notificationFactory } from "@server/shared/NotificationFactory";
 import { handleError } from "@server/utils/handleError";
@@ -24,10 +27,19 @@ type ConversationSummary = {
 	lastMessage: MessageType | null;
 };
 
+export type MessageDeliveryStatus = "sent" | "delivered" | "read";
+
+export type MessageReceiptUpdate = {
+	messageId: string;
+	senderId: string;
+	deliveryStatus: MessageDeliveryStatus;
+};
+
 type ConversationThread = ConversationSummary & {
 	messages: Array<
 		MessageType & {
 			sender: ConversationMemberView | null;
+			deliveryStatus: MessageDeliveryStatus;
 		}
 	>;
 };
@@ -113,6 +125,141 @@ export class MessagingService {
 			conversationId,
 			userId,
 		);
+	}
+
+	private getDeliveryStatus(params: {
+		message: MessageType;
+		memberIds: string[];
+		receipts: Array<{ deliveredAt: Date | null; readAt: Date | null }>;
+	}): MessageDeliveryStatus {
+		const recipientCount = params.memberIds.filter(
+			(memberId) => memberId !== params.message.senderId,
+		).length;
+
+		if (recipientCount === 0) {
+			return "read";
+		}
+
+		if (params.receipts.length < recipientCount) {
+			return "sent";
+		}
+
+		if (params.receipts.every((receipt) => Boolean(receipt.readAt))) {
+			return "read";
+		}
+
+		if (
+			params.receipts.every((receipt) =>
+				Boolean(receipt.deliveredAt || receipt.readAt),
+			)
+		) {
+			return "delivered";
+		}
+
+		return "sent";
+	}
+
+	private async getReceiptUpdates(
+		conversationId: string,
+		messageIds: string[],
+	): Promise<MessageReceiptUpdate[]> {
+		const uniqueMessageIds = Array.from(new Set(messageIds));
+		if (uniqueMessageIds.length === 0) {
+			return [];
+		}
+
+		const base = await this.getConversationBase(conversationId);
+		if (!base) {
+			return [];
+		}
+
+		const receiptRows =
+			await messageReceiptRepository.getByMessageIds(uniqueMessageIds);
+		const receiptsByMessageId = new Map<
+			string,
+			Array<{ deliveredAt: Date | null; readAt: Date | null }>
+		>();
+		for (const receipt of receiptRows) {
+			const existing = receiptsByMessageId.get(receipt.messageId) ?? [];
+			receiptsByMessageId.set(receipt.messageId, [...existing, receipt]);
+		}
+
+		const memberIds = base.members.map((member) => member.id);
+		return base.messages
+			.filter((entry) => uniqueMessageIds.includes(entry.id))
+			.map((entry) => ({
+				messageId: entry.id,
+				senderId: entry.senderId,
+				deliveryStatus: this.getDeliveryStatus({
+					message: entry,
+					memberIds,
+					receipts: receiptsByMessageId.get(entry.id) ?? [],
+				}),
+			}));
+	}
+
+	private async ensureReceiptRowsForConversation(params: {
+		conversationId: string;
+		userId: string;
+	}) {
+		const base = await this.getConversationBase(params.conversationId);
+		if (!base) {
+			return null;
+		}
+
+		const incomingMessageIds = base.messages
+			.filter((entry) => entry.senderId !== params.userId)
+			.map((entry) => entry.id);
+		const existingReceipts =
+			await messageReceiptRepository.getByUserAndMessageIds({
+				userId: params.userId,
+				messageIds: incomingMessageIds,
+			});
+		const existingReceiptMessageIds = new Set(
+			existingReceipts.map((entry) => entry.messageId),
+		);
+		const missingMessageIds = incomingMessageIds.filter(
+			(messageId) => !existingReceiptMessageIds.has(messageId),
+		);
+
+		if (missingMessageIds.length > 0) {
+			await messageReceiptRepository.createMany(
+				missingMessageIds.map((messageId) => ({
+					messageId,
+					userId: params.userId,
+				})),
+			);
+		}
+
+		return incomingMessageIds;
+	}
+
+	private async isHiddenSelfAuthoredPulseConversation(params: {
+		viewerUserId: string;
+		conversation: ConversationType;
+		members: ConversationMemberView[];
+		messages: MessageType[];
+	}) {
+		if (
+			params.conversation.type !== ConversationTypeEnum.Pulse ||
+			!params.conversation.pulseId
+		) {
+			return false;
+		}
+
+		const linkedPulse = await pulseRepository.getOne(
+			params.conversation.pulseId,
+		);
+		if (!linkedPulse || linkedPulse.userId !== params.viewerUserId) {
+			return false;
+		}
+
+		const hasOtherMember = params.members.some(
+			(member) => member.id !== params.viewerUserId,
+		);
+		const hasMessages = params.messages.length > 0;
+
+		return !hasOtherMember && !hasMessages;
 	}
 
 	async ensureDirectConversation(userId: string, otherUserId: string) {
@@ -241,6 +388,17 @@ export class MessagingService {
 					return null;
 				}
 
+				if (
+					await this.isHiddenSelfAuthoredPulseConversation({
+						viewerUserId: userId,
+						conversation: entry,
+						members: base.members,
+						messages: base.messages,
+					})
+				) {
+					return null;
+				}
+
 				return {
 					conversation: entry,
 					members: base.members,
@@ -268,6 +426,17 @@ export class MessagingService {
 			return null;
 		}
 
+		if (
+			await this.isHiddenSelfAuthoredPulseConversation({
+				viewerUserId: userId,
+				conversation: base.conversation,
+				members: base.members,
+				messages: base.messages,
+			})
+		) {
+			return null;
+		}
+
 		const senderIds = base.messages.map((entry) => entry.senderId);
 		const senderRows =
 			senderIds.length === 0
@@ -282,6 +451,18 @@ export class MessagingService {
 						.from(user)
 						.where(inArray(user.id, Array.from(new Set(senderIds))));
 		const sendersById = new Map(senderRows.map((entry) => [entry.id, entry]));
+		const receiptRows = await messageReceiptRepository.getByMessageIds(
+			base.messages.map((entry) => entry.id),
+		);
+		const receiptsByMessageId = new Map<
+			string,
+			Array<{ deliveredAt: Date | null; readAt: Date | null }>
+		>();
+		for (const receipt of receiptRows) {
+			const existing = receiptsByMessageId.get(receipt.messageId) ?? [];
+			receiptsByMessageId.set(receipt.messageId, [...existing, receipt]);
+		}
+		const memberIds = base.members.map((entry) => entry.id);
 
 		return {
 			conversation: base.conversation,
@@ -290,8 +471,97 @@ export class MessagingService {
 			messages: base.messages.map((entry) => ({
 				...entry,
 				sender: sendersById.get(entry.senderId) ?? null,
+				deliveryStatus: this.getDeliveryStatus({
+					message: entry,
+					memberIds,
+					receipts: receiptsByMessageId.get(entry.id) ?? [],
+				}),
 			})),
 		};
+	}
+
+	async listConversationMemberIds(
+		conversationId: string,
+		viewerUserId: string,
+	) {
+		const membership = await this.assertMember(conversationId, viewerUserId);
+		if (!membership) {
+			return null;
+		}
+
+		const base = await this.getConversationBase(conversationId);
+		if (!base) {
+			return null;
+		}
+
+		return base.members.map((member) => member.id);
+	}
+
+	async listOtherConversationMemberIds(
+		conversationId: string,
+		viewerUserId: string,
+	) {
+		const memberIds = await this.listConversationMemberIds(
+			conversationId,
+			viewerUserId,
+		);
+		return memberIds?.filter((memberId) => memberId !== viewerUserId) ?? null;
+	}
+
+	async markConversationDelivered(params: {
+		conversationId: string;
+		userId: string;
+	}) {
+		const membership = await this.assertMember(
+			params.conversationId,
+			params.userId,
+		);
+		if (!membership) {
+			return null;
+		}
+
+		const messageIds = await this.ensureReceiptRowsForConversation(params);
+		if (!messageIds) {
+			return null;
+		}
+
+		const updated = await messageReceiptRepository.markDelivered({
+			messageIds,
+			userId: params.userId,
+			deliveredAt: new Date(),
+		});
+		return await this.getReceiptUpdates(
+			params.conversationId,
+			updated.map((entry) => entry.messageId),
+		);
+	}
+
+	async markConversationRead(params: {
+		conversationId: string;
+		userId: string;
+	}) {
+		const membership = await this.assertMember(
+			params.conversationId,
+			params.userId,
+		);
+		if (!membership) {
+			return null;
+		}
+
+		const messageIds = await this.ensureReceiptRowsForConversation(params);
+		if (!messageIds) {
+			return null;
+		}
+
+		const updated = await messageReceiptRepository.markRead({
+			messageIds,
+			userId: params.userId,
+			readAt: new Date(),
+		});
+		return await this.getReceiptUpdates(
+			params.conversationId,
+			updated.map((entry) => entry.messageId),
+		);
 	}
 
 	async sendMessage(params: {
@@ -317,6 +587,24 @@ export class MessagingService {
 				return null;
 			}
 
+			const base = await this.getConversationBase(params.conversationId);
+			if (!base) {
+				return null;
+			}
+
+			const recipients = base.members
+				.map((entry) => entry.id)
+				.filter((entry) => entry !== params.senderId);
+			await messageReceiptRepository.createMany(
+				recipients.map((userId) => ({
+					messageId: created.id,
+					userId,
+					deliveredAt: messageSocketManager.hasConnectionsForUser(userId)
+						? new Date()
+						: null,
+				})),
+			);
+
 			const thread = await this.getConversationThread(
 				params.senderId,
 				params.conversationId,
@@ -325,9 +613,6 @@ export class MessagingService {
 				return null;
 			}
 
-			const recipients = thread.members
-				.map((entry) => entry.id)
-				.filter((entry) => entry !== params.senderId);
 			if (recipients.length > 0) {
 				const broadcastData = notificationFactory.create({
 					type: "MESSAGE",
@@ -345,6 +630,7 @@ export class MessagingService {
 			return {
 				message: created,
 				thread,
+				recipients,
 			};
 		} catch (error) {
 			handleError(error);

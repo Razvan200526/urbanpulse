@@ -11,6 +11,9 @@ export const resourceSeeds: ResourceInsert[] = [
 		description:
 			"Fuel-efficient generator suitable for fridge + lights backup during outages.",
 		availability: "Available",
+		position: { x: 26.1025, y: 44.4268 },
+		locationLabel: "Bucharest City Center",
+		resourceType: "Item",
 		imageUrls: [
 			"https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1200",
 		],
@@ -23,6 +26,9 @@ export const resourceSeeds: ResourceInsert[] = [
 		description:
 			"Emergency trauma supplies and burn dressings for on-site assistance.",
 		availability: "Available",
+		position: { x: 26.0879, y: 44.4412 },
+		locationLabel: "Cismigiu",
+		resourceType: "Item",
 		imageUrls: [
 			"https://images.unsplash.com/photo-1584515933487-779824d29309?w=1200",
 		],
@@ -35,6 +41,9 @@ export const resourceSeeds: ResourceInsert[] = [
 		description:
 			"Clean and certified seat for temporary family transport needs.",
 		availability: "Currently Unavailable",
+		position: { x: 26.1304, y: 44.4592 },
+		locationLabel: "Tei",
+		resourceType: "Item",
 		imageUrls: [],
 		createdAt: new Date("2026-03-30T09:40:00.000Z"),
 	},
@@ -45,6 +54,9 @@ export const resourceSeeds: ResourceInsert[] = [
 		description:
 			"Compact submersible pump with 20m hose for quick flood response.",
 		availability: "Unavailable",
+		position: { x: 26.0276, y: 44.4306 },
+		locationLabel: "Drumul Taberei",
+		resourceType: "Item",
 		imageUrls: [
 			"https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200",
 		],

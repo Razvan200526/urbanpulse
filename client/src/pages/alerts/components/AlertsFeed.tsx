@@ -1,44 +1,50 @@
-import { H4 } from "@client/components/typography";
+import type { NotificationListItem } from "@client/utils/notifications";
 import { ScrollShadow } from "@heroui/react";
-import { useAlertsPageData } from "../hooks";
-import { useAlertsPageStore } from "../store";
-import { AlertCard } from "./AlertCard";
+import { AlertList } from "./AlertList";
 import { AlertsEmptyState } from "./AlertsEmptyState";
+import { AlertsFeedSkeleton } from "./AlertsSkeletons";
 
-export const AlertsFeed = () => {
-	const { filteredNotifications } = useAlertsPageData();
-	const selectedAlertId = useAlertsPageStore((state) => state.selectedAlertId);
+export const AlertsFeed = ({
+	activeAlertId,
+	filteredNotifications = [],
+	isPending,
+}: {
+	activeAlertId: string | null;
+	filteredNotifications?: NotificationListItem[];
+	isPending: boolean;
+}) => {
+	const hasItems = filteredNotifications.length > 0;
 
 	return (
-		<div className="flex min-h-0 flex-col overflow-hidden rounded border border-accent bg-surface">
-			<div className="border-b border-accent px-4 py-4 sm:px-5">
-				<H4>Your alerts</H4>
-			</div>
-			<ScrollShadow
-				size={8}
-				hideScrollBar
-				className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
-			>
-				{filteredNotifications.length === 0 ? (
-					<AlertsEmptyState />
-				) : (
+		<div className="flex min-h-0 flex-col overflow-hidden rounded border border-border bg-surface">
+			{isPending ? (
+				<ScrollShadow
+					size={8}
+					hideScrollBar
+					className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+				>
 					<div className="flex flex-col gap-4">
-						{filteredNotifications.map((notificationItem, index) => {
-							const notificationId = notificationItem.notification?.id;
-							const activeId =
-								selectedAlertId ?? filteredNotifications[0]?.notification?.id;
-
-							return (
-								<AlertCard
-									key={notificationId ?? index}
-									notificationItem={notificationItem}
-									isActive={notificationId === activeId}
-								/>
-							);
-						})}
+						<AlertsFeedSkeleton />
 					</div>
-				)}
-			</ScrollShadow>
+				</ScrollShadow>
+			) : hasItems ? (
+				<ScrollShadow
+					size={8}
+					hideScrollBar
+					className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+				>
+					<div className="flex flex-col gap-4">
+						<AlertList
+							activeAlertId={activeAlertId}
+							items={filteredNotifications}
+						/>
+					</div>
+				</ScrollShadow>
+			) : (
+				<div className="min-h-0 flex-1 p-4">
+					<AlertsEmptyState />
+				</div>
+			)}
 		</div>
 	);
 };

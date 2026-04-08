@@ -1,5 +1,5 @@
 # bhvr/.gitignore
-
+postman/
 project.pdf
 
 # dependencies
@@ -41,8 +41,12 @@ pnpm-debug.log*
 *.sw?
 
 # Bun
-bun.lockb
+bun.lock
 .turbo
 
 #postgres
 data
+
+.zed/*
+.codex/*
+.agents/*

@@ -15,17 +15,22 @@ describe("resource response helpers", () => {
 					name: "Ladder",
 					description: "Tall ladder",
 					availability: "Available",
+					position: { x: 26.1, y: 44.4 },
+					locationLabel: "Bucharest",
+					resourceType: "Item",
 					imageUrls: [],
 					createdAt: "2025-01-01T00:00:00.000Z",
 				},
 				author: null,
 				recentUsers: [],
+				reviewSummary: { averageRating: 4.5, count: 2 },
 			},
 		];
 
 		const [result] = normalizeResources(items);
 
 		expect(result?.resource.createdAt).toBeInstanceOf(Date);
+		expect(result?.reviewSummary).toEqual({ averageRating: 4.5, count: 2 });
 	});
 
 	test("prefers explicit error text when present", () => {

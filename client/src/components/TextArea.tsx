@@ -99,7 +99,7 @@ export const TextArea = forwardRef<TextAreaRefType, TextAreaComponentProps>(
 					name={name}
 					value={value}
 					className={cn(
-						"rounded border border-accent text-primary-400 placeholder:italic",
+						"rounded border border-accent text-primary-400 placeholder:italic focus-within:bg-surface",
 						inputWrapperClassname,
 					)}
 					placeholder={placeholder}

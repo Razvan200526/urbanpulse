@@ -41,4 +41,28 @@ describe("notification helpers", () => {
 
 		expect(summarizeNotificationPayload("MESSAGE", null)).toBe("");
 	});
+
+	test("summarizes transaction notifications", () => {
+		expect(
+			summarizeNotificationPayload("TRANSACTION", {
+				action: "REQUESTED",
+				resourceName: "Generator",
+				borrowerName: "Mara",
+			}),
+		).toBe("Mara requested “Generator”.");
+
+		expect(
+			summarizeNotificationPayload("TRANSACTION", {
+				action: "ACCEPTED",
+				resourceName: "Generator",
+			}),
+		).toBe("Your request for “Generator” was accepted.");
+
+		expect(
+			summarizeNotificationPayload("TRANSACTION", {
+				action: "REJECTED",
+				resourceName: "Generator",
+			}),
+		).toBe("Your request for “Generator” was rejected.");
+	});
 });

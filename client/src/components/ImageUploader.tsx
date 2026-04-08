@@ -3,7 +3,7 @@ import { Toast } from "@heroui/react";
 import { PlusSquareIcon, UploadCloud, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "./Button/Button";
-import { Modal } from "./Modal";
+import { Modal, type ModalRefType } from "./Modal";
 import { H4 } from "./typography";
 
 export type ImageUploaderPropsType = {
@@ -13,10 +13,10 @@ export type ImageUploaderPropsType = {
 
 export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 	const { mutateAsync: uploadImage } = useUploadImage();
-	const [isOpen, setIsOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+	const modalRef = useRef<ModalRefType | null>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const handleFileSelect = (file: File) => {
@@ -61,9 +61,7 @@ export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 				}
 				Toast.toast.success("Image uploaded successfully");
 				onSave(response.data.url);
-				setIsOpen(false);
-				setSelectedFile(null);
-				setPreviewUrl(null);
+				modalRef.current?.close();
 			} catch {
 				Toast.toast.danger("Failed to upload image.");
 			} finally {
@@ -73,19 +71,18 @@ export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 	};
 
 	const handleClose = () => {
-		setIsOpen(false);
 		setSelectedFile(null);
 		if (previewUrl) URL.revokeObjectURL(previewUrl);
 		setPreviewUrl(null);
+		if (inputRef.current) inputRef.current.value = "";
 	};
+
+	const openModal = () => modalRef.current?.open();
+	const closeModal = () => modalRef.current?.close();
 
 	const footer = (
 		<>
-			<Button
-				variant="danger-soft"
-				onPress={handleClose}
-				isDisabled={isLoading}
-			>
+			<Button variant="danger-soft" onPress={closeModal} isDisabled={isLoading}>
 				Cancel
 			</Button>
 			<Button
@@ -101,10 +98,9 @@ export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 
 	return (
 		<Modal
-			isOpen={isOpen}
+			modalRef={modalRef}
 			onOpenChange={(open) => {
 				if (!open) handleClose();
-				else setIsOpen(true);
 			}}
 			footer={footer}
 			header={
@@ -114,9 +110,9 @@ export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 			}
 			trigger={
 				trigger ? (
-					trigger(() => setIsOpen(true))
+					trigger(openModal)
 				) : (
-					<Button onPress={() => setIsOpen(true)}>
+					<Button onPress={openModal}>
 						<PlusSquareIcon className="size-4" />
 						<p>Upload photo</p>
 					</Button>

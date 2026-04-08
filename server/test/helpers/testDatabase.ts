@@ -8,6 +8,7 @@ const APP_TABLES = [
 	'"session"',
 	'"verification"',
 	'"conversation_member"',
+	'"message_receipt"',
 	'"message"',
 	'"notification"',
 	'"pet_match"',

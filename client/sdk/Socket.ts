@@ -20,11 +20,13 @@ export type SocketResponseType<T = any> = {
 };
 
 type MessageHandler<T = any> = (response: SocketResponseType<T>) => void;
+type StatusHandler = (isOpen: boolean) => void;
 
 export class Socket {
 	private ws: WebSocket;
 	private messageHandlers: Set<MessageHandler> = new Set();
 	private openHandlers: Set<() => void> = new Set();
+	private statusHandlers: Set<StatusHandler> = new Set();
 	private _isOpen = false;
 	private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 	private manuallyClosed = false;
@@ -40,6 +42,7 @@ export class Socket {
 
 		ws.onopen = () => {
 			this._isOpen = true;
+			this.notifyStatusHandlers();
 			if (this.reconnectTimer) {
 				clearTimeout(this.reconnectTimer);
 				this.reconnectTimer = null;
@@ -53,6 +56,7 @@ export class Socket {
 
 		ws.onclose = () => {
 			this._isOpen = false;
+			this.notifyStatusHandlers();
 			if (this.manuallyClosed || this.reconnectTimer) {
 				return;
 			}
@@ -60,6 +64,11 @@ export class Socket {
 				this.reconnectTimer = null;
 				this.ws = this.connect();
 			}, 1000);
+		};
+
+		ws.onerror = () => {
+			this._isOpen = false;
+			this.notifyStatusHandlers();
 		};
 
 		ws.onmessage = (event) => {
@@ -89,7 +98,11 @@ export class Socket {
 		callback: (response: SocketResponseType<T>) => void,
 	): () => void;
 	public on(event: "open", callback: () => void): () => void;
-	public on(event: "message" | "open", callback: (...args: any[]) => void) {
+	public on(event: "status", callback: StatusHandler): () => void;
+	public on(
+		event: "message" | "open" | "status",
+		callback: (...args: any[]) => void,
+	) {
 		if (event === "message") {
 			this.messageHandlers.add(callback);
 			return () => this.messageHandlers.delete(callback);
@@ -99,6 +112,11 @@ export class Socket {
 			// If already open, fire immediately
 			if (this._isOpen) callback();
 			return () => this.openHandlers.delete(callback);
+		}
+		if (event === "status") {
+			this.statusHandlers.add(callback);
+			callback(this._isOpen);
+			return () => this.statusHandlers.delete(callback);
 		}
 		return () => {};
 	}
@@ -139,5 +157,11 @@ export class Socket {
 		if (url.startsWith("http://")) return url.replace("http://", "ws://");
 		if (url.startsWith("https://")) return url.replace("https://", "wss://");
 		return `wss://${url}`;
+	}
+
+	private notifyStatusHandlers() {
+		for (const handler of this.statusHandlers) {
+			handler(this._isOpen);
+		}
 	}
 }

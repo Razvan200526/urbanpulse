@@ -1,14 +1,31 @@
+import { useNotificationSocketOpen } from "@client/hooks/notifications/useNotificationsFeed";
 import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import { useQuery } from "@tanstack/react-query";
 import { backend } from "client/sdk/backend";
 import { useEffect } from "react";
 import {
 	fetchPulseById,
-	parsePulseNotification,
 	pulseArraySchema,
 	sendPulseSocketMessage,
-	syncPulseInCache,
 } from "./shared";
+
+const useSyncNotificationSocketLocation = (
+	data: PulseRetrievePayloadType,
+	enabled: boolean,
+) => {
+	const { x, y } = data.position;
+
+	useEffect(() => {
+		if (!enabled) {
+			return;
+		}
+
+		backend.notifications.send({
+			type: "UPDATE_LOCATION",
+			location: { x, y },
+		});
+	}, [x, y, enabled]);
+};
 
 export const useRetrievePulseById = (
 	pulseId: string | null | undefined,
@@ -27,7 +44,10 @@ export const useRetrieveMapPulses = (
 	data: PulseRetrievePayloadType,
 	enabled = true,
 ) => {
-	const query = useQuery({
+	const isNotificationSocketOpen = useNotificationSocketOpen();
+	useSyncNotificationSocketLocation(data, enabled);
+
+	return useQuery({
 		queryKey: ["pulse", "map", data],
 		enabled,
 		queryFn: () =>
@@ -39,49 +59,18 @@ export const useRetrieveMapPulses = (
 				pulseArraySchema,
 				"Failed to retrieve map pulses",
 			).then((result) => result.data),
-		refetchInterval: enabled ? 3000 : false,
+		refetchInterval: enabled && !isNotificationSocketOpen ? 3000 : false,
 		refetchIntervalInBackground: true,
 	});
-
-	useEffect(() => {
-		if (!enabled) {
-			return;
-		}
-
-		const unsubscribe = backend.notifications.on<unknown>(
-			"message",
-			(response) => {
-				if (!response.success) {
-					return;
-				}
-
-				if (
-					response.channelName !== "notifications:broadcast" &&
-					response.channelName !== "notifications:pulse_updated"
-				) {
-					return;
-				}
-
-				const parsed = parsePulseNotification(response.data);
-
-				if (!parsed.payload.pulse) {
-					return;
-				}
-
-				syncPulseInCache(parsed.payload.pulse);
-			},
-		);
-
-		return unsubscribe;
-	}, [enabled]);
-
-	return query;
 };
 
 export const useRetrievePulses = (
 	data: PulseRetrievePayloadType,
 	enabled = true,
 ) => {
+	const isNotificationSocketOpen = useNotificationSocketOpen();
+	useSyncNotificationSocketLocation(data, enabled);
+
 	return useQuery({
 		queryKey: ["pulse", "retrieve", data],
 		enabled,
@@ -94,7 +83,7 @@ export const useRetrievePulses = (
 				pulseArraySchema,
 				"Failed to retrieve pulses",
 			),
-		refetchInterval: enabled ? 3000 : false,
+		refetchInterval: enabled && !isNotificationSocketOpen ? 3000 : false,
 		refetchIntervalInBackground: true,
 	});
 };
