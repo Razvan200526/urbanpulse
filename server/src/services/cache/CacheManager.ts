@@ -150,9 +150,7 @@ class CacheManager {
     await this.redis.del(fullKey);
   }
 
-  //Cache-aside pattern
-
-
+  // Cache-aside pattern
   async getOrSet<T>(
     key: string,
     fetcher: () => Promise<T>,
@@ -166,7 +164,11 @@ class CacheManager {
     return fresh;
   }
 
-  //Invalidare pe pattern 
+  // Invalidation - single key or pattern
+  async invalidate(key: string, options: CacheOptions = {}): Promise<void> {
+    const fullKey = this.buildKey(key, options.namespace);
+    await this.redis.del(fullKey);
+  }
 
   async invalidatePattern(pattern: string, namespace?: CacheNamespace): Promise<void> {
     const fullPattern = namespace ? `${namespace}:${pattern}` : pattern;
