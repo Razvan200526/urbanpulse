@@ -1,4 +1,5 @@
 import type { PulseResponseType } from "@server/db/schema";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { pulseRepository } from "@server/repositories/PulseRepository";
 import {
 	type ResponseRepository,
@@ -11,6 +12,7 @@ import { isResponseRequestValid } from "@shared/validators/isResponseValid";
 
 export class ResponseService {
 	private responseRepo: ResponseRepository;
+	private cache = cacheManager;
 
 	constructor() {
 		this.responseRepo = responseRepository;

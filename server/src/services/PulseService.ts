@@ -1,4 +1,5 @@
 import type { PulseType, UserType } from "@server/db/schema";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { notificationRepository } from "@server/repositories/NotificationRepository";
 import {
 	type PulseRepository,
@@ -39,6 +40,7 @@ type PulseViewerContext = Pick<UserType, "id" | "role"> | null;
 export class PulseService {
 	private pulseRepository: PulseRepository;
 	responseRepository: ResponseRepository;
+	private cache = cacheManager;
 
 	constructor() {
 		this.pulseRepository = pulseRepository;
@@ -179,7 +181,11 @@ export class PulseService {
 	}
 
 	async getPulseById(id: string): Promise<PulseType | null> {
-		return this.pulseRepository.getOne(id);
+		return await this.cache.getOrSet(
+			id,
+			() => this.pulseRepository.getOne(id),
+			{ namespace: "pulse", ttl: 300 }
+		);
 	}
 
 	/**
@@ -281,22 +287,33 @@ export class PulseService {
 		urgency,
 		verifiedOnly,
 	}: PulseRetrievePayloadType): Promise<PulseType[] | null> {
-		try {
-			const pulses = await this.pulseRepository.getByOptions({
-				x: position.x,
-				y: position.y,
-				radius,
-				status,
-				type,
-				urgency,
-				isVerified: verifiedOnly ? true : undefined,
-			});
+		// Create cache key from location and filters (round coordinates to reduce cache variations)
+		const roundLat = Math.round(position.y * 100) / 100;
+		const roundLng = Math.round(position.x * 100) / 100;
+		const cacheKey = `nearby:${roundLat}:${roundLng}:${radius}:${status}:${type || "all"}:${urgency || "all"}`;
 
-			return pulses.filter((pulse) => !pulse.mergedIntoPulseId);
-		} catch (error) {
-			handleError(error);
-			return null;
-		}
+		return await this.cache.getOrSet(
+			cacheKey,
+			async () => {
+				try {
+					const pulses = await this.pulseRepository.getByOptions({
+						x: position.x,
+						y: position.y,
+						radius,
+						status,
+						type,
+						urgency,
+						isVerified: verifiedOnly ? true : undefined,
+					});
+
+					return pulses.filter((pulse) => !pulse.mergedIntoPulseId);
+				} catch (error) {
+					handleError(error);
+					return null;
+				}
+			},
+			{ namespace: "pulse", ttl: 300 }
+		);
 	}
 
 	async getMapPulses(

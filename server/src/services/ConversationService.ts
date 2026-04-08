@@ -6,6 +6,7 @@ import {
 	type UserType,
 	user,
 } from "@server/db/schema";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { conversationRepository } from "@server/repositories/ConversationRepository";
 import { messageRepository } from "@server/repositories/MessageRepository";
 import { handleError } from "@server/utils/handleError";
@@ -19,6 +20,8 @@ type ConversationMemberPreview = Pick<
 >;
 
 export class ConversationService {
+	private cache = cacheManager;
+
 	async isMember(conversationId: string, userId: string) {
 		const [membership] = await db
 			.select()

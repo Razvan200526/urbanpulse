@@ -7,6 +7,7 @@ import {
 	type UserType,
 	user,
 } from "@server/db/schema";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { conversationMemberRepository } from "@server/repositories/ConversationMemberRepository";
 import { conversationRepository } from "@server/repositories/ConversationRepository";
 import { messageRepository } from "@server/repositories/MessageRepository";
@@ -33,6 +34,8 @@ type ConversationThread = ConversationSummary & {
 };
 
 export class MessagingService {
+	private cache = cacheManager;
+
 	private async findExactPairConversations(
 		userId: string,
 		otherUserId: string,

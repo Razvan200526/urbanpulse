@@ -1,4 +1,5 @@
 import type { PulseType, QuietHoursType, UserType } from "@server/db/schema";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { quietHoursRepository } from "@server/repositories/QuietHoursRepository";
 import { skillRepository } from "@server/repositories/SkillRepository";
 import { userRepository } from "@server/repositories/UserRepository";
@@ -108,90 +109,98 @@ function resolveEffectiveLocation(user: UserType) {
 
 export class HeroAlertMatchingService {
 	async matchPulse(pulse: PulseType): Promise<MatchCandidate[]> {
-		const normalizedPulseTags = (pulse.requestedSkillTags ?? [])
-			.map((tag) => normalizeSkillTag(tag))
-			.filter(Boolean);
+		return await this.cache.getOrSet(
+			`${pulse.id}:matches`,
+			async () => {
+				const normalizedPulseTags = (pulse.requestedSkillTags ?? [])
+					.map((tag) => normalizeSkillTag(tag))
+					.filter(Boolean);
 
-		if (normalizedPulseTags.length === 0) {
-			logger.info(
-				`Hero matching skipped for Pulse[${pulse.id}] - no inferred tags`,
-			);
-			return [];
-		}
+				if (normalizedPulseTags.length === 0) {
+					logger.info(
+						`Hero matching skipped for Pulse[${pulse.id}] - no inferred tags`,
+					);
+					return [];
+				}
 
-		const nearbyUsers = await userRepository.getPotentialHelpersNearPosition({
-			position: pulse.position,
-			maxRadiusMeters: MAX_MATCH_RADIUS_METERS,
-			excludeUserId: pulse.userId,
-		});
+				const nearbyUsers = await userRepository.getPotentialHelpersNearPosition({
+					position: pulse.position,
+					maxRadiusMeters: MAX_MATCH_RADIUS_METERS,
+					excludeUserId: pulse.userId,
+				});
 
-		if (nearbyUsers.length === 0) {
-			return [];
-		}
+				if (nearbyUsers.length === 0) {
+					return [];
+				}
 
-		const [allSkills, quietHoursRows] = await Promise.all([
-			skillRepository.getByUserIds(nearbyUsers.map((entry) => entry.id)),
-			quietHoursRepository.findByUserIds(nearbyUsers.map((entry) => entry.id)),
-		]);
+				const [allSkills, quietHoursRows] = await Promise.all([
+					skillRepository.getByUserIds(nearbyUsers.map((entry) => entry.id)),
+					quietHoursRepository.findByUserIds(nearbyUsers.map((entry) => entry.id)),
+				]);
 
-		const skillsByUserId = new Map<string, string[]>();
-		for (const entry of allSkills) {
-			const normalized = normalizeSkillTag(entry.tag);
-			const existing = skillsByUserId.get(entry.userId) ?? [];
-			skillsByUserId.set(entry.userId, [...existing, normalized]);
-		}
+				const skillsByUserId = new Map<string, string[]>();
+				for (const entry of allSkills) {
+					const normalized = normalizeSkillTag(entry.tag);
+					const existing = skillsByUserId.get(entry.userId) ?? [];
+					skillsByUserId.set(entry.userId, [...existing, normalized]);
+				}
 
-		const quietHoursByUserId = new Map<string, QuietHoursType>();
-		for (const entry of quietHoursRows) {
-			quietHoursByUserId.set(entry.userId, entry);
-		}
+				const quietHoursByUserId = new Map<string, QuietHoursType>();
+				for (const entry of quietHoursRows) {
+					quietHoursByUserId.set(entry.userId, entry);
+				}
 
-		const bypassQuietHours = shouldBypassQuietHours(pulse);
-		const now = new Date();
-		const matches: MatchCandidate[] = [];
+				const bypassQuietHours = shouldBypassQuietHours(pulse);
+				const now = new Date();
+				const matches: MatchCandidate[] = [];
 
-		for (const candidate of nearbyUsers) {
-			const locationResult = resolveEffectiveLocation(candidate);
-			if (!locationResult) {
-				continue;
-			}
+				for (const candidate of nearbyUsers) {
+					const locationResult = resolveEffectiveLocation(candidate);
+					if (!locationResult) {
+						continue;
+					}
 
-			const candidateTags = new Set(skillsByUserId.get(candidate.id) ?? []);
-			const matchedTags = normalizedPulseTags.filter((tag) =>
-				candidateTags.has(tag),
-			);
-			if (matchedTags.length === 0) {
-				continue;
-			}
+					const candidateTags = new Set(skillsByUserId.get(candidate.id) ?? []);
+					const matchedTags = normalizedPulseTags.filter((tag) =>
+						candidateTags.has(tag),
+					);
+					if (matchedTags.length === 0) {
+						continue;
+					}
 
-			const quietHours = quietHoursByUserId.get(candidate.id) ?? null;
-			if (!bypassQuietHours && isQuietHoursActive(quietHours, now)) {
-				continue;
-			}
+					const quietHours = quietHoursByUserId.get(candidate.id) ?? null;
+					if (!bypassQuietHours && isQuietHoursActive(quietHours, now)) {
+						continue;
+					}
 
-			const distanceMeters = distanceInMeters(
-				pulse.position,
-				locationResult.location,
-			);
-			if (distanceMeters > (candidate.heroAlertRadiusMeters ?? 500)) {
-				continue;
-			}
+					const distanceMeters = distanceInMeters(
+						pulse.position,
+						locationResult.location,
+					);
+					if (distanceMeters > (candidate.heroAlertRadiusMeters ?? 500)) {
+						continue;
+					}
 
-			matches.push({
-				user: candidate,
-				matchedTags,
-				distanceMeters: Math.round(distanceMeters),
-				usedLiveLocation: locationResult.usedLiveLocation,
-				quietHoursBypassed:
-					bypassQuietHours && isQuietHoursActive(quietHours, now),
-			});
-		}
+					matches.push({
+						user: candidate,
+						matchedTags,
+						distanceMeters: Math.round(distanceMeters),
+						usedLiveLocation: locationResult.usedLiveLocation,
+						quietHoursBypassed:
+							bypassQuietHours && isQuietHoursActive(quietHours, now),
+					});
+				}
 
-		logger.info(
-			`Hero matching evaluated ${nearbyUsers.length} candidates for Pulse[${pulse.id}] and found ${matches.length} matches`,
+				logger.info(
+					`Hero matching evaluated ${nearbyUsers.length} candidates for Pulse[${pulse.id}] and found ${matches.length} matches`,
+				);
+				return matches;
+			},
+			{ namespace: "heroAlert", ttl: 600 },
 		);
-		return matches;
 	}
+
+	private cache = cacheManager;
 }
 
 export const heroAlertMatchingService = new HeroAlertMatchingService();

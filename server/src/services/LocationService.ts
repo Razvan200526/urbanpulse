@@ -1,6 +1,9 @@
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { socketManager, type UserConnection } from "./SocketManager";
 
 export class LocationService {
+	private cache = cacheManager;
+
 	/**
 	 * @param pos
 	 * @returns Active connections near the provided position.

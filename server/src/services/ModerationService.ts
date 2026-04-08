@@ -1,4 +1,5 @@
 import { db } from "@server/db";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import {
 	conversation,
 	type PulseType,
@@ -104,6 +105,7 @@ export class ModerationService {
 	private readonly pulseRepo: PulseRepository;
 	private readonly userRepo: UserRepository;
 	private readonly pulseConfirmationRepo: PulseConfirmationRepository;
+	private cache = cacheManager;
 
 	constructor() {
 		this.reportRepo = reportRepository;

@@ -1,3 +1,4 @@
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { notificationService } from "@server/services/NotificationService";
 import { pulseService } from "@server/services/PulseService";
 import type {
@@ -12,6 +13,7 @@ import { PulseEnum } from "@shared/types";
  * Service responsible for preparing dashboard overview metrics and chart data.
  */
 export class DashboardService {
+	private cache = cacheManager;
 	/**
 	 * Adds a number of days to a date.
 	 * @param {Date} date - Base date.
@@ -87,45 +89,50 @@ export class DashboardService {
 	async getOverview(
 		referenceDate: Date = new Date(),
 	): Promise<DashboardOverviewData | null> {
-		try {
-			const [pulseCounts, emergencyPulseCounts, userCounts, alertCounts] =
-				await Promise.all([
-					pulseService.getPulseCountsForLast7Days({}, referenceDate),
-					pulseService.getPulseCountsForLast7Days(
-						{ type: PulseEnum.Emergency },
-						referenceDate,
-					),
-					userService.getUserCountsForLast7Days({}, referenceDate),
-					notificationService.getAlertCountsForLast7Days({}, referenceDate),
-				]);
+		// Cache the overview with date-based key (daily refresh)
+		const dateKey = referenceDate.toISOString().split("T")[0];
+		return await this.cache.getOrSet(
+			`overview:${dateKey}`,
+			async () => {
+				try {
+					const [pulseCounts, emergencyPulseCounts, userCounts, alertCounts] =
+						await Promise.all([
+							pulseService.getPulseCountsForLast7Days({}, referenceDate),
+							pulseService.getPulseCountsForLast7Days(
+								{ type: PulseEnum.Emergency },
+								referenceDate,
+							),
+							userService.getUserCountsForLast7Days({}, referenceDate),
+							notificationService.getAlertCountsForLast7Days({}, referenceDate),
+						]);
 
-			if (
-				!pulseCounts ||
-				!emergencyPulseCounts ||
-				!userCounts ||
-				!alertCounts
-			) {
-				return null;
-			}
+					if (
+						!pulseCounts ||
+						!emergencyPulseCounts ||
+						!userCounts ||
+						!alertCounts
+					) {
+						return null;
+					}
 
-			const [pulsesForChart, notificationsForChart] = await Promise.all([
-				pulseService.getPulsesByCondition(
-					{},
-					{
-						createdAtFrom: pulseCounts.currentWindowStart,
-						createdAtTo: pulseCounts.currentWindowEnd,
-					},
-				),
-				notificationService.getNotificationsByCondition(
-					{},
-					{
-						createdAtFrom: alertCounts.currentWindowStart,
-						createdAtTo: alertCounts.currentWindowEnd,
-					},
-				),
-			]);
+					const [pulsesForChart, notificationsForChart] = await Promise.all([
+						pulseService.getPulsesByCondition(
+							{},
+							{
+								createdAtFrom: pulseCounts.currentWindowStart,
+								createdAtTo: pulseCounts.currentWindowEnd,
+							},
+						),
+						notificationService.getNotificationsByCondition(
+							{},
+							{
+								createdAtFrom: alertCounts.currentWindowStart,
+								createdAtTo: alertCounts.currentWindowEnd,
+							},
+						),
+					]);
 
-			if (!pulsesForChart || !notificationsForChart) {
+					if (!pulsesForChart || !notificationsForChart) {
 				return null;
 			}
 
@@ -155,11 +162,14 @@ export class DashboardService {
 				},
 				chart,
 			};
-		} catch (error) {
-			handleError(error);
-			return null;
-		}
-	}
+				} catch (error) {
+					handleError(error);
+					return null;
+				}
+			},
+			{ namespace: "dashboard", ttl: 300 }
+		);
+}
 }
 
 export const dashboardService = new DashboardService();

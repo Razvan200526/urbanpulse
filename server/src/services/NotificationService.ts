@@ -1,4 +1,5 @@
 import type { NotificationType, PulseType } from "@server/db/schema";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import {
 	type NotificationRepository,
 	notificationRepository,
@@ -30,6 +31,7 @@ export class NotificationService {
 	private notificationRepo: NotificationRepository;
 	private locationService: LocationService;
 	private notificationFactory: NotificationFactory;
+	private cache = cacheManager;
 
 	constructor() {
 		this.notificationRepo = notificationRepository;

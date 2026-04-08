@@ -12,6 +12,7 @@ import {
 	type UserRepository,
 	userRepository,
 } from "@server/repositories/UserRepository";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import type { Last7DaysUserCounts } from "@server/services/types";
 import { logger } from "@server/utils/Logger";
 import { isEmailValid } from "@shared/validators/isEmailValid";
@@ -42,11 +43,13 @@ type UserProfileView = {
 	};
 };
 
+import CacheManager from "./cache/CacheManager";
+
 export class UserService {
 	private readonly userRepo: UserRepository;
 	private readonly quietHoursRepo: QuietHoursRepository;
 	private readonly skillRepo: SkillRepository;
-
+private cache = cacheManager;
 	constructor() {
 		this.userRepo = userRepository;
 		this.quietHoursRepo = quietHoursRepository;
@@ -110,22 +113,28 @@ export class UserService {
 	}
 
 	async getProfile(userId: string): Promise<UserProfileView | null> {
-		const user = await this.userRepo.getOne(userId);
-		if (!user) {
-			return null;
-		}
+		return await this.cache.getOrSet(
+			`${userId}:profile`,
+			async () => {
+				const user = await this.userRepo.getOne(userId);
+				if (!user) {
+					return null;
+				}
 
-		const [quietHours, skills] = await Promise.all([
-			this.quietHoursRepo.findByUserId(userId),
-			this.skillRepo.getByUserId(userId),
-		]);
+				const [quietHours, skills] = await Promise.all([
+					this.quietHoursRepo.findByUserId(userId),
+					this.skillRepo.getByUserId(userId),
+				]);
 
-		return {
-			user,
-			quietHours: this.formatQuietHours(quietHours),
-			skillTags: skills.map((entry: SkillType) => entry.tag),
-			alertPreferences: this.formatAlertPreferences(user),
-		};
+				return {
+					user,
+					quietHours: this.formatQuietHours(quietHours),
+					skillTags: skills.map((entry: SkillType) => entry.tag),
+					alertPreferences: this.formatAlertPreferences(user),
+				};
+			},
+			{ namespace: "profile", ttl: 1800 }
+		);
 	}
 
 	/**
