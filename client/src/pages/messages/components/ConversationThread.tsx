@@ -5,7 +5,6 @@ import {
 	type InputMessageRefType,
 } from "@client/components/input/InputMessage";
 import { cn, ScrollShadow } from "@heroui/react";
-import { Skeleton } from "boneyard-js/react";
 import { useRef } from "react";
 import type {
 	ConversationMemberView,
@@ -20,7 +19,6 @@ export const ConversationThread = ({
 	draft,
 	isMobile,
 	isSending,
-	isThreadPending,
 	selectedConversation,
 	thread,
 	typingMembers: _typingMembers,
@@ -50,70 +48,64 @@ export const ConversationThread = ({
 	}
 
 	return (
-		<Skeleton
-			className="h-full min-h-0 *:data-[boneyard-content=true]:h-full *:data-[boneyard-content=true]:min-h-0"
-			name="messages-conversation-thread"
-			loading={isThreadPending || !thread}
-		>
-			{thread && (
-				<div className="flex h-full min-h-0 flex-col">
-					<div
-						className={cn(
-							"flex shrink-0 items-center gap-3 border-b border-border px-4 py-3",
-							!isMobile && "py-0 border-none",
-						)}
-					>
-						{isMobile ? (
-							<Button
-								aria-label="Back"
-								className="shrink-0"
-								isIconOnly
-								onPress={onBack}
-								startContent={
-									<ChevronRightIcon
-										aria-hidden="true"
-										className="size-4 rotate-180"
-										title="Back"
-									/>
-								}
-								variant="ghost"
-							/>
-						) : null}
-					</div>
-
-					<ScrollShadow
-						className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
-						hideScrollBar
-						size={8}
-					>
-						<div className="space-y-3">
-							{thread.messages.length === 0 ? (
-								<div className="flex min-h-56 items-center justify-center rounded-sm border border-dashed border-border px-4 text-sm text-muted">
-									No messages yet. Start the coordination thread here.
-								</div>
-							) : (
-								thread.messages.map((entry) => {
-									const isOwn = entry.senderId === currentUserId;
-									return <Message key={entry.id} isOwn={isOwn} entry={entry} />;
-								})
-							)}
-						</div>
-					</ScrollShadow>
-
-					<div className="shrink-0 bg-surface p-4">
-						<InputMessage
-							ref={messageRef}
-							className="w-full"
-							isDisabled={isSending}
-							onChange={(e) => {
-								messageRef.current?.setValue(e);
-							}}
-							sendMessage={async () => onSend(messageRef.current?.getValue())}
-							value={draft}
+		thread && (
+			<div className="flex h-full min-h-0 flex-col">
+				<div
+					className={cn(
+						"flex shrink-0 items-center gap-3 border-b border-border px-4 py-3",
+						!isMobile && "py-0 border-none",
+					)}
+				>
+					{isMobile ? (
+						<Button
+							aria-label="Back"
+							className="shrink-0"
+							isIconOnly
+							onPress={onBack}
+							startContent={
+								<ChevronRightIcon
+									aria-hidden="true"
+									className="size-4 rotate-180"
+									title="Back"
+								/>
+							}
+							variant="ghost"
 						/>
-					</div>
+					) : null}
 				</div>
-			)}
-		</Skeleton>
+
+				<ScrollShadow
+					className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+					hideScrollBar
+					size={8}
+				>
+					<div className="space-y-3">
+						{thread.messages.length === 0 ? (
+							<div className="flex min-h-56 items-center justify-center rounded-sm border border-dashed border-border px-4 text-sm text-muted">
+								No messages yet. Start the coordination thread here.
+							</div>
+						) : (
+							thread.messages.map((entry) => {
+								const isOwn = entry.senderId === currentUserId;
+								return <Message key={entry.id} isOwn={isOwn} entry={entry} />;
+							})
+						)}
+					</div>
+				</ScrollShadow>
+
+				<div className="shrink-0 bg-surface p-4">
+					<InputMessage
+						ref={messageRef}
+						className="w-full"
+						isDisabled={isSending}
+						onChange={(e) => {
+							messageRef.current?.setValue(e);
+						}}
+						sendMessage={async () => onSend(messageRef.current?.getValue())}
+						value={draft}
+					/>
+				</div>
+			</div>
+		)
 	);
 };

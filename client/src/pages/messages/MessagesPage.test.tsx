@@ -89,10 +89,6 @@ mock.module("react-router", () => ({
 	}),
 }));
 
-mock.module("boneyard-js/react", () => ({
-	Skeleton: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 mock.module("@client/components/Button/Button", () => ({
 	Button: (props: Record<string, any>) => {
 		buttonProps.push(props);

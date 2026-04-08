@@ -6,7 +6,6 @@ import { queryClient } from "@client/lib/api/client";
 import { useRetrievePulses } from "@client/pages/map/hooks";
 import { Card, ScrollShadow } from "@heroui/react";
 import { PulseEnum, PulseStatusEnum, UrgencyEnum } from "@shared/types";
-import { Skeleton } from "boneyard-js/react";
 import { TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
@@ -62,7 +61,7 @@ export function NeighborhoodPulseFeed() {
 		});
 		return sortPulsesForFeed(raw);
 	}, [pulsesRes?.data]);
-	const feedLoading = geoLoading || (enabled && isPending);
+	const _feedLoading = geoLoading || (enabled && isPending);
 
 	const onRefresh = () => {
 		queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
@@ -179,31 +178,10 @@ export function NeighborhoodPulseFeed() {
 						No active pulses nearby. Create one from the map.
 					</p>
 				)}
-				<Skeleton
-					name="dashboard-neighborhood-pulse-list"
-					loading={feedLoading}
-					fallback={
-						<div className="space-y-2">
-							{[0, 1, 2].map((item) => (
-								<div
-									key={item}
-									className="flex gap-3 rounded-lg border border-border/60 bg-surface/40 p-3"
-								>
-									<div className="mt-0.5 size-4 shrink-0 rounded bg-surface-secondary animate-pulse" />
-									<div className="min-w-0 flex-1 space-y-2">
-										<div className="h-4 w-32 rounded bg-surface-secondary animate-pulse" />
-										<div className="h-3 w-full rounded bg-surface-secondary animate-pulse" />
-										<div className="h-3 w-24 rounded bg-surface-secondary animate-pulse" />
-									</div>
-								</div>
-							))}
-						</div>
-					}
-				>
-					<ScrollShadow className="max-h-80 overflow-y-scroll space-y-2">
-						<PulseList pulses={sorted} />
-					</ScrollShadow>
-				</Skeleton>
+
+				<ScrollShadow className="max-h-80 overflow-y-scroll space-y-2">
+					<PulseList pulses={sorted} />
+				</ScrollShadow>
 			</Card.Content>
 		</Card>
 	);
