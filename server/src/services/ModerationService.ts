@@ -25,7 +25,6 @@ import {
   type UserRepository,
   userRepository,
 } from "@server/repositories/UserRepository";
-import { cacheManager } from "@server/services/cache/CacheManager";
 import { calculateDistance } from "@server/utils/calculateDistance";
 import { handleError } from "@server/utils/handleError";
 import { PulseStatusEnum, ReportStatusEnum } from "@shared/types";
