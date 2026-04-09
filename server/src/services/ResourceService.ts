@@ -3,13 +3,11 @@ import type {
   TransactionType,
   UserType,
 } from "@server/db/schema";
-import { cacheManager } from "@server/services/cache/CacheManager";
 import {
   type ResourceRepository,
   resourceRepository,
 } from "@server/repositories/ResourceRepository";
 import {
-  ResourceReviewRepository,
   resourceReviewRepository,
 } from "@server/repositories/ResourceReviewRepository";
 import {
@@ -20,6 +18,7 @@ import {
   type UserRepository,
   userRepository,
 } from "@server/repositories/UserRepository";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { notificationService } from "@server/services/NotificationService";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
@@ -174,7 +173,7 @@ export class ResourceService {
           return null;
         }
       },
-      { namespace: "resource", ttl: 600 }
+      { namespace: "resource", ttl: 600 },
     );
   }
 
@@ -249,7 +248,7 @@ export class ResourceService {
           return null;
         }
       },
-      { namespace: "resource", ttl: 600 }
+      { namespace: "resource", ttl: 600 },
     );
   }
 

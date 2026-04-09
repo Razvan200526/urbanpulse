@@ -133,43 +133,46 @@ export class DashboardService {
 					]);
 
 					if (!pulsesForChart || !notificationsForChart) {
-				return null;
-			}
+						return null;
+					}
 
-			const chart = this.buildTimeSeries(
-				pulsesForChart,
-				notificationsForChart,
-				pulseCounts.currentWindowStart,
-			);
+					const chart = this.buildTimeSeries(
+						pulsesForChart,
+						notificationsForChart,
+						pulseCounts.currentWindowStart,
+					);
 
-			return {
-				counts: {
-					pulsesLast7Days: pulseCounts.pulsesLast7Days,
-					emergencyPulsesLast7Days: emergencyPulseCounts.pulsesLast7Days,
-					newUsersLast7Days: userCounts.newUsersLast7Days,
-					alertsLast7Days: alertCounts.alertsLast7Days,
-				},
-				changes: {
-					pulsesLast7Days:
-						pulseCounts.pulsesLast7Days - pulseCounts.previousPulsesLast7Days,
-					emergencyPulsesLast7Days:
-						emergencyPulseCounts.pulsesLast7Days -
-						emergencyPulseCounts.previousPulsesLast7Days,
-					newUsersLast7Days:
-						userCounts.newUsersLast7Days - userCounts.previousNewUsersLast7Days,
-					alertsLast7Days:
-						alertCounts.alertsLast7Days - alertCounts.previousAlertsLast7Days,
-				},
-				chart,
-			};
+					return {
+						counts: {
+							pulsesLast7Days: pulseCounts.pulsesLast7Days,
+							emergencyPulsesLast7Days: emergencyPulseCounts.pulsesLast7Days,
+							newUsersLast7Days: userCounts.newUsersLast7Days,
+							alertsLast7Days: alertCounts.alertsLast7Days,
+						},
+						changes: {
+							pulsesLast7Days:
+								pulseCounts.pulsesLast7Days -
+								pulseCounts.previousPulsesLast7Days,
+							emergencyPulsesLast7Days:
+								emergencyPulseCounts.pulsesLast7Days -
+								emergencyPulseCounts.previousPulsesLast7Days,
+							newUsersLast7Days:
+								userCounts.newUsersLast7Days -
+								userCounts.previousNewUsersLast7Days,
+							alertsLast7Days:
+								alertCounts.alertsLast7Days -
+								alertCounts.previousAlertsLast7Days,
+						},
+						chart,
+					};
 				} catch (error) {
 					handleError(error);
 					return null;
 				}
 			},
-			{ namespace: "dashboard", ttl: 300 }
+			{ namespace: "dashboard", ttl: 300 },
 		);
-}
+	}
 }
 
 export const dashboardService = new DashboardService();

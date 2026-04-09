@@ -1,8 +1,8 @@
 import type { PulseType, QuietHoursType, UserType } from "@server/db/schema";
-import { cacheManager } from "@server/services/cache/CacheManager";
 import { quietHoursRepository } from "@server/repositories/QuietHoursRepository";
 import { skillRepository } from "@server/repositories/SkillRepository";
 import { userRepository } from "@server/repositories/UserRepository";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { logger } from "@server/utils/Logger";
 import { PulseEnum, UrgencyEnum } from "@shared/types";
 import { normalizeSkillTag } from "./RequestMatchingAIService";
@@ -123,11 +123,12 @@ export class HeroAlertMatchingService {
 					return [];
 				}
 
-				const nearbyUsers = await userRepository.getPotentialHelpersNearPosition({
-					position: pulse.position,
-					maxRadiusMeters: MAX_MATCH_RADIUS_METERS,
-					excludeUserId: pulse.userId,
-				});
+				const nearbyUsers =
+					await userRepository.getPotentialHelpersNearPosition({
+						position: pulse.position,
+						maxRadiusMeters: MAX_MATCH_RADIUS_METERS,
+						excludeUserId: pulse.userId,
+					});
 
 				if (nearbyUsers.length === 0) {
 					return [];
@@ -135,7 +136,9 @@ export class HeroAlertMatchingService {
 
 				const [allSkills, quietHoursRows] = await Promise.all([
 					skillRepository.getByUserIds(nearbyUsers.map((entry) => entry.id)),
-					quietHoursRepository.findByUserIds(nearbyUsers.map((entry) => entry.id)),
+					quietHoursRepository.findByUserIds(
+						nearbyUsers.map((entry) => entry.id),
+					),
 				]);
 
 				const skillsByUserId = new Map<string, string[]>();

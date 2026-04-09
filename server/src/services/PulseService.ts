@@ -1,5 +1,4 @@
 import type { PulseType, UserType } from "@server/db/schema";
-import { cacheManager } from "@server/services/cache/CacheManager";
 import { notificationRepository } from "@server/repositories/NotificationRepository";
 import {
 	type PulseRepository,
@@ -14,6 +13,7 @@ import type {
 	PulseConditionOptions,
 	PulseSearchOptions,
 } from "@server/repositories/types";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { notificationService } from "@server/services/NotificationService";
 import { requestMatchingAIService } from "@server/services/RequestMatchingAIService";
 import type { Last7DaysPulseCounts } from "@server/services/types";
@@ -184,7 +184,7 @@ export class PulseService {
 		return await this.cache.getOrSet(
 			id,
 			() => this.pulseRepository.getOne(id),
-			{ namespace: "pulse", ttl: 300 }
+			{ namespace: "pulse", ttl: 300 },
 		);
 	}
 
@@ -312,7 +312,7 @@ export class PulseService {
 					return null;
 				}
 			},
-			{ namespace: "pulse", ttl: 300 }
+			{ namespace: "pulse", ttl: 300 },
 		);
 	}
 

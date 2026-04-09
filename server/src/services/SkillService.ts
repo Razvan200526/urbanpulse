@@ -1,9 +1,9 @@
 import type { SkillType } from "@server/db/schema";
-import { cacheManager } from "@server/services/cache/CacheManager";
 import {
 	type SkillRepository,
 	skillRepository,
 } from "@server/repositories/SkillRepository";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { handleError } from "@server/utils/handleError";
 import { isSkillRequestValid } from "@shared/validators/isSkillValid";
 
@@ -27,7 +27,7 @@ export class SkillService {
 			handleError(error);
 		}
 		if (result.data == null) return null;
-		
+
 		const created = await this.skillRepo.create(result.data);
 		// Invalidate skills cache on creation
 		await this.cache.invalidate("all", { namespace: "skill" });
@@ -44,7 +44,7 @@ export class SkillService {
 					return null;
 				}
 			},
-			{ namespace: "skill", ttl: 3600 }
+			{ namespace: "skill", ttl: 3600 },
 		);
 	}
 	async getAllSkill() {
@@ -58,7 +58,7 @@ export class SkillService {
 					return null;
 				}
 			},
-			{ namespace: "skill", ttl: 3600 }
+			{ namespace: "skill", ttl: 3600 },
 		);
 	}
 
