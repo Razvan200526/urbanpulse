@@ -47,6 +47,27 @@ export class ResourceService {
 		this.transactionRepo = transactionRepository;
 	}
 
+	private async invalidateResourceCaches(resourceId?: string, userId?: string) {
+		await Promise.all([
+			resourceId
+				? this.cache.invalidate(resourceId, { namespace: "resource" })
+				: Promise.resolve(),
+			userId
+				? this.cache.invalidatePattern(`${userId}:*`, "resource")
+				: Promise.resolve(),
+		]);
+	}
+
+	private async invalidateProfileCache(userId?: string | null) {
+		if (!userId) {
+			return;
+		}
+
+		await this.cache.invalidate(`${userId}:profile`, {
+			namespace: "profile",
+		});
+	}
+
 	private async mapResourcesWithUsers(
 		resources: Array<ResourceType & { transactions: TransactionType[] }>,
 	) {
@@ -148,7 +169,12 @@ export class ResourceService {
 			}
 		}
 		try {
-			return await this.resourceRepo.create(resourceData);
+			const createdResource = await this.resourceRepo.create(resourceData);
+			if (createdResource) {
+				await this.invalidateResourceCaches(createdResource.id, userId);
+			}
+
+			return createdResource;
 		} catch (e) {
 			handleError(e);
 			return null;
@@ -274,7 +300,12 @@ export class ResourceService {
 				return null;
 			}
 
-			return await this.resourceRepo.update(resourceId, result.data);
+			const updatedResource = await this.resourceRepo.update(
+				resourceId,
+				result.data,
+			);
+			await this.invalidateResourceCaches(resourceId, userId);
+			return updatedResource;
 		} catch (error) {
 			handleError(error);
 			return null;
@@ -294,6 +325,7 @@ export class ResourceService {
 		}
 		try {
 			await this.resourceRepo.delete(resourceId);
+			await this.invalidateResourceCaches(resourceId, userId);
 			return true;
 		} catch (error) {
 			handleError(error);
@@ -369,6 +401,7 @@ export class ResourceService {
 				lenderId: resource.userId,
 				status: newTransaction.status,
 			});
+			await this.invalidateResourceCaches(resource.id, resource.userId);
 
 			return { success: true as const, data: newTransaction };
 		} catch (error) {
@@ -508,6 +541,7 @@ export class ResourceService {
 					status: updated.status,
 				});
 			}
+			await this.invalidateResourceCaches(resource.id, resource.userId);
 
 			return { success: true as const, data: updated };
 		} catch (error) {
@@ -545,6 +579,7 @@ export class ResourceService {
 			await this.resourceRepo.update(resource.id, {
 				availability: "Available",
 			});
+			await this.invalidateResourceCaches(resource.id, resource.userId);
 
 			return { success: true as const, data: updated };
 		} catch (error) {
@@ -611,6 +646,10 @@ export class ResourceService {
 			}
 
 			await this.applyReviewTrustImpact(resource.userId, result.data.rating);
+			await Promise.all([
+				this.invalidateResourceCaches(resource.id, resource.userId),
+				this.invalidateProfileCache(resource.userId),
+			]);
 
 			return { success: true as const, data: created };
 		} catch (error) {

@@ -224,6 +224,7 @@ describe("MessagingService", () => {
 		const firstConversation = await createConversation({
 			type: ConversationTypeEnum.Pulse,
 			pulseId: firstPulse.id,
+			createdAt: new Date("2025-01-01T00:00:00.000Z"),
 		});
 
 		await createConversationMember({
@@ -238,6 +239,7 @@ describe("MessagingService", () => {
 		const secondConversation = await createConversation({
 			type: ConversationTypeEnum.Pulse,
 			pulseId: secondPulse.id,
+			createdAt: new Date("2025-01-01T00:01:00.000Z"),
 		});
 		await createConversationMember({
 			conversationId: secondConversation.id,

@@ -25,6 +25,7 @@ import {
 	type UserRepository,
 	userRepository,
 } from "@server/repositories/UserRepository";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { calculateDistance } from "@server/utils/calculateDistance";
 import { handleError } from "@server/utils/handleError";
 import { PulseStatusEnum, ReportStatusEnum } from "@shared/types";
@@ -104,12 +105,25 @@ export class ModerationService {
 	private readonly pulseRepo: PulseRepository;
 	private readonly userRepo: UserRepository;
 	private readonly pulseConfirmationRepo: PulseConfirmationRepository;
+	private readonly cache = cacheManager;
 
 	constructor() {
 		this.reportRepo = reportRepository;
 		this.pulseRepo = pulseRepository;
 		this.userRepo = userRepository;
 		this.pulseConfirmationRepo = pulseConfirmationRepository;
+	}
+
+	private async invalidatePulseCaches(...pulseIds: string[]) {
+		const uniquePulseIds = Array.from(new Set(pulseIds.filter(Boolean)));
+		await Promise.all([
+			...uniquePulseIds.map((pulseId) =>
+				this.cache.invalidate(pulseId, { namespace: "pulse" }),
+			),
+			this.cache.invalidatePattern("nearby:*", "pulse"),
+			this.cache.invalidatePattern("*:matches", "heroAlert"),
+			this.cache.invalidatePattern("overview:*", "dashboard"),
+		]);
 	}
 
 	private async getIndependentConfirmationCount(pulseId: string) {
@@ -258,6 +272,7 @@ export class ModerationService {
 			) {
 				nextPulse = await this.pulseRepo.update(pulseId, { isVerified: true });
 				newlyVerified = true;
+				await this.invalidatePulseCaches(pulseId);
 				notificationService.broadcastPulseUpdated(nextPulse);
 				await notificationService.notifyPulseConfirmed({
 					ownerUserId: pulse.userId,
@@ -543,6 +558,7 @@ export class ModerationService {
 				pulseId,
 				this.buildModerationPatch(payload),
 			);
+			await this.invalidatePulseCaches(pulseId);
 			notificationService.broadcastPulseUpdated(updatedPulse);
 
 			return {
@@ -686,6 +702,7 @@ export class ModerationService {
 				});
 			}
 
+			await this.invalidatePulseCaches(sourcePulse.id, targetPulse.id);
 			notificationService.broadcastPulseUpdated(mergedSourcePulse);
 			notificationService.broadcastPulseUpdated(refreshedTargetPulse);
 
@@ -740,6 +757,7 @@ export class ModerationService {
 						moderationNote: payload.moderationNote,
 					}),
 				);
+				await this.invalidatePulseCaches(existing.targetPulseId);
 				notificationService.broadcastPulseUpdated(updatedPulse);
 			}
 

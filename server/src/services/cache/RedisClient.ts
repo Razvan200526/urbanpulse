@@ -1,138 +1,221 @@
-// redisClient.ts
-
 import { logger } from "@server/utils/Logger";
 import { RedisClient as BunRedisClient } from "bun";
 
+type RedisInitOptions = {
+	required?: boolean;
+};
+
 class RedisClient {
-  private client: BunRedisClient;
-  private subscriber: BunRedisClient | null = null;
-  private isConnected: boolean = false;
-  private static instance: RedisClient;
+	private client: BunRedisClient | null = null;
+	private subscriber: BunRedisClient | null = null;
+	private isConnected = false;
+	private initPromise: Promise<void> | null = null;
+	private static instance: RedisClient;
 
-  constructor() {
-    this.client = new BunRedisClient(
-      Bun.env.REDIS_URL,
-      {
-        autoReconnect: true,
-        maxRetries: 10,
-        connectionTimeout: 5000,
-        idleTimeout: 30000,
-        enableOfflineQueue: true,
-        enableAutoPipelining: true,
-      },
-    );
+	private createClient() {
+		const client = new BunRedisClient(Bun.env.REDIS_URL, {
+			autoReconnect: true,
+			maxRetries: 10,
+			connectionTimeout: 5000,
+			idleTimeout: 30000,
+			enableOfflineQueue: true,
+			enableAutoPipelining: true,
+		});
 
-    this.client.onconnect = () => {
-      this.isConnected = true;
-      logger.info("Connected");
-    };
+		client.onconnect = () => {
+			this.isConnected = true;
+			logger.info("Connected to Redis");
+		};
 
-    this.client.onclose = (err) => {
-      this.isConnected = false;
-      if (err) logger.exception(err);
-      else logger.info("Disconnected");
-    };
-  }
+		client.onclose = (err) => {
+			this.isConnected = false;
+			if (err) {
+				logger.exception(err);
+			} else {
+				logger.info("Disconnected from Redis");
+			}
+		};
 
-  //Singleton
+		return client;
+	}
 
-  static getInstance(): RedisClient {
-    if (!RedisClient.instance) {
-      RedisClient.instance = new RedisClient();
-    }
-    return RedisClient.instance;
-  }
+	private getClient() {
+		if (!this.client) {
+			this.client = this.createClient();
+		}
 
-  //lifecycle
+		return this.client;
+	}
 
-  async connect(): Promise<void> {
-    try {
-      await this.client.connect();
-    } catch (err) {
-      if (err instanceof Error) logger.exception(err);
-    }
-  }
+	private async connectInternal() {
+		await this.getClient().connect();
+	}
 
-  async cleanup(): Promise<void> {
-    this.subscriber?.close();
-    this.client.close();
-    this.isConnected = false;
-    logger.info("Connection closed");
-  }
+	private async ensureSubscriber() {
+		if (!this.connected) {
+			await this.init();
+		}
 
-  //Core Options
+		if (!this.connected || !this.client) {
+			return null;
+		}
 
-  async get(key: string): Promise<string | null> {
-    try {
-      return await this.client.get(key);
-    } catch (err) {
-      if (err instanceof Error) logger.exception(err);
-      return null;
-    }
-  }
+		if (!this.subscriber) {
+			this.subscriber = await this.client.duplicate();
+		}
 
-  async set(key: string, value: string): Promise<void> {
-    try {
-      await this.client.set(key, value);
-    } catch (err) {
-      if (err instanceof Error) logger.exception(err);
-    }
-  }
+		return this.subscriber;
+	}
 
-  async setex(key: string, ttl: number, value: string): Promise<void> {
-    try {
-      await this.client.set(key, value, "EX", ttl);
-    } catch (err) {
-      if (err instanceof Error) logger.exception(err);
-    }
-  }
+	static getInstance(): RedisClient {
+		if (!RedisClient.instance) {
+			RedisClient.instance = new RedisClient();
+		}
 
-  async del(key: string): Promise<void> {
-    try {
-      await this.client.del(key);
-    } catch (err) {
-      if (err instanceof Error) logger.exception(err);
-    }
-  }
+		return RedisClient.instance;
+	}
 
-  async keys(pattern: string): Promise<string[]> {
-    try {
-      return await this.client.keys(pattern);
-    } catch (err) {
-      if (err instanceof Error) logger.exception(err);
-      return [];
-    }
-  }
+	async init({ required = false }: RedisInitOptions = {}): Promise<void> {
+		if (this.isConnected) {
+			return;
+		}
 
-  async incr(key: string): Promise<number | null> {
-    try {
-      return await this.client.incr(key);
-    } catch (err) {
-      if (err instanceof Error) logger.exception(err);
-      return null;
-    }
-  }
+		if (!this.initPromise) {
+			this.initPromise = this.connectInternal();
+		}
 
-  //pub/sub
+		try {
+			await this.initPromise;
+		} catch (err) {
+			this.initPromise = null;
+			if (required) {
+				throw err;
+			}
 
-  async subscribe(
-    channel: string,
-    callback: (message: string, channel: string) => void,
-  ): Promise<void> {
-    try {
-      // Subscriber needs a dedicated connection — cannot share with main client
-      this.subscriber = await this.client.duplicate();
-      await this.subscriber.subscribe(channel, callback);
-    } catch (err) {
-      if (err instanceof Error) logger.exception(err);
-    }
-  }
+			if (err instanceof Error) {
+				logger.exception(err);
+			}
+		}
+	}
 
-  //helper
+	async cleanup(): Promise<void> {
+		this.subscriber?.close();
+		this.subscriber = null;
+		this.client?.close();
+		this.client = null;
+		this.initPromise = null;
+		this.isConnected = false;
+		logger.info("Redis connections closed");
+	}
 
-  get connected(): boolean {
-    return this.isConnected;
-  }
+	async get(key: string): Promise<string | null> {
+		if (!this.connected || !this.client) {
+			return null;
+		}
+
+		try {
+			return await this.client.get(key);
+		} catch (err) {
+			if (err instanceof Error) {
+				logger.exception(err);
+			}
+			return null;
+		}
+	}
+
+	async set(key: string, value: string): Promise<void> {
+		if (!this.connected || !this.client) {
+			return;
+		}
+
+		try {
+			await this.client.set(key, value);
+		} catch (err) {
+			if (err instanceof Error) {
+				logger.exception(err);
+			}
+		}
+	}
+
+	async setex(key: string, ttl: number, value: string): Promise<void> {
+		if (!this.connected || !this.client) {
+			return;
+		}
+
+		try {
+			await this.client.set(key, value, "EX", ttl);
+		} catch (err) {
+			if (err instanceof Error) {
+				logger.exception(err);
+			}
+		}
+	}
+
+	async del(...keys: string[]): Promise<void> {
+		if (!this.connected || !this.client || keys.length === 0) {
+			return;
+		}
+
+		try {
+			await this.client.del(...keys);
+		} catch (err) {
+			if (err instanceof Error) {
+				logger.exception(err);
+			}
+		}
+	}
+
+	async keys(pattern: string): Promise<string[]> {
+		if (!this.connected || !this.client) {
+			return [];
+		}
+
+		try {
+			return await this.client.keys(pattern);
+		} catch (err) {
+			if (err instanceof Error) {
+				logger.exception(err);
+			}
+			return [];
+		}
+	}
+
+	async incr(key: string): Promise<number | null> {
+		if (!this.connected || !this.client) {
+			return null;
+		}
+
+		try {
+			return await this.client.incr(key);
+		} catch (err) {
+			if (err instanceof Error) {
+				logger.exception(err);
+			}
+			return null;
+		}
+	}
+
+	async subscribe(
+		channel: string,
+		callback: (message: string, channel: string) => void,
+	): Promise<void> {
+		try {
+			const subscriber = await this.ensureSubscriber();
+			if (!subscriber) {
+				return;
+			}
+
+			await subscriber.subscribe(channel, callback);
+		} catch (err) {
+			if (err instanceof Error) {
+				logger.exception(err);
+			}
+		}
+	}
+
+	get connected(): boolean {
+		return this.isConnected;
+	}
 }
 
 export default RedisClient;

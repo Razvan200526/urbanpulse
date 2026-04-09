@@ -54,6 +54,20 @@ export class UserService {
 		this.skillRepo = skillRepository;
 	}
 
+	private async invalidateProfileCache(userId: string) {
+		await this.cache.invalidate(`${userId}:profile`, {
+			namespace: "profile",
+		});
+	}
+
+	private async invalidateHeroAlertMatches() {
+		await this.cache.invalidatePattern("*:matches", "heroAlert");
+	}
+
+	private async invalidateSkillCache() {
+		await this.cache.invalidate("all", { namespace: "skill" });
+	}
+
 	/**
 	 * Normalizes the provided date to UTC day start.
 	 * @param {Date} date - Source date.
@@ -242,12 +256,14 @@ export class UserService {
 
 	async updateProfile(userId: string, payload: UserProfileUpdateType) {
 		try {
-			return await this.userRepo.update(userId, {
+			const updatedUser = await this.userRepo.update(userId, {
 				name: payload.name,
 				bio: payload.bio,
 				image: payload.image || null,
 				updatedAt: new Date(),
 			});
+			await this.invalidateProfileCache(userId);
+			return updatedUser;
 		} catch (error) {
 			logger.exception(error as Error);
 			return null;
@@ -263,6 +279,11 @@ export class UserService {
 			await this.skillRepo.deleteByUserId(userId);
 
 			if (tags.length === 0) {
+				await Promise.all([
+					this.invalidateProfileCache(userId),
+					this.invalidateSkillCache(),
+					this.invalidateHeroAlertMatches(),
+				]);
 				return [];
 			}
 
@@ -274,6 +295,12 @@ export class UserService {
 					}),
 				),
 			);
+
+			await Promise.all([
+				this.invalidateProfileCache(userId),
+				this.invalidateSkillCache(),
+				this.invalidateHeroAlertMatches(),
+			]);
 
 			return tags;
 		} catch (error) {
@@ -295,6 +322,10 @@ export class UserService {
 			const quietHours = existing
 				? await this.quietHoursRepo.update(existing.id, data)
 				: await this.quietHoursRepo.create(data);
+			await Promise.all([
+				this.invalidateProfileCache(userId),
+				this.invalidateHeroAlertMatches(),
+			]);
 
 			return this.formatQuietHours(quietHours);
 		} catch (error) {
@@ -313,6 +344,10 @@ export class UserService {
 				heroAlertRadiusMeters: payload.heroAlertRadiusMeters,
 				updatedAt: new Date(),
 			});
+			await Promise.all([
+				this.invalidateProfileCache(userId),
+				this.invalidateHeroAlertMatches(),
+			]);
 			return this.formatAlertPreferences(updated);
 		} catch (error) {
 			logger.exception(error as Error);
@@ -325,11 +360,16 @@ export class UserService {
 		location: { x: number; y: number },
 	) {
 		try {
-			return await this.userRepo.update(userId, {
+			const updatedUser = await this.userRepo.update(userId, {
 				lastKnownLocation: location,
 				lastKnownLocationUpdatedAt: new Date(),
 				updatedAt: new Date(),
 			});
+			await Promise.all([
+				this.invalidateProfileCache(userId),
+				this.invalidateHeroAlertMatches(),
+			]);
+			return updatedUser;
 		} catch (error) {
 			logger.exception(error as Error);
 			return null;
@@ -338,7 +378,13 @@ export class UserService {
 
 	async deleteAccount(userId: string) {
 		try {
-			return await this.userRepo.delete(userId);
+			const deleted = await this.userRepo.delete(userId);
+			await Promise.all([
+				this.invalidateProfileCache(userId),
+				this.invalidateHeroAlertMatches(),
+				this.cache.invalidatePattern("overview:*", "dashboard"),
+			]);
+			return deleted;
 		} catch (error) {
 			logger.exception(error as Error);
 			return false;

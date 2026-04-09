@@ -47,6 +47,17 @@ export class PulseService {
 		this.responseRepository = responseRepository;
 	}
 
+	private async invalidatePulseCaches(pulseId?: string) {
+		await Promise.all([
+			pulseId
+				? this.cache.invalidate(pulseId, { namespace: "pulse" })
+				: Promise.resolve(),
+			this.cache.invalidatePattern("nearby:*", "pulse"),
+			this.cache.invalidatePattern("*:matches", "heroAlert"),
+			this.cache.invalidatePattern("overview:*", "dashboard"),
+		]);
+	}
+
 	private extractPulseIdFromNotificationPayload(
 		payload: unknown,
 	): string | null {
@@ -217,7 +228,7 @@ export class PulseService {
 				};
 			}
 
-			return await this.pulseRepository.create({
+			const created = await this.pulseRepository.create({
 				...data,
 				requestedSkillTags,
 				matchMetadata,
@@ -225,6 +236,11 @@ export class PulseService {
 				mergedIntoPulseId: null,
 				moderationNote: null,
 			});
+			if (created) {
+				await this.invalidatePulseCaches(created.id);
+			}
+
+			return created;
 		} catch (error) {
 			handleError(error);
 			return null;
@@ -242,7 +258,9 @@ export class PulseService {
 		data: Partial<PulseType>,
 	): Promise<PulseType | null> {
 		try {
-			return await this.pulseRepository.update(pulseId, data);
+			const updatedPulse = await this.pulseRepository.update(pulseId, data);
+			await this.invalidatePulseCaches(pulseId);
+			return updatedPulse;
 		} catch (error) {
 			handleError(error);
 			return null;
@@ -266,7 +284,9 @@ export class PulseService {
 			if (data.status === PulseStatusEnum.Resolved) {
 				patch.isResolved = true;
 			}
-			return await this.pulseRepository.update(pulseId, patch);
+			const updatedPulse = await this.pulseRepository.update(pulseId, patch);
+			await this.invalidatePulseCaches(pulseId);
+			return updatedPulse;
 		} catch (error) {
 			handleError(error);
 			return null;

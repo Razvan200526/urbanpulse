@@ -5,6 +5,7 @@ import {
 } from "@server/repositories/NotificationRepository";
 import { responseRepository } from "@server/repositories/ResponseRepository";
 import type { NotificationConditionOptions } from "@server/repositories/types";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import {
 	socketManager,
 	type UserConnection,
@@ -49,6 +50,7 @@ export class NotificationService {
 	private notificationRepo: NotificationRepository;
 	private locationService: LocationService;
 	private notificationFactory: NotificationFactory;
+	private cache = cacheManager;
 
 	constructor() {
 		this.notificationRepo = notificationRepository;
@@ -207,7 +209,12 @@ export class NotificationService {
 		const { data: notificationData, success } = isNotificationCreateValid(data);
 		if (!success) return null;
 		try {
-			return await this.notificationRepo.create(notificationData);
+			const notification = await this.notificationRepo.create(notificationData);
+			if (notification) {
+				await this.cache.invalidatePattern("overview:*", "dashboard");
+			}
+
+			return notification;
 		} catch (error) {
 			handleError(error);
 			return null;

@@ -103,19 +103,31 @@ interface CacheOptions {
 
 class CacheManager {
 	private static instance: CacheManager;
-	private redis: RedisClient;
-
 	private readonly DEFAULT_TTL = 3600; // 1h
 
-	private constructor() {
-		this.redis = RedisClient.getInstance();
-	}
+	private constructor() {}
 
 	static getInstance(): CacheManager {
 		if (!CacheManager.instance) {
 			CacheManager.instance = new CacheManager();
 		}
 		return CacheManager.instance;
+	}
+
+	private get redis() {
+		return RedisClient.getInstance();
+	}
+
+	async init(required: boolean = false): Promise<void> {
+		await this.redis.init({ required });
+	}
+
+	async shutdown(): Promise<void> {
+		await this.redis.cleanup();
+	}
+
+	get ready() {
+		return this.redis.connected;
 	}
 
 	// Key Building
@@ -181,7 +193,11 @@ class CacheManager {
 	): Promise<void> {
 		const fullPattern = namespace ? `${namespace}:${pattern}` : pattern;
 		const keys = await this.redis.keys(fullPattern);
-		await Promise.all(keys.map((k) => this.redis.del(k)));
+		if (keys.length === 0) {
+			return;
+		}
+
+		await this.redis.del(...keys);
 	}
 
 	//Rate limiting

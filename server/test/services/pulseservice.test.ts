@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
 import type { PulseType } from "@server/db/schema";
 import { notificationService } from "@server/services/NotificationService";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { PulseService } from "@server/services/PulseService";
 import {
 	PulseEnum,
@@ -100,6 +101,34 @@ describe("PulseService", () => {
 		await expect(
 			service.updatePulse(updatedPulse.id, { title: "Nope" }),
 		).resolves.toBeNull();
+	});
+
+	test("invalidates pulse-related caches after a successful update", async () => {
+		const updatedPulse = buildPulse({ title: "Updated title" });
+		const { service } = createServiceWithRepo({
+			update: mock(async () => updatedPulse),
+		});
+		const invalidateSpy = spyOn(cacheManager, "invalidate").mockResolvedValue(
+			undefined,
+		);
+		const invalidatePatternSpy = spyOn(
+			cacheManager,
+			"invalidatePattern",
+		).mockResolvedValue(undefined);
+
+		await expect(
+			service.updatePulse(updatedPulse.id, { title: updatedPulse.title }),
+		).resolves.toEqual(updatedPulse);
+
+		expect(invalidateSpy).toHaveBeenCalledWith(updatedPulse.id, {
+			namespace: "pulse",
+		});
+		expect(invalidatePatternSpy).toHaveBeenCalledWith("nearby:*", "pulse");
+		expect(invalidatePatternSpy).toHaveBeenCalledWith("*:matches", "heroAlert");
+		expect(invalidatePatternSpy).toHaveBeenCalledWith(
+			"overview:*",
+			"dashboard",
+		);
 	});
 
 	test("only lets the owner update a pulse", async () => {

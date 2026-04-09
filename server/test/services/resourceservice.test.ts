@@ -8,6 +8,7 @@ import type {
 import { locationService } from "@server/services/LocationService";
 import { notificationService } from "@server/services/NotificationService";
 import { ResourceService } from "@server/services/ResourceService";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { TransactionStatusEnum } from "@shared/types";
 import type {
 	CreateResourcePayload,
@@ -194,6 +195,25 @@ describe("ResourceService", () => {
 			...validPayload,
 			userId: "owner-1",
 		});
+	});
+
+	test("invalidates owner resource caches after creating a resource", async () => {
+		const { service } = createServiceWithRepo();
+		const invalidateSpy = spyOn(cacheManager, "invalidate").mockResolvedValue(
+			undefined,
+		);
+		const invalidatePatternSpy = spyOn(
+			cacheManager,
+			"invalidatePattern",
+		).mockResolvedValue(undefined);
+		spyOn(locationService, "getAddressByCoords").mockResolvedValue(undefined);
+
+		const createdResource = await service.createResource("owner-1", validPayload);
+
+		expect(invalidateSpy).toHaveBeenCalledWith(createdResource?.id, {
+			namespace: "resource",
+		});
+		expect(invalidatePatternSpy).toHaveBeenCalledWith("owner-1:*", "resource");
 	});
 
 	test("uses a provided location label without reverse geocoding", async () => {

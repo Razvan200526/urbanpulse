@@ -26,6 +26,7 @@ export const envSchema = z.object({
 	MAPBOX_API_KEY: z.string(),
 	MAPBOX_URL: z.string(),
 	REDIS_URL: z.string(),
+	VALKEY_URL: z.string().optional(),
 });
 
 export function parseEnv() {
@@ -33,10 +34,21 @@ export function parseEnv() {
 		Bun.env.R2_BUCKET_NAME = Bun.env.R2_BUCKET;
 	}
 
-	const { error } = envSchema.safeParse(Bun.env);
-	if (error) {
-		printZodError(error);
+	if (!Bun.env.REDIS_URL && Bun.env.VALKEY_URL) {
+		Bun.env.REDIS_URL = Bun.env.VALKEY_URL;
 	}
+
+	if (!Bun.env.REDIS_URL && Bun.env.NODE_ENV !== "production") {
+		Bun.env.REDIS_URL = "redis://localhost:6379";
+	}
+
+	const parsed = envSchema.safeParse(Bun.env);
+	if (!parsed.success) {
+		printZodError(parsed.error);
+		throw new Error("Invalid environment configuration");
+	}
+
+	return parsed.data;
 }
 
 declare module "bun" {

@@ -4,6 +4,7 @@ import { responseRepository } from "@server/repositories/ResponseRepository";
 import { heroAlertMatchingService } from "@server/services/HeroAlertMatchingService";
 import { NotificationService } from "@server/services/NotificationService";
 import { socketManager } from "@server/services/SocketManager";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import {
 	PulseEnum,
 	PulseStatusEnum,
@@ -41,6 +42,38 @@ afterEach(() => {
 });
 
 describe("NotificationService", () => {
+	test("createNotification invalidates the cached dashboard overview", async () => {
+		const service = new NotificationService();
+		const invalidatePatternSpy = spyOn(
+			cacheManager,
+			"invalidatePattern",
+		).mockResolvedValue(undefined);
+		spyOn((service as any).notificationRepo, "create").mockResolvedValue({
+			id: "notification-1",
+			userId: "user-1",
+			type: "MESSAGE",
+			payload: { body: "hello" },
+			read: false,
+			createdAt: new Date("2025-01-01T00:00:00.000Z"),
+		});
+
+		await expect(
+			service.createNotification({
+				userId: "user-1",
+				type: "MESSAGE",
+				payload: { body: "hello" },
+			}),
+		).resolves.toEqual(
+			expect.objectContaining({
+				id: "notification-1",
+			}),
+		);
+		expect(invalidatePatternSpy).toHaveBeenCalledWith(
+			"overview:*",
+			"dashboard",
+		);
+	});
+
 	test("broadcastPulseUpdated sends live updates to nearby viewers for non-emergency pulses", async () => {
 		const service = new NotificationService();
 		const ownerConnection = {
