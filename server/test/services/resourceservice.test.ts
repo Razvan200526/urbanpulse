@@ -5,10 +5,10 @@ import type {
 	TransactionType,
 	UserType,
 } from "@server/db/schema";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { locationService } from "@server/services/LocationService";
 import { notificationService } from "@server/services/NotificationService";
 import { ResourceService } from "@server/services/ResourceService";
-import { cacheManager } from "@server/services/cache/CacheManager";
 import { TransactionStatusEnum } from "@shared/types";
 import type {
 	CreateResourcePayload,
@@ -208,7 +208,10 @@ describe("ResourceService", () => {
 		).mockResolvedValue(undefined);
 		spyOn(locationService, "getAddressByCoords").mockResolvedValue(undefined);
 
-		const createdResource = await service.createResource("owner-1", validPayload);
+		const createdResource = await service.createResource(
+			"owner-1",
+			validPayload,
+		);
 
 		expect(invalidateSpy).toHaveBeenCalledWith(createdResource?.id, {
 			namespace: "resource",

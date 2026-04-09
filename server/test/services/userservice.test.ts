@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
 import type { UserType } from "@server/db/schema";
-import { UserService } from "@server/services/UserService";
 import { cacheManager } from "@server/services/cache/CacheManager";
+import { UserService } from "@server/services/UserService";
 
 function buildUser(overrides: Partial<UserType> = {}): UserType {
 	return {

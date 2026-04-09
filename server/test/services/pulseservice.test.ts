@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
 import type { PulseType } from "@server/db/schema";
-import { notificationService } from "@server/services/NotificationService";
 import { cacheManager } from "@server/services/cache/CacheManager";
+import { notificationService } from "@server/services/NotificationService";
 import { PulseService } from "@server/services/PulseService";
 import {
 	PulseEnum,

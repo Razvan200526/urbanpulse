@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
 import type { PulseType } from "@server/db/schema";
 import { responseRepository } from "@server/repositories/ResponseRepository";
+import { cacheManager } from "@server/services/cache/CacheManager";
 import { heroAlertMatchingService } from "@server/services/HeroAlertMatchingService";
 import { NotificationService } from "@server/services/NotificationService";
 import { socketManager } from "@server/services/SocketManager";
-import { cacheManager } from "@server/services/cache/CacheManager";
 import {
 	PulseEnum,
 	PulseStatusEnum,
