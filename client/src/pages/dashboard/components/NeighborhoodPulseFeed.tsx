@@ -61,6 +61,7 @@ export function NeighborhoodPulseFeed() {
 		});
 		return sortPulsesForFeed(raw);
 	}, [pulsesRes?.data]);
+	const _feedLoading = geoLoading || (enabled && isPending);
 
 	const onRefresh = () => {
 		queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
@@ -167,22 +168,17 @@ export function NeighborhoodPulseFeed() {
 						))}
 					</div>
 				</div>
-				{geoLoading && (
-					<p className="text-sm text-muted">Getting your location…</p>
-				)}
 				{geoError && (
 					<p className="text-sm text-danger">
 						Turn on location to load pulses within ~500m of you.
 					</p>
-				)}
-				{enabled && isPending && (
-					<p className="text-sm text-muted">Loading neighborhood feed…</p>
 				)}
 				{enabled && !isPending && sorted.length === 0 && (
 					<p className="text-sm text-muted">
 						No active pulses nearby. Create one from the map.
 					</p>
 				)}
+
 				<ScrollShadow className="max-h-80 overflow-y-scroll space-y-2">
 					<PulseList pulses={sorted} />
 				</ScrollShadow>

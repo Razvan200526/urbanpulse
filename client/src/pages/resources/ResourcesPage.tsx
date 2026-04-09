@@ -8,7 +8,7 @@ import { RequestIcon } from "@client/components/icons/RequestIcon";
 import type { ModalRefType } from "@client/components/Modal";
 import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
 import { ScrollShadow, Separator } from "@heroui/react";
-import { ChevronDownIcon, PlusSquareIcon } from "lucide-react";
+import { ChevronDownIcon, PlusSquareIcon, UploadCloud } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
@@ -83,13 +83,10 @@ export const ResourcesPage = () => {
 							<Dropdown
 								placement="bottom end"
 								trigger={
-									<button
-										type="button"
-										className="flex shrink-0 items-center gap-2 rounded border border-accent bg-surface-secondary/70 px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors duration-150 hover:bg-surface-secondary"
-									>
+									<div className="flex shrink-0 items-center gap-2 rounded border border-accent bg-surface-secondary/70 px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors duration-150 hover:bg-surface-secondary">
 										<span>Actions</span>
 										<ChevronDownIcon className="size-4 text-accent" />
-									</button>
+									</div>
 								}
 								items={mobileActionItems}
 							/>
@@ -120,7 +117,7 @@ export const ResourcesPage = () => {
 					className="hidden md:inline-flex"
 					size="md"
 					variant="primary"
-					startContent={<PlusSquareIcon className="size-4" />}
+					startContent={<UploadCloud className="size-4" />}
 					onPress={() => uploadModalRef.current?.open()}
 				>
 					Upload

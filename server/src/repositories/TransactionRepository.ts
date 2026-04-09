@@ -1,7 +1,7 @@
 import { db } from "@server/db";
 import { type TransactionType, transaction } from "@server/db/schema";
 import { TransactionStatusEnum } from "@shared/types";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class TransactionRepository implements IRepository<TransactionType> {
@@ -29,6 +29,35 @@ export class TransactionRepository implements IRepository<TransactionType> {
 			);
 	}
 
+	async getPendingByResourceId(resourceId: string): Promise<TransactionType[]> {
+		return await db
+			.select()
+			.from(transaction)
+			.where(
+				and(
+					eq(transaction.resourceId, resourceId as any),
+					eq(transaction.status, TransactionStatusEnum.Pending as any),
+				),
+			)
+			.orderBy(desc(transaction.startAt));
+	}
+
+	async getByResourceAndBorrowerId(
+		resourceId: string,
+		borrowerId: string,
+	): Promise<TransactionType[]> {
+		return await db
+			.select()
+			.from(transaction)
+			.where(
+				and(
+					eq(transaction.resourceId, resourceId as any),
+					eq(transaction.borrowerId, borrowerId as any),
+				),
+			)
+			.orderBy(desc(transaction.startAt));
+	}
+
 	async create(
 		data: Partial<TransactionType>,
 	): Promise<TransactionType | null> {
@@ -52,6 +81,23 @@ export class TransactionRepository implements IRepository<TransactionType> {
 			throw new Error(`TransactionRepository: Record with id ${id} not found`);
 		}
 		return result;
+	}
+
+	async cancelPendingByResourceId(
+		resourceId: string,
+		exceptTransactionId: string,
+	): Promise<TransactionType[]> {
+		return await db
+			.update(transaction)
+			.set({ status: TransactionStatusEnum.Cancelled as any })
+			.where(
+				and(
+					eq(transaction.resourceId, resourceId as any),
+					eq(transaction.status, TransactionStatusEnum.Pending as any),
+					ne(transaction.id, exceptTransactionId as any),
+				),
+			)
+			.returning();
 	}
 
 	async delete(id: string): Promise<boolean> {

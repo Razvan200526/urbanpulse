@@ -60,6 +60,10 @@ export const router = createBrowserRouter([
 						element: <AlertsPage />,
 					},
 					{
+						path: "/alerts/:notificationId",
+						element: <AlertsPage />,
+					},
+					{
 						path: "/messages",
 						element: <MessagesPage />,
 					},

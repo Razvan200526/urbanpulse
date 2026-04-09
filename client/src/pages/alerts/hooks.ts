@@ -4,9 +4,17 @@ import { getPulseResponseActionPayload } from "@client/utils/notifications";
 import { useMemo } from "react";
 import { useAlertsPageStore } from "./store";
 
-export const useAlertsPageData = () => {
+export const useAlertsPageData = ({
+	selectedAlertId = null,
+	isMobile = false,
+}: {
+	selectedAlertId?: string | null;
+	isMobile?: boolean;
+} = {}) => {
 	const { data: user } = useAuth();
-	const { data: notifications, isPending } = useNotifications(user?.user.id);
+	const { data: notifications, isPending } = useNotifications(
+		user?.user.id || "",
+	);
 	const filter = useAlertsPageStore((state) => state.filter);
 
 	const allNotifications = notifications ?? [];
@@ -43,6 +51,19 @@ export const useAlertsPageData = () => {
 		});
 	}, [allNotifications, filter]);
 
+	const hasSelectedAlert = filteredNotifications.some(
+		(item) => item.notification?.id === selectedAlertId,
+	);
+	const resolvedSelectedAlertId = hasSelectedAlert
+		? selectedAlertId
+		: isMobile
+			? null
+			: (filteredNotifications[0]?.notification?.id ?? null);
+	const selectedItem =
+		filteredNotifications.find(
+			(item) => item.notification?.id === resolvedSelectedAlertId,
+		) ?? null;
+
 	return {
 		isPending,
 		filter,
@@ -50,5 +71,7 @@ export const useAlertsPageData = () => {
 		actionableCount,
 		updatesCount: allNotifications.length - actionableCount,
 		filteredNotifications,
+		resolvedSelectedAlertId,
+		selectedItem,
 	};
 };

@@ -19,10 +19,29 @@ import {
 import type { PulseRepsponseParamsType } from "@server/types";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
-import { ResponseStatusEnum } from "@shared/types";
+import { ResponseStatusEnum, type TransactionStatusEnum } from "@shared/types";
 import { isNotificationCreateValid } from "@shared/validators/notifications/isValidCreateNotification";
 import { heroAlertMatchingService } from "./HeroAlertMatchingService";
 import { type LocationService, locationService } from "./LocationService";
+
+const MAX_LIVE_PULSE_RADIUS_METERS = 5000;
+
+type ResourceTransactionNotificationAction =
+	| "REQUESTED"
+	| "ACCEPTED"
+	| "REJECTED";
+
+type ResourceTransactionNotificationParams = {
+	recipientUserId: string;
+	action: ResourceTransactionNotificationAction;
+	transactionId: string;
+	resourceId: string;
+	resourceName: string;
+	borrowerId: string | null;
+	borrowerName?: string | null;
+	lenderId: string | null;
+	status: TransactionStatusEnum;
+};
 
 /**
  * Service for managing user notifications and real-time broadcasting.
@@ -95,6 +114,66 @@ export class NotificationService {
 
 	private toSocketSafePulse(pulse: PulseType) {
 		return JSON.parse(JSON.stringify(pulse)) as Record<string, unknown>;
+	}
+
+	private withPersistedNotification<T>(
+		broadcastData: BroadcastDataType<T>,
+		notification: NotificationType | null,
+	) {
+		if (!notification) {
+			return broadcastData;
+		}
+
+		return {
+			...broadcastData,
+			data: {
+				...broadcastData.data,
+				notification,
+			},
+		};
+	}
+
+	private getResourceTransactionMessage(
+		params: ResourceTransactionNotificationParams,
+	) {
+		const resourceName = params.resourceName || "resource";
+
+		if (params.action === "REQUESTED") {
+			return `${params.borrowerName ?? "A neighbor"} requested ${resourceName}`;
+		}
+
+		if (params.action === "ACCEPTED") {
+			return `Your request for ${resourceName} was accepted`;
+		}
+
+		return `Your request for ${resourceName} was rejected`;
+	}
+
+	private isSelfAuthoredPulseBroadcastNotification(
+		item: {
+			notification: {
+				type?: string | null;
+				payload?: unknown;
+			} | null;
+		},
+		userId: string,
+	) {
+		const type = item.notification?.type;
+		if (type !== "HERO_ALERT" && type !== "PULSE_UPDATED") {
+			return false;
+		}
+
+		const payload =
+			item.notification?.payload &&
+			typeof item.notification.payload === "object"
+				? (item.notification.payload as Record<string, unknown>)
+				: null;
+		const pulse =
+			payload?.pulse && typeof payload.pulse === "object"
+				? (payload.pulse as Record<string, unknown>)
+				: null;
+
+		return pulse?.userId === userId;
 	}
 
 	/**
@@ -238,9 +317,14 @@ export class NotificationService {
 	async getNotificationsWithUsers(userId?: string) {
 		try {
 			if (userId) {
-				return await this.annotateActionableNotifications(
-					await this.notificationRepo.getNotificationsWithUsersByUserId(userId),
+				const notifications =
+					await this.notificationRepo.getNotificationsWithUsersByUserId(userId);
+				const visibleNotifications = notifications.filter(
+					(item) =>
+						!this.isSelfAuthoredPulseBroadcastNotification(item, userId),
 				);
+
+				return await this.annotateActionableNotifications(visibleNotifications);
 			}
 			return await this.annotateActionableNotifications(
 				await this.notificationRepo.getNotificationsWithUsers(),
@@ -259,6 +343,10 @@ export class NotificationService {
 		const serializedPulse = this.toSocketSafePulse(pulseData);
 
 		for (const match of matches) {
+			if (match.user.id === pulseData.userId) {
+				continue;
+			}
+
 			const broadcastData = this.notificationFactory.create({
 				type: "HERO_ALERT",
 				payload: {
@@ -290,8 +378,15 @@ export class NotificationService {
 
 		for (const connection of this.locationService.getNearbyConnections(
 			pulse.position,
+			MAX_LIVE_PULSE_RADIUS_METERS,
 		)) {
 			recipients.set(connection.ws, connection);
+		}
+
+		for (const connection of socketManager.getAllConnections()) {
+			if (!connection.location) {
+				recipients.set(connection.ws, connection);
+			}
 		}
 
 		const heroMatches = await heroAlertMatchingService.matchPulse(pulse);
@@ -320,16 +415,27 @@ export class NotificationService {
 		logger.info(
 			`Broadcasting notification to ${recipients.length} recipients: ${broadcastData.message}`,
 		);
-		const persistedUserIds = new Set<string>();
+		const recipientsByUserId = new Map<string, UserConnection[]>();
 		for (const conn of recipients) {
-			conn.ws.send(JSON.stringify(broadcastData));
-			if (persist && !persistedUserIds.has(conn.userId)) {
-				persistedUserIds.add(conn.userId);
-				await this.createNotification({
-					userId: conn.userId,
-					type: broadcastData.data.type,
-					payload: broadcastData.data.payload,
-				});
+			const existing = recipientsByUserId.get(conn.userId) ?? [];
+			recipientsByUserId.set(conn.userId, [...existing, conn]);
+		}
+
+		for (const [userId, connections] of recipientsByUserId) {
+			const persistedNotification = persist
+				? await this.createNotification({
+						userId,
+						type: broadcastData.data.type,
+						payload: broadcastData.data.payload,
+					})
+				: null;
+			const socketData = this.withPersistedNotification(
+				broadcastData,
+				persistedNotification,
+			);
+
+			for (const connection of connections) {
+				connection.ws.send(JSON.stringify(socketData));
 			}
 		}
 	}
@@ -342,17 +448,20 @@ export class NotificationService {
 		const uniqueUserIds = Array.from(new Set(userIds.filter(Boolean)));
 
 		for (const userId of uniqueUserIds) {
+			const persistedNotification = persist
+				? await this.createNotification({
+						userId,
+						type: broadcastData.data.type,
+						payload: broadcastData.data.payload,
+					})
+				: null;
+			const socketData = this.withPersistedNotification(
+				broadcastData,
+				persistedNotification,
+			);
 			const connections = socketManager.getConnectionsForUser(userId);
 			for (const connection of connections) {
-				connection.ws.send(JSON.stringify(broadcastData));
-			}
-
-			if (persist) {
-				await this.createNotification({
-					userId,
-					type: broadcastData.data.type,
-					payload: broadcastData.data.payload,
-				});
+				connection.ws.send(JSON.stringify(socketData));
 			}
 		}
 	}
@@ -466,6 +575,27 @@ export class NotificationService {
 			message,
 		});
 		await this.notifyUsers([ownerUserId], broadcastData);
+	}
+
+	async notifyResourceTransaction(
+		params: ResourceTransactionNotificationParams,
+	) {
+		const payload = {
+			action: params.action,
+			transactionId: params.transactionId,
+			resourceId: params.resourceId,
+			resourceName: params.resourceName,
+			borrowerId: params.borrowerId,
+			borrowerName: params.borrowerName ?? null,
+			lenderId: params.lenderId,
+			status: params.status,
+		};
+		const broadcastData = this.notificationFactory.create({
+			type: "TRANSACTION",
+			payload,
+			message: this.getResourceTransactionMessage(params),
+		});
+		await this.notifyUsers([params.recipientUserId], broadcastData);
 	}
 
 	/**

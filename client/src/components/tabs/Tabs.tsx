@@ -106,7 +106,7 @@ export const Tabs = ({
 				<HeroUITabs.ListContainer>
 					<HeroUITabs.List
 						aria-label="Options"
-						className="bg-transparent rounded *:data-[selected=true]:text-accent-foreground *:data-[hovered=true]:bg-accent-soft-hover w-fit *:h-8 *:w-fit *:px-3 *:text-sm *:font-normal"
+						className="bg-transparent rounded *:data-[selected=true]:text-accent-foreground *:data-[hovered=true]:bg-accent-soft-hover w-fit *:h-8 *:w-fit *:px-3 *:text-sm *:font-normal gap-2"
 					>
 						{items.map((item) => (
 							<HeroUITabs.Tab

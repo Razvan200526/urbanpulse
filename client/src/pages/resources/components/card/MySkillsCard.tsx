@@ -3,9 +3,9 @@ import { AvailabilityChip } from "@client/components/chips/AvaiabilityChip";
 import { H6 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
 import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
-import { Card, Separator } from "@heroui/react";
+import { Card } from "@heroui/react";
 import { formatDate } from "@shared/utils/formatDate";
-import { Clock3Icon, ImageIcon } from "lucide-react";
+import { Clock3Icon } from "lucide-react";
 import { useState } from "react";
 import type { ResourceWithUsersType } from "../../resourceResponses";
 import { ResourceDetailsDrawer } from "./ResourceDetailsDrawer";
@@ -16,22 +16,15 @@ export const MySkillsCard = ({ item }: { item: ResourceWithUsersType }) => {
 
 	return (
 		<Card className="overflow-hidden border border-accent shadow-none">
-			<div className="aspect-[4/3] border-b border-accent/40 bg-surface-secondary">
-				{heroImage ? (
+			{heroImage ? (
+				<div className="aspect-4/3 border-b border-accent/40 bg-surface-secondary">
 					<img
 						src={normalizeAssetUrl(heroImage)}
 						alt={item.resource.name}
 						className="h-full w-full object-cover"
 					/>
-				) : (
-					<div className="flex h-full items-center justify-center text-muted">
-						<div className="flex items-center gap-2 text-sm">
-							<ImageIcon className="size-4" />
-							<span>No photo added</span>
-						</div>
-					</div>
-				)}
-			</div>
+				</div>
+			) : null}
 
 			<Card.Header className="flex flex-col items-start gap-3">
 				<div className="flex w-full items-start justify-between gap-3">
@@ -69,8 +62,6 @@ export const MySkillsCard = ({ item }: { item: ResourceWithUsersType }) => {
 					</div>
 				</div>
 			</Card.Content>
-
-			<Separator />
 
 			<Card.Footer className="flex items-center justify-end py-3">
 				<Button variant="primary" onPress={() => setIsDrawerOpen(true)}>

@@ -17,10 +17,8 @@ import {
 } from "@client/utils/notifications";
 import { ScrollShadow, Toast } from "@heroui/react";
 import { Activity, AlertTriangle, MessagesSquareIcon } from "lucide-react";
-import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
-import { useAlertsPageData } from "../hooks";
-import { useAlertsPageStore } from "../store";
+import { AlertDetailsSkeleton } from "./AlertsSkeletons";
 
 const isRecord = (
 	value: NotificationPayload,
@@ -62,38 +60,21 @@ const buildDataPoints = (item: NotificationListItem | null) => {
 	];
 };
 
-export const AlertDetailsDrawer = () => {
+export const AlertDetailsDrawer = ({
+	onClose,
+	selectedItem,
+	isPending,
+	isOpen = false,
+}: {
+	onClose: () => void;
+	selectedItem: NotificationListItem | null;
+	isPending: boolean;
+	isOpen?: boolean;
+}) => {
 	const navigate = useNavigate();
 	const isMobile = useIsMobile();
-	const { filteredNotifications } = useAlertsPageData();
-	const selectedAlertId = useAlertsPageStore((state) => state.selectedAlertId);
-	const selectAlert = useAlertsPageStore((state) => state.selectAlert);
-	const clearSelection = useAlertsPageStore((state) => state.clearSelection);
 	const acceptHelp = useAcceptHelpOffer();
 	const rejectHelp = useRejectHelpOffer();
-
-	const selectedItem = useMemo(() => {
-		const matchingItem =
-			filteredNotifications.find(
-				(item) => item.notification?.id === selectedAlertId,
-			) ?? null;
-
-		if (matchingItem) {
-			return matchingItem;
-		}
-
-		if (isMobile) {
-			return null;
-		}
-
-		return filteredNotifications[0] ?? null;
-	}, [filteredNotifications, isMobile, selectedAlertId]);
-
-	useEffect(() => {
-		if (!isMobile && !selectedAlertId && selectedItem?.notification?.id) {
-			selectAlert(selectedItem.notification.id);
-		}
-	}, [isMobile, selectedAlertId, selectedItem, selectAlert]);
 
 	const notificationType = selectedItem?.notification?.type || "";
 	const payload = selectedItem?.notification?.payload ?? null;
@@ -109,15 +90,21 @@ export const AlertDetailsDrawer = () => {
 		: "Unknown time";
 	const severityLabel = getSeverityLabel(selectedItem);
 	const dataPoints = buildDataPoints(selectedItem);
+	const detailsHeading =
+		isPending || !selectedItem
+			? "Alert Details"
+			: `Alert Details - ${severityLabel}`;
 
-	const detailsBody = !selectedItem ? (
-		<div className="flex h-full min-h-96 items-center justify-center rounded border border-dashed border-accent/40 bg-surface-secondary/35 p-8 text-sm text-muted">
+	const detailsBody = isPending ? (
+		<AlertDetailsSkeleton />
+	) : !selectedItem ? (
+		<div className="flex h-full min-h-96 items-center justify-center rounded border border-border bg-surface-secondary/35 p-8 text-sm text-muted">
 			Select an alert to inspect its pulse details.
 		</div>
 	) : (
 		<div className="space-y-4">
-			<div className="overflow-hidden rounded border border-accent/50 bg-surface">
-				<div className="flex items-center gap-2 border-b border-accent/40 px-4 py-4 text-[1.05rem] font-semibold text-foreground">
+			<div className="overflow-hidden rounded border border-border bg-surface">
+				<div className="flex items-center gap-2 border-b border-border px-4 py-4 text-[1.05rem] font-semibold text-foreground">
 					<AlertTriangle className="size-5 text-danger" />
 					<span>
 						{severityLabel} Alert - {selectedItem.user?.name || "System"}
@@ -136,7 +123,7 @@ export const AlertDetailsDrawer = () => {
 				</div>
 			</div>
 
-			<div className="rounded border border-accent/40 bg-surface-secondary p-4">
+			<div className="rounded border border-border bg-surface p-4">
 				<div className="flex items-center gap-2 text-[1.05rem] font-semibold text-foreground">
 					<Activity className="size-5 text-accent" />
 					<span>Vitals &amp; Data</span>
@@ -145,7 +132,7 @@ export const AlertDetailsDrawer = () => {
 					{dataPoints.map((point) => (
 						<div
 							key={point.label}
-							className="flex items-center justify-between rounded border border-accent/20 bg-surface px-3 py-2"
+							className="flex items-center justify-between rounded border border-accent-soft-hover bg-surface px-3 py-2"
 						>
 							<span className="text-sm text-muted">{point.label}</span>
 							<span className="text-right text-sm font-medium text-foreground">
@@ -223,19 +210,19 @@ export const AlertDetailsDrawer = () => {
 	if (isMobile) {
 		return (
 			<AppDrawer
-				isOpen={Boolean(selectedItem)}
+				isOpen={isOpen}
 				onOpenChange={(open) => {
 					if (!open) {
-						clearSelection();
+						onClose();
 					}
 				}}
 				backdrop="opaque"
 				placement="right"
 				mobilePlacement="bottom"
-				dialogClassName="border-accent bg-surface"
+				dialogClassName="border-border bg-surface"
 				bodyClassName="p-0"
 				header={
-					<div className="border-b border-accent px-4 py-4">
+					<div className="border-b border-border px-4 py-4">
 						<div className="flex items-center justify-between gap-3">
 							<div className="flex items-center gap-2 text-accent">
 								<BellIcon className="size-5" />
@@ -246,7 +233,7 @@ export const AlertDetailsDrawer = () => {
 								isIconOnly
 								radius="full"
 								className="text-accent"
-								onPress={clearSelection}
+								onPress={onClose}
 								startContent={<CloseIcon className="size-4" />}
 							/>
 						</div>
@@ -265,9 +252,9 @@ export const AlertDetailsDrawer = () => {
 	}
 
 	return (
-		<div className="hidden min-h-0 flex-col overflow-hidden rounded border border-accent bg-surface xl:flex">
-			<header className="border-b border-accent px-5 py-4">
-				<H4>Alert Details - {severityLabel}</H4>
+		<div className="hidden min-h-0 flex-col overflow-hidden rounded border border-border bg-surface xl:flex">
+			<header className="border-b border-border px-5 py-4">
+				<H4>{detailsHeading}</H4>
 			</header>
 			<ScrollShadow
 				size={8}

@@ -22,6 +22,27 @@
 			"when": 1775293280656,
 			"tag": "0002_thankful_gamma_corps",
 			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "7",
+			"when": 1775575877542,
+			"tag": "0003_living_puck",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1775578120706,
+			"tag": "0004_sad_ricochet",
+			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1775579939322,
+			"tag": "0005_quick_arachne",
+			"breakpoints": true
 		}
 	]
 }

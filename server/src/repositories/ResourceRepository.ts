@@ -1,6 +1,7 @@
 import { db } from "@server/db";
 import { type ResourceType, resource } from "@server/db/schema";
-import { and, eq } from "drizzle-orm";
+import type { GetResourceQuery } from "@shared/validators/resources/isGetResourcesQueryValid";
+import { and, eq, sql } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class ResourceRepository implements IRepository<ResourceType> {
@@ -30,6 +31,47 @@ export class ResourceRepository implements IRepository<ResourceType> {
 				},
 			},
 			orderBy: (resources, { desc }) => [desc(resources.createdAt)],
+		});
+	}
+
+	async getFilteredResources(query: GetResourceQuery) {
+		const filters = [];
+
+		if (query.filter !== "All") {
+			filters.push(eq(resource.availability, query.filter));
+		}
+
+		if (query.type) {
+			filters.push(eq(resource.resourceType, query.type));
+		}
+
+		if (query.lat != null && query.long != null) {
+			const center = sql`ST_SetSRID(ST_MakePoint(${query.long}, ${query.lat}), 4326)`;
+
+			filters.push(
+				sql`ST_DWithin(${resource.position}::geography, ${center}::geography, ${query.radiusMeters})`,
+			);
+		}
+
+		return await db.query.resource.findMany({
+			where: filters.length > 0 ? and(...filters) : undefined,
+			with: {
+				transactions: {
+					orderBy: (transactions, { desc }) => [desc(transactions.startAt)],
+					limit: 3,
+					with: {
+						borrower: {
+							columns: { id: true, name: true, image: true },
+						},
+					},
+				},
+			},
+			orderBy:
+				query.lat != null && query.long != null
+					? () => [
+							sql`ST_Distance(${resource.position}::geography, ST_SetSRID(ST_MakePoint(${query.long}, ${query.lat}), 4326)::geography)`,
+						]
+					: (resources, { desc }) => [desc(resources.createdAt)],
 		});
 	}
 

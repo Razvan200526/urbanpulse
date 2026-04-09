@@ -20,7 +20,7 @@ const FILTER_ITEMS_BY_TYPE: Record<FilterDropdownType, DropdownItemDataType[]> =
 			"Unavailable",
 			"Currently Unavailable",
 		]),
-		resourceType: buildItems(["All", "Skill", "Item", "Space"]),
+		resourceType: buildItems(["All", "Skill", "Item", "Location"]),
 	};
 
 export const FilterDropdownItems = (

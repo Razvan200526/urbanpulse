@@ -45,6 +45,7 @@ export type BroadcastDataType<T> = {
 	data: {
 		type: NotificationType;
 		payload: T;
+		notification?: unknown;
 	};
 	message: string;
 };

@@ -66,21 +66,21 @@ export const Modal = (props: ModalPropsType) => {
 						placement={isMobile ? "bottom" : "center"}
 						scroll="inside"
 						className={cn(
-							"px-0 pt-6 pb-0 md:p-6",
+							"px-0 pt-6 pb-0 md:p-6 rounded",
 							isMobile ? "items-end" : "items-center",
 							className,
 						)}
 					>
 						<HeroModal.Dialog
 							className={cn(
-								"flex flex-col relative overflow-hidden border border-border-secondary bg-surface shadow-2xl",
+								"flex flex-col relative overflow-hidden border border-border-secondary bg-surface",
 								isMobile
-									? "max-h-[88dvh] w-full rounded-t-sm border-x-0 border-b-0"
-									: "mx-4 w-full max-w-3xl rounded-sm",
+									? "max-h-[88dvh] w-full rounded-t border-x-0 border-b-0"
+									: "mx-4 w-2xl max-w-3xl max-h-3/4 rounded",
 							)}
 						>
 							{header && (
-								<HeroModal.Header className="border-b border-border/60 px-4 pt-5 pb-4 pr-14 md:px-6 md:pt-6">
+								<HeroModal.Header className="px-4 pt-3 pb-4 pr-14 md:px-6">
 									<HeroModal.Heading>{header}</HeroModal.Heading>
 								</HeroModal.Header>
 							)}
@@ -88,7 +88,7 @@ export const Modal = (props: ModalPropsType) => {
 								{children}
 							</HeroModal.Body>
 							{footer && (
-								<HeroModal.Footer className="border-t border-border/60 bg-surface/95 px-4 py-4 backdrop-blur md:px-6 md:py-5">
+								<HeroModal.Footer className="bg-surface/95 px-4 py-4 backdrop-blur md:px-6 md:py-5">
 									{footer}
 								</HeroModal.Footer>
 							)}

@@ -1,4 +1,4 @@
-import { hono, queryClient } from "@client/lib/api/client";
+import { hono } from "@client/lib/api/client";
 import {
 	parseApiData,
 	parseSocketData,
@@ -8,8 +8,8 @@ import {
 	heroAlertNotificationPayloadSchema,
 	pulseUpdatedNotificationPayloadSchema,
 } from "@client/utils/notifications";
-import { type ClientPulseType, clientPulseSchema } from "@client/utils/types";
-import { PulseStatusEnum, ResponseStatusEnum } from "@shared/types";
+import { clientPulseSchema } from "@client/utils/types";
+import { ResponseStatusEnum } from "@shared/types";
 import type { PulseSocketMessageType } from "@shared/validators/pulses/isPulseSocketMessageValid";
 import { z } from "zod";
 
@@ -28,32 +28,6 @@ export const pulseResponseMutationSchema = z.object({
 	status: z.nativeEnum(ResponseStatusEnum),
 	createdAt: z.string(),
 });
-
-export const upsertMapPulse = (
-	oldPulses: ClientPulseType[] | undefined,
-	pulse: ClientPulseType,
-) => {
-	const next = new Map((oldPulses ?? []).map((entry) => [entry.id, entry]));
-
-	if (pulse.status !== PulseStatusEnum.Active || pulse.mergedIntoPulseId) {
-		next.delete(pulse.id);
-		return Array.from(next.values());
-	}
-
-	next.set(pulse.id, pulse);
-	return Array.from(next.values());
-};
-
-export const syncPulseInCache = (pulse: ClientPulseType) => {
-	queryClient.setQueryData<ClientPulseType>(
-		["pulse", "detail", pulse.id],
-		pulse,
-	);
-	queryClient.setQueriesData<ClientPulseType[]>(
-		{ queryKey: ["pulse", "map"] },
-		(oldPulses) => upsertMapPulse(oldPulses, pulse),
-	);
-};
 
 export const sendPulseSocketMessage = <TSchema extends z.ZodTypeAny>(
 	message: PulseSocketMessageType,

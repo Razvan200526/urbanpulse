@@ -1,5 +1,6 @@
 import { Dropdown } from "@client/components/Dropdown";
 import { InputSearch } from "@client/components/input/InputSearch";
+import { useAuth } from "@client/hooks/useAuth";
 import type { FilterResourceType } from "@shared/types";
 import { Filter } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
@@ -16,6 +17,7 @@ export const AllResourcesTab = () => {
 	const deferredSearchTerm = useDeferredValue(searchTerm.trim().toLowerCase());
 	const { data: resources = [], isLoading } =
 		useFilterResources(availabilityFilter);
+	const { data: user } = useAuth();
 	const filterItems = FilterDropdownItems("availability").map((item) => ({
 		...item,
 		onAction: () => setAvailabilityFilter(item.key as FilterResourceType),
@@ -69,7 +71,11 @@ export const AllResourcesTab = () => {
 			) : filteredResources.length > 0 ? (
 				<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 					{filteredResources.map((item) => (
-						<ResourceCard key={item.resource.id} item={item} />
+						<ResourceCard
+							key={item.resource.id}
+							item={item}
+							isOwner={item.resource.userId === user?.user.id}
+						/>
 					))}
 				</div>
 			) : (

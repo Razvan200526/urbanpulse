@@ -97,3 +97,5 @@ export type FilterResourceType =
 	| "Available"
 	| "Unavailable"
 	| "Currently Unavailable";
+
+export type ResourceItemType = "Skill" | "Item" | "Location";

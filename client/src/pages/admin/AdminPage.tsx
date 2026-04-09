@@ -140,7 +140,7 @@ export const AdminPage = () => {
 
 	if (error || !data) {
 		return (
-			<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
+			<div className="flex h-[calc(100dvh)] w-full flex-col overflow-hidden bg-surface">
 				<Header title="Moderation" />
 				<Separator />
 				<div className="flex flex-1 items-center justify-center p-4 sm:p-8">
@@ -154,7 +154,7 @@ export const AdminPage = () => {
 	}
 
 	return (
-		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
+		<div className="flex h-[calc(100dvh)] w-full flex-col overflow-hidden bg-surface">
 			<Header title="Moderation" />
 			<Separator />
 			<ScrollShadow className="flex-1 p-4 sm:p-6" size={10}>
@@ -261,7 +261,7 @@ export const AdminPage = () => {
 						</Card.Header>
 						<Card.Content className="p-5 space-y-4">
 							{reports.length > 0 ? (
-								reports.map((entry) => {
+								reports.map((entry: any) => {
 									const isPendingReport =
 										entry.status === ReportStatusEnum.Pending;
 
@@ -376,9 +376,10 @@ export const AdminPage = () => {
 															onPress={() =>
 																moderatePulse.mutate(
 																	{
-																		pulseId: entry.targetPulse.id,
-																		isVerified: !entry.targetPulse.isVerified,
-																		moderationNote: entry.targetPulse.isVerified
+																		pulseId: entry.targetPulse?.id || "",
+																		isVerified: !entry.targetPulse?.isVerified,
+																		moderationNote: entry.targetPulse
+																			?.isVerified
 																			? "Verification removed by moderator"
 																			: "Verification granted by moderator",
 																	},
@@ -644,7 +645,7 @@ export const AdminPage = () => {
 														isPending={revokeSession.isPending}
 														onPress={() =>
 															revokeSession.mutate(
-																{ sessionToken: session.token },
+																{ sessionToken: session.token || "" },
 																{
 																	onSuccess: () =>
 																		Toast.toast.success("Session revoked"),

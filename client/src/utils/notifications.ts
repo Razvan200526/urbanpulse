@@ -56,6 +56,14 @@ export type PulseUpdatedNotificationPayload = z.infer<
 	typeof pulseUpdatedNotificationPayloadSchema
 >;
 
+export const pulseNotificationSchema = z.object({
+	type: z.string(),
+	payload: z.union([
+		heroAlertNotificationPayloadSchema,
+		pulseUpdatedNotificationPayloadSchema,
+	]),
+});
+
 export const pulseResponseAcceptedNotificationPayloadSchema = z.object({
 	pulseId: z.string(),
 	responseId: z.string(),
@@ -170,6 +178,33 @@ export function summarizeNotificationPayload(
 		const title =
 			typeof payload.pulseTitle === "string" ? payload.pulseTitle : undefined;
 		return `${title ? `“${title}” ` : "This pulse "}was verified${count ? ` by ${count} neighbors` : ""}.`;
+	}
+
+	if (type === "TRANSACTION") {
+		const action =
+			typeof payload.action === "string" ? payload.action : undefined;
+		const resourceName =
+			typeof payload.resourceName === "string"
+				? payload.resourceName
+				: "a resource";
+		const borrowerName =
+			typeof payload.borrowerName === "string"
+				? payload.borrowerName
+				: "Someone";
+
+		if (action === "REQUESTED") {
+			return `${borrowerName} requested “${resourceName}”.`;
+		}
+
+		if (action === "ACCEPTED") {
+			return `Your request for “${resourceName}” was accepted.`;
+		}
+
+		if (action === "REJECTED") {
+			return `Your request for “${resourceName}” was rejected.`;
+		}
+
+		return `Borrow request for “${resourceName}”.`;
 	}
 
 	return "";
