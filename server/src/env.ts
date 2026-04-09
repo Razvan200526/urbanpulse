@@ -25,6 +25,7 @@ export const envSchema = z.object({
 	GEMINI_API_KEY: z.string(),
 	MAPBOX_API_KEY: z.string(),
 	MAPBOX_URL: z.string(),
+	REDIS_URL: z.string(),
 });
 
 export function parseEnv() {
