@@ -34,6 +34,26 @@ export enum PulseEnum {
 	Item = "Item",
 }
 
+export enum PetAlertTypeEnum {
+	Lost = "lost",
+	Found = "found",
+}
+
+export enum PetAlertEmbeddingStatusEnum {
+	Pending = "pending",
+	Processing = "processing",
+	Ready = "ready",
+	Failed = "failed",
+	Skipped = "skipped",
+}
+
+export enum PetAlertUploadStatusEnum {
+	Pending = "pending",
+	Processing = "processing",
+	Success = "success",
+	Failed = "failed",
+}
+
 export enum UrgencyEnum {
 	Urgent = "Urgent",
 	NotUrgent = "Not Urgent",

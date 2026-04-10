@@ -51,3 +51,9 @@ export const clientPulseSchema = z.object({
 });
 
 export type ClientPulseType = z.infer<typeof clientPulseSchema>;
+
+export type ResponseType<T> = {
+	data: T;
+	success: boolean;
+	message: string;
+};

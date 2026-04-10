@@ -62,6 +62,7 @@ export async function initializeRunDatabase() {
 
 	await client.unsafe("CREATE EXTENSION IF NOT EXISTS pgcrypto");
 	await client.unsafe("CREATE EXTENSION IF NOT EXISTS postgis");
+	await client.unsafe("CREATE EXTENSION IF NOT EXISTS vector");
 
 	const migrationDb = drizzle(client);
 	await migrate(migrationDb, {

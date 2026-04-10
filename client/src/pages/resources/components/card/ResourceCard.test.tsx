@@ -68,6 +68,10 @@ mock.module("./EditResourceModal", () => ({
 	EditResourceModal: () => <div>Resource modal</div>,
 }));
 
+mock.module("./DeleteResourceModal", () => ({
+	DeleteResourceModal: () => <div>Removal modal</div>,
+}));
+
 mock.module("../../hooks", () => ({
 	useDeleteResource: () => ({
 		mutateAsync: async () => undefined,

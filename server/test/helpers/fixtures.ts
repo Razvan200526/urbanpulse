@@ -2,6 +2,7 @@ import { db } from "@server/db";
 import * as schema from "@server/db/schema";
 import {
 	ConversationTypeEnum,
+	PetAlertTypeEnum,
 	PulseEnum,
 	PulseStatusEnum,
 	PulseUploadStateEnum,
@@ -154,6 +155,7 @@ export async function createPetAlert(
 		.insert(schema.petAlert)
 		.values({
 			pulseId,
+			alertType: PetAlertTypeEnum.Lost,
 			petType: "Dog",
 			color: "Brown",
 			breed: "Mixed",
@@ -169,14 +171,20 @@ export async function createPetAlert(
 export async function createPetMatch(
 	overrides: Partial<typeof schema.petMatch.$inferInsert> = {},
 ) {
-	const lostAlertId = overrides.lostAlertId ?? (await createPetAlert()).id;
-	const foundAlertId = overrides.foundAlertId ?? (await createPetAlert()).id;
+	const lostAlertId =
+		overrides.lostAlertId ??
+		(await createPetAlert({ alertType: PetAlertTypeEnum.Lost })).id;
+	const foundAlertId =
+		overrides.foundAlertId ??
+		(await createPetAlert({ alertType: PetAlertTypeEnum.Found })).id;
 	const rows = await db
 		.insert(schema.petMatch)
 		.values({
 			lostAlertId,
 			foundAlertId,
 			confidenceScore: 0.92,
+			imageSimilarity: 0.95,
+			matchedAttributes: ["species", "color"],
 			createdAt: nextDate(),
 			...overrides,
 		})

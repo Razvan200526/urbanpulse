@@ -9,7 +9,11 @@
 				"src/**/*.tsx",
 				"src/**/*.js",
 				"src/**/*.jsx",
+				"**/*.py",
 				"src/**/*.json",
+				"pyproject.toml",
+				"uv.lock",
+				".python-version",
 				"tsconfig.json",
 				"tsconfig.*.json",
 				"vite.config.ts",
@@ -19,7 +23,13 @@
 				"index.html"
 			],
 			"outputs": ["dist/**", "build/**", ".turbo/**"],
-			"env": ["NODE_ENV", "VITE_*"]
+			"env": [
+				"NODE_ENV",
+				"VITE_*",
+				"AI_*",
+				"CLIENT_URL",
+				"CORS_ALLOW_ORIGINS"
+			]
 		},
 		"dev": {
 			"cache": false,
@@ -29,18 +39,43 @@
 				"src/**/*.tsx",
 				"src/**/*.js",
 				"src/**/*.jsx",
+				"**/*.py",
+				"pyproject.toml",
+				"uv.lock",
+				".python-version",
 				"tsconfig.json",
 				"tsconfig.*.json",
 				"vite.config.ts",
 				"package.json"
 			],
-			"env": ["NODE_ENV", "PORT", "VITE_*"]
+			"env": [
+				"NODE_ENV",
+				"PORT",
+				"VITE_*",
+				"AI_*",
+				"CLIENT_URL",
+				"CORS_ALLOW_ORIGINS"
+			]
 		},
 		"start:prod": {
 			"cache": false,
 			"persistent": true,
 			"dependsOn": ["build"],
-			"env": ["NODE_ENV", "PORT", "VITE_*"]
+			"inputs": [
+				"**/*.py",
+				"pyproject.toml",
+				"uv.lock",
+				".python-version",
+				"package.json"
+			],
+			"env": [
+				"NODE_ENV",
+				"PORT",
+				"VITE_*",
+				"AI_*",
+				"CLIENT_URL",
+				"CORS_ALLOW_ORIGINS"
+			]
 		},
 		"lint": {
 			"dependsOn": ["^build"],
@@ -78,14 +113,19 @@
 				"src/**/*.tsx",
 				"src/**/*.js",
 				"src/**/*.jsx",
+				"**/*.py",
 				"test/**/*.ts",
 				"test/**/*.tsx",
 				"test/**/*.js",
 				"test/**/*.jsx",
+				"pyproject.toml",
+				"uv.lock",
+				".python-version",
 				"__tests__/**/*.ts",
 				"__tests__/**/*.tsx",
 				"**/*.test.ts",
 				"**/*.test.tsx",
+				"**/*.py",
 				"**/*.spec.ts",
 				"**/*.spec.tsx",
 				"jest.config.*",
@@ -95,7 +135,7 @@
 				"tsconfig.*.json"
 			],
 			"outputs": ["coverage/**", ".nyc_output/**", "test-results/**"],
-			"env": ["NODE_ENV", "CI"]
+			"env": ["NODE_ENV", "CI", "AI_*", "CLIENT_URL", "CORS_ALLOW_ORIGINS"]
 		}
 	},
 	"globalDependencies": [
@@ -106,6 +146,9 @@
 		".gitignore",
 		"turbo.json",
 		"package.json",
+		"**/pyproject.toml",
+		"**/uv.lock",
+		"**/.python-version",
 		"bun.lock",
 		"tsconfig.json"
 	],

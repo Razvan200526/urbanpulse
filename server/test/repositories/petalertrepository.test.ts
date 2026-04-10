@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { petAlertRepository } from "@server/repositories/PetAlertRepository";
+import { PetAlertTypeEnum } from "@shared/types";
 import { createPetAlert, createPulse } from "../helpers/fixtures";
 import { resetDatabase } from "../helpers/testDatabase";
 
@@ -15,6 +16,7 @@ describe("PetAlertRepository", () => {
 
 		const created = await petAlertRepository.create({
 			pulseId: pulse.id,
+			alertType: PetAlertTypeEnum.Lost,
 			petType: "Dog",
 			color: "Black",
 		});

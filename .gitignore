@@ -1,5 +1,5 @@
 # bhvr/.gitignore
-postman/
+.postman/
 project.pdf
 
 # dependencies
@@ -44,9 +44,19 @@ pnpm-debug.log*
 bun.lock
 .turbo
 
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
 #postgres
 data
 
-.zed/*
-.codex/*
-.agents/*
+.zed
+.vscode
+.codex
+.agents
+postman

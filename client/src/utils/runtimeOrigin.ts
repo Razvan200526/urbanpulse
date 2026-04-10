@@ -41,6 +41,14 @@ export const resolveApiOrigin = ({
 	);
 };
 
+export const resolveAiOrigin = ({
+	appOrigin,
+	browserOrigin,
+	serverOrigin,
+}: ResolveOriginOptions = {}) =>
+	trimTrailingSlashes(serverOrigin) ||
+	resolveAppOrigin({ appOrigin, browserOrigin, serverOrigin });
+
 export const toWebSocketUrl = (url: string) => {
 	if (url.startsWith("ws://") || url.startsWith("wss://")) {
 		return url;
@@ -78,11 +86,25 @@ export const getApiOrigin = () =>
 		serverOrigin: import.meta.env?.VITE_SERVER_URL,
 	});
 
+export const getAiOrigin = () =>
+	resolveAiOrigin({
+		appOrigin: import.meta.env?.VITE_APP_URL,
+		browserOrigin: getBrowserOrigin(),
+		serverOrigin:
+			import.meta.env?.VITE_AI_URL || import.meta.env?.VITE_SERVER_URL,
+	});
+
 export const buildAppUrl = (path: string) =>
 	`${getAppOrigin()}${normalizePath(path)}`;
 
 export const buildApiUrl = (path: string) =>
 	`${getApiOrigin()}${normalizePath(path)}`;
 
+export const buildAiUrl = (path: string) =>
+	`${getAiOrigin()}${normalizePath(path)}`;
+
 export const buildApiWebSocketUrl = (path: string) =>
 	toWebSocketUrl(buildApiUrl(path));
+
+export const buildAiWebSocketUrl = (path: string) =>
+	toWebSocketUrl(buildAiUrl(path));

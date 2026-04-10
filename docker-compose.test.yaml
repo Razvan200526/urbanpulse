@@ -2,7 +2,9 @@ name: urbanpulse-test
 
 services:
   postgres_test:
-    image: postgis/postgis:17-3.4
+    build:
+      context: .
+      dockerfile: ./docker/postgres/Dockerfile
     environment:
       POSTGRES_USER: urbanpulse
       POSTGRES_PASSWORD: urbanpulse

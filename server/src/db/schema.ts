@@ -1,5 +1,7 @@
 import {
 	type ConversationTypeEnum,
+	type PetAlertEmbeddingStatusEnum,
+	type PetAlertTypeEnum,
 	PulseEnum,
 	PulseStatusEnum,
 	PulseUploadStateEnum,
@@ -26,6 +28,7 @@ import {
 	uniqueIndex,
 	uuid,
 	varchar,
+	vector,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable(
@@ -220,29 +223,61 @@ export const notification = pgTable("notification", {
 	createdAt: timestamp("createdAt").notNull().defaultNow(),
 });
 
-export const petAlert = pgTable("pet_alert", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	pulseId: uuid("pulseId")
-		.notNull()
-		.references(() => pulse.id, { onDelete: "cascade" }),
-	petType: text("petType").notNull(),
-	color: text("color").notNull(),
-	breed: text("breed"),
-	imageUrl: text("imageUrl"),
-	aiDescriptor: text("aiDescriptor"),
-});
+export const petAlert = pgTable(
+	"pet_alert",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		pulseId: uuid("pulseId")
+			.notNull()
+			.references(() => pulse.id, { onDelete: "cascade" }),
+		alertType: text("alertType").$type<PetAlertTypeEnum>().notNull(),
+		petType: text("petType").notNull(),
+		color: text("color").notNull(),
+		breed: text("breed"),
+		imageUrl: text("imageUrl"),
+		aiDescriptor: text("aiDescriptor"),
+		imageEmbedding: vector("imageEmbedding", { dimensions: 768 }),
+		embeddingModel: text("embeddingModel"),
+		embeddingStatus: text("embeddingStatus")
+			.$type<PetAlertEmbeddingStatusEnum>()
+			.notNull()
+			.default("pending" as PetAlertEmbeddingStatusEnum),
+		embeddingUpdatedAt: timestamp("embeddingUpdatedAt"),
+	},
+	(t) => [
+		uniqueIndex("pet_alert_pulse_id_unique").on(t.pulseId),
+		index("pet_alert_image_embedding_cosine_idx").using(
+			"hnsw",
+			t.imageEmbedding.op("vector_cosine_ops"),
+		),
+	],
+);
 
-export const petMatch = pgTable("pet_match", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	lostAlertId: uuid("lostAlertId")
-		.notNull()
-		.references(() => petAlert.id, { onDelete: "cascade" }),
-	foundAlertId: uuid("foundAlertId")
-		.notNull()
-		.references(() => petAlert.id, { onDelete: "cascade" }),
-	confidenceScore: doublePrecision("confidenceScore").notNull(),
-	createdAt: timestamp("createdAt").notNull().defaultNow(),
-});
+export const petMatch = pgTable(
+	"pet_match",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		lostAlertId: uuid("lostAlertId")
+			.notNull()
+			.references(() => petAlert.id, { onDelete: "cascade" }),
+		foundAlertId: uuid("foundAlertId")
+			.notNull()
+			.references(() => petAlert.id, { onDelete: "cascade" }),
+		confidenceScore: doublePrecision("confidenceScore").notNull(),
+		imageSimilarity: doublePrecision("imageSimilarity").notNull(),
+		matchedAttributes: jsonb("matchedAttributes")
+			.$type<string[]>()
+			.notNull()
+			.default(sql`'[]'::jsonb`),
+		createdAt: timestamp("createdAt").notNull().defaultNow(),
+	},
+	(t) => [
+		uniqueIndex("pet_match_lost_found_unique").on(
+			t.lostAlertId,
+			t.foundAlertId,
+		),
+	],
+);
 
 export const pulseConfirmation = pgTable("pulse_confirmation", {
 	id: uuid("id").defaultRandom().primaryKey(),

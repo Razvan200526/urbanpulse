@@ -8,6 +8,8 @@ export const petMatchSeeds: PetMatchInsert[] = [
 		lostAlertId: seedIds.petAlerts.lostDog,
 		foundAlertId: seedIds.petAlerts.foundDog,
 		confidenceScore: 0.93,
+		imageSimilarity: 0.96,
+		matchedAttributes: ["species", "color"],
 		createdAt: new Date("2026-03-31T08:42:00.000Z"),
 	},
 ];

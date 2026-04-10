@@ -1,53 +1,58 @@
 {
-	"name": "urbanpulse",
-	"version": "0.5.1",
-	"description": "A monorepo template built with Bun, Hono, Vite, and React",
-	"author": "Steve Simkins",
-	"license": "MIT",
-	"homepage": "https://github.com/stevedylandev/bhvr",
-	"packageManager": "bun@1.3.11",
-	"workspaces": [
-		"./server",
-		"./client",
-		"./shared"
-	],
-	"scripts": {
-		"dev": "turbo dev",
-		"dev:client": "turbo dev --filter=client",
-		"dev:server": "turbo dev --filter=server",
-		"build": "turbo build",
-		"build:client": "turbo build --filter=client",
-		"build:server": "turbo build --filter=server",
-		"prod": "turbo build --filter=shared --filter=server --filter=client",
-		"run:prod": "bun run prod && turbo run start:prod --filter=server --filter=client --parallel",
-		"lint": "biome lint .",
-		"type-check": "turbo type-check",
-		"test": "turbo test",
-		"postinstall": "turbo build --filter=shared --filter=server",
-		"fmt": "biome format . --write",
-		"lint:check": "biome check . --write",
-		"prepare": "husky",
-		"start": "cd server && bun run start:prod"
-	},
-	"keywords": [
-		"bun",
-		"hono",
-		"react",
-		"vite",
-		"monorepo",
-		"turbo"
-	],
-	"devDependencies": {
-		"@biomejs/biome": "^2.4.10",
-		"bun-types": "1.3.11",
-		"husky": "^9.1.7",
-		"turbo": "^2.8.20"
-	},
-	"peerDependencies": {
-		"typescript": "^5.9.3"
-	},
-	"dependencies": {
-		"hono": "^4.12.10",
-		"vite-tsconfig-paths": "^6.1.1"
-	}
+  "name": "urbanpulse",
+  "version": "0.5.1",
+  "description": "A monorepo template built with Bun, Hono, Vite, and React",
+  "author": "Steve Simkins",
+  "license": "MIT",
+  "homepage": "https://github.com/stevedylandev/bhvr",
+  "packageManager": "bun@1.3.11",
+  "workspaces": [
+    "./server",
+    "./client",
+    "./shared",
+    "./ai"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:ai": "turbo dev --filter=ai",
+    "dev:client": "turbo dev --filter=client",
+    "dev:server": "turbo dev --filter=server",
+    "build": "turbo build",
+    "build:ai": "turbo build --filter=ai",
+    "build:client": "turbo build --filter=client",
+    "build:server": "turbo build --filter=server",
+    "prod": "turbo build --filter=shared --filter=server --filter=client",
+    "run:prod": "bun run prod && turbo run start:prod --filter=server --filter=client --parallel",
+    "start:ai": "turbo run start:prod --filter=ai",
+    "lint": "biome lint .",
+    "type-check": "turbo type-check",
+    "test": "turbo test",
+    "test:ai": "turbo test --filter=ai",
+    "postinstall": "turbo build --filter=shared --filter=server",
+    "fmt": "biome format . --write",
+    "lint:check": "biome check . --write",
+    "prepare": "husky",
+    "start": "cd server && bun run start:prod"
+  },
+  "keywords": [
+    "bun",
+    "hono",
+    "react",
+    "vite",
+    "monorepo",
+    "turbo"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.10",
+    "bun-types": "1.3.11",
+    "husky": "^9.1.7",
+    "turbo": "^2.8.20"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "hono": "^4.12.10",
+    "vite-tsconfig-paths": "^6.1.1"
+  }
 }

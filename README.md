@@ -127,6 +127,7 @@ The implementation roadmap for the missing work lives in [IMPLEMENTATION_GAPS.md
 
 ```text
 .
+├── ai/          # Public FastAPI microservice
 ├── client/      # React frontend
 ├── server/      # Hono API, services, repositories, websocket flows
 ├── shared/      # Shared validators, contracts, and types
@@ -150,9 +151,15 @@ bun run dev
 Useful workspace-specific commands:
 
 ```bash
+bun run dev:ai
 bun run dev:client
 bun run dev:server
 ```
+
+The FastAPI service is exposed directly to the frontend as a separate public API.
+Use `VITE_AI_URL` in the client when you start calling FastAPI endpoints from the
+browser. Locally, the AI service runs on `http://localhost:8000` by default and
+exposes `/docs`, `/openapi.json`, `/health`, and `/api/v1/ping`.
 
 ### Build
 

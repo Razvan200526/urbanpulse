@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+	resolveAiOrigin,
 	resolveApiOrigin,
 	resolveAppOrigin,
 	toWebSocketUrl,
@@ -40,5 +41,14 @@ describe("runtime origin helpers", () => {
 		expect(
 			toWebSocketUrl("https://urbanpulse.pages.dev/api/notifications/ws"),
 		).toBe("wss://urbanpulse.pages.dev/api/notifications/ws");
+	});
+
+	test("resolves the AI origin independently from the main API origin", () => {
+		expect(
+			resolveAiOrigin({
+				appOrigin: "https://urbanpulse.pages.dev/",
+				serverOrigin: "https://ai.urbanpulse.dev/",
+			}),
+		).toBe("https://ai.urbanpulse.dev");
 	});
 });

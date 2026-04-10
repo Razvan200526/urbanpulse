@@ -4,6 +4,7 @@ import {
 	InputMessage,
 	type InputMessageRefType,
 } from "@client/components/input/InputMessage";
+import { H4 } from "@client/components/typography";
 import { cn, ScrollShadow } from "@heroui/react";
 import { useRef } from "react";
 import type {
@@ -11,6 +12,10 @@ import type {
 	ConversationSummary,
 	ConversationThread as ConversationThreadType,
 } from "../hooks";
+import {
+	getConversationTitle,
+	getConversationTypeLabel,
+} from "./conversationDisplay";
 import { Message } from "./Message";
 
 export const ConversationThread = ({
@@ -21,8 +26,9 @@ export const ConversationThread = ({
 	isSending,
 	selectedConversation,
 	thread,
-	typingMembers: _typingMembers,
+	typingMembers,
 	onBack,
+	onDraftChange,
 	onSend,
 }: {
 	conversationId: string | null;
@@ -47,15 +53,22 @@ export const ConversationThread = ({
 		);
 	}
 
+	const title = getConversationTitle(selectedConversation, currentUserId);
+	const typeLabel = getConversationTypeLabel(selectedConversation.conversation.type);
+	const typingNames = typingMembers
+		.map((member) => member.name)
+		.filter((name): name is string => Boolean(name));
+	const typingLabel =
+		typingNames.length === 0
+			? null
+			: typingNames.length === 1
+				? `${typingNames[0]} is typing...`
+				: `${typingNames.join(", ")} are typing...`;
+
 	return (
 		thread && (
 			<div className="flex h-full min-h-0 flex-col">
-				<div
-					className={cn(
-						"flex shrink-0 items-center gap-3 border-b border-border px-4 py-3",
-						!isMobile && "py-0 border-none",
-					)}
-				>
+				<div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3">
 					{isMobile ? (
 						<Button
 							aria-label="Back"
@@ -72,6 +85,17 @@ export const ConversationThread = ({
 							variant="ghost"
 						/>
 					) : null}
+					<div className="min-w-0 flex-1">
+						<H4 className="truncate text-accent">{title}</H4>
+						<p
+							className={cn(
+								"text-xs",
+								typingLabel ? "text-accent" : "text-muted",
+							)}
+						>
+							{typingLabel ?? typeLabel}
+						</p>
+					</div>
 				</div>
 
 				<ScrollShadow
@@ -98,9 +122,7 @@ export const ConversationThread = ({
 						ref={messageRef}
 						className="w-full"
 						isDisabled={isSending}
-						onChange={(e) => {
-							messageRef.current?.setValue(e);
-						}}
+						onChange={onDraftChange}
 						sendMessage={async () => onSend(messageRef.current?.getValue())}
 						value={draft}
 					/>

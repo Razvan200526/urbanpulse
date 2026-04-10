@@ -6,6 +6,7 @@ import {
 	LayoutDashboard,
 	Map as MapIcon,
 	MessageSquare,
+	PawPrint,
 	Settings,
 	ShieldAlert,
 	Wrench,
@@ -43,6 +44,12 @@ export const useSideBarItems = () => {
 			icon: MessageSquare,
 			href: "messages",
 			title: "Inbox",
+		},
+		{
+			key: "pet-alerts",
+			icon: PawPrint,
+			href: "pet-alerts",
+			title: "Lost & Found Pets",
 		},
 	];
 

@@ -1,6 +1,6 @@
 import { cn, InputGroup, TextField, type TextFieldProps } from "@heroui/react";
 import { MessageSquare, SendIcon } from "lucide-react";
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { Button } from "../Button/Button";
 
 export type InputMessageRefType = {
@@ -44,6 +44,12 @@ export const InputMessage = forwardRef<InputMessageRefType, InputNameProps>(
 		const [value, setValue] = useState<string>(initialValue);
 		const [focused, setFocused] = useState(false);
 
+		useEffect(() => {
+			if (controlledValue !== undefined) {
+				setValue(controlledValue);
+			}
+		}, [controlledValue]);
+
 		useImperativeHandle(
 			ref,
 			() => ({
@@ -66,8 +72,13 @@ export const InputMessage = forwardRef<InputMessageRefType, InputNameProps>(
 				isInvalid={false}
 				className={cn(className)}
 				onKeyDown={(e) => {
-					if (e.key === "Enter") {
-						sendMessage(value);
+					if (e.key === "Enter" && !e.shiftKey) {
+						e.preventDefault();
+						if (!value.trim()) {
+							return;
+						}
+
+						void sendMessage(value);
 					}
 				}}
 				onFocus={(e) => {

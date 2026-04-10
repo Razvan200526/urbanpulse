@@ -9,6 +9,7 @@ import { ForgotPasswordPage } from "./pages/forgot-password/ForgotPasswordPage";
 import { LandingPage } from "./pages/landing-page/LandingPage";
 import { MapPage } from "./pages/map/MapPage";
 import { MessagesPage } from "./pages/messages/MessagesPage";
+import { PetAlertsPage } from "./pages/pet-alerts/PetAlertsPage";
 import { ProfilePage } from "./pages/profile/ProfilePage";
 import { ResourcesPage } from "./pages/resources/ResourcesPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
@@ -70,6 +71,10 @@ export const router = createBrowserRouter([
 					{
 						path: "/messages/:conversationId",
 						element: <MessagesPage />,
+					},
+					{
+						path: "/pet-alerts",
+						element: <PetAlertsPage />,
 					},
 					{
 						path: "/admin",
