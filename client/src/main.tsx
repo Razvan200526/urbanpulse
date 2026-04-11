@@ -20,26 +20,26 @@ import { queryClient } from "./lib/api/client";
 import { router } from "./router.tsx";
 
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN as string, {
-  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string,
-  defaults: "2026-01-30",
+	api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string,
+	defaults: "2026-01-30",
 });
 
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
-  throw new Error("Root element not found");
+	throw new Error("Root element not found");
 }
 const root = createRoot(rootElement);
 root.render(
-  <StrictMode>
-    <PostHogProvider client={posthog}>
-      <QueryClientProvider client={queryClient}>
-        <RootProvider>
-          <NuqsAdapter>
-            <RouterProvider router={router} />
-          </NuqsAdapter>
-        </RootProvider>
-      </QueryClientProvider>
-    </PostHogProvider>
-  </StrictMode>,
+	<StrictMode>
+		<PostHogProvider client={posthog}>
+			<QueryClientProvider client={queryClient}>
+				<RootProvider>
+					<NuqsAdapter>
+						<RouterProvider router={router} />
+					</NuqsAdapter>
+				</RootProvider>
+			</QueryClientProvider>
+		</PostHogProvider>
+	</StrictMode>,
 );

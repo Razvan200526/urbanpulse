@@ -23,13 +23,7 @@
 				"index.html"
 			],
 			"outputs": ["dist/**", "build/**", ".turbo/**"],
-			"env": [
-				"NODE_ENV",
-				"VITE_*",
-				"AI_*",
-				"CLIENT_URL",
-				"CORS_ALLOW_ORIGINS"
-			]
+			"env": ["NODE_ENV", "VITE_*", "AI_*", "CLIENT_URL", "CORS_ALLOW_ORIGINS"]
 		},
 		"dev": {
 			"cache": false,

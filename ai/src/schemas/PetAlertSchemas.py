@@ -121,6 +121,7 @@ class PetAlertResponse(BaseModel):
     embeddingStatus: EmbeddingStatus
     embeddingModel: str | None
     embeddingUpdatedAt: datetime.datetime | None
+    ownerUserId: str | None
 
 
 class PetAlertUploadAcceptedResponse(BaseModel):

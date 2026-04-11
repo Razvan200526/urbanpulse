@@ -5,9 +5,14 @@ export const notificationTypeSchema = z.enum([
 	"HERO_ALERT",
 	"PULSE_RESPONSE",
 	"PULSE_RESPONSE_ACCEPTED",
+	"PET_ALERT_MATCH",
+	"PET_ALERT_MATCH_INTERESTED",
+	"PET_ALERT_MATCH_ACCEPTED",
+	"PET_ALERT_MATCH_DECLINED",
 	"MESSAGE",
 	"TRANSACTION",
 	"FEEDBACK",
+	"PULSE_UPDATED",
 ]);
 
 export const notificationCreateSchema = z.object({

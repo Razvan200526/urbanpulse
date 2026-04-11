@@ -32,6 +32,7 @@ export enum PulseEnum {
 	Emergency = "Emergency",
 	Skill = "Skill",
 	Item = "Item",
+	PetAlert = "Pet Alert",
 }
 
 export enum PetAlertTypeEnum {
@@ -54,6 +55,14 @@ export enum PetAlertUploadStatusEnum {
 	Failed = "failed",
 }
 
+export enum PetMatchStatusEnum {
+	PendingReview = "PENDING_REVIEW",
+	OwnerInterested = "OWNER_INTERESTED",
+	OwnerDismissed = "OWNER_DISMISSED",
+	FinderAccepted = "FINDER_ACCEPTED",
+	FinderDeclined = "FINDER_DECLINED",
+}
+
 export enum UrgencyEnum {
 	Urgent = "Urgent",
 	NotUrgent = "Not Urgent",
@@ -71,6 +80,10 @@ export type NotificationType =
 	| "PULSE_CONFIRMED"
 	| "PULSE_RESPONSE"
 	| "PULSE_RESPONSE_ACCEPTED"
+	| "PET_ALERT_MATCH"
+	| "PET_ALERT_MATCH_INTERESTED"
+	| "PET_ALERT_MATCH_ACCEPTED"
+	| "PET_ALERT_MATCH_DECLINED"
 	| "MESSAGE"
 	| "TRANSACTION"
 	| "FEEDBACK"

@@ -9,7 +9,7 @@ export class PetAlertMatchFetcher {
 	constructor(readonly fetcher: Fetcher) {}
 
 	public readonly list = async (
-		userId : string,
+		userId: string,
 		petAlertId: string,
 	): Promise<PetAlertMatch[]> => {
 		const raw = await this.fetcher.get(

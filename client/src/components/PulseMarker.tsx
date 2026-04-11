@@ -25,6 +25,11 @@ const colorClasses: Record<
 		ripple: "border-green-400/70",
 		glow: "bg-green-400/35",
 	},
+	[PulseEnum.PetAlert]: {
+		core: "bg-secondary",
+		ripple: "border-secondary-text",
+		glow: "bg-secondary-400/35",
+	},
 };
 
 export const PulseMarker = ({ pulse }: { pulse: ClientPulseType }) => {

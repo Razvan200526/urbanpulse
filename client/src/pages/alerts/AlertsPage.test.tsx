@@ -76,6 +76,63 @@ mock.module("@client/pages/map/hooks", () => ({
 	}),
 }));
 
+mock.module("@client/hooks/petMatches", () => ({
+	useMarkPetMatchOwnerInterested: () => ({
+		isPending: false,
+		mutate: (
+			_payload: unknown,
+			options?: { onSuccess?: () => void; onError?: (error: Error) => void },
+		) => {
+			options?.onSuccess?.();
+		},
+	}),
+	useDismissPetMatchAsOwner: () => ({
+		isPending: false,
+		mutate: (
+			_payload: unknown,
+			options?: { onSuccess?: () => void; onError?: (error: Error) => void },
+		) => {
+			options?.onSuccess?.();
+		},
+	}),
+	useAcceptPetMatchAsFinder: () => ({
+		isPending: false,
+		mutate: (
+			_payload: unknown,
+			options?: {
+				onSuccess?: (result: { conversationId?: string | null }) => void;
+				onError?: (error: Error) => void;
+			},
+		) => {
+			options?.onSuccess?.({ conversationId: "conversation-1" });
+		},
+	}),
+	useDeclinePetMatchAsFinder: () => ({
+		isPending: false,
+		mutate: (
+			_payload: unknown,
+			options?: { onSuccess?: () => void; onError?: (error: Error) => void },
+		) => {
+			options?.onSuccess?.();
+		},
+	}),
+}));
+
+mock.module("@client/pages/messages/hooks", () => ({
+	useEnsureDirectConversation: () => ({
+		isPending: false,
+		mutate: (
+			_payload: unknown,
+			options?: {
+				onSuccess?: (result: { id: string }) => void;
+				onError?: (error: Error) => void;
+			},
+		) => {
+			options?.onSuccess?.({ id: "conversation-1" });
+		},
+	}),
+}));
+
 mock.module("@client/components/Button/Button", () => ({
 	Button: (props: Record<string, any>) => {
 		buttonProps.push(props);

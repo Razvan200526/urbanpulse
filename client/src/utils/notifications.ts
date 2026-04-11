@@ -1,3 +1,8 @@
+import { PetMatchStatusEnum } from "@shared/types";
+import {
+	petMatchActorSchema,
+	petMatchAlertSchema,
+} from "@shared/validators/pet-matches/isPetMatchWorkflowValid";
 import { z } from "zod";
 import { clientPulseSchema, clientUserSchema, geoPointSchema } from "./types";
 
@@ -75,6 +80,21 @@ export type PulseResponseAcceptedNotificationPayload = z.infer<
 	typeof pulseResponseAcceptedNotificationPayloadSchema
 >;
 
+export const petMatchNotificationPayloadSchema = z.object({
+	petMatchId: z.string().uuid(),
+	status: z.nativeEnum(PetMatchStatusEnum),
+	confidenceScore: z.number(),
+	imageSimilarity: z.number(),
+	matchedAttributes: z.array(z.string()),
+	baseAlert: petMatchAlertSchema,
+	matchedAlert: petMatchAlertSchema,
+	counterpartUser: petMatchActorSchema,
+	conversationId: z.string().uuid().nullable().optional(),
+});
+export type PetMatchNotificationPayload = z.infer<
+	typeof petMatchNotificationPayloadSchema
+>;
+
 export const notificationListItemSchema = z.object({
 	notification: z
 		.object({
@@ -107,6 +127,14 @@ export function labelForNotificationType(type: string): string {
 			return "Help offer";
 		case "PULSE_RESPONSE_ACCEPTED":
 			return "Help accepted";
+		case "PET_ALERT_MATCH":
+			return "Pet match";
+		case "PET_ALERT_MATCH_INTERESTED":
+			return "Match reply";
+		case "PET_ALERT_MATCH_ACCEPTED":
+			return "Chat ready";
+		case "PET_ALERT_MATCH_DECLINED":
+			return "Match declined";
 		case "PULSE_CONFIRMED":
 			return "Pulse confirmed";
 		case "MESSAGE":
@@ -180,6 +208,38 @@ export function summarizeNotificationPayload(
 		return `${title ? `“${title}” ` : "This pulse "}was verified${count ? ` by ${count} neighbors` : ""}.`;
 	}
 
+	if (
+		type === "PET_ALERT_MATCH" ||
+		type === "PET_ALERT_MATCH_INTERESTED" ||
+		type === "PET_ALERT_MATCH_ACCEPTED" ||
+		type === "PET_ALERT_MATCH_DECLINED"
+	) {
+		const petMatchPayload = getPetMatchNotificationPayload(type, payload);
+		if (!petMatchPayload) {
+			return "";
+		}
+
+		const counterpartName =
+			petMatchPayload.counterpartUser.name ||
+			petMatchPayload.counterpartUser.email ||
+			"Someone";
+		const petLabel = `${petMatchPayload.matchedAlert.color} ${petMatchPayload.matchedAlert.petType}`;
+
+		if (type === "PET_ALERT_MATCH") {
+			return `${counterpartName} reported a possible match for your ${petMatchPayload.baseAlert.petType}.`;
+		}
+
+		if (type === "PET_ALERT_MATCH_INTERESTED") {
+			return `${counterpartName} thinks the ${petLabel} you found may be theirs.`;
+		}
+
+		if (type === "PET_ALERT_MATCH_ACCEPTED") {
+			return `${counterpartName} is ready to coordinate the pet handoff in chat.`;
+		}
+
+		return `${counterpartName} declined this pet-match request.`;
+	}
+
 	if (type === "TRANSACTION") {
 		const action =
 			typeof payload.action === "string" ? payload.action : undefined;
@@ -229,4 +289,44 @@ export function getPulseResponseActionPayload(
 	}
 
 	return { pulseId, responseId };
+}
+
+export function getPetMatchNotificationPayload(
+	type: string,
+	payload: NotificationPayload,
+): PetMatchNotificationPayload | null {
+	if (
+		type !== "PET_ALERT_MATCH" &&
+		type !== "PET_ALERT_MATCH_INTERESTED" &&
+		type !== "PET_ALERT_MATCH_ACCEPTED" &&
+		type !== "PET_ALERT_MATCH_DECLINED"
+	) {
+		return null;
+	}
+
+	const parsed = petMatchNotificationPayloadSchema.safeParse(payload);
+	return parsed.success ? parsed.data : null;
+}
+
+export function isActionableNotification(
+	type: string,
+	payload: NotificationPayload,
+) {
+	if (
+		getPulseResponseActionPayload(type === "PULSE_RESPONSE" ? payload : null)
+	) {
+		return true;
+	}
+
+	if (type === "PET_ALERT_MATCH" || type === "PET_ALERT_MATCH_INTERESTED") {
+		return Boolean(getPetMatchNotificationPayload(type, payload));
+	}
+
+	if (type === "PET_ALERT_MATCH_ACCEPTED") {
+		return Boolean(
+			getPetMatchNotificationPayload(type, payload)?.conversationId,
+		);
+	}
+
+	return false;
 }

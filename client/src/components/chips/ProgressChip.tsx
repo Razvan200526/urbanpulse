@@ -10,17 +10,6 @@ export const ProgrssChipClassNames: Record<
 	PulseUploadStateEnum | PetAlertUploadStatusEnum,
 	any
 > = {
-	[PulseUploadStateEnum.Pending]: {
-		className: "text-accent bg-accent/5 border-accent",
-		icon: (
-			<ProgressCircle isIndeterminate size="sm" className="size-3.5">
-				<ProgressCircle.Track strokeWidth={2}>
-					<ProgressCircle.TrackCircle cx={18} cy={18} r={17} strokeWidth={2} />
-					<ProgressCircle.FillCircle cx={18} cy={18} r={17} strokeWidth={2} />
-				</ProgressCircle.Track>
-			</ProgressCircle>
-		),
-	},
 	[PulseUploadStateEnum.Uploaded]: {
 		className: "text-blue-400 bg-blue-900/20 border-blue-400",
 	},
@@ -28,10 +17,10 @@ export const ProgrssChipClassNames: Record<
 		className: "text-green-400 bg-green-900/20 border-green-400",
 	},
 	[PulseUploadStateEnum.Failed]: {
-		className: "text-red-400 bg-red-900/20 border-red-400",
+		className: "text-red-400 bg-red-900/60 border-red-400",
 	},
 	[PetAlertUploadStatusEnum.Pending]: {
-		className: "text-accent bg-accent/5 border-accent",
+		className: "text-accent bg-primary border-accent",
 		icon: (
 			<ProgressCircle isIndeterminate size="sm" className="size-3.5">
 				<ProgressCircle.Track strokeWidth={2}>
@@ -54,9 +43,6 @@ export const ProgrssChipClassNames: Record<
 	},
 	[PetAlertUploadStatusEnum.Success]: {
 		className: "text-green-400 bg-green-900/20 border-green-400",
-	},
-	[PetAlertUploadStatusEnum.Failed]: {
-		className: "text-red-400 bg-red-900/20 border-red-400",
 	},
 };
 

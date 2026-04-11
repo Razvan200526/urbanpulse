@@ -43,6 +43,7 @@ export const petAlertSchema = z.object({
 	embeddingStatus: z.nativeEnum(PetAlertEmbeddingStatusEnum),
 	embeddingModel: z.string().nullable(),
 	embeddingUpdatedAt: z.string().nullable(),
+	ownerUserId: z.string().nullable(),
 });
 
 export const petAlertUploadAcceptedSchema = z.object({
@@ -83,6 +84,16 @@ export const petAlertMatchesEnvelopeSchema = createApiEnvelopeSchema(
 	petAlertMatchArraySchema,
 );
 
+export const petAlertUploadStatusLabels: Record<
+	PetAlertUploadStatusEnum,
+	string
+> = {
+	[PetAlertUploadStatusEnum.Pending]: "Uploading",
+	[PetAlertUploadStatusEnum.Processing]: "Uploading",
+	[PetAlertUploadStatusEnum.Success]: "Success",
+	[PetAlertUploadStatusEnum.Failed]: "Failed",
+};
+
 export const petAlertCreatePayloadSchema = z.object({
 	requestId: z.string().uuid(),
 	pulseId: z.string().uuid(),
@@ -115,3 +126,30 @@ export type PetAlertUploadSocketData = z.infer<
 >;
 export type PetAlertMatch = z.infer<typeof petAlertMatchSchema>;
 export type PetAlertFormValues = z.infer<typeof petAlertFormSchema>;
+
+export type PetAlertListItem = {
+	alert: ClientPetAlert;
+	requestId: string | null;
+	uploadStatus: PetAlertUploadStatusEnum | null;
+	error: string | null;
+};
+
+type PetAlertUploadResponse = PetAlertUploadAccepted | PetAlertUploadSocketData;
+
+export const createPetAlertListItem = (
+	alert: ClientPetAlert,
+): PetAlertListItem => ({
+	alert,
+	requestId: null,
+	uploadStatus: null,
+	error: null,
+});
+
+export const createPetAlertUploadListItem = (
+	payload: PetAlertUploadResponse,
+): PetAlertListItem => ({
+	alert: payload.alert,
+	requestId: payload.requestId,
+	uploadStatus: payload.status,
+	error: "error" in payload ? (payload.error ?? null) : null,
+});

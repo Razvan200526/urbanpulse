@@ -44,10 +44,7 @@ export class Backend {
 	}
 
 	public petAlertUploads(userId: string): Socket {
-		if (
-			!this._petAlertUploads ||
-			this._petAlertUploadsUserId !== userId
-		) {
+		if (!this._petAlertUploads || this._petAlertUploadsUserId !== userId) {
 			this._petAlertUploads?.close(
 				1000,
 				"Reconnecting pet alert uploads for a new user.",

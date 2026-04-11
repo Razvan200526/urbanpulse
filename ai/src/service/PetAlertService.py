@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import json
 import logging
+import os
+import urllib.error
+import urllib.request
 import uuid
 from dataclasses import dataclass
 
@@ -43,6 +47,28 @@ class PetAlertNotFoundError(Exception):
 
 class PetAlertForbiddenError(Exception):
     pass
+
+
+def serialize_pet_alert(alert: PetAlert) -> PetAlertResponse:
+    owner_user_id: str | None = None
+    pulse = alert.pulse
+    if pulse is not None:
+        owner_user_id = pulse.userId
+
+    return PetAlertResponse(
+        id=alert.id,
+        pulseId=alert.pulseId,
+        alertType=alert.alertType,
+        petType=alert.petType,
+        color=alert.color,
+        breed=alert.breed,
+        imageUrl=alert.imageUrl,
+        aiDescriptor=alert.aiDescriptor,
+        embeddingStatus=EmbeddingStatus(alert.embeddingStatus),
+        embeddingModel=alert.embeddingModel,
+        embeddingUpdatedAt=alert.embeddingUpdatedAt,
+        ownerUserId=owner_user_id,
+    )
 
 
 @dataclass(slots=True)
@@ -131,7 +157,6 @@ class PetAlertService:
                 raise PetAlertNotFoundError(
                     f"Pet alert '{existing.id}' was not found during retry."
                 )
-            self.match_repository.delete_for_alert(alert.id, commit=False)
             self.repository.commit()
             self.repository.refresh(alert)
         except IntegrityError as exc:
@@ -203,7 +228,12 @@ class PetAlertService:
                     raise PetAlertNotFoundError(
                         f"Pet alert '{processing_alert.id}' was not found."
                     )
-                self.match_repository.delete_for_alert(skipped_alert.id, commit=False)
+                self.match_repository.delete_pending_for_alert_except_pairs(
+                    skipped_alert.id,
+                    skipped_alert.alertType,
+                    set(),
+                    commit=False,
+                )
                 self.repository.commit()
                 self.repository.refresh(skipped_alert)
             except Exception:
@@ -243,9 +273,21 @@ class PetAlertService:
                     f"Pet alert '{processing_alert.id}' was not found."
                 )
 
-            self._sync_pet_matches(updated_alert, analysis)
+            new_pet_match_ids = self._sync_pet_matches(updated_alert, analysis)
             self.repository.commit()
             self.repository.refresh(updated_alert)
+
+            if new_pet_match_ids:
+                try:
+                    await asyncio.to_thread(
+                        self._notify_new_pet_match_candidates,
+                        new_pet_match_ids,
+                    )
+                except Exception as notify_exc:
+                    logger.warning(
+                        "Pet match candidate notifications failed after commit: %s",
+                        notify_exc,
+                    )
 
             await self.emit_upload_status(
                 user_id=user_id,
@@ -292,7 +334,7 @@ class PetAlertService:
             alertId=alert.id,
             status=UploadStatus(status),
             embeddingStatus=EmbeddingStatus(alert.embeddingStatus),
-            alert=PetAlertResponse.model_validate(alert),
+            alert=serialize_pet_alert(alert),
             error=error,
         )
         await self.socket_manager.send_to_user(
@@ -339,7 +381,7 @@ class PetAlertService:
 
         return [
             PetAlertMatchResponse(
-                matchedAlert=PetAlertResponse.model_validate(matched_alert),
+                matchedAlert=serialize_pet_alert(matched_alert),
                 confidenceScore=match.confidenceScore,
                 imageSimilarity=match.imageSimilarity,
                 matchedAttributes=list(match.matchedAttributes or []),
@@ -379,7 +421,9 @@ class PetAlertService:
         if not was_deleted:
             raise PetAlertNotFoundError(f"Pet alert '{pet_alert_id}' was not found.")
 
-    def _sync_pet_matches(self, pet_alert: PetAlert, analysis: dict) -> None:
+    def _sync_pet_matches(
+        self, pet_alert: PetAlert, analysis: dict
+    ) -> list[uuid.UUID]:
         opposite_alert_type = "found" if pet_alert.alertType == "lost" else "lost"
         query_alert = self._build_match_payload(pet_alert, analysis)
         candidate_pet_type = analysis.get("petType") or pet_alert.petType
@@ -398,13 +442,46 @@ class PetAlertService:
             if candidate.confidenceScore >= self.match_threshold
         ][: self.max_matches]
 
-        self.match_repository.delete_for_alert(pet_alert.id, commit=False)
-        for candidate in top_matches:
-            self._persist_match_pair(pet_alert, candidate)
+        existing_matches = self.match_repository.list_for_alert_entities(
+            pet_alert.id,
+            pet_alert.alertType,
+        )
+        existing_pairs = {
+            (match.lostAlertId, match.foundAlertId): match for match in existing_matches
+        }
+        keep_pairs: set[tuple[uuid.UUID, uuid.UUID]] = set()
+        new_pet_match_ids: list[uuid.UUID] = []
 
-    def _persist_match_pair(
+        for candidate in top_matches:
+            lost_alert_id, found_alert_id = self._resolve_match_pair(
+                pet_alert,
+                candidate,
+            )
+            pair = (lost_alert_id, found_alert_id)
+            keep_pairs.add(pair)
+            persisted_match = self.match_repository.upsert_match(
+                lost_alert_id=lost_alert_id,
+                found_alert_id=found_alert_id,
+                confidence_score=candidate.confidenceScore,
+                image_similarity=candidate.imageSimilarity,
+                matched_attributes=candidate.matchedAttributes,
+                commit=False,
+            )
+            if pair not in existing_pairs:
+                new_pet_match_ids.append(persisted_match.id)
+
+        self.match_repository.delete_pending_for_alert_except_pairs(
+            pet_alert.id,
+            pet_alert.alertType,
+            keep_pairs,
+            commit=False,
+        )
+
+        return new_pet_match_ids
+
+    def _resolve_match_pair(
         self, pet_alert: PetAlert, candidate: PetMatchCandidate
-    ) -> None:
+    ) -> tuple[uuid.UUID, uuid.UUID]:
         if pet_alert.alertType == "lost":
             lost_alert_id = pet_alert.id
             found_alert_id = candidate.candidate.id
@@ -412,14 +489,40 @@ class PetAlertService:
             lost_alert_id = candidate.candidate.id
             found_alert_id = pet_alert.id
 
-        self.match_repository.upsert_match(
-            lost_alert_id=lost_alert_id,
-            found_alert_id=found_alert_id,
-            confidence_score=candidate.confidenceScore,
-            image_similarity=candidate.imageSimilarity,
-            matched_attributes=candidate.matchedAttributes,
-            commit=False,
+        return lost_alert_id, found_alert_id
+
+    def _notify_new_pet_match_candidates(
+        self, pet_match_ids: list[uuid.UUID]
+    ) -> None:
+        if not pet_match_ids:
+            return
+
+        server_origin = (os.getenv("SERVER_URL") or "http://localhost:3000").rstrip("/")
+        secret = os.getenv("PET_MATCH_INTERNAL_SECRET") or "dev-pet-match-secret"
+        url = f"{server_origin}/api/internal/pet-matches/candidates"
+        payload = json.dumps({"petMatchIds": [str(match_id) for match_id in pet_match_ids]})
+        request = urllib.request.Request(
+            url,
+            data=payload.encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "x-pet-match-secret": secret,
+            },
+            method="POST",
         )
+
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                if response.status >= 400:
+                    raise RuntimeError(
+                        f"Internal pet match notification bridge returned {response.status}"
+                    )
+        except urllib.error.HTTPError as exc:
+            raise RuntimeError(
+                f"Internal pet match notification bridge returned {exc.code}"
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError("Internal pet match notification bridge is unavailable") from exc
 
     def _build_match_payload(self, pet_alert: PetAlert, analysis: dict) -> dict:
         return {

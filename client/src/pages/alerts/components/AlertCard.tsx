@@ -2,16 +2,25 @@ import { Button } from "@client/components/Button/Button";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
 import { Avatar } from "@client/components/user/Avatar";
 import {
+	useAcceptPetMatchAsFinder,
+	useDeclinePetMatchAsFinder,
+	useDismissPetMatchAsOwner,
+	useMarkPetMatchOwnerInterested,
+} from "@client/hooks/petMatches";
+import {
 	useAcceptHelpOffer,
 	useRejectHelpOffer,
 } from "@client/pages/map/hooks";
+import { useEnsureDirectConversation } from "@client/pages/messages/hooks";
 import {
+	getPetMatchNotificationPayload,
 	getPulseResponseActionPayload,
 	labelForNotificationType,
 	type NotificationListItem,
+	summarizeNotificationPayload,
 } from "@client/utils/notifications";
 import { Chip, cn, Toast } from "@heroui/react";
-import { BellDot } from "lucide-react";
+import { BellDot, MessagesSquareIcon } from "lucide-react";
 import { useNavigate } from "react-router";
 
 export const AlertCard = ({
@@ -24,6 +33,11 @@ export const AlertCard = ({
 	const navigate = useNavigate();
 	const acceptHelp = useAcceptHelpOffer();
 	const rejectHelp = useRejectHelpOffer();
+	const markOwnerInterested = useMarkPetMatchOwnerInterested();
+	const dismissAsOwner = useDismissPetMatchAsOwner();
+	const acceptAsFinder = useAcceptPetMatchAsFinder();
+	const declineAsFinder = useDeclinePetMatchAsFinder();
+	const ensureDirectConversation = useEnsureDirectConversation();
 
 	const notificationType = notificationItem.notification?.type || "";
 	const payload = notificationItem.notification?.payload ?? null;
@@ -33,20 +47,47 @@ export const AlertCard = ({
 	const createdAt = notificationItem.notification?.createdAt
 		? new Date(notificationItem.notification.createdAt).toLocaleString()
 		: "Unknown time";
-	const isActionPending = acceptHelp.isPending || rejectHelp.isPending;
+	const petMatchPayload = getPetMatchNotificationPayload(
+		notificationType,
+		payload,
+	);
+	const isActionPending =
+		acceptHelp.isPending ||
+		rejectHelp.isPending ||
+		markOwnerInterested.isPending ||
+		dismissAsOwner.isPending ||
+		acceptAsFinder.isPending ||
+		declineAsFinder.isPending ||
+		ensureDirectConversation.isPending;
 	const alertType =
 		typeof payload?.type === "string"
 			? payload.type
 			: labelForNotificationType(notificationType);
+	const summary = summarizeNotificationPayload(notificationType, payload);
+	const actorName =
+		petMatchPayload?.counterpartUser.name ||
+		notificationItem.user?.name ||
+		"System alert";
 	const cardContent = (
 		<div className="flex items-start gap-3">
-			<Avatar user={notificationItem.user} />
+			<Avatar
+				user={
+					petMatchPayload
+						? {
+								id: petMatchPayload.counterpartUser.id,
+								name: actorName,
+								email: petMatchPayload.counterpartUser.email || "",
+								image: petMatchPayload.counterpartUser.image,
+							}
+						: notificationItem.user
+				}
+			/>
 
 			<div className="min-w-0 flex-1 space-y-3">
 				<div className="flex min-w-0 items-start justify-between gap-3">
 					<div className="min-w-0">
 						<p className="truncate text-md font-semibold text-accent">
-							{notificationItem.user?.name || "System alert"}
+							{actorName}
 						</p>
 					</div>
 
@@ -69,6 +110,10 @@ export const AlertCard = ({
 						</Chip.Label>
 					</Chip>
 				</div>
+
+				{summary ? (
+					<p className="text-sm leading-relaxed text-muted">{summary}</p>
+				) : null}
 			</div>
 		</div>
 	);
@@ -132,6 +177,128 @@ export const AlertCard = ({
 						}}
 					>
 						Reject
+					</Button>
+				</div>
+			) : notificationType === "PET_ALERT_MATCH" && petMatchPayload ? (
+				<div className="mt-4 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:justify-end">
+					<Button
+						radius="md"
+						size="sm"
+						isDisabled={isActionPending}
+						onPress={() => {
+							markOwnerInterested.mutate(petMatchPayload.petMatchId, {
+								onSuccess: () =>
+									Toast.toast.success("Finder notified about your interest"),
+								onError: (error: Error) =>
+									Toast.toast.danger(
+										error instanceof Error
+											? error.message
+											: "Could not confirm this match",
+									),
+							});
+						}}
+						className="border border-accent bg-surface px-3 text-accent transition-colors duration-150 ease-out hover:bg-accent/10"
+					>
+						This could be my pet
+					</Button>
+					<Button
+						variant="danger-soft"
+						radius="md"
+						size="sm"
+						isDisabled={isActionPending}
+						onPress={() => {
+							dismissAsOwner.mutate(petMatchPayload.petMatchId, {
+								onSuccess: () => Toast.toast.success("Match dismissed"),
+								onError: (error: Error) =>
+									Toast.toast.danger(
+										error instanceof Error
+											? error.message
+											: "Could not dismiss this match",
+									),
+							});
+						}}
+					>
+						Dismiss
+					</Button>
+				</div>
+			) : notificationType === "PET_ALERT_MATCH_INTERESTED" &&
+				petMatchPayload ? (
+				<div className="mt-4 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:justify-end">
+					<Button
+						radius="md"
+						size="sm"
+						isDisabled={isActionPending}
+						onPress={() => {
+							acceptAsFinder.mutate(petMatchPayload.petMatchId, {
+								onSuccess: (result) => {
+									Toast.toast.success("Chat ready");
+									if (result.conversationId) {
+										navigate(`/messages/${result.conversationId}`);
+									}
+								},
+								onError: (error: Error) =>
+									Toast.toast.danger(
+										error instanceof Error
+											? error.message
+											: "Could not open chat",
+									),
+							});
+						}}
+						className="border border-success bg-surface px-3 text-success transition-colors duration-150 ease-out hover:bg-success/10"
+					>
+						Approve and open chat
+					</Button>
+					<Button
+						variant="danger-soft"
+						radius="md"
+						size="sm"
+						isDisabled={isActionPending}
+						onPress={() => {
+							declineAsFinder.mutate(petMatchPayload.petMatchId, {
+								onSuccess: () => Toast.toast.success("Match declined"),
+								onError: (error: Error) =>
+									Toast.toast.danger(
+										error instanceof Error
+											? error.message
+											: "Could not decline this match",
+									),
+							});
+						}}
+					>
+						Decline
+					</Button>
+				</div>
+			) : notificationType === "PET_ALERT_MATCH_ACCEPTED" && petMatchPayload ? (
+				<div className="mt-4 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:justify-end">
+					<Button
+						radius="md"
+						size="sm"
+						isDisabled={isActionPending}
+						startContent={<MessagesSquareIcon className="size-4" />}
+						className="border border-accent bg-accent text-accent-foreground"
+						onPress={() => {
+							if (petMatchPayload.conversationId) {
+								navigate(`/messages/${petMatchPayload.conversationId}`);
+								return;
+							}
+
+							ensureDirectConversation.mutate(
+								petMatchPayload.counterpartUser.id,
+								{
+									onSuccess: (conversation) => {
+										navigate(`/messages/${conversation.id}`);
+									},
+									onError: (error: Error) =>
+										Toast.toast.danger(
+											error instanceof Error
+												? error.message
+												: "Could not open chat",
+										),
+								},
+							);
+						}}
+					>
+						Open chat
 					</Button>
 				</div>
 			) : null}

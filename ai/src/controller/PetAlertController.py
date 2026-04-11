@@ -9,7 +9,6 @@ from src.schemas.PetAlertSchemas import (
     EmbeddingStatus,
     PetAlertCreateRequest,
     PetAlertListFilters,
-    PetAlertResponse,
     PetAlertUpdateRequest,
     PetAlertUploadAcceptedResponse,
     UploadStatus,
@@ -20,6 +19,7 @@ from src.service.PetAlertService import (
     PetAlertService,
     PetAlertValidationError,
     get_pet_alert_service,
+    serialize_pet_alert,
 )
 from src.service.PetAlertSocketManager import (
     PetAlertSocketManager,
@@ -65,7 +65,7 @@ async def create_pet_alert(
             alertId=result.alert.id,
             status=UploadStatus(result.status),
             embeddingStatus=EmbeddingStatus(result.alert.embeddingStatus),
-            alert=PetAlertResponse.model_validate(result.alert),
+            alert=serialize_pet_alert(result.alert),
         )
         return json_success(
             " uploaded!",
@@ -88,7 +88,7 @@ def list_pet_alerts(
     return json_success(
         "Pet alerts retrieved",
         [
-            PetAlertResponse.model_validate(pet_alert).model_dump(mode="json")
+            serialize_pet_alert(pet_alert).model_dump(mode="json")
             for pet_alert in pet_alerts
         ],
     )
@@ -102,7 +102,7 @@ def get_all(
     return json_success(
         "Pet alerts retrieved",
         [
-            PetAlertResponse.model_validate(pet_alert).model_dump(mode="json")
+            serialize_pet_alert(pet_alert).model_dump(mode="json")
             for pet_alert in pet_alerts
         ],
     )
@@ -118,7 +118,7 @@ def get_pet_alert(
         pet_alert = service.get_pet_alert(pet_alert_id, user_id)
         return json_success(
             "Pet alert retrieved",
-            PetAlertResponse.model_validate(pet_alert).model_dump(mode="json"),
+            serialize_pet_alert(pet_alert).model_dump(mode="json"),
         )
     except PetAlertNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
@@ -154,7 +154,7 @@ def update_pet_alert(
         pet_alert = service.update_pet_alert(pet_alert_id, payload, payload.userId)
         return json_success(
             "Pet alert updated",
-            PetAlertResponse.model_validate(pet_alert).model_dump(mode="json"),
+            serialize_pet_alert(pet_alert).model_dump(mode="json"),
         )
     except PetAlertValidationError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))

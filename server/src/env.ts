@@ -27,6 +27,7 @@ export const envSchema = z.object({
 	MAPBOX_URL: z.string(),
 	REDIS_URL: z.string(),
 	VALKEY_URL: z.string().optional(),
+	PET_MATCH_INTERNAL_SECRET: z.string().optional(),
 });
 
 export function parseEnv() {

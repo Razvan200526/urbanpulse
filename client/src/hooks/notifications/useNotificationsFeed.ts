@@ -2,10 +2,12 @@ import { hono, queryClient } from "@client/lib/api/client";
 import { parseApiData, parseValueWithSchema } from "@client/lib/api/parse";
 import { useHelpOfferUiStore } from "@client/stores/helpOfferUiStore";
 import {
+	getPetMatchNotificationPayload,
 	type NotificationListItem,
 	type NotificationPayload,
 	notificationListItemSchema,
 	notificationsPayloadSchema,
+	petMatchNotificationPayloadSchema,
 	pulseNotificationSchema,
 	pulseResponseNotificationPayloadSchema,
 } from "@client/utils/notifications";
@@ -172,6 +174,45 @@ export const useNotifications = (userId: string) => {
 						message:
 							response.message || "A neighbor offered help on your pulse",
 					});
+					return;
+				}
+
+				if (
+					response.channelName === "notifications:pet_alert_match" ||
+					response.channelName === "notifications:pet_alert_match_interested" ||
+					response.channelName === "notifications:pet_alert_match_accepted" ||
+					response.channelName === "notifications:pet_alert_match_declined"
+				) {
+					const parsed = parseValueWithSchema(
+						response.data,
+						notificationSocketDataSchema,
+						"Failed to process pet match notification",
+					);
+					const petMatchPayload = parseValueWithSchema(
+						parsed.payload,
+						petMatchNotificationPayloadSchema,
+						"Failed to process pet match notification",
+					);
+
+					prependSocketNotification(userId, parsed);
+					queryClient.invalidateQueries({ queryKey: ["pet-matches"] });
+
+					if (petMatchPayload.conversationId) {
+						queryClient.invalidateQueries({
+							queryKey: ["messages", "conversations"],
+						});
+					}
+
+					queryClient.invalidateQueries({
+						queryKey: ["dashboard", "overview"],
+					});
+					Toast.toast.success(
+						response.message ||
+							(getPetMatchNotificationPayload(parsed.type, parsed.payload)
+								?.conversationId
+								? "Pet match chat ready"
+								: "Possible pet match update"),
+					);
 					return;
 				}
 

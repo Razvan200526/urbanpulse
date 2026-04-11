@@ -105,9 +105,14 @@ export const PulseDrawerHeader = ({
 			<div className="pointer-events-none absolute inset-0 bg-linear-to-b" />
 			<div className="relative flex flex-col gap-3">
 				<div className="flex flex-wrap items-center gap-2">
-					<Chip className="gap-1 rounded-full border border-accent bg-accent/5">
-						<TypeIcon className="size-4 text-accent" />
-						<p className="text-accent">{typeConfig.label}</p>
+					<Chip
+						className={cn(
+							"gap-1 rounded-full border border-accent bg-accent/5",
+							typeConfig.badgeBg,
+						)}
+					>
+						<TypeIcon className={cn("size-4", typeConfig.icon)} />
+						<p className={typeConfig.label}>{typeConfig.label}</p>
 					</Chip>
 					{renderVerificationBadges(pulse)}
 				</div>
@@ -193,7 +198,12 @@ export const PulseDrawerSummary = ({
 			)}
 			{pulse.imageUrls.length > 0 &&
 				pulse.imageUrls.map((url) => (
-					<img key={url} alt="pulse-image" src={normalizeAssetUrl(url)} />
+					<img
+						width={60}
+						key={url}
+						alt="pulse-image"
+						src={normalizeAssetUrl(url)}
+					/>
 				))}
 		</div>
 	);

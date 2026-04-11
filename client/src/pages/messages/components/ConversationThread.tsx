@@ -54,7 +54,9 @@ export const ConversationThread = ({
 	}
 
 	const title = getConversationTitle(selectedConversation, currentUserId);
-	const typeLabel = getConversationTypeLabel(selectedConversation.conversation.type);
+	const typeLabel = getConversationTypeLabel(
+		selectedConversation.conversation.type,
+	);
 	const typingNames = typingMembers
 		.map((member) => member.name)
 		.filter((name): name is string => Boolean(name));

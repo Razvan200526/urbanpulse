@@ -5,8 +5,11 @@ import {
 	PetAlertUploadStatusEnum,
 } from "@shared/types";
 import {
+	createPetAlertListItem,
+	createPetAlertUploadListItem,
 	petAlertUploadAcceptedEnvelopeSchema,
 	petAlertUploadSocketDataSchema,
+	petAlertUploadStatusLabels,
 } from "./petAlerts";
 
 const validAlert = {
@@ -21,6 +24,7 @@ const validAlert = {
 	embeddingStatus: PetAlertEmbeddingStatusEnum.Ready,
 	embeddingModel: "google/siglip2-base-patch16-224",
 	embeddingUpdatedAt: "2026-04-10T10:00:00.000Z",
+	ownerUserId: "user-1",
 };
 
 describe("pet alert schemas", () => {
@@ -56,5 +60,30 @@ describe("pet alert schemas", () => {
 		});
 
 		expect(parsed.success).toBe(false);
+	});
+
+	test("creates list items for persisted and uploading alerts", () => {
+		const persistedItem = createPetAlertListItem(validAlert);
+		const uploadingItem = createPetAlertUploadListItem({
+			requestId: "33333333-3333-3333-8333-333333333333",
+			alertId: validAlert.id,
+			status: PetAlertUploadStatusEnum.Processing,
+			embeddingStatus: PetAlertEmbeddingStatusEnum.Pending,
+			alert: {
+				...validAlert,
+				embeddingStatus: PetAlertEmbeddingStatusEnum.Pending,
+				embeddingModel: null,
+				embeddingUpdatedAt: null,
+			},
+			error: null,
+		});
+
+		expect(persistedItem.uploadStatus).toBeNull();
+		expect(uploadingItem.uploadStatus).toBe(
+			PetAlertUploadStatusEnum.Processing,
+		);
+		expect(petAlertUploadStatusLabels[uploadingItem.uploadStatus!]).toBe(
+			"Uploading",
+		);
 	});
 });

@@ -1,3 +1,15 @@
 [mcp_servers.railway]
 command = "npx"
 args = [ "-y", "@railway/mcp-server" ]
+
+[mcp_servers.railway.tools.check-railway-status]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.list-services]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.list-projects]
+approval_mode = "approve"
+
+[mcp_servers.railway.tools.list-deployments]
+approval_mode = "approve"

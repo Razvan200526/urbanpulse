@@ -1,5 +1,4 @@
 import { Button } from "@client/components/Button/Button";
-import { ProgressChip } from "@client/components/chips/ProgressChip";
 import { ImageUploader } from "@client/components/ImageUploader";
 import {
 	InputName,
@@ -14,18 +13,14 @@ import { useCreatePulse } from "@client/pages/map/hooks";
 import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import {
 	type PetAlertFormValues,
+	type PetAlertUploadAccepted,
 	petAlertFormSchema,
 } from "@client/utils/petAlerts";
 import { Chip, Toast } from "@heroui/react";
-import {
-	PetAlertTypeEnum,
-	PetAlertUploadStatusEnum,
-	PulseEnum,
-	UrgencyEnum,
-} from "@shared/types";
+import { PetAlertTypeEnum, PulseEnum, UrgencyEnum } from "@shared/types";
 import { Image } from "lucide-react";
 import { useRef, useState } from "react";
-import { useCreatePetAlert, usePetAlertSocket } from "../hooks";
+import { useCreatePetAlert } from "../hooks";
 
 const alertTypeItems = [
 	{ key: PetAlertTypeEnum.Lost, label: "Lost", className: "mx-2" },
@@ -37,13 +32,6 @@ const urgencyItems = [
 	{ key: UrgencyEnum.Immediate, label: "Immediate", className: "mx-2" },
 	{ key: UrgencyEnum.NotUrgent, label: "Not urgent", className: "mx-2" },
 ];
-
-const uploadStatusLabels: Record<PetAlertUploadStatusEnum, string> = {
-	[PetAlertUploadStatusEnum.Pending]: "Uploading",
-	[PetAlertUploadStatusEnum.Processing]: "Uploading",
-	[PetAlertUploadStatusEnum.Success]: "Success",
-	[PetAlertUploadStatusEnum.Failed]: "Failed",
-};
 
 const defaultFormValues: PetAlertFormValues = {
 	userId: "",
@@ -74,15 +62,16 @@ const buildPulseDescription = (values: PetAlertFormValues) => {
 
 interface CreateAlertModalProps {
 	modalRef: React.RefObject<ModalRefType | null>;
-	onSuccess?: () => void;
+	onAlertAccepted: (accepted: PetAlertUploadAccepted) => void;
+	socketConnected: boolean;
 }
 
 export const CreateAlertModal = ({
 	modalRef,
-	onSuccess,
+	onAlertAccepted,
+	socketConnected,
 }: CreateAlertModalProps) => {
 	const { data: user } = useAuth();
-	const currentUserId = user?.user.id || "";
 	const { coords, isError: locationError } = useGetGeolocation();
 	const { mutateAsync: createPulse, isPending: isCreatingPulse } =
 		useCreatePulse();
@@ -98,24 +87,11 @@ export const CreateAlertModal = ({
 	const [urgency, setUrgency] = useState(defaultFormValues.urgency);
 	const [imageUrl, setImageUrl] = useState(defaultFormValues.imageUrl);
 	const [draftPulseId, setDraftPulseId] = useState<string | null>(null);
-	const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
-
-	const { socketConnected, uploadStatus, syncUpload, reset, markUploadFailed } =
-		usePetAlertSocket({
-			userId: currentUserId,
-			activeRequestId,
-			onUploadSuccess: () => {
-				setDraftPulseId(null);
-				setActiveRequestId(null);
-				onSuccess?.();
-				setTimeout(() => modalRef.current?.close(), 1500);
-			},
-		});
 
 	const isSubmitting = isCreatingPulse || isCreatingAlert;
 
 	const getFormValues = (): PetAlertFormValues => ({
-		userId: currentUserId,
+		userId: user?.user.id || "",
 		alertType,
 		petType: petTypeRef.current?.getValue() ?? defaultFormValues.petType,
 		color: colorRef.current?.getValue() ?? defaultFormValues.color,
@@ -130,20 +106,13 @@ export const CreateAlertModal = ({
 		setUrgency(defaultFormValues.urgency);
 		setImageUrl(defaultFormValues.imageUrl);
 		setDraftPulseId(null);
-		setActiveRequestId(null);
 		petTypeRef.current?.setValue(defaultFormValues.petType);
 		colorRef.current?.setValue(defaultFormValues.color);
 		breedRef.current?.setValue(defaultFormValues.breed ?? "");
 		notesRef.current?.setValue(defaultFormValues.notes ?? "");
-		reset();
 	};
 
 	const handleSubmit = async () => {
-		if (!currentUserId) {
-			Toast.toast.danger("You must be signed in to submit a pet alert.");
-			return;
-		}
-
 		const parsed = petAlertFormSchema.safeParse(getFormValues());
 		if (!parsed.success) {
 			Toast.toast.danger("Please complete all required pet alert fields.");
@@ -157,13 +126,11 @@ export const CreateAlertModal = ({
 			return;
 		}
 
-		reset();
-
 		try {
 			let pulseId = draftPulseId;
 			if (!pulseId) {
 				const pulseResponse = await createPulse({
-					type: PulseEnum.Item,
+					type: PulseEnum.PetAlert,
 					urgency: parsed.data.urgency,
 					title: buildPulseTitle(parsed.data),
 					description: buildPulseDescription(parsed.data),
@@ -175,12 +142,11 @@ export const CreateAlertModal = ({
 			}
 
 			const requestId = crypto.randomUUID();
-			setActiveRequestId(requestId);
 
 			const accepted = await createAlert({
 				requestId,
 				pulseId,
-				userId: currentUserId,
+				userId: user?.user.id || "",
 				alertType: parsed.data.alertType,
 				petType: parsed.data.petType.trim(),
 				color: parsed.data.color.trim(),
@@ -188,9 +154,9 @@ export const CreateAlertModal = ({
 				imageUrl: parsed.data.imageUrl,
 			});
 
-			await syncUpload(user?.user.id || "", accepted);
+			onAlertAccepted(accepted);
+			modalRef.current?.close();
 		} catch (error) {
-			markUploadFailed();
 			Toast.toast.danger(
 				error instanceof Error ? error.message : "Failed to submit pet alert.",
 			);
@@ -210,12 +176,6 @@ export const CreateAlertModal = ({
 						</p>
 					</div>
 					<div className="flex flex-wrap items-center gap-3">
-						{uploadStatus ? (
-							<ProgressChip
-								status={uploadStatus}
-								label={uploadStatusLabels[uploadStatus]}
-							/>
-						) : null}
 						<Chip className="rounded-full border border-accent/30 bg-accent/5 text-accent text-xs">
 							{socketConnected ? "Online" : "Connecting..."}
 						</Chip>

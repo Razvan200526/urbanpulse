@@ -16,6 +16,7 @@ COPY ai/pyproject.toml ai/uv.lock ./
 RUN uv sync --frozen --no-dev
 
 COPY ai/main.py ./main.py
+COPY ai/src ./src
 
 EXPOSE 8000
 

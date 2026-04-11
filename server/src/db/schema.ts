@@ -2,6 +2,7 @@ import {
 	type ConversationTypeEnum,
 	type PetAlertEmbeddingStatusEnum,
 	type PetAlertTypeEnum,
+	type PetMatchStatusEnum,
 	PulseEnum,
 	PulseStatusEnum,
 	PulseUploadStateEnum,
@@ -269,7 +270,12 @@ export const petMatch = pgTable(
 			.$type<string[]>()
 			.notNull()
 			.default(sql`'[]'::jsonb`),
+		status: text("status")
+			.$type<PetMatchStatusEnum>()
+			.notNull()
+			.default("PENDING_REVIEW" as PetMatchStatusEnum),
 		createdAt: timestamp("createdAt").notNull().defaultNow(),
+		updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 	},
 	(t) => [
 		uniqueIndex("pet_match_lost_found_unique").on(

@@ -8,6 +8,7 @@ import { PulseEnum, PulseStatusEnum } from "@shared/types";
 import {
 	CheckCircle2Icon,
 	PackageIcon,
+	PawPrint,
 	Wrench,
 	XCircleIcon,
 	ZapIcon,
@@ -48,6 +49,12 @@ const PULSE_TYPE_CONFIG: Record<
 		label: "Item",
 		accent: "text-primary",
 		badgeBg: `bg-primary/10 border-primary text-primary`,
+	},
+	[PulseEnum.PetAlert]: {
+		icon: PawPrint,
+		label: "Pet Alert",
+		accent: "text-secondary",
+		badgeBg: `bg-secondary/10 border-secondary text-secondary`,
 	},
 };
 

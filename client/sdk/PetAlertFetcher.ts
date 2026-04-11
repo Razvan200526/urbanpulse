@@ -53,15 +53,15 @@ export class PetAlertFetcher {
 		return parsed.data ?? null;
 	};
 
-	public readonly list = async (): Promise<
-		ResponseType<ClientPetAlert[]> | []
-	> => {
+	public readonly list = async (): Promise<ResponseType<ClientPetAlert[]>> => {
 		const raw = await this.fetcher.get("/api/v1/pet-alerts");
 		const parsed = petAlertListEnvelopeSchema.safeParse(raw);
 		if (!parsed.success) {
 			throwPetAlertApiError(raw, "Failed to list pet alerts");
 		}
-		return parsed.data ?? [];
+		return parsed?.data
+			? parsed.data
+			: { data: [], success: true, message: "" };
 	};
 
 	public readonly update = async (

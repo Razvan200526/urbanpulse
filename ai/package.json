@@ -1,12 +1,12 @@
 {
-  "name": "ai",
-  "private": true,
-  "scripts": {
-    "dev": "sh -c 'set -a && . ./.env && set +a && uv run --frozen uvicorn main:app --reload --host 0.0.0.0 --port ${PORT:-8000}'",
-    "build": "python3 -m py_compile main.py",
-    "db:generate-models": "sh -c 'set -a && . ./.env && set +a && uvx --from \"sqlacodegen[geoalchemy2,pgvector]\" --with psycopg2-binary sqlacodegen --generator declarative --schemas public --outfile src/persistance/generated_models.py \"$DATABASE_URL\"'",
-    "test": "uv run --frozen python -m unittest discover -s tests -p 'test_*.py'",
-    "start": "sh -c 'set -a && . ./.env && set +a && uv run --frozen uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}'",
-    "start:prod": "sh -c 'set -a && . ./.env && set +a && uv run --frozen uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}'"
-  }
+	"name": "ai",
+	"private": true,
+	"scripts": {
+		"dev": "sh -c 'set -a && . ./.env && set +a && uv run --frozen uvicorn main:app --reload --host 0.0.0.0 --port ${PORT:-8000}'",
+		"build": "python3 -m py_compile main.py",
+		"db:generate-models": "sh -c 'set -a && . ./.env && set +a && uvx --from \"sqlacodegen[geoalchemy2,pgvector]\" --with psycopg2-binary sqlacodegen --generator declarative --schemas public --outfile src/persistance/generated_models.py \"$DATABASE_URL\"'",
+		"test": "uv run --frozen python -m unittest discover -s tests -p 'test_*.py'",
+		"start": "sh -c 'set -a && . ./.env && set +a && uv run --frozen uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}'",
+		"start:prod": "sh -c 'set -a && . ./.env && set +a && uv run --frozen uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}'"
+	}
 }

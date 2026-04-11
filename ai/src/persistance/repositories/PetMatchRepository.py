@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import delete, desc, or_, select
+from sqlalchemy import delete, desc, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, aliased
 
@@ -34,6 +34,7 @@ class PetMatchRepository:
                 "confidenceScore": confidence_score,
                 "imageSimilarity": image_similarity,
                 "matchedAttributes": matched_attributes,
+                "updatedAt": func.now(),
             },
         ).returning(PetMatch)
 
@@ -93,6 +94,42 @@ class PetMatchRepository:
         ).limit(limit)
 
         return [(match, alert) for match, alert in self.db.execute(statement).all()]
+
+    def list_for_alert_entities(
+        self, pet_alert_id: uuid.UUID, alert_type: str
+    ) -> list[PetMatch]:
+        if alert_type == "lost":
+            statement = select(PetMatch).where(PetMatch.lostAlertId == pet_alert_id)
+        else:
+            statement = select(PetMatch).where(PetMatch.foundAlertId == pet_alert_id)
+
+        statement = statement.order_by(
+            desc(PetMatch.updatedAt),
+            desc(PetMatch.confidenceScore),
+            desc(PetMatch.imageSimilarity),
+        )
+
+        return list(self.db.scalars(statement))
+
+    def delete_pending_for_alert_except_pairs(
+        self,
+        pet_alert_id: uuid.UUID,
+        alert_type: str,
+        keep_pairs: set[tuple[uuid.UUID, uuid.UUID]],
+        *,
+        commit: bool = True,
+    ) -> None:
+        existing_matches = self.list_for_alert_entities(pet_alert_id, alert_type)
+
+        for match in existing_matches:
+            pair = (match.lostAlertId, match.foundAlertId)
+            if match.status == "PENDING_REVIEW" and pair not in keep_pairs:
+                self.db.delete(match)
+
+        self.db.flush()
+
+        if commit:
+            self.commit()
 
     def commit(self) -> None:
         try:

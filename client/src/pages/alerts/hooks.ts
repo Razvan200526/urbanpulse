@@ -1,6 +1,6 @@
 import { useAuth } from "@client/hooks/useAuth";
 import { useNotifications } from "@client/hooks/useNotifications";
-import { getPulseResponseActionPayload } from "@client/utils/notifications";
+import { isActionableNotification } from "@client/utils/notifications";
 import { useMemo } from "react";
 import { useAlertsPageStore } from "./store";
 
@@ -22,12 +22,9 @@ export const useAlertsPageData = ({
 	const actionableCount = useMemo(
 		() =>
 			allNotifications.filter((item) =>
-				Boolean(
-					getPulseResponseActionPayload(
-						item.notification?.type === "PULSE_RESPONSE"
-							? item.notification?.payload
-							: null,
-					),
+				isActionableNotification(
+					item.notification?.type || "",
+					item.notification?.payload ?? null,
 				),
 			).length,
 		[allNotifications],
@@ -37,17 +34,16 @@ export const useAlertsPageData = ({
 		if (filter === "all") return allNotifications;
 
 		return allNotifications.filter((item) => {
-			const actionPayload = getPulseResponseActionPayload(
-				item.notification?.type === "PULSE_RESPONSE"
-					? item.notification?.payload
-					: null,
+			const isActionable = isActionableNotification(
+				item.notification?.type || "",
+				item.notification?.payload ?? null,
 			);
 
 			if (filter === "actionable") {
-				return Boolean(actionPayload);
+				return isActionable;
 			}
 
-			return !actionPayload;
+			return !isActionable;
 		});
 	}, [allNotifications, filter]);
 

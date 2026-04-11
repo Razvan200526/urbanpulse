@@ -10,6 +10,10 @@ import { dashboardController } from "./controllers/DashboardController";
 import { healthController } from "./controllers/HealthController";
 import { messageController } from "./controllers/MessageController";
 import { notificationController } from "./controllers/NotificationController";
+import {
+	internalPetMatchController,
+	petMatchController,
+} from "./controllers/PetMatchController";
 import { pulseController } from "./controllers/PulseController";
 import { reportController } from "./controllers/ReportController";
 import { resourceController } from "./controllers/ResourceController";
@@ -62,6 +66,8 @@ export const app = new Hono<{ Variables: Variables }>()
 	.route("/", pulseController)
 	.route("/", messageController)
 	.route("/", notificationController)
+	.route("/", petMatchController)
+	.route("/", internalPetMatchController)
 	.route("/", reportController)
 	.route("/", resourceController)
 	.route("/", dashboardController)
