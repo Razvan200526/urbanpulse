@@ -1,8 +1,6 @@
-# Public AI service config for a separate Railway service that points to `/ai/railway.toml`.
-
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "/ai/Dockerfile"
+dockerfilePath = "Dockerfile"
 watchPatterns = [
   "/ai/**",
 ]
