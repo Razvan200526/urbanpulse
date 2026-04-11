@@ -12,11 +12,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir uv
 
-COPY ai/pyproject.toml ai/uv.lock ./
+COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
-COPY ai/main.py ./main.py
-COPY ai/src ./src
+COPY main.py ./main.py
+COPY src ./src
 
 EXPOSE 8000
 
