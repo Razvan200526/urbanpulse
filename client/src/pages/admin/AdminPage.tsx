@@ -465,7 +465,7 @@ export const AdminPage = () => {
 										className="rounded border border-accent/30 p-4 space-y-3"
 									>
 										<div className="grid gap-3 lg:grid-cols-2">
-											<div className="rounded border border-accent/20 p-3">
+											<div className="rounded border border-accent-soft-hover p-3">
 												<p className="text-xs uppercase tracking-wide text-muted">
 													Source pulse
 												</p>
@@ -477,7 +477,7 @@ export const AdminPage = () => {
 													{formatDate(new Date(entry.sourcePulse.createdAt))}
 												</p>
 											</div>
-											<div className="rounded border border-accent/20 p-3">
+											<div className="rounded border border-accent-soft-hover p-3">
 												<p className="text-xs uppercase tracking-wide text-muted">
 													Canonical target
 												</p>

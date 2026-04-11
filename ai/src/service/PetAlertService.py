@@ -421,9 +421,7 @@ class PetAlertService:
         if not was_deleted:
             raise PetAlertNotFoundError(f"Pet alert '{pet_alert_id}' was not found.")
 
-    def _sync_pet_matches(
-        self, pet_alert: PetAlert, analysis: dict
-    ) -> list[uuid.UUID]:
+    def _sync_pet_matches(self, pet_alert: PetAlert, analysis: dict) -> list[uuid.UUID]:
         opposite_alert_type = "found" if pet_alert.alertType == "lost" else "lost"
         query_alert = self._build_match_payload(pet_alert, analysis)
         candidate_pet_type = analysis.get("petType") or pet_alert.petType
@@ -491,16 +489,16 @@ class PetAlertService:
 
         return lost_alert_id, found_alert_id
 
-    def _notify_new_pet_match_candidates(
-        self, pet_match_ids: list[uuid.UUID]
-    ) -> None:
+    def _notify_new_pet_match_candidates(self, pet_match_ids: list[uuid.UUID]) -> None:
         if not pet_match_ids:
             return
 
         server_origin = (os.getenv("SERVER_URL") or "http://localhost:3000").rstrip("/")
         secret = os.getenv("PET_MATCH_INTERNAL_SECRET") or "dev-pet-match-secret"
         url = f"{server_origin}/api/internal/pet-matches/candidates"
-        payload = json.dumps({"petMatchIds": [str(match_id) for match_id in pet_match_ids]})
+        payload = json.dumps(
+            {"petMatchIds": [str(match_id) for match_id in pet_match_ids]}
+        )
         request = urllib.request.Request(
             url,
             data=payload.encode("utf-8"),
@@ -522,7 +520,9 @@ class PetAlertService:
                 f"Internal pet match notification bridge returned {exc.code}"
             ) from exc
         except urllib.error.URLError as exc:
-            raise RuntimeError("Internal pet match notification bridge is unavailable") from exc
+            raise RuntimeError(
+                "Internal pet match notification bridge is unavailable"
+            ) from exc
 
     def _build_match_payload(self, pet_alert: PetAlert, analysis: dict) -> dict:
         return {
