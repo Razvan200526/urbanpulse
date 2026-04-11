@@ -1,10 +1,16 @@
 import uuid
+from enum import StrEnum
 
 from sqlalchemy import delete, desc, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, aliased
 
 from src.persistance.generated_models import PetAlert, PetMatch
+from src.schemas.PetAlertSchemas import AlertType
+
+
+class PetMatchStatus(StrEnum):
+    PENDING_REVIEW = "PENDING_REVIEW"
 
 
 class PetMatchRepository:
@@ -48,13 +54,13 @@ class PetMatchRepository:
     def delete_for_alert(
         self,
         pet_alert_id: uuid.UUID,
-        alert_type: str | None = None,
+        alert_type: AlertType | None = None,
         *,
         commit: bool = True,
     ) -> None:
-        if alert_type == "lost":
+        if alert_type is AlertType.LOST:
             statement = delete(PetMatch).where(PetMatch.lostAlertId == pet_alert_id)
-        elif alert_type == "found":
+        elif alert_type is AlertType.FOUND:
             statement = delete(PetMatch).where(PetMatch.foundAlertId == pet_alert_id)
         else:
             statement = delete(PetMatch).where(
@@ -71,11 +77,11 @@ class PetMatchRepository:
             self.commit()
 
     def list_for_alert(
-        self, pet_alert_id: uuid.UUID, alert_type: str, *, limit: int = 5
+        self, pet_alert_id: uuid.UUID, alert_type: AlertType, *, limit: int = 5
     ) -> list[tuple[PetMatch, PetAlert]]:
         matched_alert = aliased(PetAlert)
 
-        if alert_type == "lost":
+        if alert_type is AlertType.LOST:
             statement = (
                 select(PetMatch, matched_alert)
                 .join(matched_alert, PetMatch.foundAlertId == matched_alert.id)
@@ -96,15 +102,14 @@ class PetMatchRepository:
         return [(match, alert) for match, alert in self.db.execute(statement).all()]
 
     def list_for_alert_entities(
-        self, pet_alert_id: uuid.UUID, alert_type: str
+        self, pet_alert_id: uuid.UUID, alert_type: AlertType
     ) -> list[PetMatch]:
-        if alert_type == "lost":
+        if alert_type is AlertType.LOST:
             statement = select(PetMatch).where(PetMatch.lostAlertId == pet_alert_id)
         else:
             statement = select(PetMatch).where(PetMatch.foundAlertId == pet_alert_id)
 
         statement = statement.order_by(
-            desc(PetMatch.updatedAt),
             desc(PetMatch.confidenceScore),
             desc(PetMatch.imageSimilarity),
         )
@@ -114,7 +119,7 @@ class PetMatchRepository:
     def delete_pending_for_alert_except_pairs(
         self,
         pet_alert_id: uuid.UUID,
-        alert_type: str,
+        alert_type: AlertType,
         keep_pairs: set[tuple[uuid.UUID, uuid.UUID]],
         *,
         commit: bool = True,
@@ -123,7 +128,7 @@ class PetMatchRepository:
 
         for match in existing_matches:
             pair = (match.lostAlertId, match.foundAlertId)
-            if match.status == "PENDING_REVIEW" and pair not in keep_pairs:
+            if match.status == PetMatchStatus.PENDING_REVIEW and pair not in keep_pairs:
                 self.db.delete(match)
 
         self.db.flush()

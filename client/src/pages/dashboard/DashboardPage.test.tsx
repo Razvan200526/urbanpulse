@@ -96,6 +96,12 @@ mock.module("./components/Chart", () => ({
 	),
 }));
 
+mock.module("@client/components/charts/ChartContainer", () => ({
+	ChartContainer: ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	),
+}));
+
 mock.module("./components/dashboardStats", () => ({
 	getDashboardStats: () => [
 		{ title: "Pulses", value: 4 },

@@ -7,7 +7,11 @@ import { Header } from "@client/components/Header";
 import { RequestIcon } from "@client/components/icons/RequestIcon";
 import type { ModalRefType } from "@client/components/Modal";
 import { type TabItemType, Tabs } from "@client/components/tabs/Tabs";
-import { ScrollShadow, Separator } from "@heroui/react";
+import {
+	Dropdown as HeroDropdown,
+	ScrollShadow,
+	Separator,
+} from "@heroui/react";
 import { ChevronDownIcon, PlusSquareIcon, UploadCloud } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useRef } from "react";
@@ -83,10 +87,10 @@ export const ResourcesPage = () => {
 							<Dropdown
 								placement="bottom end"
 								trigger={
-									<div className="flex shrink-0 items-center gap-2 rounded border border-accent bg-surface-secondary/70 px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors duration-150 hover:bg-surface-secondary">
+									<HeroDropdown.Trigger className="flex shrink-0 items-center gap-2 rounded border border-accent bg-surface-secondary/70 px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors duration-150 hover:bg-surface-secondary">
 										<span>Actions</span>
 										<ChevronDownIcon className="size-4 text-accent" />
-									</div>
+									</HeroDropdown.Trigger>
 								}
 								items={mobileActionItems}
 							/>

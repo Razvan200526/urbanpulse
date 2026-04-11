@@ -458,9 +458,11 @@ class PetMatch(Base):
     lostAlertId: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     foundAlertId: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
     confidenceScore: Mapped[float] = mapped_column(Double(53), nullable=False)
-    createdAt: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False, server_default=text('now()'))
     imageSimilarity: Mapped[float] = mapped_column(Double(53), nullable=False)
-    matchedAttributes: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    matchedAttributes: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'PENDING_REVIEW'::text"))
+    createdAt: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False, server_default=text('now()'))
+    updatedAt: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False, server_default=text('now()'))
 
     pet_alert: Mapped['PetAlert'] = relationship('PetAlert', foreign_keys=[foundAlertId], back_populates='pet_match_foundAlertId')
     pet_alert_: Mapped['PetAlert'] = relationship('PetAlert', foreign_keys=[lostAlertId], back_populates='pet_match_lostAlertId')

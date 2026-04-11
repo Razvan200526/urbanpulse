@@ -56,6 +56,10 @@ mock.module("@client/hooks/useNotifications", () => ({
 mock.module("@client/pages/map/hooks", () => ({
 	useAcceptHelpOffer: () => ({
 		isPending: alertsState.acceptPending,
+		mutateAsync: async (payload: unknown) => {
+			acceptCalls.push(payload);
+			return true;
+		},
 		mutate: (
 			payload: unknown,
 			options?: { onSuccess?: () => void; onError?: (error: Error) => void },
@@ -66,6 +70,10 @@ mock.module("@client/pages/map/hooks", () => ({
 	}),
 	useRejectHelpOffer: () => ({
 		isPending: alertsState.rejectPending,
+		mutateAsync: async (payload: unknown) => {
+			rejectCalls.push(payload);
+			return true;
+		},
 		mutate: (
 			payload: unknown,
 			options?: { onSuccess?: () => void; onError?: (error: Error) => void },
@@ -79,6 +87,7 @@ mock.module("@client/pages/map/hooks", () => ({
 mock.module("@client/hooks/petMatches", () => ({
 	useMarkPetMatchOwnerInterested: () => ({
 		isPending: false,
+		mutateAsync: async () => true,
 		mutate: (
 			_payload: unknown,
 			options?: { onSuccess?: () => void; onError?: (error: Error) => void },
@@ -88,6 +97,7 @@ mock.module("@client/hooks/petMatches", () => ({
 	}),
 	useDismissPetMatchAsOwner: () => ({
 		isPending: false,
+		mutateAsync: async () => true,
 		mutate: (
 			_payload: unknown,
 			options?: { onSuccess?: () => void; onError?: (error: Error) => void },
@@ -97,6 +107,7 @@ mock.module("@client/hooks/petMatches", () => ({
 	}),
 	useAcceptPetMatchAsFinder: () => ({
 		isPending: false,
+		mutateAsync: async () => ({ conversationId: "conversation-1" }),
 		mutate: (
 			_payload: unknown,
 			options?: {
@@ -109,6 +120,7 @@ mock.module("@client/hooks/petMatches", () => ({
 	}),
 	useDeclinePetMatchAsFinder: () => ({
 		isPending: false,
+		mutateAsync: async () => true,
 		mutate: (
 			_payload: unknown,
 			options?: { onSuccess?: () => void; onError?: (error: Error) => void },
@@ -121,6 +133,7 @@ mock.module("@client/hooks/petMatches", () => ({
 mock.module("@client/pages/messages/hooks", () => ({
 	useEnsureDirectConversation: () => ({
 		isPending: false,
+		mutateAsync: async () => ({ id: "conversation-1" }),
 		mutate: (
 			_payload: unknown,
 			options?: {
@@ -166,6 +179,12 @@ mock.module("@client/components/user/Avatar", () => ({
 }));
 
 mock.module("@heroui/react", () => {
+	const Dropdown = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Dropdown.Trigger = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
 	const Card = ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	);
@@ -282,6 +301,7 @@ mock.module("@heroui/react", () => {
 		Button: HeroButton,
 		Card,
 		Chip,
+		Dropdown,
 		Drawer,
 		Modal,
 		ProgressCircle: () => <div>Progress Circle</div>,
@@ -334,7 +354,7 @@ describe("AlertsPage", () => {
 		expect(markup).toContain("No alerts yet.");
 	});
 
-	test("renders alert rows and wires quick actions for pulse responses", () => {
+	test("renders alert rows and wires quick actions for pulse responses", async () => {
 		alertsState.notifications = [
 			{
 				notification: {
@@ -379,8 +399,8 @@ describe("AlertsPage", () => {
 		const rejectButton = buttonProps.find(
 			(props) => props.children === "Reject",
 		);
-		acceptButton?.onPress?.();
-		rejectButton?.onPress?.();
+		await acceptButton?.onPress?.();
+		await rejectButton?.onPress?.();
 
 		expect(acceptCalls).toEqual([
 			{ pulseId: "pulse-1", responseId: "response-1" },

@@ -20,6 +20,7 @@ import {
 	summarizeNotificationPayload,
 } from "@client/utils/notifications";
 import { Chip, cn, Toast } from "@heroui/react";
+import { formatDate } from "@shared/utils/formatDate";
 import { BellDot, MessagesSquareIcon } from "lucide-react";
 import { useNavigate } from "react-router";
 
@@ -31,13 +32,24 @@ export const AlertCard = ({
 	isActive?: boolean;
 }) => {
 	const navigate = useNavigate();
-	const acceptHelp = useAcceptHelpOffer();
-	const rejectHelp = useRejectHelpOffer();
-	const markOwnerInterested = useMarkPetMatchOwnerInterested();
-	const dismissAsOwner = useDismissPetMatchAsOwner();
-	const acceptAsFinder = useAcceptPetMatchAsFinder();
-	const declineAsFinder = useDeclinePetMatchAsFinder();
-	const ensureDirectConversation = useEnsureDirectConversation();
+	const { mutateAsync: acceptHelp, isPending: isAcceptPending } =
+		useAcceptHelpOffer();
+	const { mutateAsync: rejectHelp, isPending: isRejectPending } =
+		useRejectHelpOffer();
+	const {
+		mutateAsync: markOwnerInterested,
+		isPending: markOwnerInterestedPending,
+	} = useMarkPetMatchOwnerInterested();
+	const { mutateAsync: dismissAsOwner, isPending: isDismissPending } =
+		useDismissPetMatchAsOwner();
+	const { mutateAsync: acceptAsFinder, isPending: isAcceptAsFinderPending } =
+		useAcceptPetMatchAsFinder();
+	const { mutateAsync: declineAsFinder, isPending: isDeclineAsFinderPending } =
+		useDeclinePetMatchAsFinder();
+	const {
+		mutateAsync: ensureDirectConversation,
+		isPending: isEnsureDirectPending,
+	} = useEnsureDirectConversation();
 
 	const notificationType = notificationItem.notification?.type || "";
 	const payload = notificationItem.notification?.payload ?? null;
@@ -51,14 +63,16 @@ export const AlertCard = ({
 		notificationType,
 		payload,
 	);
+
 	const isActionPending =
-		acceptHelp.isPending ||
-		rejectHelp.isPending ||
-		markOwnerInterested.isPending ||
-		dismissAsOwner.isPending ||
-		acceptAsFinder.isPending ||
-		declineAsFinder.isPending ||
-		ensureDirectConversation.isPending;
+		isAcceptPending ||
+		isRejectPending ||
+		markOwnerInterestedPending ||
+		isDismissPending ||
+		isAcceptAsFinderPending ||
+		isDeclineAsFinderPending ||
+		isEnsureDirectPending;
+
 	const alertType =
 		typeof payload?.type === "string"
 			? payload.type
@@ -68,6 +82,7 @@ export const AlertCard = ({
 		petMatchPayload?.counterpartUser.name ||
 		notificationItem.user?.name ||
 		"System alert";
+
 	const cardContent = (
 		<div className="flex items-start gap-3">
 			<Avatar
@@ -92,15 +107,15 @@ export const AlertCard = ({
 					</div>
 
 					<div className="shrink-0 text-right text-xs text-muted">
-						<span>{createdAt}</span>
+						<span>{formatDate(createdAt)}</span>
 					</div>
 				</div>
 
 				<div className="flex items-center gap-2 text-sm text-foreground">
-					<Chip className="rounded border border-accent bg-accent/10 p-1">
+					<Chip className="rounded-full border border-accent bg-accent/10 p-1">
 						<Chip.Label className="flex items-center justify-center gap-1">
 							{pulseResponsePayload ? (
-								<HelpIcon className="size-6 text-accent" />
+								<HelpIcon className="size-4 text-accent" />
 							) : (
 								<BellDot className="size-4 text-accent" />
 							)}
@@ -144,16 +159,11 @@ export const AlertCard = ({
 						radius="md"
 						size="sm"
 						isDisabled={isActionPending}
-						onPress={() => {
-							acceptHelp.mutate(pulseResponsePayload, {
-								onSuccess: () => Toast.toast.success("Help offer accepted"),
-								onError: (error: Error) =>
-									Toast.toast.danger(
-										error instanceof Error
-											? error.message
-											: "Could not accept offer",
-									),
-							});
+						onPress={async () => {
+							const res = await acceptHelp(pulseResponsePayload);
+							if (res) {
+								Toast.toast.success("Help offer accepted");
+							}
 						}}
 						className="border border-success bg-surface px-3 text-success transition-colors duration-150 ease-out hover:bg-success/10"
 					>
@@ -164,16 +174,11 @@ export const AlertCard = ({
 						radius="md"
 						size="sm"
 						isDisabled={isActionPending}
-						onPress={() => {
-							rejectHelp.mutate(pulseResponsePayload, {
-								onSuccess: () => Toast.toast.success("Help offer rejected"),
-								onError: (error: Error) =>
-									Toast.toast.danger(
-										error instanceof Error
-											? error.message
-											: "Could not reject offer",
-									),
-							});
+						onPress={async () => {
+							const res = await rejectHelp(pulseResponsePayload);
+							if (res) {
+								Toast.toast.success("Help offer rejected");
+							}
 						}}
 					>
 						Reject
@@ -185,17 +190,11 @@ export const AlertCard = ({
 						radius="md"
 						size="sm"
 						isDisabled={isActionPending}
-						onPress={() => {
-							markOwnerInterested.mutate(petMatchPayload.petMatchId, {
-								onSuccess: () =>
-									Toast.toast.success("Finder notified about your interest"),
-								onError: (error: Error) =>
-									Toast.toast.danger(
-										error instanceof Error
-											? error.message
-											: "Could not confirm this match",
-									),
-							});
+						onPress={async () => {
+							const res = await markOwnerInterested(petMatchPayload.petMatchId);
+							if (res) {
+								Toast.toast.success("Interest marked");
+							}
 						}}
 						className="border border-accent bg-surface px-3 text-accent transition-colors duration-150 ease-out hover:bg-accent/10"
 					>
@@ -206,16 +205,11 @@ export const AlertCard = ({
 						radius="md"
 						size="sm"
 						isDisabled={isActionPending}
-						onPress={() => {
-							dismissAsOwner.mutate(petMatchPayload.petMatchId, {
-								onSuccess: () => Toast.toast.success("Match dismissed"),
-								onError: (error: Error) =>
-									Toast.toast.danger(
-										error instanceof Error
-											? error.message
-											: "Could not dismiss this match",
-									),
-							});
+						onPress={async () => {
+							const res = await dismissAsOwner(petMatchPayload.petMatchId);
+							if (res) {
+								Toast.toast.success("Match dismissed");
+							}
 						}}
 					>
 						Dismiss
@@ -228,21 +222,14 @@ export const AlertCard = ({
 						radius="md"
 						size="sm"
 						isDisabled={isActionPending}
-						onPress={() => {
-							acceptAsFinder.mutate(petMatchPayload.petMatchId, {
-								onSuccess: (result) => {
-									Toast.toast.success("Chat ready");
-									if (result.conversationId) {
-										navigate(`/messages/${result.conversationId}`);
-									}
-								},
-								onError: (error: Error) =>
-									Toast.toast.danger(
-										error instanceof Error
-											? error.message
-											: "Could not open chat",
-									),
-							});
+						onPress={async () => {
+							const result = await acceptAsFinder(petMatchPayload.petMatchId);
+							if (result) {
+								Toast.toast.success("Chat ready");
+								if (result.conversationId) {
+									navigate(`/messages/${result.conversationId}`);
+								}
+							}
 						}}
 						className="border border-success bg-surface px-3 text-success transition-colors duration-150 ease-out hover:bg-success/10"
 					>
@@ -253,16 +240,11 @@ export const AlertCard = ({
 						radius="md"
 						size="sm"
 						isDisabled={isActionPending}
-						onPress={() => {
-							declineAsFinder.mutate(petMatchPayload.petMatchId, {
-								onSuccess: () => Toast.toast.success("Match declined"),
-								onError: (error: Error) =>
-									Toast.toast.danger(
-										error instanceof Error
-											? error.message
-											: "Could not decline this match",
-									),
-							});
+						onPress={async () => {
+							const res = await declineAsFinder(petMatchPayload.petMatchId);
+							if (res) {
+								Toast.toast.success("Match declined");
+							}
 						}}
 					>
 						Decline
@@ -276,26 +258,18 @@ export const AlertCard = ({
 						isDisabled={isActionPending}
 						startContent={<MessagesSquareIcon className="size-4" />}
 						className="border border-accent bg-accent text-accent-foreground"
-						onPress={() => {
+						onPress={async () => {
 							if (petMatchPayload.conversationId) {
 								navigate(`/messages/${petMatchPayload.conversationId}`);
 								return;
 							}
 
-							ensureDirectConversation.mutate(
+							const conversation = await ensureDirectConversation(
 								petMatchPayload.counterpartUser.id,
-								{
-									onSuccess: (conversation) => {
-										navigate(`/messages/${conversation.id}`);
-									},
-									onError: (error: Error) =>
-										Toast.toast.danger(
-											error instanceof Error
-												? error.message
-												: "Could not open chat",
-										),
-								},
 							);
+							if (conversation) {
+								navigate(`/messages/${conversation.id}`);
+							}
 						}}
 					>
 						Open chat

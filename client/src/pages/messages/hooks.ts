@@ -1,4 +1,5 @@
 import { hono, queryClient } from "@client/lib/api/client";
+import { Toast } from "@heroui/react";
 import type { MessageSocketMessageType } from "@shared/validators/messages/isConversationValid";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { backend } from "client/sdk/backend";
@@ -213,7 +214,8 @@ export const useConversationList = () => {
 			const res = await hono.api.messages.conversations.$get();
 			const json = (await res.json()) as SuccessResponse<ConversationSummary[]>;
 			if (!json.success) {
-				throw new Error(json.message || "Failed to load conversations");
+				Toast.toast.danger(json.message || "Failed to load conversations");
+				return [];
 			}
 			return json.data;
 		},
@@ -235,7 +237,8 @@ export const useConversationThread = (conversationId: string | null) => {
 			const json =
 				(await res.json()) as SuccessResponse<ConversationThread | null>;
 			if (!json.success || !json.data) {
-				throw new Error(json.message || "Failed to load conversation");
+				Toast.toast.danger(json.message || "Failed to load conversation");
+				return null;
 			}
 			return json.data;
 		},
@@ -249,21 +252,30 @@ export const useSendConversationMessage = () => {
 			conversationId: string;
 			content: string;
 		}) => {
-			const result =
-				await sendMessageSocketRequest<SendConversationMessageResult>(
-					{
-						type: "send_message",
-						payload: {
-							conversationId: payload.conversationId,
-							content: payload.content,
+			try {
+				const result =
+					await sendMessageSocketRequest<SendConversationMessageResult>(
+						{
+							type: "send_message",
+							payload: {
+								conversationId: payload.conversationId,
+								content: payload.content,
+							},
 						},
-					},
-					"Failed to send message",
+						"Failed to send message",
+					);
+				return result.thread;
+			} catch (error) {
+				Toast.toast.danger(
+					error instanceof Error ? error.message : "Failed to send message",
 				);
-			return result.thread;
+				return null;
+			}
 		},
 		onSuccess: async (thread) => {
-			syncConversationThread(thread);
+			if (thread) {
+				syncConversationThread(thread);
+			}
 		},
 	});
 };
@@ -386,14 +398,19 @@ export const useEnsureDirectConversation = () => {
 				id: string;
 			} | null>;
 			if (!json.success || !json.data) {
-				throw new Error(json.message || "Failed to open direct conversation");
+				Toast.toast.danger(
+					json.message || "Failed to open direct conversation",
+				);
+				return null;
 			}
 			return json.data;
 		},
-		onSuccess: async () => {
-			await queryClient.invalidateQueries({
-				queryKey: ["messages", "conversations"],
-			});
+		onSuccess: async (data) => {
+			if (data) {
+				await queryClient.invalidateQueries({
+					queryKey: ["messages", "conversations"],
+				});
+			}
 		},
 	});
 };

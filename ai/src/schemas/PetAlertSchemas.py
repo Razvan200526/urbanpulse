@@ -1,11 +1,25 @@
+from __future__ import annotations
+
 import datetime
 import uuid
-from enum import Enum
-from typing import Literal
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-AlertType = Literal["lost", "found"]
+
+class AlertType(StrEnum):
+    LOST = "lost"
+    FOUND = "found"
+
+    @classmethod
+    def coerce(cls, value: str | AlertType) -> AlertType:
+        return value if isinstance(value, cls) else cls(value)
+
+    def opposite(self) -> AlertType:
+        if self is AlertType.LOST:
+            return AlertType.FOUND
+
+        return AlertType.LOST
 
 
 class EmbeddingStatus(Enum):

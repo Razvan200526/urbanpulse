@@ -16,9 +16,9 @@ export const AlertsFeed = ({
 	const hasItems = filteredNotifications.length > 0;
 
 	return (
-		<div className="flex min-h-0 flex-col overflow-hidden rounded border border-border bg-surface">
+		<div className="h-full flex flex-col rounded border border-border bg-surface">
 			{isPending ? (
-				<div className="min-h-0 flex-1">
+				<div className="h-full flex-1">
 					<div role="status" aria-label="Loading alerts">
 						<ScrollShadow
 							size={8}
@@ -35,7 +35,7 @@ export const AlertsFeed = ({
 				<ScrollShadow
 					size={8}
 					hideScrollBar
-					className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+					className="h-full flex-1 overflow-y-auto px-4 py-4"
 				>
 					<div className="flex flex-col gap-4">
 						<AlertList

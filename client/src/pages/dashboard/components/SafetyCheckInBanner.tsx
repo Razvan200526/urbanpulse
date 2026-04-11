@@ -10,9 +10,6 @@ type Props = {
 	geoReady: boolean;
 };
 
-/**
- * Pinned when OpenWeather reports a severe alert for the user coordinates.
- */
 export function SafetyCheckInBanner({ lat, lon, geoReady }: Props) {
 	const navigate = useNavigate();
 	const { data, isPending, isError } = useWeatherAlerts(lat, lon);

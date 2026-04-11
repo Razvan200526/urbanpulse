@@ -94,7 +94,10 @@ export const InputMessage = forwardRef<InputMessageRefType, InputNameProps>(
 					onChange?.(e);
 				}}
 			>
-				<InputGroup className="border border-accent focus-within:bg-surface rounded-full">
+				<InputGroup
+					aria-label="input-message"
+					className="border border-accent focus-within:bg-surface rounded-full"
+				>
 					{showIcon && (
 						<InputGroup.Prefix>
 							<MessageSquare

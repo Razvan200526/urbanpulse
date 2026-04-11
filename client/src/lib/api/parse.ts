@@ -1,3 +1,4 @@
+import { Toast } from "@heroui/react";
 import { z } from "zod";
 
 const apiEnvelopeSchema = z.object({
@@ -35,11 +36,10 @@ export const parseApiData = async <TSchema extends z.ZodTypeAny>(
 	const envelope = apiEnvelopeSchema.safeParse(raw);
 
 	if (!envelope.success) {
-		throw new Error(fallbackMessage);
+		return;
 	}
-
 	if (!envelope.data.success) {
-		throw new Error(envelope.data.message || fallbackMessage);
+		Toast.toast.danger(envelope.data.message);
 	}
 
 	return {
@@ -61,8 +61,8 @@ export const parseApiEnvelope = async <TSchema extends z.ZodTypeAny>(
 
 	return {
 		success: true as const,
-		message: parsed.message,
-		data: parsed.data,
+		message: parsed?.message,
+		data: parsed?.data,
 	};
 };
 

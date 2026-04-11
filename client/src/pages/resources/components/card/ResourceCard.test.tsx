@@ -41,6 +41,12 @@ mock.module("@client/components/user/Avatar", () => ({
 }));
 
 mock.module("@heroui/react", () => {
+	const Dropdown = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Dropdown.Trigger = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
 	const Card = ({ children }: { children: React.ReactNode }) => (
 		<section>{children}</section>
 	);
@@ -56,6 +62,7 @@ mock.module("@heroui/react", () => {
 
 	return {
 		Card,
+		Dropdown,
 		Separator: () => <hr />,
 	};
 });

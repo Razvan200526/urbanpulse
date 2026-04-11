@@ -19,6 +19,7 @@ from src.persistance.generated_models import PetAlert
 from src.persistance.repositories.PetAlertRepository import PetAlertRepository
 from src.persistance.repositories.PetMatchRepository import PetMatchRepository
 from src.schemas.PetAlertSchemas import (
+    AlertType,
     EmbeddingStatus,
     PetAlertCreateRequest,
     PetAlertListFilters,
@@ -58,7 +59,7 @@ def serialize_pet_alert(alert: PetAlert) -> PetAlertResponse:
     return PetAlertResponse(
         id=alert.id,
         pulseId=alert.pulseId,
-        alertType=alert.alertType,
+        alertType=AlertType.coerce(alert.alertType),
         petType=alert.petType,
         color=alert.color,
         breed=alert.breed,
@@ -230,7 +231,7 @@ class PetAlertService:
                     )
                 self.match_repository.delete_pending_for_alert_except_pairs(
                     skipped_alert.id,
-                    skipped_alert.alertType,
+                    AlertType.coerce(skipped_alert.alertType),
                     set(),
                     commit=False,
                 )
@@ -375,7 +376,7 @@ class PetAlertService:
         pet_alert = self.get_pet_alert(pet_alert_id, user_id)
         rows = self.match_repository.list_for_alert(
             pet_alert.id,
-            pet_alert.alertType,
+            AlertType.coerce(pet_alert.alertType),
             limit=self.max_matches,
         )
 
@@ -422,7 +423,8 @@ class PetAlertService:
             raise PetAlertNotFoundError(f"Pet alert '{pet_alert_id}' was not found.")
 
     def _sync_pet_matches(self, pet_alert: PetAlert, analysis: dict) -> list[uuid.UUID]:
-        opposite_alert_type = "found" if pet_alert.alertType == "lost" else "lost"
+        alert_type = AlertType.coerce(pet_alert.alertType)
+        opposite_alert_type = alert_type.opposite()
         query_alert = self._build_match_payload(pet_alert, analysis)
         candidate_pet_type = analysis.get("petType") or pet_alert.petType
         candidates = self.repository.get_match_candidates(
@@ -442,7 +444,7 @@ class PetAlertService:
 
         existing_matches = self.match_repository.list_for_alert_entities(
             pet_alert.id,
-            pet_alert.alertType,
+            alert_type,
         )
         existing_pairs = {
             (match.lostAlertId, match.foundAlertId): match for match in existing_matches
@@ -470,7 +472,7 @@ class PetAlertService:
 
         self.match_repository.delete_pending_for_alert_except_pairs(
             pet_alert.id,
-            pet_alert.alertType,
+            alert_type,
             keep_pairs,
             commit=False,
         )
@@ -480,7 +482,7 @@ class PetAlertService:
     def _resolve_match_pair(
         self, pet_alert: PetAlert, candidate: PetMatchCandidate
     ) -> tuple[uuid.UUID, uuid.UUID]:
-        if pet_alert.alertType == "lost":
+        if AlertType.coerce(pet_alert.alertType) is AlertType.LOST:
             lost_alert_id = pet_alert.id
             found_alert_id = candidate.candidate.id
         else:
@@ -527,7 +529,7 @@ class PetAlertService:
     def _build_match_payload(self, pet_alert: PetAlert, analysis: dict) -> dict:
         return {
             "id": pet_alert.id,
-            "alertType": pet_alert.alertType,
+            "alertType": AlertType.coerce(pet_alert.alertType),
             "petType": analysis.get("petType") or pet_alert.petType,
             "color": analysis.get("color") or pet_alert.color,
             "breed": pet_alert.breed,

@@ -1,8 +1,6 @@
 import { Button } from "@client/components/Button/Button";
-import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
-import { queryClient } from "@client/lib/api/client";
 import { useRetrievePulses } from "@client/pages/map/hooks";
 import { Card, ScrollShadow } from "@heroui/react";
 import { PulseEnum, PulseStatusEnum, UrgencyEnum } from "@shared/types";
@@ -23,11 +21,7 @@ export function NeighborhoodPulseFeed() {
 	const [statusFilter, setStatusFilter] = useState<PulseStatusEnum | "ALL">(
 		PulseStatusEnum.Active,
 	);
-	const {
-		coords,
-		isLoading: geoLoading,
-		isError: geoError,
-	} = useGetGeolocation();
+	const { coords, isError: geoError } = useGetGeolocation();
 
 	const enabled = !!user?.user.id && coords != null && !geoError;
 	const retrievePayload = useMemo(
@@ -48,12 +42,10 @@ export function NeighborhoodPulseFeed() {
 		],
 	);
 
-	const {
-		data: pulsesRes,
-		isPending,
-		refetch,
-		isFetching,
-	} = useRetrievePulses(retrievePayload, enabled);
+	const { data: pulsesRes, isPending } = useRetrievePulses(
+		retrievePayload,
+		enabled,
+	);
 
 	const sorted = useMemo(() => {
 		const raw = (pulsesRes?.data ?? []).map((pulse) => {
@@ -61,12 +53,6 @@ export function NeighborhoodPulseFeed() {
 		});
 		return sortPulsesForFeed(raw);
 	}, [pulsesRes?.data]);
-	const _feedLoading = geoLoading || (enabled && isPending);
-
-	const onRefresh = () => {
-		queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
-		refetch();
-	};
 
 	return (
 		<Card className="border border-accent shadow-none">
@@ -84,15 +70,6 @@ export function NeighborhoodPulseFeed() {
 						Notification history
 					</button>
 				</div>
-				<Button
-					size="sm"
-					variant="primary"
-					isPending={isFetching}
-					onPress={onRefresh}
-					startContent={<RefreshIcon className="size-4" />}
-				>
-					Refresh
-				</Button>
 			</Card.Header>
 			<Card.Content className="space-y-3 min-h-50">
 				<div className="space-y-2">

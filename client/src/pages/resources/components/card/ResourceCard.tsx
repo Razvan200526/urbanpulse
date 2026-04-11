@@ -7,7 +7,7 @@ import {
 import type { ModalRefType } from "@client/components/Modal";
 import { H6 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
-import { Card, Separator } from "@heroui/react";
+import { Card, Dropdown as HeroDropdown, Separator } from "@heroui/react";
 import { formatDate } from "@shared/utils/formatDate";
 import { EditIcon, MoreVertical, Star, Trash2Icon } from "lucide-react";
 import { useRef, useState } from "react";
@@ -59,9 +59,9 @@ export const ResourceCard = ({
 				{dropdownItems.length > 0 && (
 					<Dropdown
 						trigger={
-							<div className="rounded-full p-2 transition-colors duration-150 ease-out hover:bg-accent/10">
+							<HeroDropdown.Trigger className="rounded-full p-2 transition-colors duration-150 ease-out hover:bg-accent/10">
 								<MoreVertical className="size-4 text-accent" />
-							</div>
+							</HeroDropdown.Trigger>
 						}
 						items={dropdownItems}
 					/>

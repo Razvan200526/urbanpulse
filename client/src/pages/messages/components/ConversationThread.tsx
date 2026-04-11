@@ -6,17 +6,16 @@ import {
 } from "@client/components/input/InputMessage";
 import { H4 } from "@client/components/typography";
 import { cn, ScrollShadow } from "@heroui/react";
+import { MessageSquareIcon } from "lucide-react";
 import { useRef } from "react";
 import type {
 	ConversationMemberView,
 	ConversationSummary,
 	ConversationThread as ConversationThreadType,
 } from "../hooks";
-import {
-	getConversationTitle,
-	getConversationTypeLabel,
-} from "./conversationDisplay";
+import { getConversationTitle } from "./conversationDisplay";
 import { Message } from "./Message";
+import { MessageTypingSkeleton } from "./MessageTypingSkeleton";
 
 export const ConversationThread = ({
 	conversationId,
@@ -54,9 +53,6 @@ export const ConversationThread = ({
 	}
 
 	const title = getConversationTitle(selectedConversation, currentUserId);
-	const typeLabel = getConversationTypeLabel(
-		selectedConversation.conversation.type,
-	);
 	const typingNames = typingMembers
 		.map((member) => member.name)
 		.filter((name): name is string => Boolean(name));
@@ -76,11 +72,13 @@ export const ConversationThread = ({
 							aria-label="Back"
 							className="shrink-0"
 							isIconOnly
+							size="sm"
+							radius="full"
 							onPress={onBack}
 							startContent={
 								<ChevronRightIcon
 									aria-hidden="true"
-									className="size-4 rotate-180"
+									className="size-4 rotate-180 text-accent"
 									title="Back"
 								/>
 							}
@@ -92,23 +90,28 @@ export const ConversationThread = ({
 						<p
 							className={cn(
 								"text-xs",
-								typingLabel ? "text-accent" : "text-muted",
+								typingLabel ? "text-secondary-text" : "text-muted",
 							)}
 						>
-							{typingLabel ?? typeLabel}
+							{typingLabel}
 						</p>
 					</div>
 				</div>
 
 				<ScrollShadow
-					className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+					className="h-full flex-1 overflow-y-auto px-4 py-4"
 					hideScrollBar
 					size={8}
 				>
-					<div className="space-y-3">
+					<div className="space-y-3 h-full">
 						{thread.messages.length === 0 ? (
-							<div className="flex min-h-56 items-center justify-center rounded-sm border border-dashed border-border px-4 text-sm text-muted">
-								No messages yet. Start the coordination thread here.
+							<div className="h-full flex items-center justify-center">
+								<div className="flex items-center justify-center gap-2">
+									<MessageSquareIcon className="size-6 text-accent" />
+									<p className="text-accent font-semibold">
+										No messages yet. Say hi!
+									</p>
+								</div>
 							</div>
 						) : (
 							thread.messages.map((entry) => {
@@ -116,11 +119,13 @@ export const ConversationThread = ({
 								return <Message key={entry.id} isOwn={isOwn} entry={entry} />;
 							})
 						)}
+						{typingLabel && <MessageTypingSkeleton user={typingMembers[0]} />}
 					</div>
 				</ScrollShadow>
 
 				<div className="shrink-0 bg-surface p-4">
 					<InputMessage
+						aria-label="input-message"
 						ref={messageRef}
 						className="w-full"
 						isDisabled={isSending}

@@ -11,7 +11,7 @@ const fetchUserProfile = async () => {
 		"Failed to load profile",
 	);
 
-	return parsed.data;
+	return parsed?.data;
 };
 
 export const useUserProfile = () => {

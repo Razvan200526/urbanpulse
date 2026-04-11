@@ -1,6 +1,7 @@
 import { Dropdown } from "@client/components/Dropdown";
 import { InputSearch } from "@client/components/input/InputSearch";
 import { useAuth } from "@client/hooks/useAuth";
+import { Dropdown as HeroDropdown } from "@heroui/react";
 import type { FilterResourceType } from "@shared/types";
 import { Filter } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
@@ -52,9 +53,9 @@ export const AllResourcesTab = () => {
 				<div className="shrink-0 self-end sm:self-auto">
 					<Dropdown
 						trigger={
-							<div className="rounded border border-accent bg-surface px-3 py-2 text-accent shadow-sm">
+							<HeroDropdown.Trigger className="rounded border border-accent bg-surface px-3 py-2 text-accent shadow-sm">
 								<Filter className="size-4" />
-							</div>
+							</HeroDropdown.Trigger>
 						}
 						items={filterItems}
 					/>

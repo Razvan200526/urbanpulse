@@ -6,7 +6,7 @@ import { Header } from "@client/components/Header";
 import { AllIcon } from "@client/components/icons/AllIcon";
 import { BellIcon } from "@client/components/icons/BellIcon";
 import { useIsMobile } from "@client/hooks/useMediaQuery";
-import { Chip, Skeleton } from "@heroui/react";
+import { Chip, Dropdown as HeroDropdown, Skeleton } from "@heroui/react";
 import { AlertTriangle, Filter } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -115,14 +115,14 @@ export const AlertsPage = () => {
 						placement="bottom end"
 						className="rounded border border-accent-soft"
 						trigger={
-							<div className="flex cursor-pointer min-w-24 items-center justify-between gap-2 rounded border border-accent bg-surface px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-surface-secondary/60">
+							<HeroDropdown.Trigger className="flex cursor-pointer min-w-24 items-center justify-between gap-2 rounded border border-accent bg-surface px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-surface-secondary/60">
 								<Filter className="size-4 text-accent" />
 								<span className="text-accent">
 									{filterDropdownItems.find(
 										(item) => item.key === (filter as string),
 									)?.label || "All alerts"}
 								</span>
-							</div>
+							</HeroDropdown.Trigger>
 						}
 						items={filterDropdownItems}
 						onAction={(key) => {
@@ -131,23 +131,35 @@ export const AlertsPage = () => {
 					/>
 				}
 			/>
-			<div className="min-h-0 flex-1 p-4 sm:p-6">
-				<section className="grid h-full min-h-0 gap-4 xl:grid-cols-[minmax(24rem,0.92fr)_minmax(32rem,1.08fr)]">
+			<div className="flex-1 min-h-0 p-4 sm:p-6">
+				<section className="grid h-full gap-4 xl:grid-cols-[minmax(24rem,0.92fr)_minmax(32rem,1.08fr)]">
 					<AlertsFeed
 						activeAlertId={resolvedSelectedAlertId}
 						filteredNotifications={filteredNotifications}
 						isPending={isPending}
 					/>
-					<AlertDetailsDrawer
-						onClose={() => navigate("/alerts")}
-						selectedItem={selectedItem}
-						isPending={isPending}
-						isOpen={
-							Boolean(selectedItem) || (isPending && Boolean(notificationId))
-						}
-					/>
+					{!isMobile && (
+						<AlertDetailsDrawer
+							onClose={() => navigate("/alerts")}
+							selectedItem={selectedItem}
+							isPending={isPending}
+							isOpen={
+								Boolean(selectedItem) || (isPending && Boolean(notificationId))
+							}
+						/>
+					)}
 				</section>
 			</div>
+			{isMobile && (
+				<AlertDetailsDrawer
+					onClose={() => navigate("/alerts")}
+					selectedItem={selectedItem}
+					isPending={isPending}
+					isOpen={
+						Boolean(selectedItem) || (isPending && Boolean(notificationId))
+					}
+				/>
+			)}
 		</div>
 	);
 };

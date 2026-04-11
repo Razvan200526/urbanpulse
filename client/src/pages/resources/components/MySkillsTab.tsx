@@ -4,6 +4,7 @@ import {
 	InputSearch,
 	type InputSearchRefType,
 } from "@client/components/input/InputSearch";
+import { Dropdown as HeroDropdown } from "@heroui/react";
 import type { FilterResourceType } from "@shared/types";
 import { Filter, PlusSquareIcon } from "lucide-react";
 import { useDeferredValue, useMemo, useRef, useState } from "react";
@@ -110,9 +111,9 @@ export const MySkillsTab = ({
 					</Button>
 					<Dropdown
 						trigger={
-							<div className="flex justify-center rounded border border-accent bg-surface px-3 py-2 text-accent shadow-sm">
+							<HeroDropdown.Trigger className="flex justify-center rounded border border-accent bg-surface px-3 py-2 text-accent shadow-sm">
 								<Filter className="size-4" />
-							</div>
+							</HeroDropdown.Trigger>
 						}
 						items={filterItems}
 					/>

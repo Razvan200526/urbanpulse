@@ -1,6 +1,7 @@
 import { Dropdown } from "@client/components/Dropdown";
 import {
 	cn,
+	Dropdown as HeroDropdown,
 	type TabsProps as HeroTabsProps,
 	Tabs as HeroUITabs,
 } from "@heroui/react";
@@ -59,10 +60,7 @@ export const Tabs = ({
 					placement="bottom start"
 					className="w-(--trigger-width) min-w-0"
 					trigger={
-						<button
-							type="button"
-							className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-surface-secondary/70 px-4 py-3 text-left shadow-sm transition-colors duration-150 hover:bg-surface-secondary"
-						>
+						<HeroDropdown.Trigger className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-surface-secondary/70 px-4 py-3 text-left shadow-sm transition-colors duration-150 hover:bg-surface-secondary">
 							<div className="min-w-0">
 								<p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted">
 									View
@@ -72,7 +70,7 @@ export const Tabs = ({
 								</p>
 							</div>
 							<ChevronDownIcon className="size-4 shrink-0 text-accent" />
-						</button>
+						</HeroDropdown.Trigger>
 					}
 					items={items.map((item) => ({
 						key: item.key,

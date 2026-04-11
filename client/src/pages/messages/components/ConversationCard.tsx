@@ -1,5 +1,6 @@
 import { Avatar } from "@client/components/user/Avatar";
-import { Card } from "@heroui/react";
+import { useIsMobile } from "@client/hooks/useMediaQuery";
+import { Card, cn } from "@heroui/react";
 import { Check, CheckCheck } from "lucide-react";
 import { useNavigate } from "react-router";
 import type { ConversationSummary } from "../hooks";
@@ -45,6 +46,7 @@ export const ConversationCard = ({
 	currentUserId?: string;
 	isActive?: boolean;
 }) => {
+	const isMobile = useIsMobile();
 	const navigate = useNavigate();
 	const title = getConversationTitle(conversation, currentUserId);
 	const avatarMember = getConversationAvatarMember(conversation, currentUserId);
@@ -55,9 +57,11 @@ export const ConversationCard = ({
 
 	return (
 		<Card
-			className={`m-2 gap-0 rounded border border-border p-0 shadow-none transition-colors duration-150 hover:border-accent ${
-				isActive ? "bg-surface-secondary" : "bg-surface"
-			}`}
+			className={cn(
+				`m-2 gap-0 rounded border border-border p-0 shadow-none transition-colors duration-150 hover:border-accent ${
+					isActive ? "bg-surface-secondary" : "bg-surface"
+				}`,
+			)}
 		>
 			<Card.Content className="p-0">
 				<button
@@ -81,7 +85,12 @@ export const ConversationCard = ({
 							</div>
 						</div>
 					</div>
-					<div className="mt-1 flex min-w-0 items-center justify-between gap-1.5">
+					<div
+						className={cn(
+							"flex min-w-0 items-center justify-between gap-1.5",
+							isMobile ? "mt-3" : "mt-1",
+						)}
+					>
 						<p className="truncate text-sm text-muted">{preview}</p>
 						<LastMessageStatus
 							conversation={conversation}

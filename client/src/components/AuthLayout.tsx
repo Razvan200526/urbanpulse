@@ -37,7 +37,7 @@ export const AuthLayout = () => {
 			<SidebarDrawer />
 			<div
 				className={cn(
-					"relative hidden h-full w-64 shrink-0 self-start border-r border-border bg-surface p-2 transition-all duration-300 ease-in-out 2xl:flex",
+					"relative border-r border-border bg-surface",
 					!isOpen ? "hidden" : "hidden 2xl:flex",
 				)}
 			>
@@ -45,7 +45,7 @@ export const AuthLayout = () => {
 			</div>
 			<div
 				className={cn(
-					"flex min-h-dvh min-w-0 flex-1 overflow-hidden font-normal",
+					"flex min-h-dvh w-full flex-1 overflow-hidden font-normal",
 				)}
 			>
 				<Outlet />

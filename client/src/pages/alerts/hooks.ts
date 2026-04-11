@@ -17,7 +17,10 @@ export const useAlertsPageData = ({
 	);
 	const filter = useAlertsPageStore((state) => state.filter);
 
-	const allNotifications = notifications ?? [];
+	const allNotifications =
+		notifications?.filter((notification) => {
+			return notification.notification?.type !== "MESSAGE";
+		}) ?? [];
 
 	const actionableCount = useMemo(
 		() =>
@@ -31,7 +34,10 @@ export const useAlertsPageData = ({
 	);
 
 	const filteredNotifications = useMemo(() => {
-		if (filter === "all") return allNotifications;
+		if (filter === "all")
+			return allNotifications.filter((notification) => {
+				return notification.notification?.type !== "MESSAGE";
+			});
 
 		return allNotifications.filter((item) => {
 			const isActionable = isActionableNotification(

@@ -1,9 +1,11 @@
+import { useAuth } from "@client/hooks/useAuth";
 import { cn, ScrollShadow } from "@heroui/react";
 import { useSideBarItems } from "./hooks";
 import { NavMenuItem } from "./NavMenuItem";
 
 export const NavMenu = ({ isMinimize = false }) => {
 	const { mainItems, secondaryItems } = useSideBarItems();
+	const { data: user } = useAuth();
 
 	return (
 		<div className="flex flex-col flex-1 h-full overflow-hidden">
@@ -27,10 +29,11 @@ export const NavMenu = ({ isMinimize = false }) => {
 					isMinimize ? "w-full items-center justify-center" : "px-1",
 				)}
 			>
-				{secondaryItems.map((item, index) => (
-					// biome-ignore lint/suspicious/noArrayIndexKey: <the items don't chage>
-					<NavMenuItem key={index} isMinimize={isMinimize} item={item} />
-				))}
+				{secondaryItems.map((item) =>
+					item.key === "admin" && user?.user.role !== "ADMIN" ? null : (
+						<NavMenuItem key={item.key} isMinimize={isMinimize} item={item} />
+					),
+				)}
 			</div>
 		</div>
 	);

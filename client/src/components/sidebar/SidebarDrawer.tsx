@@ -1,18 +1,22 @@
 import { AppDrawer } from "@client/components/AppDrawer";
+import { useIs2xl } from "@client/hooks/useMediaQuery";
 import { cn, Tooltip } from "@heroui/react";
 import { Button } from "../Button/Button";
 import { MenuIcon } from "../icons/MenuIcon";
 import { Sidebar } from "./Sidebar";
 import { SidebarMinimize } from "./SidebarMinimize";
 import { useAppSidebarStore } from "./sidebarStore";
+
 export const SidebarDrawer = () => {
 	const { isOpen, open, onOpenChange } = useAppSidebarStore();
+	const is2xl = useIs2xl();
+
 	return (
 		<>
 			<div
 				className={cn(
-					"hidden h-dvh min-h-dvh shrink-0 flex-col items-center gap-4 border-r border-border bg-surface p-2 md:flex",
-					!isOpen ? "md:flex" : "md:flex 2xl:hidden",
+					"flex-col items-center gap-4 border-r border-border p-2 bg-surface",
+					!isOpen ? "flex" : "flex 2xl:hidden",
 				)}
 			>
 				<Tooltip delay={0} trigger={"focus"}>
@@ -35,9 +39,9 @@ export const SidebarDrawer = () => {
 				</div>
 			</div>
 			<AppDrawer
-				isOpen={isOpen}
+				isOpen={isOpen && !is2xl}
 				onOpenChange={onOpenChange}
-				backdrop="opaque"
+				backdrop="transparent"
 				placement="left"
 				mobilePlacement="left"
 				contentClassName="w-72 max-w-[85vw]"

@@ -240,6 +240,12 @@ mock.module("@client/utils/normalizeAssetUrl", () => ({
 }));
 
 mock.module("@heroui/react", () => {
+	const Dropdown = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Dropdown.Trigger = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
 	const Tooltip = ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	);
@@ -272,6 +278,7 @@ mock.module("@heroui/react", () => {
 			),
 		},
 		Card,
+		Dropdown,
 		ScrollShadow: ({ children }: { children: React.ReactNode }) => (
 			<div>{children}</div>
 		),

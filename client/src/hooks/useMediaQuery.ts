@@ -30,3 +30,7 @@ export const useMediaQuery = (query: string) => {
 export const useIsMobile = () => {
 	return useMediaQuery("(max-width: 767px)");
 };
+
+export const useIs2xl = () => {
+	return useMediaQuery("(min-width: 1536px)");
+};

@@ -252,7 +252,9 @@ describe("MessagesPage", () => {
 		expect(markup).toContain("Your messages");
 		expect(markup).toContain("Alex");
 		expect(markup).toContain("See you there");
-		expect(markup).toContain("Direct conversation");
+		expect(markup).not.toContain(
+			"Select a conversation to start coordinating.",
+		);
 		expect(markup).not.toContain("Back");
 	});
 

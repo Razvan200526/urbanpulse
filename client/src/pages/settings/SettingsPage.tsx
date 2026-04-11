@@ -1,7 +1,6 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
 import { PageLoader } from "@client/components/PageLoader";
-import { H6 } from "@client/components/typography";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import {
 	useUpdateAlertPreferences,
@@ -208,9 +207,7 @@ export const SettingsPage = () => {
 
 					<Card className="border border-accent shadow-none">
 						<Card.Header className="flex flex-col items-start gap-1">
-							<Card.Title>
-								<H6>Hero Alert Reach</H6>
-							</Card.Title>
+							<Card.Title>Hero Alert Reach</Card.Title>
 							<Card.Description className="text-sm">
 								Choose the saved location and alert radius used when UrbanPulse
 								matches you to nearby requests.
@@ -295,9 +292,7 @@ export const SettingsPage = () => {
 
 					<Card className="border border-accent shadow-none">
 						<Card.Header className="flex flex-col items-start gap-1">
-							<Card.Title>
-								<H6>Account</H6>
-							</Card.Title>
+							<Card.Title>Account</Card.Title>
 							<Card.Description>
 								Review the current session identity and manage your data.
 							</Card.Description>

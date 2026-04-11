@@ -14,7 +14,6 @@ const typeOrder: Record<string, number> = {
 	[PulseEnum.Item]: 2,
 };
 
-/** Higher-priority community needs first, then newest. */
 export function sortPulsesForFeed(pulses: PulseType[]): PulseType[] {
 	return [...pulses].sort((a, b) => {
 		const ua = urgencyOrder[a.urgency] ?? 9;

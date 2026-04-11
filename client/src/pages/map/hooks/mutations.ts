@@ -1,5 +1,4 @@
 import { hono, queryClient } from "@client/lib/api/client";
-import { parseApiData } from "@client/lib/api/parse";
 import { syncPulseInCache } from "@client/utils/pulseCache";
 import { clientPulseSchema } from "@client/utils/types";
 import { Toast } from "@heroui/react";
@@ -7,7 +6,7 @@ import type { PulseRequestType } from "@shared/validators/pulses/isPulseRequestV
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
 import { useMutation } from "@tanstack/react-query";
 import posthog from "posthog-js";
-import { parsePulseMutationResponse, sendPulseSocketMessage } from "./shared";
+import { sendPulseSocketMessage } from "./shared";
 
 type PulseResponseMutationInput = {
 	pulseId: string;
@@ -30,29 +29,31 @@ export const useCreatePulse = () => {
 	return useMutation({
 		mutationKey: ["pulse", "create"],
 		mutationFn: async (pulseData: PulseRequestType) => {
-			const response = await sendPulseSocketMessage(
-				{
-					type: "upload-pulse",
-					payload: pulseData,
-				} satisfies UploadPulseSocketMessage,
-				clientPulseSchema,
-				"Failed to create pulse",
-			);
+			try {
+				const response = await sendPulseSocketMessage(
+					{
+						type: "upload-pulse",
+						payload: pulseData,
+					} satisfies UploadPulseSocketMessage,
+					clientPulseSchema,
+					"Failed to create pulse",
+				);
 
-			syncPulseInCache(response.data);
-			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
-			Toast.toast.success("Pulse created successfully!");
-			posthog.capture("pulse_created", {
-				pulse_type: pulseData.type,
-				urgency: pulseData.urgency,
-			});
+				syncPulseInCache(response.data);
+				queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+				Toast.toast.success("Pulse created successfully!");
+				posthog.capture("pulse_created", {
+					pulse_type: pulseData.type,
+					urgency: pulseData.urgency,
+				});
 
-			return response;
-		},
-		onError: (error) => {
-			Toast.toast.danger(
-				error instanceof Error ? error.message : "Failed to create pulse.",
-			);
+				return response;
+			} catch (error) {
+				Toast.toast.danger(
+					error instanceof Error ? error.message : "Failed to create pulse.",
+				);
+				return null;
+			}
 		},
 	});
 };
@@ -67,15 +68,22 @@ export const useAcceptHelpOffer = () => {
 				param: { id: pulseId, responseId },
 			});
 
-			return parsePulseMutationResponse(response, "Could not accept offer");
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Failed to accept help offer");
+				return null;
+			}
+			return res.data;
 		},
-		onSuccess: (_, { pulseId, responseId }) => {
-			queryClient.invalidateQueries({ queryKey: ["notifications"] });
-			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
-			posthog.capture("help_offer_accepted", {
-				pulse_id: pulseId,
-				response_id: responseId,
-			});
+		onSuccess: (data, { pulseId, responseId }) => {
+			if (data) {
+				queryClient.invalidateQueries({ queryKey: ["notifications"] });
+				queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+				posthog.capture("help_offer_accepted", {
+					pulse_id: pulseId,
+					response_id: responseId,
+				});
+			}
 		},
 	});
 };
@@ -90,15 +98,22 @@ export const useRejectHelpOffer = () => {
 				param: { id: pulseId, responseId },
 			});
 
-			return parsePulseMutationResponse(response, "Could not reject offer");
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Failed to reject help offer");
+				return null;
+			}
+			return res.data;
 		},
-		onSuccess: (_, { pulseId, responseId }) => {
-			queryClient.invalidateQueries({ queryKey: ["notifications"] });
-			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
-			posthog.capture("help_offer_rejected", {
-				pulse_id: pulseId,
-				response_id: responseId,
-			});
+		onSuccess: (data, { pulseId, responseId }) => {
+			if (data) {
+				queryClient.invalidateQueries({ queryKey: ["notifications"] });
+				queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+				posthog.capture("help_offer_rejected", {
+					pulse_id: pulseId,
+					response_id: responseId,
+				});
+			}
 		},
 	});
 };
@@ -112,11 +127,18 @@ export const useOfferHelp = () => {
 				json: { note },
 			});
 
-			return parsePulseMutationResponse(response, "Could not send offer");
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Could not send offer");
+				return null;
+			}
+			return res.data;
 		},
-		onSuccess: (_, { pulseId }) => {
-			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
-			posthog.capture("help_offered", { pulse_id: pulseId });
+		onSuccess: (data, { pulseId }) => {
+			if (data) {
+				queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+				posthog.capture("help_offered", { pulse_id: pulseId });
+			}
 		},
 	});
 };
@@ -129,17 +151,19 @@ export const useUpdatePulse = () => {
 				param: { id: pulseId },
 				json: body,
 			});
-			const parsed = await parseApiData(
-				response,
-				clientPulseSchema,
-				"Failed to update pulse",
-			);
 
-			return parsed.data;
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Failed to update pulse");
+				return null;
+			}
+			return res.data;
 		},
 		onSuccess: (pulse) => {
-			syncPulseInCache(pulse);
-			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+			if (pulse) {
+				syncPulseInCache(pulse);
+				queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+			}
 		},
 	});
 };

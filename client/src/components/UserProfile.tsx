@@ -1,5 +1,5 @@
 import { useAuth } from "@client/hooks/useAuth";
-import { Avatar, Toast } from "@heroui/react";
+import { Avatar, Dropdown as HeroDropdown, Toast } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { LogOutIcon, UserIcon } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -41,7 +41,7 @@ export const UserProfile = () => {
 			placement="top end"
 			className="border border-border"
 			trigger={
-				<div className="h-20 w-full flex items-center justify-between px-4 text-left">
+				<HeroDropdown.Trigger className="h-20 w-full flex items-center justify-between px-4 text-left">
 					<div className="flex items-center gap-3">
 						<Avatar className="size-8 border border-accent">
 							<Avatar.Image src={data?.user.image ?? ""} />
@@ -59,7 +59,7 @@ export const UserProfile = () => {
 						</div>
 					</div>
 					<Icon className="size-4 text-muted" icon="mi:select" />
-				</div>
+				</HeroDropdown.Trigger>
 			}
 			items={items}
 		/>

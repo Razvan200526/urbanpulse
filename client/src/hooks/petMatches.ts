@@ -1,10 +1,5 @@
 import { hono, queryClient } from "@client/lib/api/client";
-import { parseApiData } from "@client/lib/api/parse";
-import {
-	petMatchActionResponseSchema,
-	petMatchWorkflowItemSchema,
-	petMatchWorkflowListSchema,
-} from "@client/utils/petMatches";
+import { Toast } from "@heroui/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 const invalidatePetMatchQueries = async (petMatchId: string) => {
@@ -29,13 +24,14 @@ export const usePetMatchesForAlert = (petAlertId: string | null) => {
 					param: { petAlertId },
 				},
 			);
-			const parsed = await parseApiData(
-				response,
-				petMatchWorkflowListSchema,
-				"Failed to load pet matches",
-			);
 
-			return parsed.data;
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Failed to load pet matches");
+				return [];
+			}
+
+			return res.data;
 		},
 	});
 };
@@ -52,13 +48,14 @@ export const usePetMatchDetail = (petMatchId: string | null) => {
 			const response = await hono.api["pet-matches"][":petMatchId"].$get({
 				param: { petMatchId },
 			});
-			const parsed = await parseApiData(
-				response,
-				petMatchWorkflowItemSchema,
-				"Failed to load pet match",
-			);
 
-			return parsed.data;
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Failed to load pet match");
+				return null;
+			}
+
+			return res.data;
 		},
 	});
 };
@@ -72,16 +69,19 @@ export const useMarkPetMatchOwnerInterested = () => {
 			].$post({
 				param: { petMatchId },
 			});
-			const parsed = await parseApiData(
-				response,
-				petMatchActionResponseSchema,
-				"Failed to update pet match",
-			);
 
-			return parsed.data;
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Failed to update pet match");
+				return null;
+			}
+
+			return res.data;
 		},
 		onSuccess: async (result) => {
-			await invalidatePetMatchQueries(result.item.petMatch.id);
+			if (result) {
+				await invalidatePetMatchQueries(result.item.petMatch.id);
+			}
 		},
 	});
 };
@@ -95,16 +95,19 @@ export const useDismissPetMatchAsOwner = () => {
 			].$post({
 				param: { petMatchId },
 			});
-			const parsed = await parseApiData(
-				response,
-				petMatchActionResponseSchema,
-				"Failed to dismiss pet match",
-			);
 
-			return parsed.data;
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Failed to dismiss pet match");
+				return null;
+			}
+
+			return res.data;
 		},
 		onSuccess: async (result) => {
-			await invalidatePetMatchQueries(result.item.petMatch.id);
+			if (result) {
+				await invalidatePetMatchQueries(result.item.petMatch.id);
+			}
 		},
 	});
 };
@@ -118,19 +121,22 @@ export const useAcceptPetMatchAsFinder = () => {
 			].$post({
 				param: { petMatchId },
 			});
-			const parsed = await parseApiData(
-				response,
-				petMatchActionResponseSchema,
-				"Failed to open pet-match chat",
-			);
 
-			return parsed.data;
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Failed to open pet-match chat");
+				return null;
+			}
+
+			return res.data;
 		},
 		onSuccess: async (result) => {
-			await invalidatePetMatchQueries(result.item.petMatch.id);
-			await queryClient.invalidateQueries({
-				queryKey: ["messages", "conversations"],
-			});
+			if (result) {
+				await invalidatePetMatchQueries(result.item.petMatch.id);
+				await queryClient.invalidateQueries({
+					queryKey: ["messages", "conversations"],
+				});
+			}
 		},
 	});
 };
@@ -144,16 +150,19 @@ export const useDeclinePetMatchAsFinder = () => {
 			].$post({
 				param: { petMatchId },
 			});
-			const parsed = await parseApiData(
-				response,
-				petMatchActionResponseSchema,
-				"Failed to decline pet match",
-			);
 
-			return parsed.data;
+			const res = await response.json();
+			if (!res.success) {
+				Toast.toast.danger(res.message || "Failed to decline pet match");
+				return null;
+			}
+
+			return res.data;
 		},
 		onSuccess: async (result) => {
-			await invalidatePetMatchQueries(result.item.petMatch.id);
+			if (result) {
+				await invalidatePetMatchQueries(result.item.petMatch.id);
+			}
 		},
 	});
 };

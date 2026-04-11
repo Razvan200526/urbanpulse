@@ -1,4 +1,5 @@
 import { Button } from "@client/components/Button/Button";
+import { ChartContainer } from "@client/components/charts/ChartContainer";
 import { Header } from "@client/components/Header";
 import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { useDashboardOverview } from "@client/hooks/useDashboardOverview";
@@ -27,7 +28,7 @@ export const DashboardPages = () => {
 	};
 
 	return (
-		<div className="flex h-[calc(100dvh)] min-w-0 flex-col overflow-hidden bg-surface">
+		<div className="flex h-[calc(100dvh)] w-full min-w-0 flex-col overflow-hidden bg-surface">
 			<Header title="Dashboard" />
 			<Separator />
 
@@ -67,7 +68,9 @@ export const DashboardPages = () => {
 								</div>
 							</Card.Header>
 							<Card.Content className="flex min-h-65 items-center justify-center p-3 sm:min-h-80 sm:p-4">
-								<Chart data={overview?.chart ?? []} />
+								<ChartContainer>
+									<Chart data={overview?.chart ?? []} />
+								</ChartContainer>
 							</Card.Content>
 						</Card>
 

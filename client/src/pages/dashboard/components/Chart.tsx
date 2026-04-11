@@ -21,7 +21,7 @@ export const Chart = ({ data }: { data: ChartPoint[] }) => {
 	}
 
 	return (
-		<ResponsiveContainer width="100%" height="100%">
+		<ResponsiveContainer width="100%" height="100%" aspect={undefined}>
 			<LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
 				<CartesianGrid
 					stroke="var(--color-border)"
