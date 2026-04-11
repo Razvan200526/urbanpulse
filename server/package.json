@@ -2,22 +2,22 @@
 	"name": "server",
 	"version": "0.0.1",
 	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"types": "dist/server/src/index.d.ts",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
+			"types": "./dist/server/src/index.d.ts",
 			"default": "./dist/index.js"
 		},
 		"./client": {
-			"types": "./dist/client.d.ts",
-			"default": "./dist/client.js"
+			"types": "./dist/server/src/client.d.ts",
+			"default": "./dist/server/src/client.js"
 		}
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "tsc && bun build ./src/index.ts --target bun --outfile ./dist/index.js",
 		"dev": "bun --watch run src/index.ts",
-		"start": "bun run src/index.ts",
-		"start:prod": "NODE_ENV=production bun run src/index.ts",
+		"start": "bun run dist/index.js",
+		"start:prod": "NODE_ENV=production bun run dist/index.js",
 		"db:seed": "bun run ./commands/seed-command.ts",
 		"db:generate": "bunx --bun drizzle-kit generate --config=drizzle.config.ts",
 		"db:push": "bunx --bun drizzle-kit push",
