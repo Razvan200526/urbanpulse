@@ -69,7 +69,10 @@ const MemberCard = ({ member }: { member: NetworkMember }) => {
 };
 
 export const NetworkTab = () => {
-	const { data: resources, isLoading } = useFilterResources("All");
+	const { data: resources, isLoading } = useFilterResources({
+		filter: "All",
+		excludeOwn: true,
+	});
 	const [searchTerm, setSearchTerm] = useState("");
 	const deferredSearchTerm = useDeferredValue(searchTerm.trim().toLowerCase());
 
@@ -128,7 +131,7 @@ export const NetworkTab = () => {
 				</div>
 				<InputSearch
 					className="w-full max-w-sm"
-					placeholder="Search people or offers..."
+					placeholder="Search people..."
 					onChange={(value) => setSearchTerm(String(value))}
 				/>
 			</div>

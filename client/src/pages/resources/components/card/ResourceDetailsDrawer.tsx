@@ -98,6 +98,8 @@ export function ResourceDetailsDrawer({
 	const { data: user } = useAuth();
 	const userId = user?.user.id || "";
 	const isOwner = resource.userId === userId;
+	const requiresVerifiedNeighbor = resource.resourceType === "Item";
+	const isViewerVerifiedNeighbor = user?.user.isVerified === true;
 	const reviewModalRef = useRef<ModalRefType>(null);
 	const [reviewTransactionId, setReviewTransactionId] = useState<string | null>(
 		null,
@@ -202,6 +204,14 @@ export function ResourceDetailsDrawer({
 			);
 		}
 
+		if (requiresVerifiedNeighbor && !isViewerVerifiedNeighbor) {
+			return (
+				<Button variant="primary" isDisabled>
+					Verified Neighbor required
+				</Button>
+			);
+		}
+
 		return (
 			<Button
 				variant="primary"
@@ -271,6 +281,25 @@ export function ResourceDetailsDrawer({
 							</p>
 						)}
 					</div>
+					{requiresVerifiedNeighbor && (
+						<div className="rounded border border-warning/30 bg-warning/5 p-4">
+							<div className="flex flex-wrap items-center gap-2">
+								<p className="text-sm font-semibold text-warning">
+									High-trust borrowing
+								</p>
+								<Chip variant="soft" color="warning" size="sm">
+									<Chip.Label>Verified Neighbor needed</Chip.Label>
+								</Chip>
+							</div>
+							<p className="mt-2 text-sm text-muted">
+								Item listings use a stronger trust gate before private pickup
+								details are shared.
+								{isViewerVerifiedNeighbor
+									? " Your account is already verified."
+									: " Complete three positively reviewed community help interactions to unlock borrowing."}
+							</p>
+						</div>
+					)}
 
 					{isOwner && (
 						<div className="rounded border border-border bg-surface p-4">
@@ -286,9 +315,16 @@ export function ResourceDetailsDrawer({
 										>
 											<div className="flex items-center gap-3">
 												<Avatar user={request.borrower} />
-												<p className="text-sm font-medium">
-													{request.borrower?.name || "Unknown borrower"}
-												</p>
+												<div className="flex flex-wrap items-center gap-2">
+													<p className="text-sm font-medium">
+														{request.borrower?.name || "Unknown borrower"}
+													</p>
+													{request.borrower?.isVerified && (
+														<Chip variant="soft" color="success" size="sm">
+															<Chip.Label>Verified Neighbor</Chip.Label>
+														</Chip>
+													)}
+												</div>
 											</div>
 											<div className="flex items-center gap-2">
 												<Button
@@ -328,9 +364,16 @@ export function ResourceDetailsDrawer({
 						<MetaRow label="Owner">
 							<div className="flex items-center gap-3">
 								<Avatar user={author} />
-								<p className="text-sm font-medium">
-									{author?.name || "Unknown"}
-								</p>
+								<div className="flex flex-wrap items-center gap-2">
+									<p className="text-sm font-medium">
+										{author?.name || "Unknown"}
+									</p>
+									{author?.isVerified && (
+										<Chip variant="soft" color="success" size="sm">
+											<Chip.Label>Verified Neighbor</Chip.Label>
+										</Chip>
+									)}
+								</div>
 							</div>
 						</MetaRow>
 

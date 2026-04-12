@@ -115,9 +115,9 @@ export const AlertsPage = () => {
 						placement="bottom end"
 						className="rounded border border-accent-soft"
 						trigger={
-							<HeroDropdown.Trigger className="flex cursor-pointer min-w-24 items-center justify-between gap-2 rounded border border-accent bg-surface px-3 py-2 text-sm font-medium text-foreground transition-colors duration-150 ease-out hover:bg-surface-secondary/60">
-								<Filter className="size-4 text-accent" />
-								<span className="text-accent">
+							<HeroDropdown.Trigger className="flex cursor-pointer min-w-24 items-center justify-between gap-2 rounded px-3 py-2 text-sm font-medium bg-accent hover:bg-accent/80">
+								<Filter className="size-4 text-white" />
+								<span className="text-white">
 									{filterDropdownItems.find(
 										(item) => item.key === (filter as string),
 									)?.label || "All alerts"}

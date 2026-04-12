@@ -132,6 +132,7 @@ export const useOfferHelp = () => {
 				Toast.toast.danger(res.message || "Could not send offer");
 				return null;
 			}
+			Toast.toast.success(res.message || "Offer sent successfully");
 			return res.data;
 		},
 		onSuccess: (data, { pulseId }) => {
@@ -157,6 +158,7 @@ export const useUpdatePulse = () => {
 				Toast.toast.danger(res.message || "Failed to update pulse");
 				return null;
 			}
+			Toast.toast.success(res.message || "Pulse updated successfully");
 			return res.data;
 		},
 		onSuccess: (pulse) => {

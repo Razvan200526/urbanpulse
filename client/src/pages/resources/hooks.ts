@@ -25,6 +25,7 @@ export type { ResourceWithUsersType } from "./resourceResponses";
 
 type ResourceFilterCriteria = {
 	filter: FilterResourceType;
+	excludeOwn?: boolean;
 	lat?: number;
 	long?: number;
 	radiusMeters?: number;
@@ -33,6 +34,7 @@ type ResourceFilterCriteria = {
 
 type ResourceQueryParams = {
 	filter: FilterResourceType;
+	excludeOwn?: string;
 	lat?: string;
 	long?: string;
 	radiusMeters?: string;
@@ -52,6 +54,10 @@ const toResourceQueryParams = (
 	criteria: ResourceFilterCriteria,
 ): ResourceQueryParams => {
 	const query: ResourceQueryParams = { filter: criteria.filter };
+
+	if (criteria.excludeOwn !== undefined) {
+		query.excludeOwn = String(criteria.excludeOwn);
+	}
 
 	if (criteria.lat !== undefined) {
 		query.lat = String(criteria.lat);

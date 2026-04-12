@@ -197,6 +197,9 @@ bun run test:db:up
 bun run test:db:down
 ```
 
+The canonical deploy, Railway env, and database contract now live in
+[DEPLOYMENT.md](/Volumes/Projects/urbanpulse/DEPLOYMENT.md).
+
 ## Project Goals
 
 UrbanPulse is being built toward a neighborhood resilience product that supports:

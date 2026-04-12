@@ -5,6 +5,7 @@ describe("isGetResourcesQueryValid", () => {
 	test("coerces numeric query values and applies the default radius", () => {
 		const result = isGetResourcesQueryValid({
 			filter: "Available",
+			excludeOwn: "true",
 			lat: "44.4",
 			long: "26.1",
 			type: "Location",
@@ -13,6 +14,7 @@ describe("isGetResourcesQueryValid", () => {
 		expect(result.success).toBe(true);
 		expect(result.data).toEqual({
 			filter: "Available",
+			excludeOwn: true,
 			lat: 44.4,
 			long: 26.1,
 			radiusMeters: 2000,

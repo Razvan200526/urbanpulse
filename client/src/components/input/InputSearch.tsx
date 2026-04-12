@@ -77,7 +77,7 @@ export const InputSearch = forwardRef<InputSearchRefType, InputSearchProps>(
 			>
 				{label && <Label className="text-accent font-semibold">{label}</Label>}
 
-				<InputGroup className="rounded border border-accent">
+				<InputGroup className="rounded border border-accent focus-within:bg-surface">
 					{showIcon && (
 						<InputGroup.Prefix>
 							<SearchIcon

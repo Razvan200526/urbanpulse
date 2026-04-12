@@ -55,7 +55,11 @@ independently from the Bun server and Vite client.
 2. Point that service at `/ai/railway.toml`.
 3. Generate a public domain for the service.
 4. Set `CLIENT_URL` or `AI_CORS_ORIGINS` to your frontend domain.
-5. Set `VITE_AI_URL` on the frontend service to the generated FastAPI domain.
+5. Set `DATABASE_URL` to the PostGIS service private URL reference:
+   `${{PostGIS.DATABASE_PRIVATE_URL}}`
+6. Set `VITE_AI_URL` on the frontend service to the generated FastAPI domain.
 
 The Railway deployment uses `ai/Dockerfile` so the Python build is isolated from
-the Node/Bun workspaces in the rest of the monorepo.
+the Node/Bun workspaces in the rest of the monorepo. The shared deployment and
+database contract is documented in
+[DEPLOYMENT.md](/Volumes/Projects/urbanpulse/DEPLOYMENT.md).

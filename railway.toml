@@ -11,7 +11,7 @@ watchPatterns = [
 ]
 
 [deploy]
-startCommand = "cd server && NODE_ENV=production bun run dist/index.js"
+startCommand = "cd server && bun run start:railway"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

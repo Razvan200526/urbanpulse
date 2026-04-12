@@ -175,7 +175,7 @@ export const PetAlertsPage = () => {
 					className="h-full m-4 sm:p-6 lg:p-8 border border-border rounded"
 					size={10}
 				>
-					<div className="mx-auto max-w-7xl h-full">
+					<div className="max-w-7xl h-full">
 						<PetAlertList
 							items={items}
 							isLoading={isLoading}

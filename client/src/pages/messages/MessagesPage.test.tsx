@@ -70,7 +70,22 @@ mock.module("./hooks", () => ({
 		mutateAsync: async () => messagesState.thread,
 		isPending: false,
 	}),
+	useResolveConversation: () => ({
+		mutateAsync: async () => ({ data: { conversationId: "conversation-1" } }),
+		isPending: false,
+	}),
+	useDeleteConversation: () => ({
+		mutateAsync: async () => ({ data: { conversationId: "conversation-1" } }),
+		isPending: false,
+	}),
 	sendConversationTypingState: () => {},
+}));
+
+mock.module("@client/hooks/useModeration", () => ({
+	useCreateReport: () => ({
+		mutateAsync: async () => ({ data: null }),
+		isPending: false,
+	}),
 }));
 
 mock.module("react-router", () => ({
@@ -100,10 +115,6 @@ mock.module("@client/components/Header", () => ({
 	Header: ({ title }: { title: string }) => <h1>{title}</h1>,
 }));
 
-mock.module("@client/components/PageLoader", () => ({
-	PageLoader: () => <div>Page Loader</div>,
-}));
-
 mock.module("@client/components/input/InputMessage", () => ({
 	InputMessage: () => <button>Send</button>,
 }));
@@ -117,6 +128,13 @@ mock.module("@client/components/user/Avatar", () => ({
 mock.module("@heroui/react", () => ({
 	cn: (...classes: Array<string | false | null | undefined>) =>
 		classes.filter(Boolean).join(" "),
+	Description: ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	),
+	Label: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+		<div className={className}>{children}</div>
+	),
+	Kbd: ({ children }: { children: React.ReactNode }) => <kbd>{children}</kbd>,
 	Card: Object.assign(
 		({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 		{
@@ -125,10 +143,60 @@ mock.module("@heroui/react", () => ({
 			),
 		},
 	),
+	Dropdown: Object.assign(
+		({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+		{
+			Trigger: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+				<div className={className}>{children}</div>
+			),
+			Popover: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+				<div className={className}>{children}</div>
+			),
+			Menu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+			Item: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+			SubmenuTrigger: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+			SubmenuIndicator: () => <span>{">"}</span>,
+		},
+	),
+	Modal: Object.assign(
+		({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+		{
+			Trigger: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+			Backdrop: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+			Container: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+			Dialog: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+			Header: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+			Heading: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+			Body: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+			Footer: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
+			),
+		},
+	),
 	ScrollShadow: ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	),
+	Skeleton: ({ className }: { className?: string }) => (
+		<div className={className}>Skeleton</div>
+	),
 	Separator: () => <hr />,
+	TextArea: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
 	Toast: { toast: { danger: () => {}, success: () => {} } },
 }));
 
@@ -147,12 +215,14 @@ describe("MessagesPage", () => {
 		buttonProps.length = 0;
 	});
 
-	test("renders a loader while conversations are loading", () => {
+	test("renders pane skeletons while conversations are loading", () => {
 		messagesState.isPending = true;
 
 		const markup = renderToStaticMarkup(<MessagesPage />);
 
-		expect(markup).toContain("Page Loader");
+		expect(markup).toContain("Loading conversations");
+		expect(markup).toContain("Loading conversation thread");
+		expect(markup).not.toContain("Page Loader");
 	});
 
 	test("renders the empty inbox state on mobile without a thread pane", () => {
@@ -256,6 +326,20 @@ describe("MessagesPage", () => {
 			"Select a conversation to start coordinating.",
 		);
 		expect(markup).not.toContain("Back");
+	});
+
+	test("renders the thread skeleton while a selected conversation is loading", () => {
+		messagesState.routeConversationId = "conversation-1";
+		messagesState.conversations = [directConversation];
+		messagesState.isThreadPending = true;
+
+		const markup = renderToStaticMarkup(<MessagesPage />);
+
+		expect(markup).toContain("Your messages");
+		expect(markup).toContain("Loading conversation thread");
+		expect(markup).not.toContain(
+			"Select a conversation to start coordinating.",
+		);
 	});
 
 	test("returns to /messages when backing out on mobile", async () => {

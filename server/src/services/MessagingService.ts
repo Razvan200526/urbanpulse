@@ -508,6 +508,52 @@ export class MessagingService {
 		return memberIds?.filter((memberId) => memberId !== viewerUserId) ?? null;
 	}
 
+	async resolveConversation(params: { conversationId: string; userId: string }) {
+		const membership = await this.assertMember(
+			params.conversationId,
+			params.userId,
+		);
+		if (!membership) {
+			return null;
+		}
+
+		const removed = await conversationMemberRepository.delete(membership.id);
+		if (!removed) {
+			return null;
+		}
+
+		const remainingMembers =
+			await conversationMemberRepository.getByConversationId(
+				params.conversationId,
+			);
+		if (remainingMembers.length === 0) {
+			await conversationRepository.delete(params.conversationId);
+		}
+
+		return {
+			conversationId: params.conversationId,
+		};
+	}
+
+	async deleteConversation(params: { conversationId: string; userId: string }) {
+		const membership = await this.assertMember(
+			params.conversationId,
+			params.userId,
+		);
+		if (!membership) {
+			return null;
+		}
+
+		const deleted = await conversationRepository.delete(params.conversationId);
+		if (!deleted) {
+			return null;
+		}
+
+		return {
+			conversationId: params.conversationId,
+		};
+	}
+
 	async markConversationDelivered(params: {
 		conversationId: string;
 		userId: string;

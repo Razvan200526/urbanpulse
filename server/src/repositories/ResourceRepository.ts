@@ -1,7 +1,7 @@
 import { db } from "@server/db";
 import { type ResourceType, resource } from "@server/db/schema";
 import type { GetResourceQuery } from "@shared/validators/resources/isGetResourcesQueryValid";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class ResourceRepository implements IRepository<ResourceType> {
@@ -34,7 +34,12 @@ export class ResourceRepository implements IRepository<ResourceType> {
 		});
 	}
 
-	async getFilteredResources(query: GetResourceQuery) {
+	async getFilteredResources(
+		query: GetResourceQuery,
+		options: {
+			excludeUserId?: string;
+		} = {},
+	) {
 		const filters = [];
 
 		if (query.filter !== "All") {
@@ -43,6 +48,10 @@ export class ResourceRepository implements IRepository<ResourceType> {
 
 		if (query.type) {
 			filters.push(eq(resource.resourceType, query.type));
+		}
+
+		if (options.excludeUserId) {
+			filters.push(ne(resource.userId, options.excludeUserId));
 		}
 
 		if (query.lat != null && query.long != null) {

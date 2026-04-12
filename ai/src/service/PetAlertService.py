@@ -274,7 +274,11 @@ class PetAlertService:
                     f"Pet alert '{processing_alert.id}' was not found."
                 )
 
-            new_pet_match_ids = self._sync_pet_matches(updated_alert, analysis)
+            new_pet_match_ids = self._sync_pet_matches(
+                updated_alert,
+                analysis,
+                owner_user_id=user_id,
+            )
             self.repository.commit()
             self.repository.refresh(updated_alert)
 
@@ -360,6 +364,10 @@ class PetAlertService:
         pet_alerts = self.repository.get_all()
         return pet_alerts
 
+    def get_unresolved(self) -> list[PetAlert]:
+        pet_alerts = self.repository.get_unresolved()
+        return pet_alerts
+
     def get_all_pet_alerts(
         self, user_id: str, filters: PetAlertListFilters
     ) -> list[PetAlert]:
@@ -422,7 +430,13 @@ class PetAlertService:
         if not was_deleted:
             raise PetAlertNotFoundError(f"Pet alert '{pet_alert_id}' was not found.")
 
-    def _sync_pet_matches(self, pet_alert: PetAlert, analysis: dict) -> list[uuid.UUID]:
+    def _sync_pet_matches(
+        self,
+        pet_alert: PetAlert,
+        analysis: dict,
+        *,
+        owner_user_id: str | None,
+    ) -> list[uuid.UUID]:
         alert_type = AlertType.coerce(pet_alert.alertType)
         opposite_alert_type = alert_type.opposite()
         query_alert = self._build_match_payload(pet_alert, analysis)
@@ -432,6 +446,7 @@ class PetAlertService:
             embedding=analysis["embedding"],
             pet_type=candidate_pet_type,
             exclude_id=pet_alert.id,
+            exclude_owner_user_id=owner_user_id,
             limit=self.max_candidates,
         )
 

@@ -29,7 +29,6 @@ export class SkillService {
 		if (result.data == null) return null;
 
 		const created = await this.skillRepo.create(result.data);
-		// Invalidate skills cache on creation
 		await this.cache.invalidate("all", { namespace: "skill" });
 		return created;
 	}

@@ -279,6 +279,72 @@ describe("NotificationService", () => {
 		);
 	});
 
+	test("filters self-owned pet match notifications from notification history", async () => {
+		const service = new NotificationService();
+		const items = [
+			{
+				notification: {
+					type: "PET_ALERT_MATCH",
+					payload: {
+						counterpartUser: {
+							id: "owner-1",
+							name: "Owner",
+						},
+						baseAlert: {
+							ownerUserId: "owner-1",
+						},
+						matchedAlert: {
+							ownerUserId: "owner-1",
+						},
+					},
+				},
+				user: null,
+			},
+		];
+
+		spyOn(
+			(service as any).notificationRepo,
+			"getNotificationsWithUsersByUserId",
+		).mockResolvedValue(items as any);
+
+		await expect(service.getNotificationsWithUsers("owner-1")).resolves.toEqual(
+			[],
+		);
+	});
+
+	test("keeps pet match notifications from other users in notification history", async () => {
+		const service = new NotificationService();
+		const items = [
+			{
+				notification: {
+					type: "PET_ALERT_MATCH",
+					payload: {
+						counterpartUser: {
+							id: "finder-1",
+							name: "Finder",
+						},
+						baseAlert: {
+							ownerUserId: "owner-1",
+						},
+						matchedAlert: {
+							ownerUserId: "finder-1",
+						},
+					},
+				},
+				user: null,
+			},
+		];
+
+		spyOn(
+			(service as any).notificationRepo,
+			"getNotificationsWithUsersByUserId",
+		).mockResolvedValue(items as any);
+
+		await expect(service.getNotificationsWithUsers("owner-1")).resolves.toEqual(
+			items,
+		);
+	});
+
 	test("does not broadcast hero alerts back to the pulse owner", async () => {
 		const service = new NotificationService();
 		const notifyUsersSpy = spyOn(service, "notifyUsers").mockResolvedValue(

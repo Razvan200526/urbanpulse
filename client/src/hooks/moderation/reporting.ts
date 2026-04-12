@@ -13,6 +13,7 @@ import {
 	moderatePulseResultSchema,
 	reviewReportResultSchema,
 } from "./schemas";
+import { Toast } from "@heroui/react";
 
 const pulseByIdRoute = hono.api.pulse[":id"];
 const adminReportByIdRoute = hono.api.admin.reports[":id"];
@@ -66,7 +67,7 @@ const fetchAdminReports = async () => {
 		"Failed to load reports",
 	);
 
-	return parsed.data.reports;
+	return parsed?.data.reports;
 };
 
 const fetchAdminDuplicatePulses = async () => {
@@ -77,7 +78,7 @@ const fetchAdminDuplicatePulses = async () => {
 		"Failed to load duplicate pulses",
 	);
 
-	return parsed.data.duplicates;
+	return parsed?.data.duplicates;
 };
 
 const reviewReport = async ({ param, json }: ReviewReportInput) => {
@@ -128,8 +129,13 @@ const invalidateModerationQueries = () => {
 export const useConfirmPulse = () => {
 	return useMutation({
 		mutationKey: ["pulse", "confirm"],
-		mutationFn: ({ pulseId }: { pulseId: string }) =>
-			confirmPulse({ id: pulseId }),
+		mutationFn: async ({ pulseId }: { pulseId: string }) => {
+			const res = await confirmPulse({ id: pulseId });
+			if (res.success) {
+				Toast.toast.success("Pulse confirmed successfully");
+			}
+			return res;
+		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
 			queryClient.invalidateQueries({ queryKey: ["notifications"] });

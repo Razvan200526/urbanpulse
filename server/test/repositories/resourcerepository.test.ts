@@ -90,6 +90,7 @@ describe("ResourceRepository", () => {
 
 		const resources = await resourceRepository.getFilteredResources({
 			filter: "All",
+			excludeOwn: false,
 			radiusMeters: 2000,
 		});
 		expect(resources).toHaveLength(1);
@@ -134,6 +135,7 @@ describe("ResourceRepository", () => {
 
 		const resources = await resourceRepository.getFilteredResources({
 			filter: "Available",
+			excludeOwn: false,
 			type: "Item",
 			lat: 44.4268,
 			long: 26.1025,
@@ -160,11 +162,38 @@ describe("ResourceRepository", () => {
 
 		const resources = await resourceRepository.getFilteredResources({
 			filter: "All",
+			excludeOwn: false,
 			lat: 44.4268,
 			long: 26.1025,
 			radiusMeters: 5000,
 		});
 
 		expect(resources.map((item) => item.id)).toEqual([near.id, far.id]);
+	});
+
+	test("excludes the viewer's own resources when requested", async () => {
+		const owner = await createUser();
+		const otherUser = await createUser();
+		await createResource({
+			userId: owner.id,
+			name: "My generator",
+			resourceType: "Item",
+		});
+		const otherResource = await createResource({
+			userId: otherUser.id,
+			name: "Neighbor generator",
+			resourceType: "Item",
+		});
+
+		const resources = await resourceRepository.getFilteredResources(
+			{
+				filter: "All",
+				excludeOwn: false,
+				radiusMeters: 2000,
+			},
+			{ excludeUserId: owner.id },
+		);
+
+		expect(resources.map((item) => item.id)).toEqual([otherResource.id]);
 	});
 });

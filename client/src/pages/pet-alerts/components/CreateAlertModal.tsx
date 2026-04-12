@@ -126,41 +126,38 @@ export const CreateAlertModal = ({
 			return;
 		}
 
-		try {
-			let pulseId = draftPulseId;
-			if (!pulseId) {
-				const pulseResponse = await createPulse({
-					type: PulseEnum.PetAlert,
-					urgency: parsed.data.urgency,
-					title: buildPulseTitle(parsed.data),
-					description: buildPulseDescription(parsed.data),
-					position: { x: coords.long, y: coords.lat },
-					imageUrls: [parsed.data.imageUrl],
-				});
-				pulseId = pulseResponse.data.id;
-				setDraftPulseId(pulseId);
-			}
-
-			const requestId = crypto.randomUUID();
-
-			const accepted = await createAlert({
-				requestId,
-				pulseId,
-				userId: user?.user.id || "",
-				alertType: parsed.data.alertType,
-				petType: parsed.data.petType.trim(),
-				color: parsed.data.color.trim(),
-				breed: parsed.data.breed?.trim() || null,
-				imageUrl: parsed.data.imageUrl,
+		let pulseId = draftPulseId;
+		if (!pulseId) {
+			const pulseResponse = await createPulse({
+				type: PulseEnum.PetAlert,
+				urgency: parsed.data.urgency,
+				title: buildPulseTitle(parsed.data),
+				description: buildPulseDescription(parsed.data),
+				position: { x: coords.long, y: coords.lat },
+				imageUrls: [parsed.data.imageUrl],
 			});
-
-			onAlertAccepted(accepted);
-			modalRef.current?.close();
-		} catch (error) {
-			Toast.toast.danger(
-				error instanceof Error ? error.message : "Failed to submit pet alert.",
-			);
+			if (!pulseResponse) {
+				Toast.toast.danger("Error creating pulse");
+				return;
+			}
+			pulseId = pulseResponse.data.id;
+			setDraftPulseId(pulseId);
 		}
+
+		const requestId = crypto.randomUUID();
+
+		const accepted = await createAlert({
+			requestId,
+			pulseId,
+			userId: user?.user.id || "",
+			alertType: parsed.data.alertType,
+			petType: parsed.data.petType.trim(),
+			color: parsed.data.color.trim(),
+			breed: parsed.data.breed?.trim() || null,
+			imageUrl: parsed.data.imageUrl,
+		});
+		onAlertAccepted(accepted);
+		modalRef.current?.close();
 	};
 
 	return (

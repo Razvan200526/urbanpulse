@@ -17,6 +17,7 @@ import {
 	XCircleIcon,
 } from "lucide-react";
 import { UrgencyMeter } from "../UrgencyMeter";
+import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 
 type PulseTypeConfig = {
 	icon: React.ComponentType<{ className?: string }>;
@@ -53,11 +54,10 @@ type CommunityActionsProps = {
 	isConfirming: boolean;
 	isReportPending: boolean;
 	isReporting: boolean;
-	reportReason: string;
 	onToggleReporting: () => void;
-	onReportReasonChange: (value: string) => void;
 	onConfirm: () => void;
 	onSubmitReport: () => void;
+	reportRef: React.RefObject<TextAreaRefType | null>;
 };
 
 type DrawerFooterActionsProps = {
@@ -99,6 +99,7 @@ export const PulseDrawerHeader = ({
 	typeConfig,
 }: PulseDrawerHeaderProps) => {
 	const TypeIcon = typeConfig.icon;
+	const isApproximateLocation = pulse.locationPrecision === "approximate";
 
 	return (
 		<div className="relative overflow-hidden border-b border-accent px-4 pt-5 pb-5 md:px-5 md:pt-4 md:pb-6">
@@ -124,6 +125,8 @@ export const PulseDrawerHeader = ({
 				<div className="flex items-center gap-4 text-xs text-muted">
 					<span className="flex items-center gap-1">
 						<MapPinIcon className="size-3" />
+						{isApproximateLocation ? "Approximate area" : "Exact location"}
+						{" · "}
 						{pulse.position.x.toFixed(4)}, {pulse.position.y.toFixed(4)}
 					</span>
 					<span className="flex items-center gap-1">
@@ -143,6 +146,7 @@ export const PulseDrawerSummary = ({
 }: PulseDrawerSummaryProps) => {
 	const TypeIcon = typeConfig.icon;
 	const StatusIcon = statusConfig.icon;
+	const isApproximateLocation = pulse.locationPrecision === "approximate";
 
 	return (
 		<div className="flex flex-col gap-4 px-4 pt-3 pb-8 md:px-5 md:pb-10">
@@ -183,11 +187,18 @@ export const PulseDrawerSummary = ({
 					<ProgressChip status={pulse.pulseUploadState} />
 				</MetaRow>
 
-				<MetaRow label="Coordinates">
+				<MetaRow label={isApproximateLocation ? "Approximate area" : "Coordinates"}>
 					<span className="font-mono text-xs text-muted">
 						{pulse.position.x.toFixed(5)}, {pulse.position.y.toFixed(5)}
 					</span>
 				</MetaRow>
+				{isApproximateLocation && (
+					<MetaRow label="Privacy">
+						<span className="text-xs text-muted">
+							Exact coordinates stay hidden until direct coordination starts.
+						</span>
+					</MetaRow>
+				)}
 			</div>
 
 			{pulse.audioUrl && (
@@ -248,11 +259,10 @@ export const CommunityActionsSection = ({
 	isConfirming,
 	isReportPending,
 	isReporting,
-	reportReason,
 	onToggleReporting,
-	onReportReasonChange,
 	onConfirm,
 	onSubmitReport,
+	reportRef,
 }: CommunityActionsProps) => {
 	return (
 		<div className="rounded border border-border bg-surface p-4">
@@ -291,23 +301,21 @@ export const CommunityActionsSection = ({
 							moderation team can act quickly.
 						</p>
 					</div>
-					<textarea
-						value={reportReason}
-						onChange={(event) => onReportReasonChange(event.target.value)}
+					<TextArea
+						inputWrapperClassname="bg-danger-soft border border-danger"
+						label=""
+						ref={reportRef}
+						onChange={(e) => reportRef.current?.setValue(e.target.value)}
 						rows={4}
 						maxLength={500}
 						placeholder="What’s wrong with this pulse?"
-						className="w-full rounded border border-border bg-surface px-3 py-2 text-sm outline-none transition focus:border-danger"
+						className="focus-within:border-danger"
 					/>
-					<div className="flex items-center justify-between gap-3">
-						<span className="text-[11px] text-muted">
-							{reportReason.length}/500
-						</span>
+					<div className="flex items-center justify-end gap-3">
 						<Button
 							size="sm"
 							variant="danger"
 							isPending={isReportPending}
-							isDisabled={reportReason.trim().length < 5}
 							onPress={onSubmitReport}
 						>
 							Submit report

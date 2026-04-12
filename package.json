@@ -28,6 +28,7 @@
 		"type-check": "turbo type-check",
 		"test": "turbo test",
 		"test:ai": "turbo test --filter=ai",
+		"verify:deploy": "bun run --cwd server deploy:verify",
 		"postinstall": "turbo build --filter=shared --filter=server",
 		"fmt": "biome format . --write",
 		"lint:check": "biome check . --write",

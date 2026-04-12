@@ -79,4 +79,13 @@ export class PetAlertFetcher {
 		}
 		return parsed.data ?? null;
 	};
+
+	public readonly delete = async (payload: {
+		petAlertId: string;
+		userId: string;
+	}) => {
+		return await this.fetcher.delete(
+			`/api/v1/pet-alerts/${payload.userId}/${payload.petAlertId}`,
+		);
+	};
 }

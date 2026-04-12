@@ -80,6 +80,66 @@ export const messageController = new Hono()
 		},
 	)
 	.post(
+		"/conversations/:id/resolve",
+		zValidator("param", conversationIdParamSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+
+			const resolved = await messagingService.resolveConversation({
+				conversationId: c.req.valid("param").id,
+				userId: session.userId,
+			});
+			if (!resolved) {
+				return c.json(
+					{ success: false, message: "Conversation not found", data: null },
+					404,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message: "Conversation resolved",
+				data: resolved,
+			});
+		},
+	)
+	.delete(
+		"/conversations/:id",
+		zValidator("param", conversationIdParamSchema),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json(
+					{ success: false, message: "Unauthorized", data: null },
+					401,
+				);
+			}
+
+			const deleted = await messagingService.deleteConversation({
+				conversationId: c.req.valid("param").id,
+				userId: session.userId,
+			});
+			if (!deleted) {
+				return c.json(
+					{ success: false, message: "Conversation not found", data: null },
+					404,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message: "Conversation deleted",
+				data: deleted,
+			});
+		},
+	)
+	.post(
 		"/direct",
 		zValidator("json", directConversationBodySchema),
 		async (c) => {

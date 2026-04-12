@@ -3,7 +3,7 @@ import { SignalIcon } from "@client/components/icons/SignalIcon";
 import { useAuth } from "@client/hooks/useAuth";
 import { useConfirmPulse, useCreateReport } from "@client/hooks/useModeration";
 import type { ClientPulseType } from "@client/utils/types";
-import { Drawer, Toast } from "@heroui/react";
+import { Drawer } from "@heroui/react";
 import { PulseEnum, PulseStatusEnum } from "@shared/types";
 import {
 	CheckCircle2Icon,
@@ -13,7 +13,7 @@ import {
 	XCircleIcon,
 	ZapIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useOfferHelp, useUpdatePulse } from "../hooks";
 import {
 	CommunityActionsSection,
@@ -22,6 +22,7 @@ import {
 	PulseDrawerHeader,
 	PulseDrawerSummary,
 } from "./pulse-drawer/PulseDrawerSections";
+import type { TextAreaRefType } from "@client/components/TextArea";
 
 const PULSE_TYPE_CONFIG: Record<
 	PulseEnum,
@@ -89,87 +90,40 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 	const typeCfg = PULSE_TYPE_CONFIG[pulse.type];
 	const statusCfg = STATUS_CONFIG[pulse.status];
 	const { data: user } = useAuth();
-	const updatePulse = useUpdatePulse();
-	const offerHelp = useOfferHelp();
-	const confirmPulse = useConfirmPulse();
-	const createReport = useCreateReport();
-	const [reportReason, setReportReason] = useState("");
+	const { mutateAsync: updatePulse, isPending: isPulseUpdating } =
+		useUpdatePulse();
+	const { mutateAsync: offerHelp, isPending: isOfferingHelpPending } =
+		useOfferHelp();
+	const { mutateAsync: confirmPulse, isPending: isPulseConfirming } =
+		useConfirmPulse();
+	const { mutateAsync: createReport, isPending: isCreatingReport } =
+		useCreateReport();
+	const reportRef = useRef<TextAreaRefType | null>(null);
 	const [isReporting, setIsReporting] = useState(false);
 	const isOwner = user?.user.id === pulse.userId;
 	const canOfferHelp =
 		!isOwner && pulse.status === PulseStatusEnum.Active && user?.user.id;
 
-	const handlePulseStatusUpdate = (
-		status: PulseStatusEnum,
-		successMessage: string,
-	) => {
-		updatePulse.mutate(
-			{
-				pulseId: pulse.id,
-				status,
-			},
-			{
-				onSuccess: () => {
-					Toast.toast.success(successMessage);
-					onOpenChange(false);
-				},
-				onError: (error) =>
-					Toast.toast.danger(
-						error instanceof Error ? error.message : "Could not update pulse",
-					),
-			},
-		);
+	const handlePulseStatusUpdate = async (status: PulseStatusEnum) => {
+		await updatePulse({
+			pulseId: pulse.id,
+			status,
+		});
 	};
 
-	const handleConfirmPulse = () => {
-		confirmPulse.mutate(
-			{ pulseId: pulse.id },
-			{
-				onSuccess: (response) => {
-					Toast.toast.success(response.message);
-				},
-				onError: (error) =>
-					Toast.toast.danger(
-						error instanceof Error ? error.message : "Could not confirm pulse",
-					),
-			},
-		);
+	const handleConfirmPulse = async () => {
+		await confirmPulse({ pulseId: pulse.id });
 	};
 
-	const handleSubmitReport = () => {
-		createReport.mutate(
-			{
-				targetPulseId: pulse.id,
-				reason: reportReason.trim(),
-			},
-			{
-				onSuccess: (response) => {
-					Toast.toast.success(response.message);
-					setReportReason("");
-					setIsReporting(false);
-				},
-				onError: (error) =>
-					Toast.toast.danger(
-						error instanceof Error ? error.message : "Could not submit report",
-					),
-			},
-		);
+	const handleSubmitReport = async () => {
+		await createReport({
+			targetPulseId: pulse.id,
+			reason: reportRef.current?.getValue() || "",
+		});
 	};
 
-	const handleOfferHelp = () => {
-		offerHelp.mutate(
-			{ pulseId: pulse.id },
-			{
-				onSuccess: () => {
-					Toast.toast.success("Your offer was sent to the poster");
-					onOpenChange(false);
-				},
-				onError: (error) =>
-					Toast.toast.danger(
-						error instanceof Error ? error.message : "Could not offer help",
-					),
-			},
-		);
+	const handleOfferHelp = async () => {
+		await offerHelp({ pulseId: pulse.id });
 	};
 
 	return (
@@ -183,7 +137,7 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 				<Drawer.Footer className="shrink-0 border-t border-border bg-surface/95 px-4 py-4 backdrop-blur md:px-5">
 					<DrawerFooterActions
 						canOfferHelp={Boolean(canOfferHelp)}
-						isOfferPending={offerHelp.isPending}
+						isOfferPending={isOfferingHelpPending}
 						onClose={() => onOpenChange(false)}
 						onOfferHelp={handleOfferHelp}
 					/>
@@ -200,30 +154,19 @@ export function PulseDrawer({ pulse, isOpen, onOpenChange }: PulseDrawerProps) {
 			<div className="px-4 pb-8 md:px-5 md:pb-10">
 				{isOwner && pulse.status === PulseStatusEnum.Active && (
 					<OwnerActionsSection
-						isPending={updatePulse.isPending}
-						onResolve={() =>
-							handlePulseStatusUpdate(
-								PulseStatusEnum.Resolved,
-								"Marked as resolved",
-							)
-						}
-						onDismiss={() =>
-							handlePulseStatusUpdate(
-								PulseStatusEnum.Dismissed,
-								"Pulse dismissed",
-							)
-						}
+						isPending={isPulseUpdating}
+						onResolve={() => handlePulseStatusUpdate(PulseStatusEnum.Resolved)}
+						onDismiss={() => handlePulseStatusUpdate(PulseStatusEnum.Dismissed)}
 					/>
 				)}
 				{!isOwner && user?.user.id && (
 					<CommunityActionsSection
+						reportRef={reportRef}
 						canConfirm={pulse.status === PulseStatusEnum.Active}
-						isConfirming={confirmPulse.isPending}
-						isReportPending={createReport.isPending}
+						isConfirming={isPulseConfirming}
+						isReportPending={isCreatingReport}
 						isReporting={isReporting}
-						reportReason={reportReason}
 						onToggleReporting={() => setIsReporting((current) => !current)}
-						onReportReasonChange={setReportReason}
 						onConfirm={handleConfirmPulse}
 						onSubmitReport={handleSubmitReport}
 					/>

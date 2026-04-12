@@ -244,12 +244,16 @@ describe("PulseService", () => {
 
 	test("handles get-pulses socket requests", async () => {
 		const pulses = [buildPulse()];
+		const serializedPulses = pulses.map((pulse) => ({
+			...pulse,
+			locationPrecision: "exact" as const,
+		}));
 		const { service } = createServiceWithRepo();
 		const getPulsesSpy = spyOn(service, "getPulses").mockResolvedValue(pulses);
 		const serializeSpy = spyOn(
 			service,
 			"serializePulsesForViewer",
-		).mockResolvedValue(pulses);
+		).mockResolvedValue(serializedPulses);
 
 		await expect(
 			service.handleSocketMessage(
@@ -264,7 +268,7 @@ describe("PulseService", () => {
 		).resolves.toEqual({
 			success: true,
 			message: "Pulses retrieved",
-			data: pulses,
+			data: serializedPulses,
 		});
 
 		expect(getPulsesSpy).toHaveBeenCalledWith({
@@ -378,6 +382,10 @@ describe("PulseService", () => {
 			type: PulseEnum.Skill,
 			pulseUploadState: PulseUploadStateEnum.Uploaded,
 		});
+		const serializedUploadedPulse = {
+			...uploadedPulse,
+			locationPrecision: "exact" as const,
+		};
 		const { service } = createServiceWithRepo();
 		const createPulseSpy = spyOn(service, "createPulse").mockResolvedValue(
 			pendingPulse,
@@ -396,7 +404,7 @@ describe("PulseService", () => {
 		const serializeSpy = spyOn(
 			service,
 			"serializePulseForViewer",
-		).mockResolvedValue(uploadedPulse);
+		).mockResolvedValue(serializedUploadedPulse);
 
 		await expect(
 			service.handleSocketMessage(
@@ -416,7 +424,7 @@ describe("PulseService", () => {
 		).resolves.toEqual({
 			success: true,
 			message: "Pulse received",
-			data: uploadedPulse,
+			data: serializedUploadedPulse,
 		});
 
 		expect(createPulseSpy).toHaveBeenCalled();
@@ -431,7 +439,28 @@ describe("PulseService", () => {
 		);
 	});
 
-	test("keeps exact pulse coordinates when serializing for other viewers", async () => {
+	test("keeps exact pulse coordinates for the pulse owner", async () => {
+		const pulse = buildPulse({
+			userId: "owner-1",
+			position: {
+				x: 27.57399363305121,
+				y: 47.15385267140391,
+			} as PulseType["position"],
+		});
+		const { service } = createServiceWithRepo();
+
+		await expect(
+			service.serializePulseForViewer(pulse, {
+				id: "owner-1",
+				role: "user",
+			} as any),
+		).resolves.toEqual({
+			...pulse,
+			locationPrecision: "exact",
+		});
+	});
+
+	test("rounds pulse coordinates for other viewers", async () => {
 		const pulse = buildPulse({
 			position: {
 				x: 27.57399363305121,
@@ -445,7 +474,14 @@ describe("PulseService", () => {
 				id: "user-2",
 				role: "user",
 			} as any),
-		).resolves.toEqual(pulse);
+		).resolves.toEqual({
+			...pulse,
+			position: {
+				x: 27.574,
+				y: 47.154,
+			},
+			locationPrecision: "approximate",
+		});
 	});
 
 	test("rejects unauthenticated pulse uploads", async () => {

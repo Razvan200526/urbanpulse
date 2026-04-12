@@ -161,6 +161,10 @@ export class PetMatchService {
 				continue;
 			}
 
+			if (lostOwnerId === foundOwnerId) {
+				continue;
+			}
+
 			contexts.set(match.id, {
 				match,
 				lostAlert,

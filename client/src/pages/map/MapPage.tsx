@@ -10,7 +10,7 @@ import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { useUserProfile } from "@client/hooks/useProfileSettings";
 import type { ClientPulseType } from "@client/utils/types";
-import { Separator, Toast } from "@heroui/react";
+import { Card, Separator, Toast } from "@heroui/react";
 import { PlusSquare } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
@@ -30,6 +30,8 @@ export const MapPage = () => {
 	const modalRef = useRef<ModalRefType>(null);
 	const [createModalSession, setCreateModalSession] = useState(0);
 	const [emergencyLaunch, setEmergencyLaunch] = useState(false);
+	const [safetyCheckinLaunch, setSafetyCheckinLaunch] = useState(false);
+	const [isMapUnavailable, setIsMapUnavailable] = useState(false);
 	const hasCoords = coords?.lat != null && coords?.long != null;
 	const mapPulseRadius = profile?.alertPreferences.heroAlertRadiusMeters ?? 500;
 	const retrievePayload = useMemo(
@@ -40,8 +42,12 @@ export const MapPage = () => {
 		[coords?.lat, coords?.long, mapPulseRadius],
 	);
 
-	const openCreateModal = (emergency: boolean) => {
+	const openCreateModal = (
+		emergency: boolean,
+		options?: { safetyCheckin?: boolean },
+	) => {
 		setEmergencyLaunch(emergency);
+		setSafetyCheckinLaunch(options?.safetyCheckin === true);
 		setCreateModalSession((s) => s + 1);
 		queueMicrotask(() => modalRef.current?.open());
 	};
@@ -52,9 +58,14 @@ export const MapPage = () => {
 	);
 
 	useEffect(() => {
-		const state = location.state as { safetyCheckin?: boolean } | null;
-		if (!state?.safetyCheckin) return;
+		const state = location.state as
+			| { safetyCheckin?: boolean; launchMode?: "safety-checkin" }
+			| null;
+		if (!state?.safetyCheckin && state?.launchMode !== "safety-checkin") {
+			return;
+		}
 		setEmergencyLaunch(true);
+		setSafetyCheckinLaunch(true);
 		setCreateModalSession((s) => s + 1);
 		queueMicrotask(() => modalRef.current?.open());
 		navigate(location.pathname, { replace: true, state: null });
@@ -86,6 +97,45 @@ export const MapPage = () => {
 					<MapComponent
 						center={[coords?.long ?? 0, coords?.lat ?? 0]}
 						zoom={17}
+						onUnavailableChange={setIsMapUnavailable}
+						fallback={
+							<div className="flex h-full items-center justify-center p-4">
+								<Card className="w-full max-w-xl border border-accent bg-surface/90 shadow-none">
+									<Card.Content className="space-y-4 p-5">
+										<div>
+											<p className="text-sm font-semibold text-accent">
+												Map view is temporarily unavailable
+											</p>
+											<p className="mt-1 text-sm text-muted">
+												Live neighborhood pulses are still loading, and you can
+												still create or respond while the map provider recovers.
+											</p>
+										</div>
+										<div className="space-y-2">
+											{pulseList.length > 0 ? (
+												pulseList.slice(0, 5).map((pulse: ClientPulseType) => (
+													<div
+														key={pulse.id}
+														className="rounded border border-border bg-surface-secondary/70 px-3 py-2"
+													>
+														<p className="text-sm font-medium text-foreground">
+															{pulse.title}
+														</p>
+														<p className="text-xs text-muted">
+															{pulse.type} · {pulse.urgency}
+														</p>
+													</div>
+												))
+											) : (
+												<p className="text-sm text-muted">
+													No nearby pulses are active right now.
+												</p>
+											)}
+										</div>
+									</Card.Content>
+								</Card>
+							</div>
+						}
 					>
 						<PulseHeatmapLayer pulses={pulseList} />
 						{pulseList.map((pulse: ClientPulseType) => (
@@ -108,6 +158,7 @@ export const MapPage = () => {
 							key={createModalSession}
 							modalRef={modalRef}
 							emergencyLaunch={emergencyLaunch}
+							safetyCheckinLaunch={safetyCheckinLaunch}
 						/>
 					)}
 					<Button
@@ -116,7 +167,7 @@ export const MapPage = () => {
 						startContent={<SignalIcon className="size-4" />}
 						onPress={() => openCreateModal(true)}
 					>
-						Emergency
+						{isMapUnavailable ? "Emergency post" : "Emergency"}
 					</Button>
 				</div>
 			</div>

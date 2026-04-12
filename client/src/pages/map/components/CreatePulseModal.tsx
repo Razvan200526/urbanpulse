@@ -35,10 +35,12 @@ export const urgencyItems: TabItemType[] = [
 export const CreatePulseModal = ({
 	modalRef,
 	emergencyLaunch = false,
+	safetyCheckinLaunch = false,
 	coords,
 }: {
 	modalRef: React.RefObject<ModalRefType | null>;
 	emergencyLaunch?: boolean;
+	safetyCheckinLaunch?: boolean;
 	coords?: { lat: number; long: number };
 }) => {
 	const { data: user } = useAuth();
@@ -49,9 +51,21 @@ export const CreatePulseModal = ({
 	const audioUrlRef = useRef<string>("");
 	const audioRef = useRef<HTMLAudioElement>(null);
 
-	const [pulseType, setPulseType] = useState<PulseEnum>(PulseEnum.Emergency);
-	const [urgency, setUrgency] = useState<UrgencyEnum>(UrgencyEnum.Immediate);
+	const [pulseType, setPulseType] = useState<PulseEnum>(() =>
+		PulseEnum.Emergency,
+	);
+	const [urgency, setUrgency] = useState<UrgencyEnum>(() =>
+		safetyCheckinLaunch ? UrgencyEnum.NotUrgent : UrgencyEnum.Immediate,
+	);
 	const [imageUrls, setImageUrls] = useState<string[]>([]);
+	const defaultTitle = safetyCheckinLaunch
+		? "Safety check-in"
+		: emergencyLaunch
+			? "Emergency need help"
+			: "";
+	const defaultDescription = safetyCheckinLaunch
+		? "Checking in during the weather alert. I'm safe right now and can coordinate with neighbours if needed."
+		: "";
 
 	const handleCreate = async () => {
 		const title = titleRef.current?.getValue() ?? "";
@@ -138,13 +152,14 @@ export const CreatePulseModal = ({
 					label="Pulse name"
 					placeholder="My pulse..."
 					maxLength={100}
-					initialValue={emergencyLaunch ? "Emergency need help" : ""}
+					initialValue={defaultTitle}
 				/>
 
 				<TextArea
 					ref={descriptionRef}
 					label="Description"
 					placeholder="Describe what's happening..."
+					initialValue={defaultDescription}
 					maxLength={100}
 				/>
 

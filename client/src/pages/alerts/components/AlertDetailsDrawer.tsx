@@ -371,8 +371,8 @@ export const AlertDetailsDrawer = ({
 								acceptAsFinder.mutate(petMatchPayload.petMatchId, {
 									onSuccess: (result) => {
 										Toast.toast.success("Chat ready");
-										if (result.conversationId) {
-											navigate(`/messages/${result.conversationId}`);
+										if (result?.conversationId) {
+											navigate(`/messages/${result?.conversationId}`);
 										}
 									},
 									onError: (error: Error) =>
@@ -422,7 +422,7 @@ export const AlertDetailsDrawer = ({
 								petMatchPayload.counterpartUser.id,
 								{
 									onSuccess: (conversation) => {
-										navigate(`/messages/${conversation.id}`);
+										navigate(`/messages/${conversation?.id}`);
 									},
 									onError: (error: Error) =>
 										Toast.toast.danger(

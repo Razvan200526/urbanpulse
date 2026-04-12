@@ -1,8 +1,11 @@
 import { resolve } from "node:path";
+import {
+	bootstrapDatabaseExtensions,
+	createDatabaseClient,
+	getDatabaseUrl,
+} from "@server/db/contract";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
-import postgres from "postgres";
-
 const APP_TABLES = [
 	'"account"',
 	'"session"',
@@ -25,19 +28,7 @@ const APP_TABLES = [
 	'"user"',
 ] as const;
 
-type SqlClient = ReturnType<typeof postgres>;
-
-let testClient: SqlClient | null = null;
-
-function getDatabaseUrl() {
-	const databaseUrl = process.env.DATABASE_URL;
-	if (!databaseUrl) {
-		throw new Error(
-			"DATABASE_URL is required for repository integration tests.",
-		);
-	}
-	return databaseUrl;
-}
+let testClient: ReturnType<typeof createDatabaseClient> | null = null;
 
 export async function initializeRunDatabase() {
 	if (testClient) {
@@ -45,10 +36,7 @@ export async function initializeRunDatabase() {
 	}
 
 	const databaseUrl = getDatabaseUrl();
-	const client = postgres(databaseUrl, {
-		max: 1,
-		onnotice: () => {},
-	});
+	const client = createDatabaseClient(databaseUrl);
 
 	try {
 		await client`select 1`;
@@ -60,9 +48,7 @@ export async function initializeRunDatabase() {
 		);
 	}
 
-	await client.unsafe("CREATE EXTENSION IF NOT EXISTS pgcrypto");
-	await client.unsafe("CREATE EXTENSION IF NOT EXISTS postgis");
-	await client.unsafe("CREATE EXTENSION IF NOT EXISTS vector");
+	await bootstrapDatabaseExtensions(client);
 
 	const migrationDb = drizzle(client);
 	await migrate(migrationDb, {

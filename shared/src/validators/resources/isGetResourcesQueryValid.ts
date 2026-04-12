@@ -9,6 +9,7 @@ export const getResourcesSchema = z
 			"Unavailable",
 			"Currently Unavailable",
 		]),
+		excludeOwn: z.coerce.boolean().optional().default(false),
 		lat: z.coerce.number().min(-90).max(90).optional(),
 		long: z.coerce.number().min(-180).max(180).optional(),
 		radiusMeters: z.coerce.number().int().min(100).max(10000).default(2000),

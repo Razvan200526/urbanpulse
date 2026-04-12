@@ -9,6 +9,8 @@ export interface MapProps {
 	zoom?: number;
 	className?: string;
 	style?: React.CSSProperties;
+	fallback?: React.ReactNode;
+	onUnavailableChange?: (isUnavailable: boolean) => void;
 }
 
 export const MapComponent = ({
@@ -17,20 +19,27 @@ export const MapComponent = ({
 	zoom = 9,
 	className = "w-full h-full relative",
 	style,
+	fallback,
+	onUnavailableChange,
 }: MapProps) => {
 	const mapContainerRef = useRef<HTMLDivElement>(null);
 	const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
+	const [isUnavailable, setIsUnavailable] = useState(false);
 	const hasInitialized = useRef(false);
 
 	useEffect(() => {
 		const token = import.meta.env.VITE_MAPBOX_GL_ACCESS_TOKEN as string;
 
 		if (!token) {
+			setIsUnavailable(true);
+			onUnavailableChange?.(true);
 			return;
 		}
 
 		if (!mapContainerRef.current || hasInitialized.current) return;
 		hasInitialized.current = true;
+		setIsUnavailable(false);
+		onUnavailableChange?.(false);
 
 		mapboxgl.accessToken = token;
 		const map = new mapboxgl.Map({
@@ -41,12 +50,15 @@ export const MapComponent = ({
 		});
 
 		map.on("load", () => {
+			setIsUnavailable(false);
+			onUnavailableChange?.(false);
 			setMapInstance(map);
 			map.resize();
 		});
 
 		map.on("error", () => {
-			return;
+			setIsUnavailable(true);
+			onUnavailableChange?.(true);
 		});
 
 		return () => {
@@ -54,7 +66,7 @@ export const MapComponent = ({
 			setMapInstance(null);
 			hasInitialized.current = false;
 		};
-	}, [center, zoom]);
+	}, [center, onUnavailableChange, zoom]);
 
 	const centerLng = center[0];
 	const centerLat = center[1];
@@ -70,6 +82,12 @@ export const MapComponent = ({
 
 	return (
 		<div ref={mapContainerRef} className={className} style={style}>
+			{isUnavailable &&
+				(fallback ?? (
+					<div className="flex h-full items-center justify-center bg-surface-secondary/60 p-6 text-center text-sm text-muted">
+						Map view is temporarily unavailable.
+					</div>
+				))}
 			{mapInstance && (
 				<MapContext.Provider value={mapInstance}>
 					{children}

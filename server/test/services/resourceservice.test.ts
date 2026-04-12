@@ -122,10 +122,12 @@ function createServiceForTransactions({
 	resource = buildResource(),
 	transaction = buildTransaction(),
 	borrower = buildUser(),
+	owner = buildUser({ id: "owner-1", name: "Owner", email: "owner@example.com" }),
 }: {
 	resource?: ResourceType | null;
 	transaction?: TransactionType | null;
 	borrower?: UserType | null;
+	owner?: UserType | null;
 } = {}) {
 	const service = new ResourceService();
 	const resourceRepo = {
@@ -150,8 +152,24 @@ function createServiceForTransactions({
 		cancelPendingByResourceId: mock(async () => []),
 	};
 	const userRepo = {
-		getOne: mock(async () => borrower),
-		update: mock(async () => borrower),
+		getOne: mock(async (id: string) => {
+			if (borrower?.id === id) {
+				return borrower;
+			}
+			if (owner?.id === id) {
+				return owner;
+			}
+			return null;
+		}),
+		update: mock(async (id: string, data: Partial<UserType>) => {
+			if (borrower?.id === id) {
+				return { ...borrower, ...data };
+			}
+			if (owner?.id === id) {
+				return { ...owner, ...data };
+			}
+			return null;
+		}),
 	};
 	const reviewRepo = {
 		getLatestByRevieweeId: mock(async () => []),
@@ -293,6 +311,26 @@ describe("ResourceService", () => {
 		);
 	});
 
+	test("can request community resources without the viewer's own listings", async () => {
+		const service = new ResourceService();
+		const resourceRepo = {
+			getFilteredResources: mock(async () => []),
+		};
+		(service as any).resourceRepo = resourceRepo;
+
+		await expect(
+			service.getFilteredResources(
+				{ filter: "All", excludeOwn: true, radiusMeters: 2000 },
+				"owner-1",
+			),
+		).resolves.toEqual([]);
+
+		expect(resourceRepo.getFilteredResources).toHaveBeenCalledWith(
+			{ filter: "All", excludeOwn: true, radiusMeters: 2000 },
+			{ excludeUserId: "owner-1" },
+		);
+	});
+
 	test("rejects resource metadata updates from non-owners", async () => {
 		const resource = buildResource({ userId: "owner-1" });
 		const { service, resourceRepo } = createServiceForTransactions({
@@ -340,6 +378,35 @@ describe("ResourceService", () => {
 			lenderId: resource.userId,
 			status: TransactionStatusEnum.Pending,
 		});
+	});
+
+	test("requires Verified Neighbor status for item borrow requests", async () => {
+		const resource = buildResource({
+			userId: "owner-1",
+			resourceType: "Item",
+		});
+		const borrower = buildUser({
+			id: "borrower-1",
+			isVerified: false,
+			successfulInteractions: 2,
+		});
+		const { service, transactionRepo } = createServiceForTransactions({
+			resource,
+			borrower,
+		});
+
+		await expect(
+			service.requestBorrow({
+				resourceId: resource.id,
+				borrowerId: borrower.id,
+			}),
+		).resolves.toEqual({
+			success: false,
+			error:
+				"Verified Neighbor status is required to borrow community item listings. Complete three positively reviewed help interactions to unlock it.",
+		});
+
+		expect(transactionRepo.create).not.toHaveBeenCalled();
 	});
 
 	test("notifies the borrower when a request is accepted", async () => {
@@ -531,9 +598,15 @@ describe("ResourceService", () => {
 		const transaction = buildTransaction({
 			status: TransactionStatusEnum.Completed,
 		});
+		const owner = buildUser({
+			id: "owner-1",
+			trustScore: 80,
+			successfulInteractions: 2,
+			isVerified: false,
+		});
 		const { service, userRepo, reviewRepo } = createServiceForTransactions({
 			transaction,
-			borrower: buildUser({ id: "owner-1", trustScore: 80 }),
+			owner,
 		});
 		reviewRepo.getLatestByRevieweeId = mock(async () => [
 			buildReview({ rating: 5, createdAt: new Date("2025-01-03") }),
@@ -554,7 +627,37 @@ describe("ResourceService", () => {
 		});
 
 		expect(userRepo.update).toHaveBeenCalledWith("owner-1", {
+			successfulInteractions: 3,
+			isVerified: true,
 			trustScore: 85,
+		});
+	});
+
+	test("increments successful interactions after a positive review before verification", async () => {
+		const transaction = buildTransaction({
+			status: TransactionStatusEnum.Completed,
+		});
+		const owner = buildUser({
+			id: "owner-1",
+			trustScore: 65,
+			successfulInteractions: 1,
+			isVerified: false,
+		});
+		const { service, userRepo, reviewRepo } = createServiceForTransactions({
+			transaction,
+			owner,
+		});
+		reviewRepo.getLatestByRevieweeId = mock(async () => [
+			buildReview({ rating: 5, createdAt: new Date("2025-01-02") }),
+			buildReview({ rating: 4, createdAt: new Date("2025-01-01") }),
+		]);
+
+		await service.submitResourceReview(transaction.id, "borrower-1", {
+			rating: 5,
+		});
+
+		expect(userRepo.update).toHaveBeenCalledWith("owner-1", {
+			successfulInteractions: 2,
 		});
 	});
 
@@ -562,9 +665,14 @@ describe("ResourceService", () => {
 		const transaction = buildTransaction({
 			status: TransactionStatusEnum.Completed,
 		});
+		const owner = buildUser({
+			id: "owner-1",
+			trustScore: 80,
+			successfulInteractions: 4,
+		});
 		const { service, userRepo, reviewRepo } = createServiceForTransactions({
 			transaction,
-			borrower: buildUser({ id: "owner-1", trustScore: 80 }),
+			owner,
 		});
 		reviewRepo.getLatestByRevieweeId = mock(async () => [
 			buildReview({ rating: 1, createdAt: new Date("2025-01-03") }),
@@ -585,9 +693,14 @@ describe("ResourceService", () => {
 		const transaction = buildTransaction({
 			status: TransactionStatusEnum.Completed,
 		});
+		const owner = buildUser({
+			id: "owner-1",
+			trustScore: 80,
+			successfulInteractions: 6,
+		});
 		const { service, userRepo, reviewRepo } = createServiceForTransactions({
 			transaction,
-			borrower: buildUser({ id: "owner-1", trustScore: 80 }),
+			owner,
 		});
 
 		await service.submitResourceReview(transaction.id, "borrower-1", {

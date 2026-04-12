@@ -29,10 +29,13 @@ import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateVal
 type PulseSocketResponse = {
 	success: boolean;
 	message: string;
-	data: PulseType | PulseType[] | null;
+	data: SerializedPulse | SerializedPulse[] | null;
 };
 
 type PulseViewerContext = Pick<UserType, "id" | "role"> | null;
+export type SerializedPulse = PulseType & {
+	locationPrecision: "exact" | "approximate";
+};
 
 /**
  * Service for managing Urban Pulse records and retrieving location-based pulses.
@@ -78,17 +81,47 @@ export class PulseService {
 		return Array.from(unique.values());
 	}
 
+	private canViewExactPulseLocation(
+		pulse: PulseType,
+		viewer: PulseViewerContext,
+	) {
+		if (!viewer) {
+			return false;
+		}
+
+		return viewer.role === "admin" || viewer.id === pulse.userId;
+	}
+
+	private toApproximatePosition(position: PulseType["position"]) {
+		const precision = 1000;
+		return {
+			x: Math.round(position.x * precision) / precision,
+			y: Math.round(position.y * precision) / precision,
+		};
+	}
+
 	async serializePulseForViewer(
 		pulse: PulseType,
-		_viewer: PulseViewerContext,
-	): Promise<PulseType> {
-		return pulse;
+		viewer: PulseViewerContext,
+	): Promise<SerializedPulse> {
+		if (this.canViewExactPulseLocation(pulse, viewer)) {
+			return {
+				...pulse,
+				locationPrecision: "exact",
+			};
+		}
+
+		return {
+			...pulse,
+			position: this.toApproximatePosition(pulse.position),
+			locationPrecision: "approximate",
+		};
 	}
 
 	async serializePulsesForViewer(
 		pulses: PulseType[],
 		viewer: PulseViewerContext,
-	): Promise<PulseType[]> {
+	): Promise<SerializedPulse[]> {
 		return Promise.all(
 			pulses.map((pulse) => this.serializePulseForViewer(pulse, viewer)),
 		);

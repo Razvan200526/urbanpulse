@@ -98,7 +98,7 @@ def list_pet_alerts(
 def get_all(
     service: PetAlertService = Depends(get_pet_alert_service),
 ):
-    pet_alerts = service.get_all()
+    pet_alerts = service.get_unresolved()
     return json_success(
         "Pet alerts retrieved",
         [
@@ -172,12 +172,11 @@ def delete_pet_alert(
 ):
     try:
         service.delete_pet_alert(pet_alert_id, user_id)
+        return json_success("Pet alert deleted", data={})
     except PetAlertNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except PetAlertForbiddenError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
-
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.websocket("/ws")

@@ -1,9 +1,11 @@
+import { hono, queryClient } from "@client/lib/api/client";
 import {
 	type PetAlertCreatePayload,
 	type PetAlertUploadSocketData,
 	petAlertUploadSocketDataSchema,
 } from "@client/utils/petAlerts";
 import { Toast } from "@heroui/react";
+import { PulseStatusEnum } from "@shared/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { backend } from "client/sdk/backend";
 import { useEffect, useEffectEvent, useState } from "react";
@@ -84,4 +86,79 @@ export const usePetAlertSocket = ({
 	return {
 		socketConnected,
 	};
+};
+
+export const useDeletePetAlert = (userId: string) => {
+	return useMutation({
+		mutationKey: ["pet-alert", "delete"],
+		mutationFn: async (petAlertId: string) => {
+			return await backend.petAlerts.delete({ petAlertId, userId });
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["pet-alerts", "list"] });
+		},
+	});
+};
+
+export const useResolvePetAlert = () => {
+	return useMutation({
+		mutationKey: ["pet-alert", "resolve"],
+		mutationFn: async (pulseId: string) => {
+			const response = await hono.api.pulse[":id"].$patch({
+				param: { id: pulseId },
+				json: { status: PulseStatusEnum.Resolved },
+			});
+			const result = await response.json();
+			if (!result.success) {
+				Toast.toast.danger(result.message);
+			}
+			return result.data;
+		},
+		onSuccess: (_, pulseId) => {
+			queryClient.invalidateQueries({
+				queryKey: ["pet-alerts", "list"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["pulse", "detail", pulseId],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["pulse", "retrieve"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["pulse", "map"],
+			});
+			Toast.toast.success("Pet alert marked as resolved");
+		},
+		onError: (error) => {
+			Toast.toast.danger(error.message);
+		},
+	});
+};
+
+export const useReportPetAlert = () => {
+	return useMutation({
+		mutationKey: ["pet-alert", "report"],
+		mutationFn: async ({
+			pulseId,
+			reason,
+		}: {
+			pulseId: string;
+			reason: string;
+		}) => {
+			const response = await hono.api.reports.$post({
+				json: { targetPulseId: pulseId, reason },
+			});
+			const result = await response.json();
+			if (!result.success) {
+				throw new Error(result.message || "Failed to submit report");
+			}
+			return result.data;
+		},
+		onSuccess: () => {
+			Toast.toast.success("Report submitted successfully");
+		},
+		onError: (error) => {
+			Toast.toast.danger(error.message);
+		},
+	});
 };

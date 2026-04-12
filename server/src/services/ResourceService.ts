@@ -34,6 +34,13 @@ import {
 } from "@shared/validators/transactions/isTransactionRequestValid";
 import { locationService } from "./LocationService";
 
+const VERIFIED_NEIGHBOR_RESOURCE_TYPES = new Set<ResourceType["resourceType"]>([
+	"Item",
+]);
+const POSITIVE_REVIEW_THRESHOLD = 4;
+const NEGATIVE_REVIEW_THRESHOLD = 2;
+const VERIFIED_NEIGHBOR_INTERACTION_THRESHOLD = 3;
+
 export class ResourceService {
 	private resourceRepo: ResourceRepository;
 	private userRepo: UserRepository;
@@ -98,8 +105,8 @@ export class ResourceService {
 	}
 
 	private getReviewDirection(rating: number) {
-		if (rating >= 4) return "positive";
-		if (rating <= 2) return "negative";
+		if (rating >= POSITIVE_REVIEW_THRESHOLD) return "positive";
+		if (rating <= NEGATIVE_REVIEW_THRESHOLD) return "negative";
 		return "neutral";
 	}
 
@@ -107,9 +114,34 @@ export class ResourceService {
 		return Math.max(0, Math.min(100, score));
 	}
 
-	private async applyReviewTrustImpact(revieweeId: string, rating: number) {
+	private requiresVerifiedNeighbor(resource: ResourceType) {
+		return VERIFIED_NEIGHBOR_RESOURCE_TYPES.has(resource.resourceType);
+	}
+
+	private async buildReviewImpactPatch(revieweeId: string, rating: number) {
+		const reviewee = await this.userRepo.getOne(revieweeId);
+		if (!reviewee) {
+			return null;
+		}
+
 		const direction = this.getReviewDirection(rating);
-		if (direction === "neutral") return;
+		const patch: Partial<UserType> = {};
+
+		if (direction === "positive") {
+			const successfulInteractions = (reviewee.successfulInteractions ?? 0) + 1;
+			patch.successfulInteractions = successfulInteractions;
+
+			if (
+				!reviewee.isVerified &&
+				successfulInteractions >= VERIFIED_NEIGHBOR_INTERACTION_THRESHOLD
+			) {
+				patch.isVerified = true;
+			}
+		}
+
+		if (direction === "neutral") {
+			return Object.keys(patch).length > 0 ? patch : null;
+		}
 
 		const latestReviews =
 			await this.reviewRepo.getLatestByRevieweeId(revieweeId);
@@ -123,18 +155,15 @@ export class ResourceService {
 		}
 
 		if (streakCount === 0 || streakCount % 3 !== 0) {
-			return;
+			return Object.keys(patch).length > 0 ? patch : null;
 		}
 
-		const reviewee = await this.userRepo.getOne(revieweeId);
-		if (!reviewee) return;
-
 		const currentScore = reviewee.trustScore ?? 0;
-		const nextScore = this.clampTrustScore(
+		patch.trustScore = this.clampTrustScore(
 			currentScore + (direction === "positive" ? 5 : -5),
 		);
 
-		await this.userRepo.update(revieweeId, { trustScore: nextScore });
+		return patch;
 	}
 
 	/**
@@ -241,9 +270,14 @@ export class ResourceService {
 	 * @param query Takes in the query with filters
 	 * @returns A list of resources filtered by the availability status.
 	 */
-	async getFilteredResources(query: GetResourceQuery) {
+	async getFilteredResources(
+		query: GetResourceQuery,
+		viewerUserId: string | null = null,
+	) {
 		try {
-			const res = await this.resourceRepo.getFilteredResources(query);
+			const res = await this.resourceRepo.getFilteredResources(query, {
+				excludeUserId: query.excludeOwn ? viewerUserId ?? undefined : undefined,
+			});
 			return await this.mapResourcesWithUsers(res);
 		} catch (error) {
 			handleError(error);
@@ -356,6 +390,23 @@ export class ResourceService {
 					error: "Resource is not currently available",
 				};
 			}
+			const borrower = await this.userRepo.getOne(requestData.borrowerId);
+			if (!borrower) {
+				return {
+					success: false as const,
+					error: "Borrower account not found",
+				};
+			}
+			if (
+				this.requiresVerifiedNeighbor(resource) &&
+				borrower.isVerified !== true
+			) {
+				return {
+					success: false as const,
+					error:
+						"Verified Neighbor status is required to borrow community item listings. Complete three positively reviewed help interactions to unlock it.",
+				};
+			}
 
 			const existingTransactions =
 				await this.transactionRepo.getByResourceAndBorrowerId(
@@ -389,7 +440,6 @@ export class ResourceService {
 				};
 			}
 
-			const borrower = await this.userRepo.getOne(requestData.borrowerId);
 			await notificationService.notifyResourceTransaction({
 				recipientUserId: resource.userId,
 				action: "REQUESTED",
@@ -645,7 +695,13 @@ export class ResourceService {
 				return { success: false as const, error: "Failed to create review" };
 			}
 
-			await this.applyReviewTrustImpact(resource.userId, result.data.rating);
+			const reviewImpact = await this.buildReviewImpactPatch(
+				resource.userId,
+				result.data.rating,
+			);
+			if (reviewImpact) {
+				await this.userRepo.update(resource.userId, reviewImpact);
+			}
 			await Promise.all([
 				this.invalidateResourceCaches(resource.id, resource.userId),
 				this.invalidateProfileCache(resource.userId),

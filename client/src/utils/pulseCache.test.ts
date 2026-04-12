@@ -28,6 +28,7 @@ function buildPulse(overrides: Partial<ClientPulseType> = {}): ClientPulseType {
 		isVerified: false,
 		mergedIntoPulseId: null,
 		moderationNote: null,
+		locationPrecision: "exact",
 		createdAt: "2025-01-01T00:00:00.000Z",
 		...overrides,
 	};

@@ -149,7 +149,7 @@ export class NotificationService {
 		return `Your request for ${resourceName} was rejected`;
 	}
 
-	private isSelfAuthoredPulseBroadcastNotification(
+	private shouldHideNotificationForRecipient(
 		item: {
 			notification: {
 				type?: string | null;
@@ -159,7 +159,7 @@ export class NotificationService {
 		userId: string,
 	) {
 		const type = item.notification?.type;
-		if (type !== "HERO_ALERT" && type !== "PULSE_UPDATED") {
+		if (!type) {
 			return false;
 		}
 
@@ -168,12 +168,42 @@ export class NotificationService {
 			typeof item.notification.payload === "object"
 				? (item.notification.payload as Record<string, unknown>)
 				: null;
-		const pulse =
-			payload?.pulse && typeof payload.pulse === "object"
-				? (payload.pulse as Record<string, unknown>)
-				: null;
 
-		return pulse?.userId === userId;
+		if (type === "HERO_ALERT" || type === "PULSE_UPDATED") {
+			const pulse =
+				payload?.pulse && typeof payload.pulse === "object"
+					? (payload.pulse as Record<string, unknown>)
+					: null;
+
+			return pulse?.userId === userId;
+		}
+
+		if (
+			type === "PET_ALERT_MATCH" ||
+			type === "PET_ALERT_MATCH_INTERESTED" ||
+			type === "PET_ALERT_MATCH_ACCEPTED" ||
+			type === "PET_ALERT_MATCH_DECLINED"
+		) {
+			const counterpartUser =
+				payload?.counterpartUser && typeof payload.counterpartUser === "object"
+					? (payload.counterpartUser as Record<string, unknown>)
+					: null;
+			const baseAlert =
+				payload?.baseAlert && typeof payload.baseAlert === "object"
+					? (payload.baseAlert as Record<string, unknown>)
+					: null;
+			const matchedAlert =
+				payload?.matchedAlert && typeof payload.matchedAlert === "object"
+					? (payload.matchedAlert as Record<string, unknown>)
+					: null;
+
+			return (
+				counterpartUser?.id === userId ||
+				(baseAlert?.ownerUserId === userId && matchedAlert?.ownerUserId === userId)
+			);
+		}
+
+		return false;
 	}
 
 	/**
@@ -325,8 +355,7 @@ export class NotificationService {
 				const notifications =
 					await this.notificationRepo.getNotificationsWithUsersByUserId(userId);
 				const visibleNotifications = notifications.filter(
-					(item) =>
-						!this.isSelfAuthoredPulseBroadcastNotification(item, userId),
+					(item) => !this.shouldHideNotificationForRecipient(item, userId),
 				);
 
 				return await this.annotateActionableNotifications(visibleNotifications);

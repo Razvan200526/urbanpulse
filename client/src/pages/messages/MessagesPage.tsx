@@ -1,12 +1,13 @@
 import { Header } from "@client/components/Header";
-import { PageLoader } from "@client/components/PageLoader";
 import { useAuth } from "@client/hooks/useAuth";
 import { useIsMobile } from "@client/hooks/useMediaQuery";
 import { Separator, Toast } from "@heroui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ConversationList } from "./components/ConversationList";
+import { ConversationListSkeleton } from "./components/ConversationListSkeleton";
 import { ConversationThread } from "./components/ConversationThread";
+import { ConversationThreadSkeleton } from "./components/ConversationThreadSkeleton";
 import {
 	type ConversationMemberView,
 	sendConversationTypingState,
@@ -144,33 +145,39 @@ export const MessagesPage = () => {
 		}, 1500);
 	};
 
-	if (isPending) {
-		return <PageLoader />;
-	}
-
 	const conversationList = (
-		<ConversationList
-			activeConversationId={effectiveConversationId}
-			conversations={conversations}
-			currentUserId={auth?.user.id}
-		/>
+		isPending ? (
+			<ConversationListSkeleton />
+		) : (
+			<ConversationList
+				activeConversationId={effectiveConversationId}
+				conversations={conversations}
+				currentUserId={auth?.user.id}
+			/>
+		)
 	);
 
 	const conversationThread = (
-		<ConversationThread
-			conversationId={effectiveConversationId}
-			currentUserId={auth?.user.id}
-			draft={draft}
-			isMobile={isMobile}
-			isSending={isSending}
-			isThreadPending={isThreadPending}
-			selectedConversation={selectedConversation}
-			thread={thread}
-			typingMembers={typingMembers}
-			onBack={closeConversation}
-			onDraftChange={handleDraftChange}
-			onSend={handleSend}
-		/>
+		isPending || (Boolean(effectiveConversationId) && isThreadPending) ? (
+			<ConversationThreadSkeleton
+				showBackButton={Boolean(isMobile && effectiveConversationId)}
+			/>
+		) : (
+			<ConversationThread
+				composer={{
+					draft,
+					isSending,
+					onDraftChange: handleDraftChange,
+					onSend: handleSend,
+				}}
+				conversation={thread ?? selectedConversation}
+				conversationId={effectiveConversationId}
+				currentUserId={auth?.user.id}
+				thread={thread}
+				typingMembers={typingMembers}
+				onBack={closeConversation}
+			/>
+		)
 	);
 
 	return (

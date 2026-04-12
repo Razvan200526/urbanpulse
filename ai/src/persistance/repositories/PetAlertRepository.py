@@ -1,4 +1,5 @@
 import uuid
+from typing import List
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -15,6 +16,15 @@ class PetAlertRepository:
 
     def get_by_pulse_id(self, pulse_id: uuid.UUID) -> PetAlert | None:
         return self.db.scalar(select(PetAlert).where(PetAlert.pulseId == pulse_id))
+
+    def get_unresolved(self) -> List[PetAlert]:
+        return list(
+            self.db.scalars(
+                select(PetAlert)
+                .where(PetAlert.pulseId == Pulse.id, Pulse.status != "RESOLVED")
+                .join(Pulse)
+            )
+        )
 
     def get_owned_pulse(self, pulse_id: uuid.UUID, user_id: str) -> Pulse | None:
         return self.db.scalar(
@@ -80,14 +90,19 @@ class PetAlertRepository:
         embedding: list[float],
         pet_type: str | None,
         exclude_id: uuid.UUID,
+        exclude_owner_user_id: str | None,
         limit: int,
     ) -> list[PetAlert]:
         query = (
             select(PetAlert)
+            .join(Pulse, PetAlert.pulseId == Pulse.id)
             .where(PetAlert.alertType == opposite_alert_type)
             .where(PetAlert.id != exclude_id)
             .where(PetAlert.imageEmbedding.is_not(None))
         )
+
+        if exclude_owner_user_id:
+            query = query.where(Pulse.userId != exclude_owner_user_id)
 
         if pet_type and pet_type != "other pet":
             query = query.where(func.lower(PetAlert.petType) == pet_type.lower())

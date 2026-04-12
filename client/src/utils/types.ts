@@ -47,6 +47,10 @@ export const clientPulseSchema = z.object({
 	isVerified: z.boolean().nullable(),
 	mergedIntoPulseId: z.string().nullable(),
 	moderationNote: z.string().nullable(),
+	locationPrecision: z
+		.enum(["exact", "approximate"])
+		.optional()
+		.default("exact"),
 	createdAt: z.string(),
 });
 

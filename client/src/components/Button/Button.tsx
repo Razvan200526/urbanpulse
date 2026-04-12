@@ -67,6 +67,9 @@ export const Button = ({
 				radiusMap[radius],
 				"flex items-center justify-center gap-2",
 				className,
+				props.variant === "outline"
+					? "text-accent border border-accent hover:bg-accent-soft-hover"
+					: "",
 			)}
 			{...props}
 		>

@@ -1,9 +1,11 @@
 import { hono, queryClient } from "@client/lib/api/client";
+import { parseApiEnvelope } from "@client/lib/api/parse";
 import { Toast } from "@heroui/react";
 import type { MessageSocketMessageType } from "@shared/validators/messages/isConversationValid";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { backend } from "client/sdk/backend";
 import { useEffect, useRef, useState } from "react";
+import { z } from "zod";
 
 type SuccessResponse<T> = {
 	success: boolean;
@@ -82,6 +84,10 @@ type TypingSocketData = {
 	isTyping: boolean;
 };
 
+const conversationActionResultSchema = z.object({
+	conversationId: z.string().uuid(),
+});
+
 const MESSAGE_SOCKET_TIMEOUT_MS = 10000;
 
 const toConversationSummary = (
@@ -116,6 +122,17 @@ const syncConversationThread = (thread: ConversationThread) => {
 			return [...old, summary];
 		},
 	);
+};
+
+const removeConversationFromCache = (conversationId: string) => {
+	queryClient.setQueryData<ConversationSummary[]>(
+		["messages", "conversations"],
+		(old) => old?.filter((entry) => entry.conversation.id !== conversationId) ?? [],
+	);
+	queryClient.removeQueries({
+		queryKey: ["messages", "conversations", conversationId],
+		exact: true,
+	});
 };
 
 const applyReceiptUpdates = (
@@ -276,6 +293,47 @@ export const useSendConversationMessage = () => {
 			if (thread) {
 				syncConversationThread(thread);
 			}
+		},
+	});
+};
+
+export const useResolveConversation = () => {
+	return useMutation({
+		mutationKey: ["messages", "conversations", "resolve"],
+		mutationFn: async ({ conversationId }: { conversationId: string }) => {
+			const response =
+				await hono.api.messages.conversations[":id"].resolve.$post({
+					param: { id: conversationId },
+				});
+
+			return parseApiEnvelope(
+				response,
+				conversationActionResultSchema,
+				"Failed to resolve conversation",
+			);
+		},
+		onSuccess: (_result, variables) => {
+			removeConversationFromCache(variables.conversationId);
+		},
+	});
+};
+
+export const useDeleteConversation = () => {
+	return useMutation({
+		mutationKey: ["messages", "conversations", "delete"],
+		mutationFn: async ({ conversationId }: { conversationId: string }) => {
+			const response = await hono.api.messages.conversations[":id"].$delete({
+				param: { id: conversationId },
+			});
+
+			return parseApiEnvelope(
+				response,
+				conversationActionResultSchema,
+				"Failed to delete conversation",
+			);
+		},
+		onSuccess: (_result, variables) => {
+			removeConversationFromCache(variables.conversationId);
 		},
 	});
 };

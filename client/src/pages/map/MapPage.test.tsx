@@ -58,6 +58,25 @@ mock.module("@client/hooks/useProfileSettings", () => ({
 	}),
 }));
 
+mock.module("@heroui/react", () => {
+	const Card = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Card.Content = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+
+	return {
+		Card,
+		Separator: () => <hr />,
+		Toast: {
+			toast: {
+				danger: () => undefined,
+			},
+		},
+	};
+});
+
 mock.module("@client/components/Button/Button", () => ({
 	Button: ({ children }: { children: React.ReactNode }) => (
 		<button>{children}</button>
@@ -114,12 +133,15 @@ mock.module("./components/CreatePulseModal", () => ({
 	CreatePulseModal: ({
 		coords,
 		emergencyLaunch,
+		safetyCheckinLaunch,
 	}: {
 		coords: { lat: number; long: number };
 		emergencyLaunch: boolean;
+		safetyCheckinLaunch: boolean;
 	}) => (
 		<div>
-			Create Pulse Modal:{coords.lat}:{coords.long}:{String(emergencyLaunch)}
+			Create Pulse Modal:{coords.lat}:{coords.long}:{String(emergencyLaunch)}:
+			{String(safetyCheckinLaunch)}
 		</div>
 	),
 }));
@@ -171,7 +193,7 @@ describe("MapPage", () => {
 		expect(markup).toContain("Heatmap:2");
 		expect(markup).toContain("Water needed");
 		expect(markup).toContain("Medical help");
-		expect(markup).toContain("Create Pulse Modal:44.4:26.1:false");
+		expect(markup).toContain("Create Pulse Modal:44.4:26.1:false:false");
 		expect(markup).toContain("Create pulse");
 		expect(markup).toContain("Emergency");
 		expect(retrieveCalls).toEqual([

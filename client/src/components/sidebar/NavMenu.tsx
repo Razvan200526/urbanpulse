@@ -17,7 +17,10 @@ export const NavMenu = ({ isMinimize = false }) => {
 					)}
 				>
 					{mainItems.map((item) => (
-						<li key={item.key} className="w-full flex">
+						<li
+							key={item.key}
+							className="w-full flex items-center justify-center"
+						>
 							<NavMenuItem isMinimize={isMinimize} item={item} />
 						</li>
 					))}
@@ -30,7 +33,7 @@ export const NavMenu = ({ isMinimize = false }) => {
 				)}
 			>
 				{secondaryItems.map((item) =>
-					item.key === "admin" && user?.user.role !== "ADMIN" ? null : (
+					item.key === "admin" && user?.user.role !== "admin" ? null : (
 						<NavMenuItem key={item.key} isMinimize={isMinimize} item={item} />
 					),
 				)}

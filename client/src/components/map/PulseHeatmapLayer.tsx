@@ -28,9 +28,6 @@ function toFeatureCollection(pulses: ClientPulseType[]) {
 	};
 }
 
-/**
- * Heatmap under HTML markers — shows local need density (Emergency / urgency weighted).
- */
 export function PulseHeatmapLayer({ pulses }: { pulses: ClientPulseType[] }) {
 	const map = useMap();
 	const pulsesRef = useRef(pulses);

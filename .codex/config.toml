@@ -13,3 +13,6 @@ approval_mode = "approve"
 
 [mcp_servers.railway.tools.list-deployments]
 approval_mode = "approve"
+
+[mcp_servers.railway.tools.list-variables]
+approval_mode = "approve"
