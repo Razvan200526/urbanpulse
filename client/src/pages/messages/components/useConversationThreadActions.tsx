@@ -4,13 +4,13 @@ import { useCreateReport } from "@client/hooks/useModeration";
 import { Toast } from "@heroui/react";
 import { CheckCheckIcon, ShieldAlertIcon, Trash2 } from "lucide-react";
 import { useRef } from "react";
+import { useNavigate } from "react-router";
 import {
 	type ConversationSummary,
 	type ConversationThread as ConversationThreadType,
 	useDeleteConversation,
 	useResolveConversation,
 } from "../hooks";
-import { useNavigate } from "react-router";
 
 type UseConversationThreadActionsParams = {
 	conversation: ConversationSummary | ConversationThreadType | null;

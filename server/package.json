@@ -18,7 +18,7 @@
 		"dev": "bun --watch run src/index.ts",
 		"start": "bun run dist/index.js",
 		"start:prod": "NODE_ENV=production bun run dist/index.js",
-		"start:railway": "NODE_ENV=production bun run ./commands/migration-command.ts && NODE_ENV=production bun run ./commands/verify-database-command.ts --smoke && NODE_ENV=production bun run dist/index.js",
+		"start:railway": "NODE_ENV=production bun run dist/index.js",
 		"db:seed": "bun run ./commands/seed-command.ts",
 		"db:generate": "bunx --bun drizzle-kit generate --config=drizzle.config.ts",
 		"db:push": "bunx --bun drizzle-kit push",
