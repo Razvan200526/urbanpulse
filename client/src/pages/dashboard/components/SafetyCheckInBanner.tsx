@@ -116,7 +116,8 @@ export function SafetyCheckInBanner({ lat, lon, geoReady }: Props) {
 									Pinned safety thread
 								</p>
 								<p className="text-xs text-muted">
-									Recent nearby check-ins stay pinned here until the alert clears.
+									Recent nearby check-ins stay pinned here until the alert
+									clears.
 								</p>
 							</div>
 						</div>

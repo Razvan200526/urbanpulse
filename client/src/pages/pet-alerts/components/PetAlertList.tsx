@@ -1,8 +1,8 @@
+import { useAuth } from "@client/hooks/useAuth";
 import type { PetAlertListItem } from "@client/utils/petAlerts";
 import { NoPetAlerts } from "./NoPetAlerts";
 import { PetAlertCard } from "./PetAlertCard";
 import { PetListSkeleton } from "./PetListSkeleton";
-import { useAuth } from "@client/hooks/useAuth";
 
 interface PetAlertListProps {
 	items: PetAlertListItem[];

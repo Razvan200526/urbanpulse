@@ -4,13 +4,12 @@ import {
 	Dropdown,
 	type DropdownItemDataType,
 } from "@client/components/Dropdown";
-import { Dropdown as HeroDropdown } from "@heroui/react";
 import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import {
 	type PetAlertListItem,
 	petAlertUploadStatusLabels,
 } from "@client/utils/petAlerts";
-import { Card, Chip, cn } from "@heroui/react";
+import { Card, Chip, cn, Dropdown as HeroDropdown } from "@heroui/react";
 import { PetAlertTypeEnum } from "@shared/types";
 import { CheckCheck, MoreVerticalIcon, PawPrint, Trash2 } from "lucide-react";
 import { useDeletePetAlert, useResolvePetAlert } from "../hooks";

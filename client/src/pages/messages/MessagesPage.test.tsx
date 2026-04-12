@@ -131,9 +131,13 @@ mock.module("@heroui/react", () => ({
 	Description: ({ children }: { children: React.ReactNode }) => (
 		<div>{children}</div>
 	),
-	Label: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-		<div className={className}>{children}</div>
-	),
+	Label: ({
+		children,
+		className,
+	}: {
+		children: React.ReactNode;
+		className?: string;
+	}) => <div className={className}>{children}</div>,
 	Kbd: ({ children }: { children: React.ReactNode }) => <kbd>{children}</kbd>,
 	Card: Object.assign(
 		({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -146,14 +150,26 @@ mock.module("@heroui/react", () => ({
 	Dropdown: Object.assign(
 		({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 		{
-			Trigger: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-				<div className={className}>{children}</div>
+			Trigger: ({
+				children,
+				className,
+			}: {
+				children: React.ReactNode;
+				className?: string;
+			}) => <div className={className}>{children}</div>,
+			Popover: ({
+				children,
+				className,
+			}: {
+				children: React.ReactNode;
+				className?: string;
+			}) => <div className={className}>{children}</div>,
+			Menu: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
 			),
-			Popover: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-				<div className={className}>{children}</div>
+			Item: ({ children }: { children: React.ReactNode }) => (
+				<div>{children}</div>
 			),
-			Menu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-			Item: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 			SubmenuTrigger: ({ children }: { children: React.ReactNode }) => (
 				<div>{children}</div>
 			),
@@ -196,7 +212,9 @@ mock.module("@heroui/react", () => ({
 		<div className={className}>Skeleton</div>
 	),
 	Separator: () => <hr />,
-	TextArea: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+	TextArea: ({ children }: { children?: React.ReactNode }) => (
+		<div>{children}</div>
+	),
 	Toast: { toast: { danger: () => {}, success: () => {} } },
 }));
 

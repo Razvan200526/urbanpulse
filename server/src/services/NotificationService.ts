@@ -199,7 +199,8 @@ export class NotificationService {
 
 			return (
 				counterpartUser?.id === userId ||
-				(baseAlert?.ownerUserId === userId && matchedAlert?.ownerUserId === userId)
+				(baseAlert?.ownerUserId === userId &&
+					matchedAlert?.ownerUserId === userId)
 			);
 		}
 

@@ -18,8 +18,13 @@ function normalizeBaseUrl(url: string) {
 	return `https://${url}`;
 }
 
-function getRequiredUrl(name: string, ...candidates: Array<string | undefined>) {
-	const value = candidates.find((candidate) => candidate && candidate.length > 0);
+function getRequiredUrl(
+	name: string,
+	...candidates: Array<string | undefined>
+) {
+	const value = candidates.find(
+		(candidate) => candidate && candidate.length > 0,
+	);
 
 	if (!value) {
 		throw new Error(
@@ -37,7 +42,9 @@ async function expectStatusOk(label: string, url: string) {
 		throw new Error(`${label} returned ${response.status} for ${url}.`);
 	}
 
-	console.log(p.magentaBright(`${figures.tick} ${label} returned 200 (${url})`));
+	console.log(
+		p.magentaBright(`${figures.tick} ${label} returned 200 (${url})`),
+	);
 }
 
 try {
@@ -66,7 +73,8 @@ try {
 	const connection = createDatabaseClient();
 
 	try {
-		const installedExtensions = await assertRequiredDatabaseExtensions(connection);
+		const installedExtensions =
+			await assertRequiredDatabaseExtensions(connection);
 		const smokeResults = await runDatabaseSmokeChecks(connection);
 		console.log(
 			p.magentaBright(

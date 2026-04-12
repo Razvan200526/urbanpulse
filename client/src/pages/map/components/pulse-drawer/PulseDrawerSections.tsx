@@ -2,6 +2,7 @@ import { CustomPlayer } from "@client/components/audio/CustomPlayer";
 import { Button } from "@client/components/Button/Button";
 import { ProgressChip } from "@client/components/chips/ProgressChip";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
+import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import { MetaRow } from "@client/pages/map/components/MetaRow";
 import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import type { ClientPulseType } from "@client/utils/types";
@@ -17,7 +18,6 @@ import {
 	XCircleIcon,
 } from "lucide-react";
 import { UrgencyMeter } from "../UrgencyMeter";
-import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 
 type PulseTypeConfig = {
 	icon: React.ComponentType<{ className?: string }>;
@@ -187,7 +187,9 @@ export const PulseDrawerSummary = ({
 					<ProgressChip status={pulse.pulseUploadState} />
 				</MetaRow>
 
-				<MetaRow label={isApproximateLocation ? "Approximate area" : "Coordinates"}>
+				<MetaRow
+					label={isApproximateLocation ? "Approximate area" : "Coordinates"}
+				>
 					<span className="font-mono text-xs text-muted">
 						{pulse.position.x.toFixed(5)}, {pulse.position.y.toFixed(5)}
 					</span>

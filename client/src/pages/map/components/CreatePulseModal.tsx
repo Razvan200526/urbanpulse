@@ -51,8 +51,8 @@ export const CreatePulseModal = ({
 	const audioUrlRef = useRef<string>("");
 	const audioRef = useRef<HTMLAudioElement>(null);
 
-	const [pulseType, setPulseType] = useState<PulseEnum>(() =>
-		PulseEnum.Emergency,
+	const [pulseType, setPulseType] = useState<PulseEnum>(
+		() => PulseEnum.Emergency,
 	);
 	const [urgency, setUrgency] = useState<UrgencyEnum>(() =>
 		safetyCheckinLaunch ? UrgencyEnum.NotUrgent : UrgencyEnum.Immediate,

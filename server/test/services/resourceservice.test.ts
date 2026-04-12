@@ -122,7 +122,11 @@ function createServiceForTransactions({
 	resource = buildResource(),
 	transaction = buildTransaction(),
 	borrower = buildUser(),
-	owner = buildUser({ id: "owner-1", name: "Owner", email: "owner@example.com" }),
+	owner = buildUser({
+		id: "owner-1",
+		name: "Owner",
+		email: "owner@example.com",
+	}),
 }: {
 	resource?: ResourceType | null;
 	transaction?: TransactionType | null;

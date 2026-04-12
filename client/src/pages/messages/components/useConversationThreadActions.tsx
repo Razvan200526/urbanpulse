@@ -1,14 +1,8 @@
-import {
-	DropdownItemDataType,
-} from "@client/components/Dropdown";
-import { type ModalRefType } from "@client/components/Modal";
+import type { DropdownItemDataType } from "@client/components/Dropdown";
+import type { ModalRefType } from "@client/components/Modal";
 import { useCreateReport } from "@client/hooks/useModeration";
 import { Toast } from "@heroui/react";
-import {
-	CheckCheckIcon,
-	ShieldAlertIcon,
-	Trash2,
-} from "lucide-react";
+import { CheckCheckIcon, ShieldAlertIcon, Trash2 } from "lucide-react";
 import { useRef } from "react";
 import {
 	type ConversationSummary,

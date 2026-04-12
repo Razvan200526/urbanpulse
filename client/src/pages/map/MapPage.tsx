@@ -58,9 +58,10 @@ export const MapPage = () => {
 	);
 
 	useEffect(() => {
-		const state = location.state as
-			| { safetyCheckin?: boolean; launchMode?: "safety-checkin" }
-			| null;
+		const state = location.state as {
+			safetyCheckin?: boolean;
+			launchMode?: "safety-checkin";
+		} | null;
 		if (!state?.safetyCheckin && state?.launchMode !== "safety-checkin") {
 			return;
 		}

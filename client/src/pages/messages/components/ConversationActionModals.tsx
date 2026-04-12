@@ -4,7 +4,7 @@ import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import { H4 } from "@client/components/typography";
 import { Toast } from "@heroui/react";
 import { CheckCheckIcon, Trash2 } from "lucide-react";
-import { useRef, type RefObject } from "react";
+import { type RefObject, useRef } from "react";
 
 type ConversationConfirmModalProps = {
 	modalRef: RefObject<ModalRefType | null>;

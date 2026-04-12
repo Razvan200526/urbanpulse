@@ -276,7 +276,9 @@ export class ResourceService {
 	) {
 		try {
 			const res = await this.resourceRepo.getFilteredResources(query, {
-				excludeUserId: query.excludeOwn ? viewerUserId ?? undefined : undefined,
+				excludeUserId: query.excludeOwn
+					? (viewerUserId ?? undefined)
+					: undefined,
 			});
 			return await this.mapResourcesWithUsers(res);
 		} catch (error) {

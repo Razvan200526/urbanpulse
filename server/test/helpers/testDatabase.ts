@@ -6,6 +6,7 @@ import {
 } from "@server/db/contract";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+
 const APP_TABLES = [
 	'"account"',
 	'"session"',

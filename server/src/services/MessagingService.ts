@@ -508,7 +508,10 @@ export class MessagingService {
 		return memberIds?.filter((memberId) => memberId !== viewerUserId) ?? null;
 	}
 
-	async resolveConversation(params: { conversationId: string; userId: string }) {
+	async resolveConversation(params: {
+		conversationId: string;
+		userId: string;
+	}) {
 		const membership = await this.assertMember(
 			params.conversationId,
 			params.userId,

@@ -145,19 +145,17 @@ export const MessagesPage = () => {
 		}, 1500);
 	};
 
-	const conversationList = (
-		isPending ? (
-			<ConversationListSkeleton />
-		) : (
-			<ConversationList
-				activeConversationId={effectiveConversationId}
-				conversations={conversations}
-				currentUserId={auth?.user.id}
-			/>
-		)
+	const conversationList = isPending ? (
+		<ConversationListSkeleton />
+	) : (
+		<ConversationList
+			activeConversationId={effectiveConversationId}
+			conversations={conversations}
+			currentUserId={auth?.user.id}
+		/>
 	);
 
-	const conversationThread = (
+	const conversationThread =
 		isPending || (Boolean(effectiveConversationId) && isThreadPending) ? (
 			<ConversationThreadSkeleton
 				showBackButton={Boolean(isMobile && effectiveConversationId)}
@@ -177,8 +175,7 @@ export const MessagesPage = () => {
 				typingMembers={typingMembers}
 				onBack={closeConversation}
 			/>
-		)
-	);
+		);
 
 	return (
 		<div className="flex h-[calc(100dvh)] w-full flex-col bg-surface">

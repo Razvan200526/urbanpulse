@@ -1,5 +1,6 @@
 import { AppDrawer } from "@client/components/AppDrawer";
 import { SignalIcon } from "@client/components/icons/SignalIcon";
+import type { TextAreaRefType } from "@client/components/TextArea";
 import { useAuth } from "@client/hooks/useAuth";
 import { useConfirmPulse, useCreateReport } from "@client/hooks/useModeration";
 import type { ClientPulseType } from "@client/utils/types";
@@ -22,7 +23,6 @@ import {
 	PulseDrawerHeader,
 	PulseDrawerSummary,
 } from "./pulse-drawer/PulseDrawerSections";
-import type { TextAreaRefType } from "@client/components/TextArea";
 
 const PULSE_TYPE_CONFIG: Record<
 	PulseEnum,

@@ -127,7 +127,8 @@ const syncConversationThread = (thread: ConversationThread) => {
 const removeConversationFromCache = (conversationId: string) => {
 	queryClient.setQueryData<ConversationSummary[]>(
 		["messages", "conversations"],
-		(old) => old?.filter((entry) => entry.conversation.id !== conversationId) ?? [],
+		(old) =>
+			old?.filter((entry) => entry.conversation.id !== conversationId) ?? [],
 	);
 	queryClient.removeQueries({
 		queryKey: ["messages", "conversations", conversationId],
@@ -301,10 +302,11 @@ export const useResolveConversation = () => {
 	return useMutation({
 		mutationKey: ["messages", "conversations", "resolve"],
 		mutationFn: async ({ conversationId }: { conversationId: string }) => {
-			const response =
-				await hono.api.messages.conversations[":id"].resolve.$post({
-					param: { id: conversationId },
-				});
+			const response = await hono.api.messages.conversations[
+				":id"
+			].resolve.$post({
+				param: { id: conversationId },
+			});
 
 			return parseApiEnvelope(
 				response,
