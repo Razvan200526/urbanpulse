@@ -46,6 +46,7 @@ export const user = pgTable(
 		bio: text("bio"),
 		trustScore: doublePrecision("trustScore").default(0),
 		successfulInteractions: integer("successfulInteractions").default(0),
+		failedInteractions: integer("failedInteractions").default(0),
 		isVerified: boolean("isVerified").default(false),
 		rememberMe: boolean("rememberMe").default(false),
 		banned: boolean("banned").default(false),
@@ -177,6 +178,7 @@ export const conversationMember = pgTable("conversation_member", {
 	userId: text("userId")
 		.notNull()
 		.references(() => user.id, { onDelete: "cascade" }),
+	hiddenAt: timestamp("hiddenAt"),
 });
 
 export const message = pgTable("message", {

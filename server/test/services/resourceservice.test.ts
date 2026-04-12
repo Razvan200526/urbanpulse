@@ -75,6 +75,7 @@ function buildUser(overrides: Partial<UserType> = {}): UserType {
 		bio: null,
 		trustScore: 0,
 		successfulInteractions: 0,
+		failedInteractions: 0,
 		isVerified: false,
 		homeLocation: null,
 		lastKnownLocation: null,
@@ -598,7 +599,7 @@ describe("ResourceService", () => {
 		expect(reviewRepo.create).not.toHaveBeenCalled();
 	});
 
-	test("bumps owner trust score after three consecutive positive reviews", async () => {
+	test("bumps owner trust score after every third successful action", async () => {
 		const transaction = buildTransaction({
 			status: TransactionStatusEnum.Completed,
 		});
@@ -608,15 +609,10 @@ describe("ResourceService", () => {
 			successfulInteractions: 2,
 			isVerified: false,
 		});
-		const { service, userRepo, reviewRepo } = createServiceForTransactions({
+		const { service, userRepo } = createServiceForTransactions({
 			transaction,
 			owner,
 		});
-		reviewRepo.getLatestByRevieweeId = mock(async () => [
-			buildReview({ rating: 5, createdAt: new Date("2025-01-03") }),
-			buildReview({ rating: 4, createdAt: new Date("2025-01-02") }),
-			buildReview({ rating: 5, createdAt: new Date("2025-01-01") }),
-		]);
 
 		await expect(
 			service.submitResourceReview(transaction.id, "borrower-1", {
@@ -647,14 +643,10 @@ describe("ResourceService", () => {
 			successfulInteractions: 1,
 			isVerified: false,
 		});
-		const { service, userRepo, reviewRepo } = createServiceForTransactions({
+		const { service, userRepo } = createServiceForTransactions({
 			transaction,
 			owner,
 		});
-		reviewRepo.getLatestByRevieweeId = mock(async () => [
-			buildReview({ rating: 5, createdAt: new Date("2025-01-02") }),
-			buildReview({ rating: 4, createdAt: new Date("2025-01-01") }),
-		]);
 
 		await service.submitResourceReview(transaction.id, "borrower-1", {
 			rating: 5,
@@ -665,30 +657,26 @@ describe("ResourceService", () => {
 		});
 	});
 
-	test("lowers owner trust score after three consecutive negative reviews", async () => {
+	test("lowers owner trust score after every third failed action", async () => {
 		const transaction = buildTransaction({
 			status: TransactionStatusEnum.Completed,
 		});
 		const owner = buildUser({
 			id: "owner-1",
 			trustScore: 80,
-			successfulInteractions: 4,
+			failedInteractions: 2,
 		});
-		const { service, userRepo, reviewRepo } = createServiceForTransactions({
+		const { service, userRepo } = createServiceForTransactions({
 			transaction,
 			owner,
 		});
-		reviewRepo.getLatestByRevieweeId = mock(async () => [
-			buildReview({ rating: 1, createdAt: new Date("2025-01-03") }),
-			buildReview({ rating: 2, createdAt: new Date("2025-01-02") }),
-			buildReview({ rating: 1, createdAt: new Date("2025-01-01") }),
-		]);
 
 		await service.submitResourceReview(transaction.id, "borrower-1", {
 			rating: 1,
 		});
 
 		expect(userRepo.update).toHaveBeenCalledWith("owner-1", {
+			failedInteractions: 3,
 			trustScore: 75,
 		});
 	});
@@ -702,7 +690,7 @@ describe("ResourceService", () => {
 			trustScore: 80,
 			successfulInteractions: 6,
 		});
-		const { service, userRepo, reviewRepo } = createServiceForTransactions({
+		const { service, userRepo } = createServiceForTransactions({
 			transaction,
 			owner,
 		});
@@ -711,7 +699,6 @@ describe("ResourceService", () => {
 			rating: 3,
 		});
 
-		expect(reviewRepo.getLatestByRevieweeId).not.toHaveBeenCalled();
 		expect(userRepo.update).not.toHaveBeenCalled();
 	});
 });

@@ -4,16 +4,23 @@ import {
 	type ResponseRepository,
 	responseRepository,
 } from "@server/repositories/ResponseRepository";
+import {
+	type UserRepository,
+	userRepository,
+} from "@server/repositories/UserRepository";
 import { messagingService } from "@server/services/MessagingService";
+import { recordUserReputationOutcome } from "@server/services/UserReputationService";
 import { handleError } from "@server/utils/handleError";
 import { ResponseStatusEnum } from "@shared/types";
 import { isResponseRequestValid } from "@shared/validators/isResponseValid";
 
 export class ResponseService {
 	private responseRepo: ResponseRepository;
+	private userRepo: UserRepository;
 
 	constructor() {
 		this.responseRepo = responseRepository;
+		this.userRepo = userRepository;
 	}
 
 	/**
@@ -68,6 +75,15 @@ export class ResponseService {
 					ownerUserId,
 					row.responderId,
 				);
+			try {
+				await recordUserReputationOutcome(
+					this.userRepo,
+					row.responderId,
+					"success",
+				);
+			} catch (error) {
+				handleError(error);
+			}
 			return {
 				accepted,
 				pulseTitle: pulse.title,
@@ -97,9 +113,20 @@ export class ResponseService {
 				return null;
 			}
 
-			return await this.responseRepo.update(responseId, {
+			const rejected = await this.responseRepo.update(responseId, {
 				status: ResponseStatusEnum.Declined,
 			});
+			try {
+				await recordUserReputationOutcome(
+					this.userRepo,
+					row.responderId,
+					"failure",
+				);
+			} catch (error) {
+				handleError(error);
+			}
+
+			return rejected;
 		} catch (error) {
 			handleError(error);
 			return null;

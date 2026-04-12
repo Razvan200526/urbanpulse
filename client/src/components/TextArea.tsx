@@ -98,8 +98,9 @@ export const TextArea = forwardRef<TextAreaRefType, TextAreaComponentProps>(
 					{...rest}
 					name={name}
 					value={value}
+					fullWidth
 					className={cn(
-						"rounded border border-accent text-primary-400 placeholder:italic focus-within:bg-surface",
+						"w-full rounded border border-accent text-primary-400 placeholder:italic focus-within:bg-surface",
 						inputWrapperClassname,
 					)}
 					placeholder={placeholder}

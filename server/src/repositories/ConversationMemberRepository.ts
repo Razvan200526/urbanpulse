@@ -3,7 +3,7 @@ import {
 	type ConversationMemberType,
 	conversationMember,
 } from "@server/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class ConversationMemberRepository
@@ -30,11 +30,37 @@ export class ConversationMemberRepository
 			.where(eq(conversationMember.conversationId, conversationId as any));
 	}
 
+	async getVisibleByConversationId(
+		conversationId: string,
+	): Promise<ConversationMemberType[]> {
+		return await db
+			.select()
+			.from(conversationMember)
+			.where(
+				and(
+					eq(conversationMember.conversationId, conversationId as any),
+					isNull(conversationMember.hiddenAt),
+				),
+			);
+	}
+
 	async getByUserId(userId: string): Promise<ConversationMemberType[]> {
 		return await db
 			.select()
 			.from(conversationMember)
 			.where(eq(conversationMember.userId, userId));
+	}
+
+	async getVisibleByUserId(userId: string): Promise<ConversationMemberType[]> {
+		return await db
+			.select()
+			.from(conversationMember)
+			.where(
+				and(
+					eq(conversationMember.userId, userId),
+					isNull(conversationMember.hiddenAt),
+				),
+			);
 	}
 
 	async findByConversationAndUser(

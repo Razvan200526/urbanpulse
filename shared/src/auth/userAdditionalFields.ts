@@ -22,6 +22,12 @@ export const userAdditionalFields = {
 		defaultValue: 0,
 		input: false,
 	},
+	failedInteractions: {
+		type: "number",
+		required: false,
+		defaultValue: 0,
+		input: false,
+	},
 	isVerified: {
 		type: "boolean",
 		required: false,

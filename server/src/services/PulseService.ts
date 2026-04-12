@@ -340,7 +340,6 @@ export class PulseService {
 		urgency,
 		verifiedOnly,
 	}: PulseRetrievePayloadType): Promise<PulseType[] | null> {
-		// Create cache key from location and filters (round coordinates to reduce cache variations)
 		const roundLat = Math.round(position.y * 100) / 100;
 		const roundLng = Math.round(position.x * 100) / 100;
 		const cacheKey = `nearby:${roundLat}:${roundLng}:${radius}:${status}:${type || "all"}:${urgency || "all"}`;

@@ -214,11 +214,11 @@ export const ConversationThreadModals = ({
 
 			<ConversationConfirmModal
 				modalRef={deleteModalRef}
-				title="Delete conversation forever"
+				title="Hide conversation"
 				titleClassName="text-danger"
-				description="This permanently deletes the conversation and all of its messages for everyone involved."
-				warning="This action cannot be undone."
-				confirmLabel="Delete forever"
+				description="This removes the conversation from your inbox for now. If the other participant sends a new message later, the thread will appear again."
+				warning="Existing message history is preserved."
+				confirmLabel="Hide conversation"
 				confirmVariant="danger"
 				icon={<Trash2 className="size-4" />}
 				iconClassName="text-danger"

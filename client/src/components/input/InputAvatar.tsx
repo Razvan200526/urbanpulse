@@ -44,10 +44,10 @@ export const InputAvatar = ({
 		<>
 			<label
 				htmlFor={id}
-				className="flex h-30 w-30 items-center justify-center"
+				className="flex h-24 w-24 max-w-full items-center justify-center sm:h-30 sm:w-30"
 			>
 				<Avatar
-					className="w-full h-full group hover:border-2 hover:border-accent transition-colors duration-150 ease-in cursor-pointer"
+					className="group h-full w-full cursor-pointer transition-colors duration-150 ease-in hover:border-2 hover:border-accent"
 					variant="soft"
 				>
 					{!imageToCrop && (

@@ -8,7 +8,8 @@ export const InputGroup = (props: InputGroupProps) => {
 	return (
 		<HeroInputGroup
 			{...props}
-			className={cn(props.className, "focus-within:bg-surface")}
+			fullWidth={props.fullWidth ?? true}
+			className={cn("w-full focus-within:bg-surface", props.className)}
 		/>
 	);
 };

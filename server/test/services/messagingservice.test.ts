@@ -111,6 +111,58 @@ describe("MessagingService", () => {
 		expect(ownerThread?.messages[0]?.deliveryStatus).toBe("read");
 	});
 
+	test("restores a hidden conversation for a user when a new message arrives", async () => {
+		const firstUser = await createUser();
+		const secondUser = await createUser();
+		const conversation = await createConversation({
+			type: ConversationTypeEnum.Direct,
+		});
+		await createConversationMember({
+			conversationId: conversation.id,
+			userId: firstUser.id,
+		});
+		await createConversationMember({
+			conversationId: conversation.id,
+			userId: secondUser.id,
+		});
+
+		const hidden = await messagingService.deleteConversation({
+			conversationId: conversation.id,
+			userId: firstUser.id,
+		});
+
+		expect(hidden).toEqual({ conversationId: conversation.id });
+		await expect(
+			messagingService.getConversationThread(firstUser.id, conversation.id),
+		).resolves.toBeNull();
+		await expect(
+			messagingService.listConversationsForUser(firstUser.id),
+		).resolves.toHaveLength(0);
+
+		const sent = await messagingService.sendMessage({
+			conversationId: conversation.id,
+			senderId: secondUser.id,
+			content: "Checking back in after you hid the thread.",
+		});
+
+		expect(sent?.recipients).toContain(firstUser.id);
+
+		const restoredThread = await messagingService.getConversationThread(
+			firstUser.id,
+			conversation.id,
+		);
+		expect(restoredThread?.messages.at(-1)?.content).toBe(
+			"Checking back in after you hid the thread.",
+		);
+
+		const restoredConversations =
+			await messagingService.listConversationsForUser(firstUser.id);
+		expect(restoredConversations).toHaveLength(1);
+		expect(restoredConversations[0]?.lastMessage?.content).toBe(
+			"Checking back in after you hid the thread.",
+		);
+	});
+
 	test("hides empty self-authored pulse conversations from the owner", async () => {
 		const owner = await createUser();
 		const pulse = await createPulse({ userId: owner.id });

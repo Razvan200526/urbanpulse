@@ -121,9 +121,51 @@ export class MessagingService {
 	}
 
 	private async assertMember(conversationId: string, userId: string) {
+		const membership =
+			await conversationMemberRepository.findByConversationAndUser(
+				conversationId,
+				userId,
+			);
+		if (!membership || membership.hiddenAt) {
+			return null;
+		}
+
+		return membership;
+	}
+
+	private async assertMemberIncludingHidden(
+		conversationId: string,
+		userId: string,
+	) {
 		return await conversationMemberRepository.findByConversationAndUser(
 			conversationId,
 			userId,
+		);
+	}
+
+	private async restoreConversationMemberships(
+		conversationId: string,
+		userIds?: string[],
+	) {
+		const memberships =
+			await conversationMemberRepository.getByConversationId(conversationId);
+		const targetUserIds = userIds ? new Set(userIds) : null;
+		const hiddenMemberships = memberships.filter(
+			(membership) =>
+				Boolean(membership.hiddenAt) &&
+				(!targetUserIds || targetUserIds.has(membership.userId)),
+		);
+
+		if (hiddenMemberships.length === 0) {
+			return;
+		}
+
+		await Promise.all(
+			hiddenMemberships.map((membership) =>
+				conversationMemberRepository.update(membership.id, {
+					hiddenAt: null,
+				}),
+			),
 		);
 	}
 
@@ -274,6 +316,10 @@ export class MessagingService {
 		);
 
 		if (existing) {
+			await this.restoreConversationMemberships(existing.id, [
+				userId,
+				otherUserId,
+			]);
 			return await conversationRepository.getOne(existing.id);
 		}
 
@@ -359,6 +405,10 @@ export class MessagingService {
 					conversationId: pulseConversation.id,
 					userId,
 				});
+			} else if (existing.hiddenAt) {
+				await conversationMemberRepository.update(existing.id, {
+					hiddenAt: null,
+				});
 			}
 		}
 
@@ -368,7 +418,8 @@ export class MessagingService {
 	async listConversationsForUser(
 		userId: string,
 	): Promise<ConversationSummary[]> {
-		const memberships = await conversationMemberRepository.getByUserId(userId);
+		const memberships =
+			await conversationMemberRepository.getVisibleByUserId(userId);
 		const conversationIds = memberships.map((entry) => entry.conversationId);
 
 		if (conversationIds.length === 0) {
@@ -489,12 +540,12 @@ export class MessagingService {
 			return null;
 		}
 
-		const base = await this.getConversationBase(conversationId);
-		if (!base) {
-			return null;
-		}
+		const memberships =
+			await conversationMemberRepository.getVisibleByConversationId(
+				conversationId,
+			);
 
-		return base.members.map((member) => member.id);
+		return memberships.map((member) => member.userId);
 	}
 
 	async listOtherConversationMemberIds(
@@ -547,13 +598,15 @@ export class MessagingService {
 			return null;
 		}
 
-		const deleted = await conversationRepository.delete(params.conversationId);
-		if (!deleted) {
-			return null;
-		}
+		const hiddenMembership = await conversationMemberRepository.update(
+			membership.id,
+			{
+				hiddenAt: new Date(),
+			},
+		);
 
 		return {
-			conversationId: params.conversationId,
+			conversationId: hiddenMembership.conversationId,
 		};
 	}
 
@@ -618,7 +671,7 @@ export class MessagingService {
 		senderId: string;
 		content: string;
 	}) {
-		const membership = await this.assertMember(
+		const membership = await this.assertMemberIncludingHidden(
 			params.conversationId,
 			params.senderId,
 		);
@@ -635,6 +688,8 @@ export class MessagingService {
 			if (!created) {
 				return null;
 			}
+
+			await this.restoreConversationMemberships(params.conversationId);
 
 			const base = await this.getConversationBase(params.conversationId);
 			if (!base) {

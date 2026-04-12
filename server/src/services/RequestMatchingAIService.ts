@@ -1,8 +1,6 @@
-import { BaseAIService } from "./BaseAIService";
-
 type MatchInferenceResult = {
 	tags: string[];
-	provider: "gemini" | "keyword";
+	provider: "keyword";
 	model: string | null;
 	matchedKeywords: string[];
 	rawSuggestedTags?: string[];
@@ -73,13 +71,13 @@ const KEYWORD_RULES: Record<string, string[]> = {
 	],
 	transport: ["transport", "ride", "pickup", "drop off", "drive", "clinic"],
 	logistics: ["move", "moving", "carry", "couch", "heavy", "lifting"],
-	coordination: ["coordinate", "coordination", "organize", "organise", "help"],
+	coordination: ["coordinate", "coordination", "organize", "organise"],
 	communications: ["phone", "signal", "contact", "communicate", "message"],
 	childcare: ["child", "children", "babysit", "babysitting"],
 	"pet-care": ["pet", "dog", "cat", "animal"],
 	electrical: ["electrical", "power", "wiring", "electricity"],
 	"generator-repair": ["generator", "outage", "repair"],
-	"community-support": ["check-in", "elderly", "support", "wellness"],
+	"community-support": ["check-in", "elderly", "wellness", "safe"],
 	"physical-help": ["physical help", "manual labor", "manual labour"],
 	lifting: ["lifting", "lift", "carry", "heavy"],
 	mechanic: [
@@ -204,18 +202,38 @@ function tokenizeForMatching(value: string) {
 	);
 }
 
-export class RequestMatchingAIService extends BaseAIService {
+type ScoredTag = {
+	score: number;
+	matchedKeywords: Set<string>;
+};
+
+function addTagScore(
+	scoredTags: Map<string, ScoredTag>,
+	tag: string,
+	score: number,
+	keywords: string[],
+) {
+	const existing = scoredTags.get(tag) ?? {
+		score: 0,
+		matchedKeywords: new Set<string>(),
+	};
+	existing.score += score;
+	for (const keyword of keywords) {
+		existing.matchedKeywords.add(keyword);
+	}
+	scoredTags.set(tag, existing);
+}
+
+export class RequestMatchingAIService {
 	private keywordInfer(text: string, allowedTags: string[]) {
 		const normalizedAllowed = new Set(allowedTags.map(normalizeSkillTag));
 		const sourceTokens = new Set(tokenizeForMatching(text));
-		const matchedKeywords = new Set<string>();
-		const directMatches = new Set<string>();
+		const scoredTags = new Map<string, ScoredTag>();
 
 		for (const tag of normalizedAllowed) {
 			const candidate = tag.replace(/-/g, " ");
 			if (text.includes(candidate)) {
-				directMatches.add(tag);
-				matchedKeywords.add(candidate);
+				addTagScore(scoredTags, tag, 4, [candidate]);
 			}
 
 			const tagTokens = tokenizeForMatching(candidate);
@@ -223,10 +241,14 @@ export class RequestMatchingAIService extends BaseAIService {
 				sourceTokens.has(token),
 			);
 			if (overlappingTokens.length > 0) {
-				directMatches.add(tag);
-				for (const token of overlappingTokens) {
-					matchedKeywords.add(token);
-				}
+				const overlapBonus =
+					overlappingTokens.length === tagTokens.length ? 2 : 0;
+				addTagScore(
+					scoredTags,
+					tag,
+					overlappingTokens.length + overlapBonus,
+					overlappingTokens,
+				);
 			}
 		}
 
@@ -238,8 +260,7 @@ export class RequestMatchingAIService extends BaseAIService {
 
 			for (const pattern of patterns) {
 				if (text.includes(pattern)) {
-					directMatches.add(normalizedTag);
-					matchedKeywords.add(pattern);
+					addTagScore(scoredTags, normalizedTag, 4, [pattern]);
 				}
 			}
 		}
@@ -254,16 +275,34 @@ export class RequestMatchingAIService extends BaseAIService {
 
 			for (const tag of normalizedAllowed) {
 				const tagTokens = tokenizeForMatching(tag.replace(/-/g, " "));
-				if (tagTokens.some((token) => rule.tokens.includes(token))) {
-					directMatches.add(tag);
-					matchedKeywords.add(matchedPattern);
+				const semanticOverlap = tagTokens.filter((token) =>
+					rule.tokens.includes(token),
+				);
+				if (semanticOverlap.length > 0) {
+					addTagScore(scoredTags, tag, semanticOverlap.length, [
+						matchedPattern,
+						...semanticOverlap,
+					]);
 				}
 			}
 		}
 
+		const sortedMatches = Array.from(scoredTags.entries())
+			.filter(([, data]) => data.score > 0)
+			.sort((a, b) => {
+				if (b[1].score !== a[1].score) {
+					return b[1].score - a[1].score;
+				}
+
+				return a[0].localeCompare(b[0]);
+			})
+			.slice(0, 5);
+
 		return {
-			tags: Array.from(directMatches),
-			matchedKeywords: Array.from(matchedKeywords),
+			tags: sortedMatches.map(([tag]) => tag),
+			matchedKeywords: unique(
+				sortedMatches.flatMap(([, data]) => Array.from(data.matchedKeywords)),
+			),
 		};
 	}
 
@@ -280,41 +319,12 @@ export class RequestMatchingAIService extends BaseAIService {
 			.trim();
 		const keywordResult = this.keywordInfer(sourceText, normalizedAllowed);
 
-		if (!sourceText || normalizedAllowed.length === 0) {
-			return {
-				tags: keywordResult.tags,
-				provider: "keyword",
-				model: null,
-				matchedKeywords: keywordResult.matchedKeywords,
-			};
-		}
-
-		const response = await this.generateJson<{ tags?: string[] }>(
-			[
-				"You classify neighborhood help requests into an existing controlled tag list.",
-				'Return strict JSON only in the form {"tags": string[]}.',
-				"Choose only tags from the allowed list.",
-				"Prefer at most 5 tags and omit weak guesses.",
-				`Allowed tags: ${normalizedAllowed.join(", ")}`,
-				`Request title: ${params.title}`,
-				`Request description: ${params.description ?? ""}`,
-			].join("\n"),
-		);
-
-		const aiTags = unique(
-			(response?.tags ?? [])
-				.map((tag) => normalizeSkillTag(String(tag)))
-				.filter((tag) => normalizedAllowed.includes(tag)),
-		);
-
-		const tags = aiTags.length > 0 ? aiTags : keywordResult.tags;
-
 		return {
-			tags,
-			provider: aiTags.length > 0 ? "gemini" : "keyword",
-			model: aiTags.length > 0 ? this.model : null,
+			tags:
+				sourceText && normalizedAllowed.length > 0 ? keywordResult.tags : [],
+			provider: "keyword",
+			model: null,
 			matchedKeywords: keywordResult.matchedKeywords,
-			rawSuggestedTags: aiTags.length > 0 ? aiTags : undefined,
 		};
 	}
 }

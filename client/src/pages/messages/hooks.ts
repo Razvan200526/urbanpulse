@@ -314,7 +314,10 @@ export const useResolveConversation = () => {
 				"Failed to resolve conversation",
 			);
 		},
-		onSuccess: (_result, variables) => {
+		onSuccess: (result, variables) => {
+			if (!result.success) {
+				return;
+			}
 			removeConversationFromCache(variables.conversationId);
 		},
 	});
@@ -331,10 +334,13 @@ export const useDeleteConversation = () => {
 			return parseApiEnvelope(
 				response,
 				conversationActionResultSchema,
-				"Failed to delete conversation",
+				"Failed to hide conversation",
 			);
 		},
-		onSuccess: (_result, variables) => {
+		onSuccess: (result, variables) => {
+			if (!result.success) {
+				return;
+			}
 			removeConversationFromCache(variables.conversationId);
 		},
 	});

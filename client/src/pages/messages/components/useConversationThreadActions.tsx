@@ -10,6 +10,7 @@ import {
 	useDeleteConversation,
 	useResolveConversation,
 } from "../hooks";
+import { useNavigate } from "react-router";
 
 type UseConversationThreadActionsParams = {
 	conversation: ConversationSummary | ConversationThreadType | null;
@@ -24,6 +25,7 @@ export const useConversationThreadActions = ({
 	currentUserId,
 	onBack,
 }: UseConversationThreadActionsParams) => {
+	const navigate = useNavigate();
 	const reportModalRef = useRef<ModalRefType | null>(null);
 	const resolveModalRef = useRef<ModalRefType | null>(null);
 	const deleteModalRef = useRef<ModalRefType | null>(null);
@@ -51,6 +53,7 @@ export const useConversationThreadActions = ({
 			return;
 		}
 
+		navigate("/messages");
 		Toast.toast.success("Conversation marked as resolved");
 		onBack();
 	};
@@ -63,11 +66,12 @@ export const useConversationThreadActions = ({
 
 		const res = await deleteConversation({ conversationId });
 		if (!res.success) {
-			Toast.toast.danger("Failed to delete conversation");
+			Toast.toast.danger("Failed to hide conversation");
 			return;
 		}
 
-		Toast.toast.success("Conversation deleted");
+		navigate("/messages");
+		Toast.toast.success("Conversation hidden");
 		onBack();
 	};
 
@@ -86,6 +90,7 @@ export const useConversationThreadActions = ({
 			return;
 		}
 
+		navigate("/messages");
 		Toast.toast.success("Report submitted");
 	};
 
@@ -101,7 +106,7 @@ export const useConversationThreadActions = ({
 		},
 		{
 			key: "delete",
-			label: "Delete forever",
+			label: "Hide conversation",
 			icon: <Trash2 className="size-4 text-danger" />,
 			className:
 				"bg-surface hover:bg-danger-soft-hover transition-colors duration-150 ease-out",
@@ -112,8 +117,9 @@ export const useConversationThreadActions = ({
 			key: "report",
 			label: "Report user",
 			icon: <ShieldAlertIcon className="size-4 text-warning" />,
-			className: "bg-muted-soft hover:bg-muted-soft-hover",
-			labelClassName: "text-muted",
+			className:
+				"bg-surface hover:bg-warning-soft-hover transition-colors durations-150 ease-out",
+			labelClassName: "text-warning",
 			onAction: () => reportModalRef.current?.open(),
 		},
 	];

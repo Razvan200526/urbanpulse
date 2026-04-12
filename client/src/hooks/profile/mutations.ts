@@ -48,7 +48,7 @@ const updateSkillTags = async ({ tags }: UpdateSkillTagsInput) => {
 		"Failed to update skill tags",
 	);
 
-	return parsed.data.tags;
+	return parsed?.data.tags;
 };
 
 const updateQuietHours = async (payload: UpdateQuietHoursInput) => {
@@ -61,7 +61,7 @@ const updateQuietHours = async (payload: UpdateQuietHoursInput) => {
 		"Failed to save quiet hours",
 	);
 
-	return parsed.data;
+	return parsed?.data;
 };
 
 const updateAlertPreferences = async (payload: UpdateAlertPreferencesInput) => {
@@ -74,7 +74,7 @@ const updateAlertPreferences = async (payload: UpdateAlertPreferencesInput) => {
 		"Failed to save alert preferences",
 	);
 
-	return parsed.data;
+	return parsed?.data;
 };
 
 const deleteAccount = async () => {
@@ -130,7 +130,10 @@ export const useDeleteAccount = () => {
 	return useMutation({
 		mutationKey: ["user", "account", "delete"],
 		mutationFn: deleteAccount,
-		onSuccess: async () => {
+		onSuccess: async (result) => {
+			if (!result.success) {
+				return;
+			}
 			await authClient.signOut();
 			await Promise.all([
 				queryClient.invalidateQueries({ queryKey: ["auth"] }),

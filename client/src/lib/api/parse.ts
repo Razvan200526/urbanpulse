@@ -32,14 +32,22 @@ export const parseApiData = async <TSchema extends z.ZodTypeAny>(
 	schema: TSchema,
 	fallbackMessage: string,
 ) => {
-	const raw = await response.json();
+	let raw: unknown;
+	try {
+		raw = await response.json();
+	} catch {
+		throw new Error(fallbackMessage);
+	}
 	const envelope = apiEnvelopeSchema.safeParse(raw);
 
 	if (!envelope.success) {
-		return;
+		throw new Error(fallbackMessage);
 	}
-	if (!envelope.data.success) {
-		Toast.toast.danger(envelope.data.message);
+
+	if (!response.ok || !envelope.data.success) {
+		const message = envelope.data.message || fallbackMessage;
+		Toast.toast.danger(message);
+		throw new Error(message);
 	}
 
 	return {
@@ -57,13 +65,24 @@ export const parseApiEnvelope = async <TSchema extends z.ZodTypeAny>(
 	schema: TSchema,
 	fallbackMessage: string,
 ) => {
-	const parsed = await parseApiData(response, schema, fallbackMessage);
+	try {
+		const parsed = await parseApiData(response, schema, fallbackMessage);
 
-	return {
-		success: true as const,
-		message: parsed?.message,
-		data: parsed?.data,
-	};
+		return {
+			success: true as const,
+			message: parsed.message,
+			data: parsed.data,
+		};
+	} catch (error) {
+		return {
+			success: false as const,
+			message:
+				error instanceof Error && error.message
+					? error.message
+					: fallbackMessage,
+			data: null,
+		};
+	}
 };
 
 export const parseSocketData = <TSchema extends z.ZodTypeAny>(

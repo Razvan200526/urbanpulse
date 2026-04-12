@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { responseRepository } from "@server/repositories/ResponseRepository";
+import { userRepository } from "@server/repositories/UserRepository";
 import { responseService } from "@server/services/ResponseService";
 import { ResponseStatusEnum } from "@shared/types";
 import { createPulse, createResponse, createUser } from "../helpers/fixtures";
@@ -28,6 +29,9 @@ describe("ResponseService", () => {
 		expect((await responseRepository.getOne(response.id))?.status).toBe(
 			ResponseStatusEnum.Declined,
 		);
+		expect(
+			(await userRepository.getOne(responder.id))?.failedInteractions,
+		).toBe(1);
 	});
 
 	test("does not reject help offers for non-owners", async () => {
@@ -114,6 +118,54 @@ describe("ResponseService", () => {
 		expect(secondAccepted?.conversationId).toBeTruthy();
 		expect(secondAccepted?.conversationId).not.toBe(
 			firstAccepted?.conversationId,
+		);
+	});
+
+	test("bumps trust score after every third accepted pulse help", async () => {
+		const owner = await createUser();
+		const responder = await createUser({
+			successfulInteractions: 2,
+			trustScore: 80,
+			isVerified: false,
+		});
+		const pulse = await createPulse({ userId: owner.id });
+		const response = await createResponse({
+			pulseId: pulse.id,
+			responderId: responder.id,
+			status: ResponseStatusEnum.Pending,
+		});
+
+		await responseService.acceptHelpOffer(owner.id, pulse.id, response.id);
+
+		expect(await userRepository.getOne(responder.id)).toEqual(
+			expect.objectContaining({
+				successfulInteractions: 3,
+				trustScore: 85,
+				isVerified: true,
+			}),
+		);
+	});
+
+	test("lowers trust score after every third rejected pulse help", async () => {
+		const owner = await createUser();
+		const responder = await createUser({
+			failedInteractions: 2,
+			trustScore: 80,
+		});
+		const pulse = await createPulse({ userId: owner.id });
+		const response = await createResponse({
+			pulseId: pulse.id,
+			responderId: responder.id,
+			status: ResponseStatusEnum.Pending,
+		});
+
+		await responseService.rejectHelpOffer(owner.id, pulse.id, response.id);
+
+		expect(await userRepository.getOne(responder.id)).toEqual(
+			expect.objectContaining({
+				failedInteractions: 3,
+				trustScore: 75,
+			}),
 		);
 	});
 });

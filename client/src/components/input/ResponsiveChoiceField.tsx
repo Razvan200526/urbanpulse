@@ -18,10 +18,15 @@ export const ResponsiveChoiceField = ({
 	className,
 }: ResponsiveChoiceFieldProps) => {
 	return (
-		<div className={cn("flex flex-col gap-2 items-start", className)}>
+		<div
+			className={cn(
+				"flex w-full min-w-0 flex-col items-start gap-2",
+				className,
+			)}
+		>
 			<Label className="text-accent text-sm font-semibold">{label}</Label>
 			<Tabs
-				className="flex items-start text-start"
+				className="flex w-full items-start text-start"
 				items={items}
 				selectedKey={selectedKey}
 				onSelectionChange={(key) => onSelectionChange(String(key))}

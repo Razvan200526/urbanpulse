@@ -134,7 +134,7 @@ export const messageController = new Hono()
 
 			return c.json({
 				success: true,
-				message: "Conversation deleted",
+				message: "Conversation hidden",
 				data: deleted,
 			});
 		},

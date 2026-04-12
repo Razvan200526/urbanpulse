@@ -47,6 +47,7 @@ export const SignupOTPVerificationStep = () => {
 		const res = await verifyOTP({
 			email: data.email,
 			otp: code,
+			password: data.password,
 		});
 
 		if (res) {

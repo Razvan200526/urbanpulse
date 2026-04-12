@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
-import { parseApiData, parseSocketData } from "./parse";
+import { parseApiData, parseApiEnvelope, parseSocketData } from "./parse";
 
 describe("api parsers", () => {
 	test("parses successful API envelopes with runtime validation", async () => {
@@ -39,5 +39,24 @@ describe("api parsers", () => {
 				"Failed",
 			),
 		).toThrow("Updated");
+	});
+
+	test("returns a failed envelope result when the API response shape is invalid", async () => {
+		const response = new Response(JSON.stringify({ error: "nope" }), {
+			status: 500,
+			headers: { "content-type": "application/json" },
+		});
+
+		const result = await parseApiEnvelope(
+			response,
+			z.object({ id: z.string() }),
+			"Failed",
+		);
+
+		expect(result).toEqual({
+			success: false,
+			message: "Failed",
+			data: null,
+		});
 	});
 });

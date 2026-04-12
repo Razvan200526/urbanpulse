@@ -60,17 +60,34 @@ export const useSignUp = () => {
 type VerifyOTPInput = {
 	email: string;
 	otp: string;
+	password: string;
 };
 export const useVerifyOTP = () => {
 	return useMutation({
 		mutationKey: ["verifyOTP"],
-		mutationFn: async ({ email, otp }: VerifyOTPInput) => {
-			const { data } = await authClient.emailOtp.verifyEmail({
+		mutationFn: async ({ email, otp, password }: VerifyOTPInput) => {
+			const { data, error } = await authClient.emailOtp.verifyEmail({
 				email,
 				otp,
 			});
+			if (error) {
+				Toast.toast.danger(error.message || "Could not verify OTP");
+				return;
+			}
 			if (!data?.user) {
 				Toast.toast.danger("Could not verify OTP");
+				return;
+			}
+
+			const signInResult = await authClient.signIn.email({
+				email,
+				password,
+			});
+			if (signInResult.error) {
+				Toast.toast.danger(
+					signInResult.error.message ||
+						"Email verified, but sign in did not complete.",
+				);
 				return;
 			}
 

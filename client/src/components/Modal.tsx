@@ -12,9 +12,18 @@ export type ModalPropsType = Omit<ModalProps, "children"> & {
 	footer?: React.ReactNode;
 	modalRef?: React.RefObject<ModalRefType | null>;
 	backdrop?: "opaque" | "blur" | "transparent";
+	placement?: "auto" | "top" | "center" | "bottom";
+	scroll?: "inside" | "outside";
+	size?: "xs" | "sm" | "md" | "lg" | "cover" | "full";
+	isDismissable?: boolean;
+	isKeyboardDismissDisabled?: boolean;
 	trigger?: React.ReactNode | ((open: () => void) => React.ReactNode);
 	children: React.ReactNode;
 	className?: string;
+	dialogClassName?: string;
+	headerClassName?: string;
+	bodyClassName?: string;
+	footerClassName?: string;
 };
 
 export const Modal = (props: ModalPropsType) => {
@@ -27,7 +36,16 @@ export const Modal = (props: ModalPropsType) => {
 		children,
 		isOpen: controlledIsOpen,
 		onOpenChange: controlledOnOpenChange,
+		placement,
+		scroll = "inside",
+		size,
+		isDismissable = true,
+		isKeyboardDismissDisabled,
 		className,
+		dialogClassName,
+		headerClassName,
+		bodyClassName,
+		footerClassName,
 		...rest
 	} = props;
 
@@ -55,39 +73,65 @@ export const Modal = (props: ModalPropsType) => {
 
 	return (
 		<HeroModal isOpen={isOpen} onOpenChange={handleOpenChange} {...rest}>
-			<HeroModal.Trigger>{renderedTrigger}</HeroModal.Trigger>
+			<HeroModal.Trigger tabIndex={0}>{renderedTrigger}</HeroModal.Trigger>
 			<HeroModal.Backdrop
 				isOpen={isOpen}
 				onOpenChange={handleOpenChange}
+				isDismissable={isDismissable}
+				isKeyboardDismissDisabled={isKeyboardDismissDisabled}
 				variant={backdrop ?? "opaque"}
 			>
 				<HeroModal.Container
-					placement={isMobile ? "bottom" : "center"}
-					scroll="inside"
+					placement={placement ?? (isMobile ? "bottom" : "center")}
+					scroll={scroll}
+					size={size}
 					className={cn(
-						"px-0 pt-6 pb-0 md:p-6 rounded",
+						"rounded px-0 pt-0 pb-0 sm:px-4 sm:py-6",
 						isMobile ? "items-end" : "items-center",
 						className,
 					)}
 				>
 					<HeroModal.Dialog
 						className={cn(
-							"flex flex-col relative overflow-hidden border border-border-secondary bg-surface",
+							"relative flex w-full flex-col overflow-hidden border border-border-secondary bg-surface",
 							isMobile
-								? "max-h-[88dvh] w-full rounded-t border-x-0 border-b-0"
-								: "mx-4 w-2xl max-w-3xl max-h-3/4 rounded",
+								? "max-h-[90dvh] rounded-t-lg border-x-0 border-b-0"
+								: "mx-4 max-h-[min(84dvh,56rem)] w-2xl max-w-3xl rounded",
+							dialogClassName,
 						)}
 					>
 						{header && (
-							<HeroModal.Header className="px-4 pt-3 pb-4 pr-14 md:px-6">
-								<HeroModal.Heading>{header}</HeroModal.Heading>
+							<HeroModal.Header
+								className={cn(
+									"px-4 pt-4 pb-4 pr-14 sm:px-6",
+									isMobile && "pt-5",
+									headerClassName,
+								)}
+							>
+								{typeof header === "string" || typeof header === "number" ? (
+									<HeroModal.Heading>{header}</HeroModal.Heading>
+								) : (
+									header
+								)}
 							</HeroModal.Header>
 						)}
-						<HeroModal.Body className="flex-1 min-h-0 overflow-y-auto">
+						<HeroModal.Body
+							className={cn(
+								"min-h-0 flex-1 overflow-y-auto overscroll-contain",
+								bodyClassName,
+							)}
+						>
 							{children}
 						</HeroModal.Body>
 						{footer && (
-							<HeroModal.Footer className="bg-surface/95 px-4 py-4 backdrop-blur md:px-6 md:py-5">
+							<HeroModal.Footer
+								className={cn(
+									"bg-surface/95 px-4 py-4 backdrop-blur sm:px-6 sm:py-5",
+									"*:w-full sm:*:w-auto",
+									isMobile && "pb-[calc(1rem+env(safe-area-inset-bottom))]",
+									footerClassName,
+								)}
+							>
 								{footer}
 							</HeroModal.Footer>
 						)}

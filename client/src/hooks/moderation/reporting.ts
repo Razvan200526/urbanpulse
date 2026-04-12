@@ -136,7 +136,10 @@ export const useConfirmPulse = () => {
 			}
 			return res;
 		},
-		onSuccess: () => {
+		onSuccess: (result) => {
+			if (!result.success) {
+				return;
+			}
 			queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
 			queryClient.invalidateQueries({ queryKey: ["notifications"] });
 		},
@@ -147,7 +150,10 @@ export const useCreateReport = () => {
 	return useMutation({
 		mutationKey: ["report", "create"],
 		mutationFn: createReport,
-		onSuccess: () => {
+		onSuccess: (result) => {
+			if (!result.success) {
+				return;
+			}
 			queryClient.invalidateQueries({ queryKey: ["admin", "overview"] });
 			queryClient.invalidateQueries({ queryKey: ["admin", "reports"] });
 		},
@@ -195,7 +201,12 @@ export const useReviewReport = () => {
 					moderationNote,
 				},
 			}),
-		onSuccess: invalidateModerationQueries,
+		onSuccess: (result) => {
+			if (!result.success) {
+				return;
+			}
+			invalidateModerationQueries();
+		},
 	});
 };
 
@@ -221,7 +232,12 @@ export const useModeratePulse = () => {
 					moderationNote,
 				},
 			}),
-		onSuccess: invalidateModerationQueries,
+		onSuccess: (result) => {
+			if (!result.success) {
+				return;
+			}
+			invalidateModerationQueries();
+		},
 	});
 };
 
@@ -229,6 +245,11 @@ export const useMergePulse = () => {
 	return useMutation({
 		mutationKey: ["admin", "pulse", "merge"],
 		mutationFn: mergePulse,
-		onSuccess: invalidateModerationQueries,
+		onSuccess: (result) => {
+			if (!result.success) {
+				return;
+			}
+			invalidateModerationQueries();
+		},
 	});
 };

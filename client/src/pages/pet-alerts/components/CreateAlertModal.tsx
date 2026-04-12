@@ -163,8 +163,11 @@ export const CreateAlertModal = ({
 	return (
 		<Modal
 			modalRef={modalRef}
+			dialogClassName="sm:max-w-2xl"
+			bodyClassName="px-4 pb-4 sm:px-6 sm:pb-6"
+			footerClassName="border-t border-border"
 			header={
-				<div className="flex flex-wrap items-center justify-between gap-3">
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					<div className="min-w-0">
 						<h3 className="text-lg font-semibold">Report a pet</h3>
 						<p className="text-sm text-muted">
@@ -180,11 +183,12 @@ export const CreateAlertModal = ({
 				</div>
 			}
 			footer={
-				<div className="flex w-full justify-end gap-3">
+				<div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 					<Button
 						variant="secondary"
 						onPress={resetForm}
 						isDisabled={isSubmitting}
+						className="w-full sm:w-auto"
 					>
 						Reset
 					</Button>
@@ -192,13 +196,14 @@ export const CreateAlertModal = ({
 						variant="primary"
 						onPress={handleSubmit}
 						isPending={isSubmitting}
+						className="w-full sm:w-auto"
 					>
 						Submit pet alert
 					</Button>
 				</div>
 			}
 		>
-			<div className="space-y-5 p-1">
+			<div className="space-y-4 py-1 sm:space-y-5">
 				<ResponsiveChoiceField
 					label="Alert type"
 					items={alertTypeItems}
@@ -248,8 +253,8 @@ export const CreateAlertModal = ({
 				/>
 
 				<div className="rounded border border-accent/40 bg-accent/5 p-4">
-					<div className="flex flex-wrap items-center justify-between gap-3">
-						<div>
+					<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+						<div className="min-w-0">
 							<p className="text-sm font-semibold text-accent">Pet image</p>
 							<p className="text-xs text-muted">
 								This first version requires one clear image for AI matching.
@@ -262,6 +267,7 @@ export const CreateAlertModal = ({
 									size="sm"
 									variant="primary"
 									onPress={open}
+									className="w-full sm:w-auto"
 									startContent={<Image className="size-4" />}
 								>
 									Upload image
@@ -275,7 +281,7 @@ export const CreateAlertModal = ({
 							<img
 								src={normalizeAssetUrl(imageUrl)}
 								alt="Uploaded pet preview"
-								className="h-64 w-full object-cover"
+								className="h-56 w-full object-cover sm:h-64"
 							/>
 						</div>
 					) : null}

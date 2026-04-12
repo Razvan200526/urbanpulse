@@ -15,6 +15,7 @@ function buildUser(overrides: Partial<UserType> = {}): UserType {
 		bio: null,
 		trustScore: 0,
 		successfulInteractions: 0,
+		failedInteractions: 0,
 		isVerified: false,
 		homeLocation: null,
 		lastKnownLocation: null,

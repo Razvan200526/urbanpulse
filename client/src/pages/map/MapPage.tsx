@@ -144,7 +144,7 @@ export const MapPage = () => {
 						))}
 					</MapComponent>
 				)}
-				<div className="absolute inset-x-4 bottom-4 z-50 flex flex-col gap-3 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-4">
+				<div className="absolute inset-x-4 bottom-4 z-50 flex flex-col gap-1 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-4">
 					<Button
 						variant="primary"
 						className="w-full border border-accent sm:w-auto"

@@ -60,7 +60,7 @@ const ReviewCard = ({
 						<img
 							src={normalizeAssetUrl(item.matchedAlert.imageUrl)}
 							alt={`${item.matchedAlert.color} ${item.matchedAlert.petType}`}
-							className="h-44 w-full object-cover md:h-full"
+							className="h-40 w-full object-cover sm:h-44 md:h-full"
 						/>
 					) : (
 						<div className="flex h-44 items-center justify-center text-sm text-muted">
@@ -68,8 +68,8 @@ const ReviewCard = ({
 						</div>
 					)}
 				</div>
-				<div className="space-y-4 p-4">
-					<div className="flex flex-wrap items-start justify-between gap-3">
+				<div className="space-y-4 p-4 sm:p-5">
+					<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
 						<div className="space-y-1">
 							<p className="text-xs uppercase tracking-[0.16em] text-muted">
 								Matched alert
@@ -87,7 +87,7 @@ const ReviewCard = ({
 						</div>
 						<Chip
 							size="sm"
-							className={`rounded-full border px-2 py-1 ${statusToneClassName[item.petMatch.status]}`}
+							className={`max-w-full self-start rounded-full border px-2 py-1 ${statusToneClassName[item.petMatch.status]}`}
 						>
 							{petMatchStatusLabels[item.petMatch.status]}
 						</Chip>
@@ -134,7 +134,7 @@ const ReviewCard = ({
 								<Button
 									size="sm"
 									isDisabled={isPending}
-									className="border border-accent bg-surface text-accent hover:bg-accent/10"
+									className="w-full border border-accent bg-surface text-accent hover:bg-accent/10 sm:w-auto"
 									onPress={() => onConfirmOwnerInterest(item.petMatch.id)}
 								>
 									This could be my pet
@@ -143,6 +143,7 @@ const ReviewCard = ({
 									size="sm"
 									variant="danger-soft"
 									isDisabled={isPending}
+									className="w-full sm:w-auto"
 									onPress={() => onDismiss(item.petMatch.id)}
 								>
 									Dismiss
@@ -155,7 +156,7 @@ const ReviewCard = ({
 								<Button
 									size="sm"
 									isDisabled={isPending}
-									className="border border-success bg-surface text-success hover:bg-success/10"
+									className="w-full border border-success bg-surface text-success hover:bg-success/10 sm:w-auto"
 									onPress={() => onAcceptFinder(item.petMatch.id)}
 								>
 									Approve and open chat
@@ -164,6 +165,7 @@ const ReviewCard = ({
 									size="sm"
 									variant="danger-soft"
 									isDisabled={isPending}
+									className="w-full sm:w-auto"
 									onPress={() => onDeclineFinder(item.petMatch.id)}
 								>
 									Decline
@@ -176,7 +178,7 @@ const ReviewCard = ({
 								size="sm"
 								isDisabled={isPending}
 								startContent={<MessagesSquareIcon className="size-4" />}
-								className="border border-accent bg-accent text-accent-foreground"
+								className="w-full border border-accent bg-accent text-accent-foreground sm:w-auto"
 								onPress={() => onOpenChat(item)}
 							>
 								Open chat
@@ -229,7 +231,7 @@ export const PetMatchReviewDrawer = ({
 			dialogClassName="border-border bg-surface"
 			bodyClassName="p-0"
 			header={
-				<div className="border-b border-border px-4 py-4">
+				<div className="border-b border-border px-4 py-4 sm:px-5">
 					<div className="flex items-center justify-between gap-3">
 						<div className="flex items-center gap-2 text-accent">
 							<PawPrint className="size-5" />
@@ -253,7 +255,7 @@ export const PetMatchReviewDrawer = ({
 			<ScrollShadow
 				size={8}
 				hideScrollBar
-				className="min-h-0 max-h-[82dvh] overflow-y-auto px-4 py-4"
+				className="h-full overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-5"
 			>
 				<div className="space-y-4">
 					{isPending ? (

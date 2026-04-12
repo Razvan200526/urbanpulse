@@ -18,6 +18,7 @@ import {
 } from "@server/repositories/UserRepository";
 import { cacheManager } from "@server/services/cache/CacheManager";
 import { notificationService } from "@server/services/NotificationService";
+import { recordUserReputationOutcome } from "@server/services/UserReputationService";
 import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
 import { type FilterResourceType, TransactionStatusEnum } from "@shared/types";
@@ -39,7 +40,6 @@ const VERIFIED_NEIGHBOR_RESOURCE_TYPES = new Set<ResourceType["resourceType"]>([
 ]);
 const POSITIVE_REVIEW_THRESHOLD = 4;
 const NEGATIVE_REVIEW_THRESHOLD = 2;
-const VERIFIED_NEIGHBOR_INTERACTION_THRESHOLD = 3;
 
 export class ResourceService {
 	private resourceRepo: ResourceRepository;
@@ -110,60 +110,8 @@ export class ResourceService {
 		return "neutral";
 	}
 
-	private clampTrustScore(score: number) {
-		return Math.max(0, Math.min(100, score));
-	}
-
 	private requiresVerifiedNeighbor(resource: ResourceType) {
 		return VERIFIED_NEIGHBOR_RESOURCE_TYPES.has(resource.resourceType);
-	}
-
-	private async buildReviewImpactPatch(revieweeId: string, rating: number) {
-		const reviewee = await this.userRepo.getOne(revieweeId);
-		if (!reviewee) {
-			return null;
-		}
-
-		const direction = this.getReviewDirection(rating);
-		const patch: Partial<UserType> = {};
-
-		if (direction === "positive") {
-			const successfulInteractions = (reviewee.successfulInteractions ?? 0) + 1;
-			patch.successfulInteractions = successfulInteractions;
-
-			if (
-				!reviewee.isVerified &&
-				successfulInteractions >= VERIFIED_NEIGHBOR_INTERACTION_THRESHOLD
-			) {
-				patch.isVerified = true;
-			}
-		}
-
-		if (direction === "neutral") {
-			return Object.keys(patch).length > 0 ? patch : null;
-		}
-
-		const latestReviews =
-			await this.reviewRepo.getLatestByRevieweeId(revieweeId);
-		let streakCount = 0;
-
-		for (const review of latestReviews) {
-			if (this.getReviewDirection(review.rating) !== direction) {
-				break;
-			}
-			streakCount += 1;
-		}
-
-		if (streakCount === 0 || streakCount % 3 !== 0) {
-			return Object.keys(patch).length > 0 ? patch : null;
-		}
-
-		const currentScore = reviewee.trustScore ?? 0;
-		patch.trustScore = this.clampTrustScore(
-			currentScore + (direction === "positive" ? 5 : -5),
-		);
-
-		return patch;
 	}
 
 	/**
@@ -697,12 +645,17 @@ export class ResourceService {
 				return { success: false as const, error: "Failed to create review" };
 			}
 
-			const reviewImpact = await this.buildReviewImpactPatch(
-				resource.userId,
-				result.data.rating,
-			);
-			if (reviewImpact) {
-				await this.userRepo.update(resource.userId, reviewImpact);
+			const direction = this.getReviewDirection(result.data.rating);
+			if (direction !== "neutral") {
+				try {
+					await recordUserReputationOutcome(
+						this.userRepo,
+						resource.userId,
+						direction === "positive" ? "success" : "failure",
+					);
+				} catch (error) {
+					handleError(error);
+				}
 			}
 			await Promise.all([
 				this.invalidateResourceCaches(resource.id, resource.userId),
