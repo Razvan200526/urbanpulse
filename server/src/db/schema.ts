@@ -10,6 +10,7 @@ import {
 	type ResourceAvailabilityType,
 	type ResourceItemType,
 	type ResponseStatusEnum,
+	type SafetyCheckinStatusEnum,
 	type NotificationType as SharedNotificationType,
 	type TransactionStatusEnum,
 	type UrgencyEnum,
@@ -339,6 +340,29 @@ export const quietHours = pgTable("quiet_hours", {
 	days: text("days").notNull(),
 });
 
+export const safetyCheckin = pgTable(
+	"safety_checkin",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		status: text("status").$type<SafetyCheckinStatusEnum>().notNull(),
+		position: geometry("location", {
+			type: "point",
+			mode: "xy",
+			srid: 4326,
+		}).notNull(),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+		expiresAt: timestamp("expires_at").notNull(),
+	},
+	(t) => [
+		uniqueIndex("safety_checkin_user_unique").on(t.userId),
+		index("safety_checkin_spatial_index").using("gist", t.position),
+	],
+);
+
 export const report = pgTable("report", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	reporterId: text("reporterId")
@@ -442,6 +466,7 @@ export const usersRelations = relations(user, ({ many }) => ({
 	notifications: many(notification),
 	pulseConfirmations: many(pulseConfirmation),
 	responses: many(pulseResponse),
+	safetyCheckins: many(safetyCheckin),
 	reportsSent: many(report, { relationName: "reportsSent" }),
 	reportsReceived: many(report, { relationName: "reportsReceived" }),
 	borrowedTransactions: many(transaction, {
@@ -574,6 +599,10 @@ export const quietHoursRelations = relations(quietHours, ({ one }) => ({
 	user: one(user, { fields: [quietHours.userId], references: [user.id] }),
 }));
 
+export const safetyCheckinRelations = relations(safetyCheckin, ({ one }) => ({
+	user: one(user, { fields: [safetyCheckin.userId], references: [user.id] }),
+}));
+
 export const reportRelations = relations(report, ({ one }) => ({
 	reporter: one(user, {
 		fields: [report.reporterId],
@@ -691,6 +720,7 @@ export type PetMatchType = InferSelectModel<typeof petMatch>;
 export type PulseConfirmationType = InferSelectModel<typeof pulseConfirmation>;
 export type PulseResponseType = InferSelectModel<typeof pulseResponse>;
 export type QuietHoursType = InferSelectModel<typeof quietHours>;
+export type SafetyCheckinType = InferSelectModel<typeof safetyCheckin>;
 export type ReportType = InferSelectModel<typeof report>;
 export type ResourceType = InferSelectModel<typeof resource>;
 export type ResourceReviewType = InferSelectModel<typeof resourceReview>;

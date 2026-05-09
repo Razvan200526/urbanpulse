@@ -18,6 +18,7 @@ import {
 import { pulseController } from "./controllers/PulseController";
 import { reportController } from "./controllers/ReportController";
 import { resourceController } from "./controllers/ResourceController";
+import { safetyCheckinController } from "./controllers/SafetyCheckinController";
 import { uploadController } from "./controllers/UploadController";
 import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
@@ -72,6 +73,7 @@ export const app = new Hono<{ Variables: Variables }>()
 	.route("/", internalPetMatchController)
 	.route("/", reportController)
 	.route("/", resourceController)
+	.route("/", safetyCheckinController)
 	.route("/", dashboardController)
 	.route("/", uploadController)
 	.route("/", adminController)

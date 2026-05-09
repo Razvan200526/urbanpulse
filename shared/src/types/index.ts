@@ -46,6 +46,13 @@ export enum DefaultIncidentTypeSlugEnum {
 	Other = "other",
 }
 
+export enum SafetyCheckinStatusEnum {
+	Safe = "SAFE",
+	NeedHelp = "NEED_HELP",
+	Injured = "INJURED",
+	AvailableToHelp = "AVAILABLE_TO_HELP",
+}
+
 export const DEFAULT_INCIDENT_TYPES = [
 	{
 		slug: DefaultIncidentTypeSlugEnum.BlackoutPowerOutage,

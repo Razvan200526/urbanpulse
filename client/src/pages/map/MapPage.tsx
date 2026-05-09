@@ -119,7 +119,7 @@ export const MapPage = () => {
 				{hasCoords && (
 					<MapComponent
 						center={[coords?.long ?? 0, coords?.lat ?? 0]}
-						zoom={15}
+						zoom={14}
 						onUnavailableChange={setIsMapUnavailable}
 						fallback={
 							<div className="flex h-full items-center justify-center p-4">
