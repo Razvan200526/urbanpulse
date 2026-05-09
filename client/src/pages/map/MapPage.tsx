@@ -43,7 +43,8 @@ export const MapPage = () => {
 	const [safetyCheckinLaunch, setSafetyCheckinLaunch] = useState(false);
 	const [isMapUnavailable, setIsMapUnavailable] = useState(false);
 	const hasCoords = coords?.lat != null && coords?.long != null;
-	const mapPulseRadius = profile?.alertPreferences.heroAlertRadiusMeters ?? 500;
+	const mapPulseRadius =
+		profile?.alertPreferences.heroAlertRadiusMeters ?? 10000;
 	const retrievePayload = useMemo(
 		() => ({
 			position: { x: coords?.long ?? 0, y: coords?.lat ?? 0 },

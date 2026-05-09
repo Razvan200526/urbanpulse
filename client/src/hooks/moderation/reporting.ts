@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import type { InferRequestType } from "hono/client";
 import { z } from "zod";
 import {
+	adminCreateCrisisResultSchema,
 	adminDuplicatePulseSchema,
 	adminReportSchema,
 	confirmPulseResultSchema,
@@ -18,6 +19,7 @@ import {
 const pulseByIdRoute = hono.api.pulse[":id"];
 const adminReportByIdRoute = hono.api.admin.reports[":id"];
 const adminPulseByIdRoute = hono.api.admin.pulses[":id"];
+const adminCrisisRoute = hono.api.admin.crisis;
 
 type ConfirmPulseInput = InferRequestType<
 	typeof pulseByIdRoute.confirm.$post
@@ -33,6 +35,10 @@ type ModeratePulseInput = InferRequestType<typeof adminPulseByIdRoute.$patch>;
 
 type MergePulseInput = InferRequestType<
 	typeof hono.api.admin.pulses.merge.$post
+>["json"];
+
+type AdminCreateCrisisInput = InferRequestType<
+	typeof adminCrisisRoute.$post
 >["json"];
 
 const confirmPulse = async ({ id }: ConfirmPulseInput) => {
@@ -119,11 +125,23 @@ const mergePulse = async (payload: MergePulseInput) => {
 	);
 };
 
+const createAdminCrisis = async (payload: AdminCreateCrisisInput) => {
+	const response = await adminCrisisRoute.$post({ json: payload });
+
+	return parseApiEnvelope(
+		response,
+		adminCreateCrisisResultSchema,
+		"Failed to trigger crisis mode",
+	);
+};
+
 const invalidateModerationQueries = () => {
 	queryClient.invalidateQueries({ queryKey: ["admin", "overview"] });
 	queryClient.invalidateQueries({ queryKey: ["admin", "reports"] });
 	queryClient.invalidateQueries({ queryKey: ["admin", "duplicates"] });
 	queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+	queryClient.invalidateQueries({ queryKey: ["pulse", "clusters"] });
+	queryClient.invalidateQueries({ queryKey: ["pulse", "map"] });
 };
 
 export const useConfirmPulse = () => {
@@ -250,6 +268,24 @@ export const useMergePulse = () => {
 				return;
 			}
 			invalidateModerationQueries();
+		},
+	});
+};
+
+export const useAdminCreateCrisis = () => {
+	return useMutation({
+		mutationKey: ["admin", "crisis", "create"],
+		mutationFn: createAdminCrisis,
+		onSuccess: (result, payload) => {
+			if (!result.success) {
+				return;
+			}
+			invalidateModerationQueries();
+			Toast.toast.warning(
+				payload.scope === "global"
+					? "Global crisis mode activated"
+					: "Local crisis mode activated",
+			);
 		},
 	});
 };

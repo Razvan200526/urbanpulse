@@ -3,7 +3,7 @@ import { authMiddleware } from "@server/middleware/authMiddleware";
 import { responseRepository } from "@server/repositories/ResponseRepository";
 import { userRepository } from "@server/repositories/UserRepository";
 import auth from "@server/services/auth/AuthService";
-import { ClusteringService } from "@server/services/ClusterigService";
+import { clusteringService } from "@server/services/ClusterigService";
 import { moderationService } from "@server/services/ModerationService";
 import { notificationService } from "@server/services/NotificationService";
 import { pulseService } from "@server/services/PulseService";
@@ -30,7 +30,6 @@ export const pulseController = new Hono()
 		async (c) => {
 			try {
 				const query = c.req.valid("query");
-				const clusteringService = new ClusteringService();
 				const clusters = await clusteringService.getActiveClusters({
 					x: query.lng,
 					y: query.lat,

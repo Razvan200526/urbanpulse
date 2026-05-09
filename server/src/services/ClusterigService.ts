@@ -8,6 +8,12 @@ import {
 } from "@server/db/schema";
 import { socketManager } from "@server/services/SocketManager";
 import { logger } from "@server/utils/Logger";
+import { PulseEnum } from "@shared/types";
+import {
+	DEFAULT_CITY_CENTER,
+	GLOBAL_CRISIS_RADIUS_METERS,
+	MANUAL_CRISIS_EXPIRATION_HOURS,
+} from "@shared/utils/crisis";
 import { sql } from "drizzle-orm";
 
 const CLUSTER_CONFIG = {
@@ -19,6 +25,51 @@ const CLUSTER_CONFIG = {
 };
 
 export class ClusteringService {
+	async createAdminCrisisCluster(params: {
+		scope: "local" | "global";
+		incidentTypeId: string;
+		lat?: number;
+		lng?: number;
+		radius?: number;
+	}): Promise<PulseClusterType> {
+		const isGlobal = params.scope === "global";
+		const centerLat = isGlobal
+			? DEFAULT_CITY_CENTER.lat
+			: (params.lat as number);
+		const centerLng = isGlobal
+			? DEFAULT_CITY_CENTER.lng
+			: (params.lng as number);
+		const radiusMeters = isGlobal
+			? GLOBAL_CRISIS_RADIUS_METERS
+			: (params.radius as number);
+		const expiresAt = new Date(
+			Date.now() + MANUAL_CRISIS_EXPIRATION_HOURS * 60 * 60 * 1000,
+		);
+
+		const created = await db
+			.insert(pulseClusters)
+			.values({
+				pulseType: PulseEnum.Emergency,
+				centerLat,
+				centerLng,
+				radiusMeters,
+				reportCount: null,
+				confidenceScore: 100,
+				status: "crisis",
+				crisisTriggered: true,
+				expiresAt,
+			})
+			.returning();
+
+		const cluster = created[0];
+		if (!cluster) {
+			throw new Error("Failed to create manual crisis cluster");
+		}
+
+		this.broadcastCrisisMode(cluster, isGlobal);
+		return cluster;
+	}
+
 	/**
 	 * Returns active clusters within a specific radius of a location.
 	 */
@@ -31,10 +82,17 @@ export class ClusteringService {
       SELECT * FROM pulse_clusters
       WHERE status != 'resolved'
         AND expires_at > NOW()
-        AND ST_DWithin(
-          ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)::geography,
-          ST_SetSRID(ST_MakePoint(${params.x}, ${params.y}), 4326)::geography,
-          ${params.radiusMeters}
+        AND (
+          ST_DWithin(
+            ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)::geography,
+            ST_SetSRID(ST_MakePoint(${params.x}, ${params.y}), 4326)::geography,
+            ${params.radiusMeters}
+          )
+          OR ST_DWithin(
+            ST_SetSRID(ST_MakePoint(center_lng, center_lat), 4326)::geography,
+            ST_SetSRID(ST_MakePoint(${params.x}, ${params.y}), 4326)::geography,
+            radius_meters
+          )
         )
       ORDER BY confidence_score DESC
     `);
@@ -124,28 +182,52 @@ export class ClusteringService {
       WHERE id = ${cluster.id}
     `);
 
-		// Notifică prin WebSocket toți userii din raza clusterului
-		const center = { x: cluster.centerLng, y: cluster.centerLat };
-		const connectionsInRange = socketManager.getConnectionsInRange(
-			center,
-			CLUSTER_CONFIG.radiusMeters,
-		);
+		this.broadcastCrisisMode(cluster, false);
+	}
 
+	private broadcastCrisisMode(cluster: PulseClusterType, isGlobal: boolean) {
+		// Notifică prin WebSocket utilizatorii afectați
+		const centerLng =
+			(cluster.centerLng as number | null | undefined) ??
+			((cluster as any).center_lng as number);
+		const centerLat =
+			(cluster.centerLat as number | null | undefined) ??
+			((cluster as any).center_lat as number);
+		const radiusMeters =
+			(cluster.radiusMeters as number | null | undefined) ??
+			((cluster as any).radius_meters as number) ??
+			CLUSTER_CONFIG.radiusMeters;
+		const pulseType =
+			(cluster.pulseType as string | null | undefined) ??
+			((cluster as any).pulse_type as string);
+		const reportCount =
+			(cluster.reportCount as number | null | undefined) ??
+			((cluster as any).report_count as number | null) ??
+			null;
+		const confidenceScore =
+			(cluster.confidenceScore as number | null | undefined) ??
+			((cluster as any).confidence_score as number | null) ??
+			100;
+
+		const center = { x: centerLng, y: centerLat };
+		const connections = isGlobal
+			? socketManager.getAllConnections()
+			: socketManager.getConnectionsInRange(center, radiusMeters);
 		const message = {
 			type: "CRISIS_MODE_ACTIVATED",
 			cluster: {
 				id: cluster.id,
-				pulse_type: cluster.pulseType,
-				report_count: cluster.reportCount,
-				confidence_score: cluster.confidenceScore,
-				radius_meters: CLUSTER_CONFIG.radiusMeters,
-				center_lat: cluster.centerLat,
-				center_lng: cluster.centerLng,
+				pulse_type: pulseType,
+				report_count: reportCount,
+				confidence_score: confidenceScore,
+				radius_meters: radiusMeters,
+				center_lat: centerLat,
+				center_lng: centerLng,
 				status: "crisis",
 			},
 		};
 
-		for (const conn of connectionsInRange) {
+		for (const conn of connections) {
 			try {
 				conn.ws.send(JSON.stringify(message));
 			} catch (error) {
@@ -200,3 +282,5 @@ export class ClusteringService {
 		return cluster;
 	}
 }
+
+export const clusteringService = new ClusteringService();

@@ -73,13 +73,14 @@ export const useRetrieveClusters = (
 					{ lat: data.lat, lng: data.lng },
 					{ lat: cluster.centerLat, lng: cluster.centerLng },
 				);
+				const effectiveRadius = Math.max(data.radius, cluster.radiusMeters);
 
 				// biome-ignore lint/suspicious/noConsole: debugging proximity
 				console.log(
-					`Cluster ${cluster.id} distance: ${distance}m (Radius: ${data.radius}m)`,
+					`Cluster ${cluster.id} distance: ${distance}m (Effective radius: ${effectiveRadius}m)`,
 				);
 
-				return distance <= data.radius;
+				return distance <= effectiveRadius;
 			});
 			setActiveCrises(nearbyCrises);
 		}

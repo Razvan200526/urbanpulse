@@ -9,6 +9,8 @@ import { transactionRepository } from "@server/repositories/TransactionRepositor
 import { userRepository } from "@server/repositories/UserRepository";
 import { incidentTypeService } from "@server/services/IncidentTypeService";
 import { moderationService } from "@server/services/ModerationService";
+import { clusteringService } from "@server/services/ClusterigService";
+import { createCrisisSchema } from "@shared/validators/admin/isCreateCrisisValid";
 import { mergePulseSchema } from "@shared/validators/admin/isMergePulseValid";
 import {
 	moderatePulseParamsSchema,
@@ -252,4 +254,47 @@ export const adminController = new Hono()
 			message: "Pulses merged",
 			data: result.data,
 		});
+	})
+	.post("/crisis", zValidator("json", createCrisisSchema), async (c) => {
+		const payload = c.req.valid("json");
+		const incidentType = await incidentTypeService.getIncidentTypeById(
+			payload.incidentTypeId,
+		);
+		if (!incidentType) {
+			return c.json(
+				{
+					success: false,
+					message: "Incident type not found",
+					data: null,
+				},
+				404,
+			);
+		}
+		const cluster = await clusteringService.createAdminCrisisCluster(payload);
+		const serializedCluster = {
+			id: cluster.id,
+			pulse_type: cluster.pulseType,
+			center_lat: cluster.centerLat,
+			center_lng: cluster.centerLng,
+			radius_meters: cluster.radiusMeters,
+			report_count: cluster.reportCount,
+			confidence_score: cluster.confidenceScore,
+			status: cluster.status,
+			crisis_triggered: cluster.crisisTriggered,
+			created_at: cluster.createdAt,
+			updated_at: cluster.updatedAt,
+			expires_at: cluster.expiresAt,
+		};
+
+		return c.json(
+			{
+				success: true,
+				message:
+					payload.scope === "global"
+						? "Global crisis mode activated"
+						: "Local crisis mode activated",
+				data: { cluster: serializedCluster },
+			},
+			201,
+		);
 	});

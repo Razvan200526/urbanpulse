@@ -34,7 +34,7 @@ const fetchActiveIncidentTypes = async () => {
 };
 
 const fetchAdminIncidentTypes = async () => {
-	const response = await adminIncidentTypesRoute.$get();
+	const response = await hono.api.admin["incident-types"].$get();
 	const parsed = await parseApiData(
 		response,
 		incidentTypeListSchema,

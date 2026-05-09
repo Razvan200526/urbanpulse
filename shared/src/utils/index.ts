@@ -12,3 +12,4 @@ export const dataURLtoFile = (dataurl: string, filename: string) => {
 };
 
 export * from "./geo";
+export * from "./crisis";

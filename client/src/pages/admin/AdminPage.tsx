@@ -1,5 +1,8 @@
 import { Button } from "@client/components/Button/Button";
 import { Header } from "@client/components/Header";
+import { Modal } from "@client/components/Modal";
+import { ClusterMarker } from "@client/components/map/ClusterMarker";
+import { MapComponent } from "@client/components/map/MapComponent";
 import { PageLoader } from "@client/components/PageLoader";
 import { P } from "@client/components/typography";
 import { useAdminOverview } from "@client/hooks/useAdminOverview";
@@ -11,8 +14,8 @@ import {
 } from "@client/hooks/useIncidentTypes";
 import {
 	type AdminUserListItem,
-	type AdminUserSession,
 	useAdminBanUser,
+	useAdminCreateCrisis,
 	useAdminDuplicatePulses,
 	useAdminReports,
 	useAdminRevokeUserSession,
@@ -24,7 +27,24 @@ import {
 	useModeratePulse,
 	useReviewReport,
 } from "@client/hooks/useModeration";
+import { useRetrieveClusters } from "@client/pages/map/hooks";
+import type { ClientClusterType } from "@client/utils/clusterTypes";
 import { Card, cn, ScrollShadow, Separator, Toast } from "@heroui/react";
+import {
+	ActivityList,
+	AdminCrisisMapClickCapture,
+	AdminDraftCrisisOverlay,
+	type DraftPoint,
+	EmptyState,
+	IncidentTypeRow,
+	IncidentTypeSelect,
+	SectionCard,
+	SessionRow,
+} from "./components";
+import {
+	DEFAULT_CITY_CENTER,
+	DEFAULT_LOCAL_CRISIS_RADIUS_METERS,
+} from "@shared/utils/crisis";
 import { PulseStatusEnum, ReportStatusEnum } from "@shared/types";
 import { formatDate } from "@shared/utils/formatDate";
 import {
@@ -32,17 +52,17 @@ import {
 	ArrowRightLeft,
 	Bell,
 	ClipboardList,
-	Eye,
-	EyeOff,
+	MapPin,
 	MapPinned,
 	Plus,
-	Save,
 	Search,
 	ShieldAlert,
 	Users,
+	X,
 	Wrench,
 } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 
 const metricCards = [
 	{
@@ -85,46 +105,7 @@ const metricCards = [
 
 const banReason = "Moderator action: account access suspended pending review";
 
-const EmptyState = ({ message }: { message: string }) => (
-	<div className="rounded border border-accent/25 bg-accent/5 px-4 py-6 text-sm text-muted">
-		{message}
-	</div>
-);
-
-const SectionCard = ({
-	title,
-	description,
-	action,
-	children,
-	className,
-	contentClassName,
-}: {
-	title: string;
-	description?: string;
-	action?: React.ReactNode;
-	children: React.ReactNode;
-	className?: string;
-	contentClassName?: string;
-}) => (
-	<Card
-		className={cn("border border-accent/20 bg-surface shadow-none", className)}
-	>
-		<Card.Header className="flex flex-col gap-3 border-b border-accent/15 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
-			<div className="min-w-0">
-				<Card.Title className="text-accent">{title}</Card.Title>
-				{description ? (
-					<Card.Description className="mt-1 text-sm">
-						{description}
-					</Card.Description>
-				) : null}
-			</div>
-			{action ? <div className="w-full sm:w-auto">{action}</div> : null}
-		</Card.Header>
-		<Card.Content className={cn("p-4 sm:p-5", contentClassName)}>
-			{children}
-		</Card.Content>
-	</Card>
-);
+const adminClusterRadiusMeters = 10_000;
 
 const toneClassNameByReportStatus: Record<string, string> = {
 	[ReportStatusEnum.Pending]: "border-warning/30 bg-warning/10 text-warning",
@@ -138,179 +119,6 @@ const statusPillClassName = (status: string) =>
 
 const roleLabel = (role: AdminUserListItem["role"]) =>
 	Array.isArray(role) ? role.join(", ") : role || "user";
-
-const ActivityList = ({
-	title,
-	items,
-	emptyMessage,
-	renderItem,
-}: {
-	title: string;
-	items: readonly unknown[];
-	emptyMessage: string;
-	renderItem: (item: any) => React.ReactNode;
-}) => (
-	<div className="space-y-3">
-		<div className="flex items-center justify-between gap-3">
-			<p className="text-sm font-semibold text-accent">{title}</p>
-			<span className="text-xs text-accent/80">{items.length}</span>
-		</div>
-		{items.length > 0 ? (
-			<div className="space-y-2">{items.map(renderItem)}</div>
-		) : (
-			<EmptyState message={emptyMessage} />
-		)}
-	</div>
-);
-
-const SessionRow = ({
-	session,
-	isPending,
-	onRevoke,
-}: {
-	session: AdminUserSession;
-	isPending: boolean;
-	onRevoke: (sessionToken: string) => void;
-}) => (
-	<div className="rounded border border-accent/20 bg-surface px-3 py-3">
-		<div className="space-y-1">
-			<p className="text-xs text-muted">
-				Created:{" "}
-				{session.createdAt
-					? formatDate(new Date(session.createdAt))
-					: "Unknown"}
-			</p>
-			<p className="break-all text-xs text-muted">
-				IP: {session.ipAddress || "Unknown"}
-			</p>
-			<p className="break-all text-xs text-muted">
-				Agent: {session.userAgent || "Unknown"}
-			</p>
-		</div>
-		{session.token ? (
-			<div className="mt-3">
-				<Button
-					size="sm"
-					variant="danger"
-					className="w-full sm:w-auto"
-					isPending={isPending}
-					onPress={() => onRevoke(session.token || "")}
-				>
-					Revoke session
-				</Button>
-			</div>
-		) : null}
-	</div>
-);
-
-const IncidentTypeRow = ({
-	incidentType,
-	isPending,
-	onSave,
-	onToggleActive,
-}: {
-	incidentType: ClientIncidentType;
-	isPending: boolean;
-	onSave: (
-		incidentType: ClientIncidentType,
-		payload: { label: string; description: string; sortOrder: number },
-	) => void;
-	onToggleActive: (incidentType: ClientIncidentType) => void;
-}) => {
-	const [label, setLabel] = useState(incidentType.label);
-	const [description, setDescription] = useState(
-		incidentType.description ?? "",
-	);
-	const [sortOrder, setSortOrder] = useState(String(incidentType.sortOrder));
-
-	useEffect(() => {
-		setLabel(incidentType.label);
-		setDescription(incidentType.description ?? "");
-		setSortOrder(String(incidentType.sortOrder));
-	}, [incidentType]);
-
-	const parsedSortOrder = Number(sortOrder);
-	const canSave =
-		label.trim().length > 0 &&
-		Number.isFinite(parsedSortOrder) &&
-		Number.isInteger(parsedSortOrder) &&
-		(label.trim() !== incidentType.label ||
-			description.trim() !== (incidentType.description ?? "") ||
-			parsedSortOrder !== incidentType.sortOrder);
-
-	return (
-		<div className="rounded border border-accent/20 bg-surface-secondary/10 p-4">
-			<div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,0.3fr)_auto] lg:items-end">
-				<label className="flex min-w-0 flex-col gap-1.5 text-sm text-accent">
-					Name
-					<input
-						value={label}
-						onChange={(event) => setLabel(event.target.value)}
-						className="h-10 rounded border border-accent/25 bg-surface px-3 text-sm text-foreground outline-none focus:border-accent"
-					/>
-				</label>
-				<label className="flex min-w-0 flex-col gap-1.5 text-sm text-accent">
-					Order
-					<input
-						value={sortOrder}
-						inputMode="numeric"
-						onChange={(event) => setSortOrder(event.target.value)}
-						className="h-10 rounded border border-accent/25 bg-surface px-3 text-sm text-foreground outline-none focus:border-accent"
-					/>
-				</label>
-				<div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-					<Button
-						size="sm"
-						variant="primary"
-						className="w-full sm:w-auto"
-						startContent={<Save className="size-4" />}
-						isDisabled={!canSave}
-						isPending={isPending}
-						onPress={() =>
-							onSave(incidentType, {
-								label: label.trim(),
-								description: description.trim(),
-								sortOrder: parsedSortOrder,
-							})
-						}
-					>
-						Save
-					</Button>
-					<Button
-						size="sm"
-						variant={incidentType.isActive ? "outline" : "secondary"}
-						className="w-full sm:w-auto"
-						startContent={
-							incidentType.isActive ? (
-								<EyeOff className="size-4" />
-							) : (
-								<Eye className="size-4" />
-							)
-						}
-						isPending={isPending}
-						onPress={() => onToggleActive(incidentType)}
-					>
-						{incidentType.isActive ? "Deactivate" : "Activate"}
-					</Button>
-				</div>
-			</div>
-			<label className="mt-3 flex flex-col gap-1.5 text-sm text-accent">
-				Description
-				<textarea
-					value={description}
-					onChange={(event) => setDescription(event.target.value)}
-					rows={2}
-					className="rounded border border-accent/25 bg-surface px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
-				/>
-			</label>
-			<div className="mt-3 flex flex-wrap gap-2 text-xs text-muted">
-				<span>{incidentType.slug}</span>
-				<span>{incidentType.isSystem ? "System" : "Custom"}</span>
-				<span>{incidentType.isActive ? "Active" : "Inactive"}</span>
-			</div>
-		</div>
-	);
-};
 
 export const AdminPage = () => {
 	const { data, isPending, error } = useAdminOverview();
@@ -328,17 +136,77 @@ export const AdminPage = () => {
 	const reviewReport = useReviewReport();
 	const moderatePulse = useModeratePulse();
 	const mergePulse = useMergePulse();
+	const { coords } = useGetGeolocation();
+	const createCrisis = useAdminCreateCrisis();
 	const createIncidentType = useCreateIncidentType();
 	const updateIncidentType = useUpdateIncidentType();
 	const setRole = useAdminSetRole();
 	const banUser = useAdminBanUser();
 	const unbanUser = useAdminUnbanUser();
 	const revokeSession = useAdminRevokeUserSession();
+	const { data: clusterList = [] } = useRetrieveClusters(
+		{
+			lat: coords?.lat ?? DEFAULT_CITY_CENTER.lat,
+			lng: coords?.long ?? DEFAULT_CITY_CENTER.lng,
+			radius: adminClusterRadiusMeters,
+		},
+		Boolean(data),
+	);
+	const [draftPoint, setDraftPoint] = useState<DraftPoint | null>(null);
+	const [isGlobalModalOpen, setGlobalModalOpen] = useState(false);
+	const [isLocalModalOpen, setLocalModalOpen] = useState(false);
+	const [globalIncidentTypeId, setGlobalIncidentTypeId] = useState("");
+	const [localIncidentTypeId, setLocalIncidentTypeId] = useState("");
+	const [localRadiusInput, setLocalRadiusInput] = useState(
+		String(DEFAULT_LOCAL_CRISIS_RADIUS_METERS),
+	);
 
 	const selectedUser = useMemo(
 		() => users.find((entry) => entry.id === selectedUserId) ?? null,
 		[selectedUserId, users],
 	);
+
+	const activeIncidentTypes = useMemo(
+		() => incidentTypes.filter((item) => item.isActive),
+		[incidentTypes],
+	);
+	const globalIncidentTypes = useMemo(
+		() => [...incidentTypes].sort((a, b) => a.sortOrder - b.sortOrder),
+		[incidentTypes],
+	);
+
+	const localRadiusMeters = useMemo(() => {
+		const parsed = Number(localRadiusInput);
+		return Number.isFinite(parsed)
+			? Math.max(100, Math.min(50_000, Math.round(parsed)))
+			: DEFAULT_LOCAL_CRISIS_RADIUS_METERS;
+	}, [localRadiusInput]);
+	const hasDraftPoint =
+		typeof draftPoint?.lat === "number" && typeof draftPoint?.lng === "number";
+
+	useEffect(() => {
+		if (globalIncidentTypes.length === 0) {
+			return;
+		}
+
+		const hasGlobalSelected = globalIncidentTypes.some(
+			(item) => item.id === globalIncidentTypeId,
+		);
+		if (!hasGlobalSelected) {
+			setGlobalIncidentTypeId(globalIncidentTypes[0]?.id ?? "");
+		}
+		const hasLocalSelected = activeIncidentTypes.some(
+			(item) => item.id === localIncidentTypeId,
+		);
+		if (!hasLocalSelected) {
+			setLocalIncidentTypeId(activeIncidentTypes[0]?.id ?? "");
+		}
+	}, [
+		activeIncidentTypes,
+		globalIncidentTypeId,
+		globalIncidentTypes,
+		localIncidentTypeId,
+	]);
 
 	const onRoleToggle = (entry: AdminUserListItem) => {
 		const nextRole = entry.role === "admin" ? "user" : "admin";
@@ -454,6 +322,70 @@ export const AdminPage = () => {
 		);
 	};
 
+	const onTriggerGlobalCrisis = () => {
+		if (!globalIncidentTypeId) {
+			Toast.toast.danger("Choose an incident type first.");
+			return;
+		}
+
+		createCrisis.mutate(
+			{
+				scope: "global",
+				incidentTypeId: globalIncidentTypeId,
+			},
+			{
+				onSuccess: () => {
+					setGlobalModalOpen(false);
+				},
+				onError: (error) =>
+					Toast.toast.danger(
+						error instanceof Error
+							? error.message
+							: "Could not activate global crisis mode",
+					),
+			},
+		);
+	};
+
+	const onTriggerLocalCrisis = () => {
+		if (!hasDraftPoint || !draftPoint) {
+			Toast.toast.danger("Choose a location on the map first.");
+			return;
+		}
+		if (!localIncidentTypeId) {
+			Toast.toast.danger("Choose an incident type first.");
+			return;
+		}
+
+		createCrisis.mutate(
+			{
+				scope: "local",
+				incidentTypeId: localIncidentTypeId,
+				lat: draftPoint.lat,
+				lng: draftPoint.lng,
+				radius: localRadiusMeters,
+			},
+			{
+				onSuccess: () => {
+					setLocalModalOpen(false);
+					setDraftPoint(null);
+					setLocalRadiusInput(String(DEFAULT_LOCAL_CRISIS_RADIUS_METERS));
+				},
+				onError: (error) =>
+					Toast.toast.danger(
+						error instanceof Error
+							? error.message
+							: "Could not activate local crisis mode",
+					),
+			},
+		);
+	};
+
+	const onMapDraftPointSelected = (point: DraftPoint) => {
+		setDraftPoint(point);
+		setLocalModalOpen(true);
+	};
+
 	if (isPending) {
 		return <PageLoader />;
 	}
@@ -493,7 +425,7 @@ export const AdminPage = () => {
 							return (
 								<Card
 									key={card.key}
-									className="border border-accent/20 bg-surface shadow-none"
+									className="border border-accent-soft-hover bg-surface shadow-none"
 								>
 									<Card.Content className="flex items-start justify-between gap-3 p-4">
 										<div className="min-w-0">
@@ -518,6 +450,169 @@ export const AdminPage = () => {
 
 					<div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(18rem,0.95fr)]">
 						<div className="space-y-6">
+							<SectionCard
+								title="Crisis Management"
+								description="Trigger city-wide crisis mode or create a local crisis directly from the map."
+								action={
+									<Button
+										size="sm"
+										variant="danger"
+										startContent={<ShieldAlert className="size-4" />}
+										onPress={() => setGlobalModalOpen(true)}
+									>
+										Trigger Global Crisis
+									</Button>
+								}
+								contentClassName="space-y-4"
+							>
+								<div className="space-y-3 rounded border border-accent-soft-hover bg-surface-secondary/10 p-3">
+									<div className="flex items-start justify-between gap-3">
+										<div>
+											<p className="text-sm font-medium text-accent">
+												Local crisis map
+											</p>
+											<p className="mt-1 text-xs text-muted">
+												Click anywhere on the map to set the local crisis
+												epicenter and radius.
+											</p>
+										</div>
+										<Button
+											size="sm"
+											variant="outline"
+											startContent={<MapPin className="size-4" />}
+											isDisabled={!hasDraftPoint}
+											onPress={() => setLocalModalOpen(true)}
+										>
+											Configure local crisis
+										</Button>
+									</div>
+									<div className="h-80 overflow-hidden rounded border border-accent-soft-hover">
+										{coords ? (
+											<MapComponent
+												center={[coords.long, coords.lat]}
+												zoom={15}
+											>
+												{clusterList.map((cluster: ClientClusterType) => (
+													<ClusterMarker key={cluster.id} cluster={cluster} />
+												))}
+												<AdminCrisisMapClickCapture
+													onMapClick={onMapDraftPointSelected}
+												/>
+												<AdminDraftCrisisOverlay
+													draftPoint={draftPoint}
+													radiusMeters={localRadiusMeters}
+												/>
+											</MapComponent>
+										) : (
+											<div className="flex h-80 items-center justify-center rounded border border-accent-soft-hover bg-surface-secondary/10" />
+										)}
+										<div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
+											<span>Active clusters visible: {clusterList.length}</span>
+											{hasDraftPoint && draftPoint ? (
+												<span>
+													Draft: {draftPoint.lat.toFixed(5)},{" "}
+													{draftPoint.lng.toFixed(5)} ({localRadiusMeters}m)
+												</span>
+											) : (
+												<span>No draft point selected yet.</span>
+											)}
+										</div>
+									</div>
+								</div>
+								<Modal
+									isOpen={isGlobalModalOpen}
+									onOpenChange={setGlobalModalOpen}
+									header="Confirm Global Crisis"
+									size="sm"
+									footer={
+										<>
+											<Button
+												variant="outline"
+												startContent={<X className="size-4" />}
+												onPress={() => setGlobalModalOpen(false)}
+											>
+												Cancel
+											</Button>
+											<Button
+												variant="danger"
+												startContent={<ShieldAlert className="size-4" />}
+												isPending={createCrisis.isPending}
+												onPress={onTriggerGlobalCrisis}
+											>
+												Confirm Global Crisis
+											</Button>
+										</>
+									}
+								>
+									<div className="space-y-4 px-4 pb-4 sm:px-6 sm:pb-6">
+										<div className="space-y-1">
+											<p className="text-sm text-muted">
+												This will notify all connected users and mark Bucharest
+												as an active crisis zone.
+											</p>
+										</div>
+										<IncidentTypeSelect
+											value={globalIncidentTypeId}
+											options={globalIncidentTypes}
+											onChange={setGlobalIncidentTypeId}
+										/>
+									</div>
+								</Modal>
+
+								<Modal
+									isOpen={isLocalModalOpen}
+									onOpenChange={setLocalModalOpen}
+									header="Configure Local Crisis"
+									size="sm"
+									footer={
+										<>
+											<Button
+												variant="outline"
+												startContent={<X className="size-4" />}
+												onPress={() => setLocalModalOpen(false)}
+											>
+												Cancel
+											</Button>
+											<Button
+												variant="danger"
+												startContent={<ShieldAlert className="size-4" />}
+												isPending={createCrisis.isPending}
+												onPress={onTriggerLocalCrisis}
+											>
+												Activate Local Crisis
+											</Button>
+										</>
+									}
+								>
+									<div className="space-y-4 px-4 pb-4 sm:px-6 sm:pb-6">
+										<p className="text-sm text-muted">
+											Pick incident type and radius for the selected map point.
+										</p>
+										<IncidentTypeSelect
+											value={localIncidentTypeId}
+											options={activeIncidentTypes}
+											onChange={setLocalIncidentTypeId}
+										/>
+										<label className="flex flex-col gap-1.5 text-sm text-accent">
+											Radius (meters)
+											<input
+												value={localRadiusInput}
+												inputMode="numeric"
+												onChange={(event) =>
+													setLocalRadiusInput(event.target.value)
+												}
+												className="h-10 rounded border border-accent/25 bg-surface px-3 text-sm text-foreground outline-none focus:border-accent"
+											/>
+										</label>
+										<div className="rounded border border-accent/20 bg-accent/5 px-3 py-2 text-xs text-accent">
+											{hasDraftPoint && draftPoint
+												? `Selected point: ${draftPoint.lat.toFixed(5)}, ${draftPoint.lng.toFixed(5)}`
+												: "Click the map to select a location first."}
+										</div>
+									</div>
+								</Modal>
+							</SectionCard>
+
 							<SectionCard
 								title="Moderation Queue"
 								description="Review reports, retain valid alerts, or remove unsafe content."
@@ -923,7 +1018,7 @@ export const AdminPage = () => {
 								renderItem={(pulse) => (
 									<div
 										key={pulse.id}
-										className="rounded border border-accent/20 bg-surface-secondary/10 px-3 py-3"
+										className="rounded border border-accent-soft-hover bg-surface-secondary/10 px-3 py-3"
 									>
 										<p className="font-medium text-accent">{pulse.title}</p>
 										<p className="mt-1 text-xs text-muted">
@@ -943,7 +1038,7 @@ export const AdminPage = () => {
 								renderItem={(resource) => (
 									<div
 										key={resource.id}
-										className="rounded border border-accent/20 bg-surface-secondary/10 px-3 py-3"
+										className="rounded border border-accent-soft-hover bg-surface-secondary/10 px-3 py-3"
 									>
 										<p className="font-medium text-accent">{resource.name}</p>
 										<p className="mt-1 text-xs text-muted">

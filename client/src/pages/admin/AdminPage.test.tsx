@@ -152,6 +152,12 @@ mock.module("@client/hooks/useModeration", () => ({
 	useAdminDuplicatePulses: () => ({
 		data: [],
 	}),
+	useAdminCreateCrisis: () => ({
+		isPending: false,
+		mutate: (_payload: unknown, options?: { onSuccess?: () => void }) => {
+			options?.onSuccess?.();
+		},
+	}),
 	useAdminUsers: () => ({
 		data: [],
 	}),
@@ -189,6 +195,51 @@ mock.module("@client/hooks/useModeration", () => ({
 		isPending: false,
 		mutate: () => {},
 	}),
+}));
+
+mock.module("@client/pages/map/hooks", () => ({
+	useRetrieveClusters: () => ({
+		data: [],
+	}),
+}));
+
+mock.module("@client/components/map/MapComponent", () => ({
+	MapComponent: ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	),
+}));
+
+mock.module("@client/components/map/ClusterMarker", () => ({
+	ClusterMarker: () => <div>Cluster Marker</div>,
+}));
+
+mock.module("@client/components/Modal", () => ({
+	Modal: ({
+		children,
+		header,
+	}: {
+		children: React.ReactNode;
+		header?: string;
+	}) => (
+		<div>
+			{header ? <h2>{header}</h2> : null}
+			{children}
+		</div>
+	),
+}));
+
+mock.module("mapbox-gl", () => ({
+	default: {
+		Marker: class {
+			addTo() {
+				return this;
+			}
+			remove() {}
+			setLngLat() {
+				return this;
+			}
+		},
+	},
 }));
 
 mock.module("@client/components/Button/Button", () => ({
@@ -232,12 +283,44 @@ mock.module("@heroui/react", () => {
 			},
 		},
 	};
+	const Select = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Select.Trigger = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	Select.Value = () => <span>Select value</span>;
+	Select.Indicator = () => <span>v</span>;
+	Select.Popover = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
+	const ListBox = ({
+		children,
+		items = [],
+	}: {
+		children: React.ReactNode;
+		items?: Array<any>;
+	}) => (
+		<div>
+			{typeof children === "function"
+				? items.map((item) =>
+						(children as (item: any) => React.ReactNode)(item),
+					)
+				: children}
+		</div>
+	);
+	const ListBoxItem = ({ children }: { children: React.ReactNode }) => (
+		<div>{children}</div>
+	);
 
 	return {
 		Card,
+		ListBox,
+		ListBoxItem,
 		ScrollShadow: ({ children }: { children: React.ReactNode }) => (
 			<div>{children}</div>
 		),
+		Select,
 		Separator: () => <hr />,
 		Toast,
 		cn: (...classes: Array<string | false | null | undefined>) =>
@@ -286,6 +369,7 @@ describe("AdminPage", () => {
 		expect(markup).toContain("Moderation Queue");
 		expect(markup).toContain("Misleading location");
 		expect(markup).toContain("Incident Types");
+		expect(markup).toContain("Crisis Management");
 		expect(markup).toContain("Verified pulse");
 		expect(markup).toContain("This report has already been reviewed.");
 	});

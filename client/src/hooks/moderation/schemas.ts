@@ -1,3 +1,4 @@
+import { clientClusterSchema } from "@client/utils/clusterTypes";
 import {
 	clientIncidentTypeSchema,
 	clientPulseSchema,
@@ -97,6 +98,10 @@ export const mergePulseResultSchema = z.object({
 		id: z.string(),
 		isVerified: z.boolean().nullable(),
 	}),
+});
+
+export const adminCreateCrisisResultSchema = z.object({
+	cluster: clientClusterSchema,
 });
 
 export const adminUserListItemSchema = z.object({

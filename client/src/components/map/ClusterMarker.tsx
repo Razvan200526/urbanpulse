@@ -1,5 +1,6 @@
 import { ClusterDrawer } from "@client/pages/map/components/ClusterDrawer";
 import type { ClientClusterType } from "@client/utils/clusterTypes";
+import { GLOBAL_CRISIS_RADIUS_THRESHOLD_METERS } from "@shared/utils/crisis";
 import { PulseEnum } from "@shared/types";
 import { AlertCircle, Package, PawPrint, Zap } from "lucide-react";
 import mapboxgl from "mapbox-gl";
@@ -44,6 +45,98 @@ const typeIconConfig: Record<
 		fill: "#f59e0b", // amber-500
 		label: "Pet Alert",
 	},
+};
+
+const cityBoundaryCache = new Map<string, GeoJSON.FeatureCollection | null>();
+const cityBoundaryInFlight = new Map<
+	string,
+	Promise<GeoJSON.FeatureCollection | null>
+>();
+
+const getCityBoundaryCacheKey = (lat: number, lng: number) =>
+	`${lat.toFixed(3)},${lng.toFixed(3)}`;
+
+const extractPolygonBoundary = (
+	data: unknown,
+): GeoJSON.FeatureCollection | null => {
+	if (
+		!data ||
+		typeof data !== "object" ||
+		(data as { type?: string }).type !== "FeatureCollection"
+	) {
+		return null;
+	}
+
+	const features = (data as { features?: unknown[] }).features;
+	if (!Array.isArray(features)) {
+		return null;
+	}
+
+	const polygonFeature = features.find((feature) => {
+		const geometry = (feature as { geometry?: { type?: string } }).geometry;
+		return geometry?.type === "Polygon" || geometry?.type === "MultiPolygon";
+	});
+
+	if (!polygonFeature) {
+		return null;
+	}
+
+	return {
+		type: "FeatureCollection",
+		features: [polygonFeature as GeoJSON.Feature],
+	};
+};
+
+const fetchCityBoundaryByCoordinates = async (
+	lat: number,
+	lng: number,
+): Promise<GeoJSON.FeatureCollection | null> => {
+	const cacheKey = getCityBoundaryCacheKey(lat, lng);
+	const cached = cityBoundaryCache.get(cacheKey);
+	if (cached !== undefined) {
+		return cached;
+	}
+
+	const pending = cityBoundaryInFlight.get(cacheKey);
+	if (pending) {
+		return pending;
+	}
+
+	const request = (async () => {
+		try {
+			const url = new URL("https://nominatim.openstreetmap.org/reverse");
+			url.searchParams.set("format", "geojson");
+			url.searchParams.set("lat", String(lat));
+			url.searchParams.set("lon", String(lng));
+			url.searchParams.set("zoom", "10");
+			url.searchParams.set("addressdetails", "1");
+			url.searchParams.set("polygon_geojson", "1");
+			url.searchParams.set("polygon_threshold", "0.001");
+
+			const response = await fetch(url.toString(), {
+				headers: {
+					Accept: "application/geo+json, application/json",
+				},
+			});
+			if (!response.ok) {
+				cityBoundaryCache.set(cacheKey, null);
+				return null;
+			}
+
+			const payload = (await response.json()) as unknown;
+			const boundary = extractPolygonBoundary(payload);
+			cityBoundaryCache.set(cacheKey, boundary);
+			return boundary;
+		} catch {
+			cityBoundaryCache.set(cacheKey, null);
+			return null;
+		} finally {
+			cityBoundaryInFlight.delete(cacheKey);
+		}
+	})();
+
+	cityBoundaryInFlight.set(cacheKey, request);
+	return request;
 };
 
 // Utility to create a GeoJSON circle
@@ -92,6 +185,8 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 		status,
 	} = cluster;
 	const isCrisis = status === "crisis";
+	const isGlobalCrisis =
+		isCrisis && radiusMeters >= GLOBAL_CRISIS_RADIUS_THRESHOLD_METERS;
 
 	const map = useMap();
 	const markerRef = useRef<mapboxgl.Marker | null>(null);
@@ -119,10 +214,11 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 		};
 
 		markerEl.addEventListener("click", handleClick);
+		let isDestroyed = false;
 
 		let cleanupAnimation: (() => void) | undefined;
 
-		const addMarkerAndRadius = () => {
+		const addMarkerAndRadius = async () => {
 			if (!map) return;
 
 			// Add Center Marker
@@ -132,11 +228,18 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 
 			markerRef.current = newMarker;
 
-			// Add Radius Circle Source & Layers
+			// Add Radius (or city boundary for global crisis) Source & Layers
 			if (!map.getSource(sourceId)) {
+				const cityBoundary = isGlobalCrisis
+					? await fetchCityBoundaryByCoordinates(lat, lng)
+					: null;
+				if (isDestroyed || !map.getStyle() || map.getSource(sourceId)) {
+					return;
+				}
+
 				map.addSource(sourceId, {
 					type: "geojson",
-					data: createGeoJSONCircle([lng, lat], radiusMeters),
+					data: cityBoundary ?? createGeoJSONCircle([lng, lat], radiusMeters),
 				});
 
 				map.addLayer({
@@ -146,7 +249,7 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 					layout: {},
 					paint: {
 						"fill-color": config.fill,
-						"fill-opacity": isCrisis ? 0.2 : 0.1,
+						"fill-opacity": isGlobalCrisis ? 0.08 : isCrisis ? 0.2 : 0.1,
 					},
 				});
 
@@ -158,7 +261,11 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 					paint: {
 						"line-color": config.fill,
 						"line-width": isCrisis ? 3 : 1,
-						"line-dasharray": isCrisis ? [1, 0] : [2, 2],
+						"line-dasharray": isGlobalCrisis
+							? [1.5, 1.5]
+							: isCrisis
+								? [1, 0]
+								: [2, 2],
 						"line-opacity": 0.5,
 					},
 				});
@@ -197,6 +304,7 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 		}
 
 		return () => {
+			isDestroyed = true;
 			markerEl.removeEventListener("click", handleClick);
 			map.off("idle", addMarkerAndRadius);
 			if (cleanupAnimation) cleanupAnimation();
@@ -218,6 +326,7 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 		lng,
 		radiusMeters,
 		isCrisis,
+		isGlobalCrisis,
 		config.fill,
 		sourceId,
 		layerId,
