@@ -1,7 +1,10 @@
 import type { LostDocumentType, UserType } from "@server/db/schema";
 import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
 import { userRepository } from "@server/repositories/UserRepository";
-import { documentImageService } from "@server/services/DocumentImageService";
+import {
+	type AppliedMaskRegion,
+	documentImageService,
+} from "@server/services/DocumentImageService";
 import { lostDocumentAIService } from "@server/services/LostDocumentAIService";
 import { notificationService } from "@server/services/NotificationService";
 import { logger } from "@server/utils/Logger";
@@ -39,6 +42,12 @@ interface UploadResult {
 	success: boolean;
 	documentId?: string;
 	error?: string;
+}
+
+export interface AdminDebugMaskResult {
+	overlayUrl: string;
+	orientation: "landscape" | "portrait-cw" | "portrait-ccw";
+	appliedMasks: AppliedMaskRegion[];
 }
 
 /**
@@ -85,6 +94,7 @@ export class LostDocumentService {
 				await this.imageService.processDocument(
 					imageBuffer,
 					analysis.sensitiveRegions,
+					analysis.documentType,
 				);
 
 			// Generate embedding
@@ -304,6 +314,33 @@ export class LostDocumentService {
 		} catch (error) {
 			logger.exception(
 				error instanceof Error ? error : new Error("Failed to get signed URL"),
+			);
+			return null;
+		}
+	}
+
+	/**
+	 * Generate admin-only debug overlay with applied mask metadata.
+	 */
+	async getDebugMaskForAdmin(
+		documentId: string,
+	): Promise<AdminDebugMaskResult | null> {
+		try {
+			const document = await this.repo.getOne(documentId);
+			if (!document) {
+				return null;
+			}
+
+			return await this.imageService.createDebugMaskOverlay(
+				document.originalImageKey,
+				document.sensitiveRegions ?? [],
+				document.documentType as any,
+			);
+		} catch (error) {
+			logger.exception(
+				error instanceof Error
+					? error
+					: new Error("Failed to generate debug mask overlay"),
 			);
 			return null;
 		}

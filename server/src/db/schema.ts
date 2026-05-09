@@ -707,7 +707,13 @@ export const lostDocument = pgTable(
 					y: number;
 					w: number;
 					h: number;
-					kind?: "SENSITIVE_TEXT" | "FACE";
+					kind?:
+						| "SENSITIVE_TEXT"
+						| "FACE"
+						| "CNP"
+						| "SERIES_NUMBER"
+						| "ADDRESS"
+						| "MRZ";
 				}[]
 			>()
 			.notNull()

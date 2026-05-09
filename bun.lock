@@ -71,7 +71,7 @@
         "@aws-sdk/s3-request-presigner": "^3.1009.0",
         "@better-auth/drizzle-adapter": "^1.5.5",
         "@better-auth/infra": "^0.1.12",
-        "@google/genai": "^1.48.0",
+        "@google/genai": "^2.0.1",
         "@hono/zod-validator": "^0.7.6",
         "bcryptjs": "^3.0.3",
         "better-auth": "^1.5.6",
@@ -414,7 +414,7 @@
 
     "@formatjs/intl-localematcher": ["@formatjs/intl-localematcher@0.6.2", "", { "dependencies": { "tslib": "^2.8.0" } }, "sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA=="],
 
-    "@google/genai": ["@google/genai@1.48.0", "", { "dependencies": { "google-auth-library": "^10.3.0", "p-retry": "^4.6.2", "protobufjs": "^7.5.4", "ws": "^8.18.0" }, "peerDependencies": { "@modelcontextprotocol/sdk": "^1.25.2" }, "optionalPeers": ["@modelcontextprotocol/sdk"] }, "sha512-plonYK4ML2PrxsRD9SeqmFt76eREWkQdPCglOA6aYDzL1AAbE+7PUnT54SvpWGfws13L0AZEqGSpL7+1IPnTxQ=="],
+    "@google/genai": ["@google/genai@2.0.1", "", { "dependencies": { "google-auth-library": "^10.3.0", "p-retry": "^4.6.2", "protobufjs": "^7.5.4", "ws": "^8.18.0" }, "peerDependencies": { "@modelcontextprotocol/sdk": "^1.25.2" }, "optionalPeers": ["@modelcontextprotocol/sdk"] }, "sha512-trxxbVePM9J8Cuni5x7+xvApoqb2y6Zk27/wugjT2cuwHOT78nFGdf/Ni29MkDxzWwrj90OQpno1Ana6dm3D2A=="],
 
     "@heroui/react": ["@heroui/react@3.0.1", "", { "dependencies": { "@heroui/styles": "3.0.1", "@radix-ui/react-avatar": "1.1.11", "@react-aria/i18n": "3.12.16", "@react-aria/ssr": "3.9.10", "@react-aria/utils": "3.33.1", "@react-stately/utils": "3.11.0", "@react-types/color": "3.1.4", "@react-types/shared": "3.33.1", "input-otp": "1.4.2", "react-aria-components": "1.16.0", "tailwind-merge": "3.4.0", "tailwind-variants": "3.2.2" }, "peerDependencies": { "react": ">=19.0.0", "react-dom": ">=19.0.0", "tailwindcss": ">=4.0.0" } }, "sha512-Dx5oku2LPgK1+Uy1KIyVcfqgYTkVCXEII9OuwoKIJe7GW9Lf1xdHpSTwsdDZoNrUl8IvkDjav1ud92OGY/maRA=="],
 

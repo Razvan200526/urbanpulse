@@ -9,6 +9,7 @@ import { conversationController } from "./controllers/ConversationController";
 import { dashboardController } from "./controllers/DashboardController";
 import { healthController } from "./controllers/HealthController";
 import { incidentTypeController } from "./controllers/IncidentTypeController";
+import { lostDocumentController } from "./controllers/LostDocumentController";
 import { messageController } from "./controllers/MessageController";
 import { notificationController } from "./controllers/NotificationController";
 import {
@@ -19,7 +20,6 @@ import { pulseController } from "./controllers/PulseController";
 import { reportController } from "./controllers/ReportController";
 import { resourceController } from "./controllers/ResourceController";
 import { uploadController } from "./controllers/UploadController";
-import { lostDocumentController } from "./controllers/LostDocumentController";
 import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
 import type { UserType } from "./db/schema";

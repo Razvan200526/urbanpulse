@@ -17,22 +17,17 @@ export const sensitiveRegionSchema = z.object({
 	y: z.number().min(0),
 	w: z.number().min(1),
 	h: z.number().min(1),
-	kind: z.enum(["SENSITIVE_TEXT", "FACE"]).optional(),
+	kind: z
+		.enum(["SENSITIVE_TEXT", "FACE", "CNP", "SERIES_NUMBER", "ADDRESS", "MRZ"])
+		.optional(),
 });
 
 export const documentAnalysisSchema = z.object({
-	documentType: z.enum([
-		LostDocumentTypeEnum.IdCard,
-		LostDocumentTypeEnum.Passport,
-		LostDocumentTypeEnum.DrivingLicense,
-		LostDocumentTypeEnum.StudentCard,
-		LostDocumentTypeEnum.HealthCard,
-		LostDocumentTypeEnum.Other,
-	]),
-	extractedName: z.string().optional().nullable(),
-	extractedFirstName: z.string().optional().nullable(),
-	extractedBirthYear: z.number().optional().nullable(),
-	extractedCity: z.string().optional().nullable(),
+	documentType: z.nativeEnum(LostDocumentTypeEnum),
+	extractedName: z.string().nullable().optional(),
+	extractedFirstName: z.string().nullable().optional(),
+	extractedBirthYear: z.number().nullable().optional(),
+	extractedCity: z.string().nullable().optional(),
 	sensitiveRegions: z.array(sensitiveRegionSchema),
 	faceRegionDetected: z.boolean().optional().default(false),
 	alreadyBlurred: z.boolean(),
