@@ -19,6 +19,7 @@ import { pulseController } from "./controllers/PulseController";
 import { reportController } from "./controllers/ReportController";
 import { resourceController } from "./controllers/ResourceController";
 import { uploadController } from "./controllers/UploadController";
+import { lostDocumentController } from "./controllers/LostDocumentController";
 import { userController } from "./controllers/UserController";
 import { weatherController } from "./controllers/WeatherController";
 import type { UserType } from "./db/schema";
@@ -74,6 +75,7 @@ export const app = new Hono<{ Variables: Variables }>()
 	.route("/", resourceController)
 	.route("/", dashboardController)
 	.route("/", uploadController)
+	.route("/", lostDocumentController)
 	.route("/", adminController)
 	.route("/", weatherController);
 

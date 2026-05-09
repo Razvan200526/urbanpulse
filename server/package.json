@@ -36,6 +36,7 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.1009.0",
+		"@aws-sdk/s3-request-presigner": "^3.1009.0",
 		"@better-auth/drizzle-adapter": "^1.5.5",
 		"@better-auth/infra": "^0.1.12",
 		"@google/genai": "^1.48.0",
@@ -54,6 +55,7 @@
 		"pretty-error": "^4.0.0",
 		"resend": "^6.9.3",
 		"shared": "workspace:*",
+		"sharp": "^0.33.0",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {

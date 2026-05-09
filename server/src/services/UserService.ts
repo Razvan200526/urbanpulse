@@ -260,6 +260,10 @@ export class UserService {
 				name: payload.name,
 				bio: payload.bio,
 				image: payload.image || null,
+				firstName: payload.firstName,
+				lastName: payload.lastName,
+				birthYear: payload.birthYear,
+				homeCity: payload.homeCity,
 				updatedAt: new Date(),
 			});
 			await this.invalidateProfileCache(userId);
