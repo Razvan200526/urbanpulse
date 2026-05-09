@@ -272,9 +272,13 @@ export class PulseService {
 			if (created) {
 				await this.invalidatePulseCaches(created.id);
 
-				//adding the cluster creation
-				const clusteringService = new ClusteringService();
-  await clusteringService.findOrCreateCluster(created);
+				// adding the cluster creation
+				try {
+					const clusteringService = new ClusteringService();
+					await clusteringService.findOrCreateCluster(created);
+				} catch (error) {
+					handleError(error);
+				}
 			}
 
 			return created;
