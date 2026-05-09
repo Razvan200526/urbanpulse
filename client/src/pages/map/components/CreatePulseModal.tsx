@@ -56,7 +56,6 @@ export const CreatePulseModal = ({
 	const descriptionRef = useRef<TextAreaRefType>(null);
 	const audioUrlRef = useRef<string>("");
 	const audioRef = useRef<HTMLAudioElement>(null);
-	const incidentRef = useRef<typeof incidentTypes | null>(null);
 
 	const [pulseType, setPulseType] = useState<PulseEnum>(
 		() => PulseEnum.Emergency,
