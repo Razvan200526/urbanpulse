@@ -1,6 +1,7 @@
 import { db } from "@server/db";
 import {
 	conversation,
+	type IncidentTypeType,
 	type PulseType,
 	pulse,
 	pulseConfirmation,
@@ -34,6 +35,7 @@ import type { ModeratePulseType } from "@shared/validators/admin/isModeratePulse
 import type { CreateReportType } from "@shared/validators/reports/isCreateReportValid";
 import type { ReviewReportType } from "@shared/validators/reports/isReviewReportValid";
 import { eq } from "drizzle-orm";
+import { incidentTypeService } from "./IncidentTypeService";
 import { notificationService } from "./NotificationService";
 
 const AUTO_VERIFY_CONFIRMATION_THRESHOLD = 3;
@@ -62,16 +64,19 @@ export type AdminReportQueueItem = {
 	createdAt: Date;
 	reporter: Pick<UserType, "id" | "name" | "email" | "role"> | null;
 	targetUser: Pick<UserType, "id" | "name" | "email" | "role"> | null;
-	targetPulse: Pick<
-		PulseType,
-		| "id"
-		| "title"
-		| "description"
-		| "status"
-		| "type"
-		| "isVerified"
-		| "moderationNote"
-	> | null;
+	targetPulse:
+		| (Pick<
+				PulseType,
+				| "id"
+				| "title"
+				| "description"
+				| "status"
+				| "type"
+				| "incidentTypeId"
+				| "isVerified"
+				| "moderationNote"
+		  > & { incidentType: IncidentTypeType | null })
+		| null;
 };
 
 export type DuplicatePulseCandidate = {
@@ -81,20 +86,22 @@ export type DuplicatePulseCandidate = {
 		| "title"
 		| "description"
 		| "type"
+		| "incidentTypeId"
 		| "status"
 		| "createdAt"
 		| "isVerified"
-	>;
+	> & { incidentType: IncidentTypeType | null };
 	targetPulse: Pick<
 		PulseType,
 		| "id"
 		| "title"
 		| "description"
 		| "type"
+		| "incidentTypeId"
 		| "status"
 		| "createdAt"
 		| "isVerified"
-	>;
+	> & { incidentType: IncidentTypeType | null };
 	distanceMeters: number;
 	hoursApart: number;
 	titleSimilarity: number;
@@ -185,6 +192,16 @@ export class ModerationService {
 			rightTokens.has(token),
 		).length;
 		return overlap / Math.max(leftTokens.size, rightTokens.size);
+	}
+
+	private async getIncidentTypeForPulse(
+		pulse: Pick<PulseType, "incidentTypeId">,
+	) {
+		if (!pulse.incidentTypeId) {
+			return null;
+		}
+
+		return await incidentTypeService.getIncidentTypeById(pulse.incidentTypeId);
 	}
 
 	async confirmPulse(
@@ -439,6 +456,8 @@ export class ModerationService {
 									description: targetPulse.description,
 									status: targetPulse.status,
 									type: targetPulse.type,
+									incidentTypeId: targetPulse.incidentTypeId,
+									incidentType: await this.getIncidentTypeForPulse(targetPulse),
 									isVerified: targetPulse.isVerified,
 									moderationNote: targetPulse.moderationNote,
 								}
@@ -509,6 +528,8 @@ export class ModerationService {
 							title: source.title,
 							description: source.description,
 							type: source.type,
+							incidentTypeId: source.incidentTypeId,
+							incidentType: await this.getIncidentTypeForPulse(source),
 							status: source.status,
 							createdAt: source.createdAt,
 							isVerified: source.isVerified,
@@ -518,6 +539,8 @@ export class ModerationService {
 							title: target.title,
 							description: target.description,
 							type: target.type,
+							incidentTypeId: target.incidentTypeId,
+							incidentType: await this.getIncidentTypeForPulse(target),
 							status: target.status,
 							createdAt: target.createdAt,
 							isVerified: target.isVerified,

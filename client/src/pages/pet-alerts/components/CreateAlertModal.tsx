@@ -120,9 +120,7 @@ export const CreateAlertModal = ({
 		}
 
 		if (!coords) {
-			Toast.toast.danger(
-				locationError || "Location is required. Please enable geolocation.",
-			);
+			Toast.toast.danger(locationError || "Location is required.");
 			return;
 		}
 

@@ -8,6 +8,7 @@ import { avatarController } from "./controllers/AvatarController";
 import { conversationController } from "./controllers/ConversationController";
 import { dashboardController } from "./controllers/DashboardController";
 import { healthController } from "./controllers/HealthController";
+import { incidentTypeController } from "./controllers/IncidentTypeController";
 import { messageController } from "./controllers/MessageController";
 import { notificationController } from "./controllers/NotificationController";
 import {
@@ -63,6 +64,7 @@ export const app = new Hono<{ Variables: Variables }>()
 	.route("/", userController)
 	.route("/", avatarController)
 	.route("/", conversationController)
+	.route("/", incidentTypeController)
 	.route("/", pulseController)
 	.route("/", messageController)
 	.route("/", notificationController)

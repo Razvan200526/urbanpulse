@@ -29,6 +29,37 @@ describe("isPulseRequestValid", () => {
 		expect(result.success).toBe(true);
 	});
 
+	test("accepts an incident type id for emergency reports", () => {
+		const result = isPulseRequestValid({
+			type: PulseEnum.Emergency,
+			urgency: UrgencyEnum.Immediate,
+			title: "Power out",
+			description: "The whole block lost electricity",
+			incidentTypeId: "11111111-1111-4111-8111-111111111111",
+			position: { x: 26.1, y: 44.4 },
+			imageUrls: [],
+		});
+
+		expect(result.success).toBe(true);
+		expect(result.pulseData?.incidentTypeId).toBe(
+			"11111111-1111-4111-8111-111111111111",
+		);
+	});
+
+	test("rejects invalid incident type ids", () => {
+		const result = isPulseRequestValid({
+			type: PulseEnum.Emergency,
+			urgency: UrgencyEnum.Immediate,
+			title: "Power out",
+			description: "The whole block lost electricity",
+			incidentTypeId: "blackout",
+			position: { x: 26.1, y: 44.4 },
+			imageUrls: [],
+		});
+
+		expect(result.success).toBe(false);
+	});
+
 	test("rejects markup-like content", () => {
 		const result = isPulseRequestValid({
 			type: PulseEnum.Emergency,

@@ -1,5 +1,5 @@
 {
-	"id": "6618b1c3-057c-45d2-9ab7-82846433ac3b",
+	"id": "5feeda5c-37ed-4dd5-b3f7-40c67684a6ff",
 	"prevId": "00000000-0000-0000-0000-000000000000",
 	"version": "7",
 	"dialect": "postgresql",
@@ -176,6 +176,12 @@
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true
+				},
+				"hiddenAt": {
+					"name": "hiddenAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
 				}
 			},
 			"indexes": {},
@@ -199,6 +205,95 @@
 					"onUpdate": "no action"
 				}
 			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.incident_type": {
+			"name": "incident_type",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"slug": {
+					"name": "slug",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"label": {
+					"name": "label",
+					"type": "varchar(80)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"description": {
+					"name": "description",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"isActive": {
+					"name": "isActive",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": true
+				},
+				"isSystem": {
+					"name": "isSystem",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true,
+					"default": false
+				},
+				"sortOrder": {
+					"name": "sortOrder",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": true,
+					"default": 0
+				},
+				"createdAt": {
+					"name": "createdAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updatedAt": {
+					"name": "updatedAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"incident_type_slug_unique": {
+					"name": "incident_type_slug_unique",
+					"columns": [
+						{
+							"expression": "slug",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": true,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
 			"policies": {},
@@ -697,6 +792,12 @@
 					"notNull": true,
 					"default": "'Emergency'"
 				},
+				"incidentTypeId": {
+					"name": "incidentTypeId",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": false
+				},
 				"userId": {
 					"name": "userId",
 					"type": "text",
@@ -819,6 +920,15 @@
 				}
 			},
 			"foreignKeys": {
+				"pulse_incidentTypeId_incident_type_id_fk": {
+					"name": "pulse_incidentTypeId_incident_type_id_fk",
+					"tableFrom": "pulse",
+					"tableTo": "incident_type",
+					"columnsFrom": ["incidentTypeId"],
+					"columnsTo": ["id"],
+					"onDelete": "set null",
+					"onUpdate": "no action"
+				},
 				"pulse_userId_user_id_fk": {
 					"name": "pulse_userId_user_id_fk",
 					"tableFrom": "pulse",
@@ -1582,6 +1692,13 @@
 				},
 				"successfulInteractions": {
 					"name": "successfulInteractions",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false,
+					"default": 0
+				},
+				"failedInteractions": {
+					"name": "failedInteractions",
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": false,

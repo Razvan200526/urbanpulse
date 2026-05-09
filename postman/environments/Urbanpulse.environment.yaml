@@ -1,6 +1,12 @@
 name: Urbanpulse
 values:
   - key: baseUrl
-    value: ''
     enabled: true
+    value: ''
+  - key: authEmail
+    enabled: true
+    value: ''
+  - key: authUserId
+    enabled: true
+    value: ''
 color: 0

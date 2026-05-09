@@ -1,4 +1,7 @@
-import { clientPulseSchema } from "@client/utils/types";
+import {
+	clientIncidentTypeSchema,
+	clientPulseSchema,
+} from "@client/utils/types";
 import { PulseStatusEnum } from "@shared/types";
 import { z } from "zod";
 
@@ -10,6 +13,7 @@ const moderationPulseSummarySchema = z.object({
 	type: z.string(),
 	isVerified: z.boolean().nullable(),
 	moderationNote: z.string().nullable().optional(),
+	incidentType: clientIncidentTypeSchema.nullable().optional(),
 });
 
 const moderationUserSchema = z.object({

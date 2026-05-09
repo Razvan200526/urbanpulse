@@ -75,7 +75,7 @@ export const MapPage = () => {
 	useEffect(() => {
 		if (!isGeolocationLoading && !hasCoords && isGeolocationError) {
 			Toast.toast.danger(
-				"Failed to fetch location.Make sure you allow the browser to access your location.",
+				`Failed to fetch location.Make sure you allow the browser to access your location. ${isGeolocationError} , ${isGeolocationLoading} ${hasCoords} `,
 			);
 			navigate("/dashboard", { replace: true });
 		}
@@ -124,6 +124,9 @@ export const MapPage = () => {
 														</p>
 														<p className="text-xs text-muted">
 															{pulse.type} · {pulse.urgency}
+															{pulse.incidentType
+																? ` · ${pulse.incidentType.label}`
+																: ""}
 														</p>
 													</div>
 												))

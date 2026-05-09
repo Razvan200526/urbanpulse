@@ -9,14 +9,19 @@ import { ResponsiveChoiceField } from "@client/components/input/ResponsiveChoice
 import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import type { TabItemType } from "@client/components/tabs/Tabs";
-import { H3 } from "@client/components/typography";
+import { H3, Label } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
-import { Toast, Tooltip } from "@heroui/react";
-import { PulseEnum, UrgencyEnum } from "@shared/types";
+import { useIncidentTypes } from "@client/hooks/useIncidentTypes";
+import { ListBox, ListBoxItem, Select, Toast, Tooltip } from "@heroui/react";
+import {
+	DefaultIncidentTypeSlugEnum,
+	PulseEnum,
+	UrgencyEnum,
+} from "@shared/types";
 import { isBioValid } from "@shared/validators/isBioValid";
 import { isNameValid } from "@shared/validators/isNameValid";
 import { PaperclipIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCreatePulse } from "../hooks";
 import { ImageList } from "./ImageList";
 
@@ -45,6 +50,7 @@ export const CreatePulseModal = ({
 }) => {
 	const { data: user } = useAuth();
 	const { mutateAsync: createPulse, isPending } = useCreatePulse();
+	const { data: incidentTypes = [] } = useIncidentTypes();
 
 	const titleRef = useRef<InputNameRefType>(null);
 	const descriptionRef = useRef<TextAreaRefType>(null);
@@ -57,7 +63,16 @@ export const CreatePulseModal = ({
 	const [urgency, setUrgency] = useState<UrgencyEnum>(() =>
 		safetyCheckinLaunch ? UrgencyEnum.NotUrgent : UrgencyEnum.Immediate,
 	);
+	const [incidentTypeId, setIncidentTypeId] = useState("");
 	const [imageUrls, setImageUrls] = useState<string[]>([]);
+	const fallbackIncidentType = useMemo(
+		() =>
+			incidentTypes.find(
+				(item) => item.slug === DefaultIncidentTypeSlugEnum.Other,
+			) ?? incidentTypes[0],
+		[incidentTypes],
+	);
+	const showIncidentTypePicker = pulseType === PulseEnum.Emergency;
 	const defaultTitle = safetyCheckinLaunch
 		? "Safety check-in"
 		: emergencyLaunch
@@ -66,6 +81,22 @@ export const CreatePulseModal = ({
 	const defaultDescription = safetyCheckinLaunch
 		? "Checking in during the weather alert. I'm safe right now and can coordinate with neighbours if needed."
 		: "";
+
+	useEffect(() => {
+		if (!showIncidentTypePicker || incidentTypes.length === 0) {
+			return;
+		}
+
+		const selected = incidentTypes.find((item) => item.id === incidentTypeId);
+		if (!selected && fallbackIncidentType) {
+			setIncidentTypeId(fallbackIncidentType.id);
+		}
+	}, [
+		fallbackIncidentType,
+		incidentTypeId,
+		incidentTypes,
+		showIncidentTypePicker,
+	]);
 
 	const handleCreate = async () => {
 		const title = titleRef.current?.getValue() ?? "";
@@ -92,6 +123,9 @@ export const CreatePulseModal = ({
 			title,
 			description,
 			type: pulseType,
+			...(pulseType === PulseEnum.Emergency && incidentTypeId
+				? { incidentTypeId }
+				: {}),
 			urgency,
 			position: { x: coords.long, y: coords.lat },
 			imageUrls,
@@ -136,8 +170,44 @@ export const CreatePulseModal = ({
 					label="Pulse Type"
 					items={pulseTypeItems}
 					selectedKey={pulseType}
-					onSelectionChange={(key) => setPulseType(key as PulseEnum)}
+					onSelectionChange={(key) => {
+						setPulseType(key as PulseEnum);
+						if (key !== PulseEnum.Emergency) {
+							setIncidentTypeId("");
+						}
+					}}
 				/>
+
+				{showIncidentTypePicker && (
+					<Select>
+						<Label className="text-accent">Incident type</Label>
+						<Select.Trigger className="text-accent border border-accent rounded">
+							<Select.Value />
+							<Select.Indicator />
+						</Select.Trigger>
+						<Select.Popover className="border border-accent">
+							<ListBox
+								className="rounded"
+								items={incidentTypes.filter((item) => item.isActive)}
+								onSelectionChange={(keys) => {
+									const key = Array.from(keys)[0];
+									if (key) setIncidentTypeId(key.toString());
+								}}
+							>
+								{(item) => (
+									<ListBoxItem
+										className="text-muted bg-surface hover:text-accent-hover"
+										key={item.id}
+										id={item.id}
+										textValue={item.label}
+									>
+										{item.label}
+									</ListBoxItem>
+								)}
+							</ListBox>
+						</Select.Popover>
+					</Select>
+				)}
 
 				<ResponsiveChoiceField
 					label="Urgency"

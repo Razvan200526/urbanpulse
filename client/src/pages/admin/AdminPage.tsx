@@ -4,6 +4,12 @@ import { PageLoader } from "@client/components/PageLoader";
 import { P } from "@client/components/typography";
 import { useAdminOverview } from "@client/hooks/useAdminOverview";
 import {
+	type ClientIncidentType,
+	useAdminIncidentTypes,
+	useCreateIncidentType,
+	useUpdateIncidentType,
+} from "@client/hooks/useIncidentTypes";
+import {
 	type AdminUserListItem,
 	type AdminUserSession,
 	useAdminBanUser,
@@ -26,13 +32,17 @@ import {
 	ArrowRightLeft,
 	Bell,
 	ClipboardList,
+	Eye,
+	EyeOff,
 	MapPinned,
+	Plus,
+	Save,
 	Search,
 	ShieldAlert,
 	Users,
 	Wrench,
 } from "lucide-react";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 
 const metricCards = [
 	{
@@ -193,19 +203,133 @@ const SessionRow = ({
 	</div>
 );
 
+const IncidentTypeRow = ({
+	incidentType,
+	isPending,
+	onSave,
+	onToggleActive,
+}: {
+	incidentType: ClientIncidentType;
+	isPending: boolean;
+	onSave: (
+		incidentType: ClientIncidentType,
+		payload: { label: string; description: string; sortOrder: number },
+	) => void;
+	onToggleActive: (incidentType: ClientIncidentType) => void;
+}) => {
+	const [label, setLabel] = useState(incidentType.label);
+	const [description, setDescription] = useState(
+		incidentType.description ?? "",
+	);
+	const [sortOrder, setSortOrder] = useState(String(incidentType.sortOrder));
+
+	useEffect(() => {
+		setLabel(incidentType.label);
+		setDescription(incidentType.description ?? "");
+		setSortOrder(String(incidentType.sortOrder));
+	}, [incidentType]);
+
+	const parsedSortOrder = Number(sortOrder);
+	const canSave =
+		label.trim().length > 0 &&
+		Number.isFinite(parsedSortOrder) &&
+		Number.isInteger(parsedSortOrder) &&
+		(label.trim() !== incidentType.label ||
+			description.trim() !== (incidentType.description ?? "") ||
+			parsedSortOrder !== incidentType.sortOrder);
+
+	return (
+		<div className="rounded border border-accent/20 bg-surface-secondary/10 p-4">
+			<div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,0.3fr)_auto] lg:items-end">
+				<label className="flex min-w-0 flex-col gap-1.5 text-sm text-accent">
+					Name
+					<input
+						value={label}
+						onChange={(event) => setLabel(event.target.value)}
+						className="h-10 rounded border border-accent/25 bg-surface px-3 text-sm text-foreground outline-none focus:border-accent"
+					/>
+				</label>
+				<label className="flex min-w-0 flex-col gap-1.5 text-sm text-accent">
+					Order
+					<input
+						value={sortOrder}
+						inputMode="numeric"
+						onChange={(event) => setSortOrder(event.target.value)}
+						className="h-10 rounded border border-accent/25 bg-surface px-3 text-sm text-foreground outline-none focus:border-accent"
+					/>
+				</label>
+				<div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
+					<Button
+						size="sm"
+						variant="primary"
+						className="w-full sm:w-auto"
+						startContent={<Save className="size-4" />}
+						isDisabled={!canSave}
+						isPending={isPending}
+						onPress={() =>
+							onSave(incidentType, {
+								label: label.trim(),
+								description: description.trim(),
+								sortOrder: parsedSortOrder,
+							})
+						}
+					>
+						Save
+					</Button>
+					<Button
+						size="sm"
+						variant={incidentType.isActive ? "outline" : "secondary"}
+						className="w-full sm:w-auto"
+						startContent={
+							incidentType.isActive ? (
+								<EyeOff className="size-4" />
+							) : (
+								<Eye className="size-4" />
+							)
+						}
+						isPending={isPending}
+						onPress={() => onToggleActive(incidentType)}
+					>
+						{incidentType.isActive ? "Deactivate" : "Activate"}
+					</Button>
+				</div>
+			</div>
+			<label className="mt-3 flex flex-col gap-1.5 text-sm text-accent">
+				Description
+				<textarea
+					value={description}
+					onChange={(event) => setDescription(event.target.value)}
+					rows={2}
+					className="rounded border border-accent/25 bg-surface px-3 py-2 text-sm text-foreground outline-none focus:border-accent"
+				/>
+			</label>
+			<div className="mt-3 flex flex-wrap gap-2 text-xs text-muted">
+				<span>{incidentType.slug}</span>
+				<span>{incidentType.isSystem ? "System" : "Custom"}</span>
+				<span>{incidentType.isActive ? "Active" : "Inactive"}</span>
+			</div>
+		</div>
+	);
+};
+
 export const AdminPage = () => {
 	const { data, isPending, error } = useAdminOverview();
 	const { data: reports = [] } = useAdminReports();
 	const { data: duplicates = [] } = useAdminDuplicatePulses();
+	const { data: incidentTypes = [] } = useAdminIncidentTypes();
 	const [userSearch, setUserSearch] = useState("");
 	const deferredUserSearch = useDeferredValue(userSearch);
 	const { data: users = [] } = useAdminUsers(deferredUserSearch);
 	const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+	const [newIncidentLabel, setNewIncidentLabel] = useState("");
+	const [newIncidentDescription, setNewIncidentDescription] = useState("");
 	const { data: selectedUserSessions = [] } =
 		useAdminUserSessions(selectedUserId);
 	const reviewReport = useReviewReport();
 	const moderatePulse = useModeratePulse();
 	const mergePulse = useMergePulse();
+	const createIncidentType = useCreateIncidentType();
+	const updateIncidentType = useUpdateIncidentType();
 	const setRole = useAdminSetRole();
 	const banUser = useAdminBanUser();
 	const unbanUser = useAdminUnbanUser();
@@ -261,6 +385,70 @@ export const AdminPage = () => {
 				onError: (error) =>
 					Toast.toast.danger(
 						error instanceof Error ? error.message : "Could not ban user",
+					),
+			},
+		);
+	};
+
+	const onCreateIncidentType = () => {
+		const label = newIncidentLabel.trim();
+		if (!label) {
+			Toast.toast.danger("Incident type name is required.");
+			return;
+		}
+
+		createIncidentType.mutate(
+			{
+				label,
+				description: newIncidentDescription.trim(),
+			},
+			{
+				onSuccess: () => {
+					setNewIncidentLabel("");
+					setNewIncidentDescription("");
+				},
+				onError: (error) =>
+					Toast.toast.danger(
+						error instanceof Error
+							? error.message
+							: "Could not create incident type",
+					),
+			},
+		);
+	};
+
+	const onSaveIncidentType = (
+		incidentType: ClientIncidentType,
+		payload: { label: string; description: string; sortOrder: number },
+	) => {
+		updateIncidentType.mutate(
+			{
+				param: { id: incidentType.id },
+				json: payload,
+			},
+			{
+				onError: (error) =>
+					Toast.toast.danger(
+						error instanceof Error
+							? error.message
+							: "Could not update incident type",
+					),
+			},
+		);
+	};
+
+	const onToggleIncidentType = (incidentType: ClientIncidentType) => {
+		updateIncidentType.mutate(
+			{
+				param: { id: incidentType.id },
+				json: { isActive: !incidentType.isActive },
+			},
+			{
+				onError: (error) =>
+					Toast.toast.danger(
+						error instanceof Error
+							? error.message
+							: "Could not update incident type",
 					),
 			},
 		);
@@ -360,7 +548,11 @@ export const AdminPage = () => {
 															</p>
 															<p className="text-xs text-muted">
 																{entry.targetPulse
-																	? `Pulse: ${entry.targetPulse.title} (${entry.targetPulse.status})`
+																	? `Pulse: ${entry.targetPulse.title} (${entry.targetPulse.status})${
+																			entry.targetPulse.incidentType
+																				? ` · ${entry.targetPulse.incidentType.label}`
+																				: ""
+																		}`
 																	: entry.targetUser
 																		? `Target user: ${entry.targetUser.name || entry.targetUser.email}`
 																		: "No linked pulse or user"}
@@ -562,6 +754,9 @@ export const AdminPage = () => {
 														</p>
 														<p className="mt-1 text-xs text-muted">
 															{entry.sourcePulse.type} ·{" "}
+															{entry.sourcePulse.incidentType
+																? `${entry.sourcePulse.incidentType.label} · `
+																: ""}
 															{formatDate(
 																new Date(entry.sourcePulse.createdAt),
 															)}
@@ -576,6 +771,9 @@ export const AdminPage = () => {
 														</p>
 														<p className="mt-1 text-xs text-muted">
 															{entry.targetPulse.type} ·{" "}
+															{entry.targetPulse.incidentType
+																? `${entry.targetPulse.incidentType.label} · `
+																: ""}
 															{formatDate(
 																new Date(entry.targetPulse.createdAt),
 															)}
@@ -636,6 +834,65 @@ export const AdminPage = () => {
 									<EmptyState message="No strong duplicate pulse candidates right now." />
 								)}
 							</SectionCard>
+
+							<SectionCard
+								title="Incident Types"
+								description="Manage the emergency categories shown in the pulse reporting flow."
+								contentClassName="space-y-4"
+							>
+								<div className="rounded border border-accent/20 bg-surface-secondary/10 p-4">
+									<div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
+										<label className="flex min-w-0 flex-col gap-1.5 text-sm text-accent">
+											Name
+											<input
+												value={newIncidentLabel}
+												onChange={(event) =>
+													setNewIncidentLabel(event.target.value)
+												}
+												placeholder="Shelter need"
+												className="h-10 rounded border border-accent/25 bg-surface px-3 text-sm text-foreground outline-none placeholder:text-muted focus:border-accent"
+											/>
+										</label>
+										<label className="flex min-w-0 flex-col gap-1.5 text-sm text-accent">
+											Description
+											<input
+												value={newIncidentDescription}
+												onChange={(event) =>
+													setNewIncidentDescription(event.target.value)
+												}
+												placeholder="Optional"
+												className="h-10 rounded border border-accent/25 bg-surface px-3 text-sm text-foreground outline-none placeholder:text-muted focus:border-accent"
+											/>
+										</label>
+										<Button
+											size="sm"
+											variant="primary"
+											className="w-full lg:w-auto"
+											startContent={<Plus className="size-4" />}
+											isPending={createIncidentType.isPending}
+											onPress={onCreateIncidentType}
+										>
+											Add type
+										</Button>
+									</div>
+								</div>
+
+								{incidentTypes.length > 0 ? (
+									<div className="space-y-3">
+										{incidentTypes.map((incidentType) => (
+											<IncidentTypeRow
+												key={incidentType.id}
+												incidentType={incidentType}
+												isPending={updateIncidentType.isPending}
+												onSave={onSaveIncidentType}
+												onToggleActive={onToggleIncidentType}
+											/>
+										))}
+									</div>
+								) : (
+									<EmptyState message="No incident types are configured yet." />
+								)}
+							</SectionCard>
 						</div>
 
 						<SectionCard
@@ -671,6 +928,9 @@ export const AdminPage = () => {
 										<p className="font-medium text-accent">{pulse.title}</p>
 										<p className="mt-1 text-xs text-muted">
 											{pulse.type} · {pulse.status} ·{" "}
+											{pulse.incidentType
+												? `${pulse.incidentType.label} · `
+												: ""}
 											{formatDate(new Date(pulse.createdAt))}
 										</p>
 									</div>
