@@ -2,6 +2,7 @@ import { HelpOfferSnackbar } from "@client/components/notifications/HelpOfferSna
 import { useAuth } from "@client/hooks/useAuth";
 import { useLocationSync } from "@client/hooks/useLocationSync";
 import { useNotifications } from "@client/hooks/useNotifications";
+import { useCrisisStore } from "@client/stores/crisisStore";
 import { cn } from "@heroui/react";
 import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router";
@@ -15,13 +16,17 @@ export const AuthLayout = () => {
 	const { data: user, isPending } = useAuth();
 	const { theme } = useThemeStore();
 	const { isOpen } = useAppSidebarStore();
+	const { isCrisisModeActive } = useCrisisStore();
 
 	useNotifications(user?.user.id || "");
 	useLocationSync();
 
 	useEffect(() => {
-		document.body.setAttribute("data-theme", theme);
-	});
+		document.body.setAttribute(
+			"data-theme",
+			isCrisisModeActive ? "dark" : theme,
+		);
+	}, [isCrisisModeActive, theme]);
 
 	if (isPending) {
 		return <PageLoader />;

@@ -1,15 +1,16 @@
-import { Card, Divider, Chip } from "@heroui/react";
+import { H3, P } from "@client/components/typography";
+import { Card, Chip, Separator } from "@heroui/react";
+import { PulseEnum } from "@shared/types";
 import {
 	AlertCircle,
-	Zap,
+	AlertTriangle,
+	Gauge,
 	Package,
 	PawPrint,
-	AlertTriangle,
-	Users,
 	Signal,
-	Gauge,
+	Users,
+	Zap,
 } from "lucide-react";
-import { PulseEnum } from "@shared/types";
 
 interface ClusterCardProps {
 	id: string;
@@ -62,7 +63,7 @@ const statusConfig: Record<
 	crisis: {
 		color: "bg-yellow-100 text-yellow-700",
 		bg: "border-yellow-200",
-		label: "⚠️ CRISIS MODE",
+		label: "CRISIS MODE",
 		icon: AlertTriangle,
 	},
 	resolved: {
@@ -84,99 +85,78 @@ export const ClusterCard = ({
 	status,
 	onClick,
 }: ClusterCardProps) => {
-	const typeConfig = typeIconConfig[pulseType] || typeIconConfig[PulseEnum.Emergency];
+	const typeConfig =
+		typeIconConfig[pulseType] || typeIconConfig[PulseEnum.Emergency];
 	const statusCfg = statusConfig[status];
 	const TypeIcon = typeConfig.Icon;
-	const StatusIcon = statusCfg.icon;
 
 	return (
 		<Card
-			className={`cursor-pointer transition-all hover:shadow-lg ${statusCfg.bg} border`}
+			className={`cursor-pointer transition-all ${statusCfg.bg} border border-danger`}
 			onClick={() => onClick?.(id)}
 		>
 			<div className="p-4 space-y-3">
-				{/* Header with type icon and status badge */}
-				<div className="flex items-start justify-between gap-3">
-					<div className="flex items-center gap-2 flex-1">
-						<div
-							className={`p-2 rounded-lg ${typeConfig.color} bg-opacity-10`}
-						>
+				<div className="flex items-start gap-1">
+					<div className="flex items-center gap-1 flex-1">
+						<div className={`p-2 rounded-lg ${typeConfig.color} bg-opacity-10`}>
 							<TypeIcon className={`w-5 h-5 ${typeConfig.color}`} />
 						</div>
-						<div className="flex-1 min-w-0">
-							<h3 className="font-semibold text-sm truncate">{title}</h3>
-							<p className="text-xs text-default-500">
-								{typeConfig.label}
-							</p>
+						<div className="flex-1 min-w-0 items-center justify-center">
+							<H3 className="font-semibold text-sm truncate">{title}</H3>
 						</div>
 					</div>
-
-					<Chip
-						isDisabled
-						className={`flex-shrink-0 ${statusCfg.color}`}
-						size="sm"
-						startContent={
-							<StatusIcon className="w-3 h-3 ml-1" />
-						}
-					>
-						{statusCfg.label}
-					</Chip>
 				</div>
 
-				<Divider />
+				<Separator />
 
-				{/* Metrics grid */}
 				<div className="grid grid-cols-3 gap-3">
-					{/* Report Count */}
 					<div className="flex flex-col items-center p-2 bg-default-50 rounded-lg">
-						<div className="flex items-center gap-1 mb-1">
-							<Users className="w-4 h-4 text-default-500" />
-							<span className="text-xs text-default-500">Reports</span>
+						<div className="flex items-center gap-1 mb-1 text-accent">
+							<Users className="w-4 h-4 text-accent" />
+							<span className="text-xs text-accent">Reports</span>
 						</div>
-						<span className="font-bold text-lg">{reports}</span>
+						<span className="font-bold text-lg text-accent">{reports}</span>
 					</div>
 
-					{/* Confidence Score */}
 					<div className="flex flex-col items-center p-2 bg-default-50 rounded-lg">
 						<div className="flex items-center gap-1 mb-1">
-							<Gauge className="w-4 h-4 text-default-500" />
-							<span className="text-xs text-default-500">Confidence</span>
+							<Gauge className="w-4 h-4 text-accent" />
+							<span className="text-xs text-accent">Confidence</span>
 						</div>
 						<div className="flex items-baseline gap-1">
-							<span className="font-bold text-lg">{Math.round(confidence)}</span>
-							<span className="text-xs text-default-500">%</span>
+							<span className="font-bold text-lg text-accent">
+								{Math.round(confidence)}
+							</span>
+							<span className="text-xs text-accent">%</span>
 						</div>
 					</div>
 
-					{/* Radius */}
 					<div className="flex flex-col items-center p-2 bg-default-50 rounded-lg">
 						<div className="flex items-center gap-1 mb-1">
-							<AlertCircle className="w-4 h-4 text-default-500" />
-							<span className="text-xs text-default-500">Radius</span>
+							<AlertCircle className="w-4 h-4 text-accent" />
+							<span className="text-xs text-accent">Radius</span>
 						</div>
-						<span className="font-bold text-lg text-sm">{radius}</span>
+						<span className="font-bold text-sm text-accent">{radius}</span>
 					</div>
 				</div>
 
-				{/* Crisis Mode Indicator */}
 				{isCrisis && (
-					<div className="flex items-center gap-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-						<AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+					<div className="flex items-center gap-2 p-2 bg-danger-soft-hover border border-danger rounded-lg">
+						<AlertTriangle className="w-4 h-4 text-danger shrink-0" />
 						<div>
-							<p className="text-xs font-semibold text-yellow-700">
+							<P className="text-xs font-semibold text-muted">
 								Crisis Mode Active
-							</p>
-							<p className="text-xs text-yellow-600">
+							</P>
+							<P className="text-xs text-muted">
 								High concentration of incidents detected
-							</p>
+							</P>
 						</div>
 					</div>
 				)}
 
-				{/* Footer description */}
-				<p className="text-xs text-default-500">
+				<P className="text-xs text-default-500">
 					Click to view cluster details and respond to incidents
-				</p>
+				</P>
 			</div>
 		</Card>
 	);

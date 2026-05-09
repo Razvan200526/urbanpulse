@@ -189,10 +189,6 @@ export const CreatePulseModal = ({
 							<ListBox
 								className="rounded"
 								items={incidentTypes.filter((item) => item.isActive)}
-								onSelectionChange={(keys) => {
-									const key = Array.from(keys)[0];
-									if (key) setIncidentTypeId(key.toString());
-								}}
 							>
 								{(item) => (
 									<ListBoxItem

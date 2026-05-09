@@ -2,9 +2,10 @@ import { Button } from "@client/components/Button/Button";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { useRetrievePulses } from "@client/pages/map/hooks";
+import { useCrisisStore } from "@client/stores/crisisStore";
 import { Card, ScrollShadow } from "@heroui/react";
 import { PulseEnum, PulseStatusEnum, UrgencyEnum } from "@shared/types";
-import { TrendingUp } from "lucide-react";
+import { AlertTriangle, TrendingUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { sortPulsesForFeed } from "../sortPulsesForFeed";
@@ -12,6 +13,7 @@ import { PulseList } from "./PulseList";
 
 export function NeighborhoodPulseFeed() {
 	const navigate = useNavigate();
+	const isCrisisModeActive = useCrisisStore((s) => s.isCrisisModeActive);
 	const { data: user } = useAuth();
 	const [radius, setRadius] = useState(500);
 	const [typeFilter, setTypeFilter] = useState<PulseEnum | "ALL">("ALL");
@@ -76,6 +78,20 @@ export function NeighborhoodPulseFeed() {
 				</div>
 			</Card.Header>
 			<Card.Content className="space-y-3 min-h-50">
+				{isCrisisModeActive && (
+					<div className="flex items-center gap-3 p-3 bg-red-100 border border-red-200 rounded-lg animate-pulse mb-2">
+						<AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+						<div>
+							<p className="text-xs font-bold text-red-700 uppercase">
+								CRISIS ACTIVE NEAR YOU
+							</p>
+							<p className="text-[10px] text-red-600 leading-tight">
+								Multiple emergency incidents detected. Please stay alert and
+								coordinate with neighbors.
+							</p>
+						</div>
+					</div>
+				)}
 				<div className="space-y-2">
 					<div className="flex flex-wrap gap-2">
 						{[

@@ -669,8 +669,8 @@ export const pulseClusters = pgTable(
 
 // Relatie pulse -> cluster
 export const pulseClusterMembers = pgTable("pulse_cluster_members", {
-  pulseId: uuid("pulse_id").references(() => pulse.id),
-  clusterId: uuid("cluster_id").references(() => pulseClusters.id),
+	pulseId: uuid("pulse_id").references(() => pulse.id),
+	clusterId: uuid("cluster_id").references(() => pulseClusters.id),
 });
 
 export type UserType = InferSelectModel<typeof user>;

@@ -3,6 +3,7 @@ import { authMiddleware } from "@server/middleware/authMiddleware";
 import { responseRepository } from "@server/repositories/ResponseRepository";
 import { userRepository } from "@server/repositories/UserRepository";
 import auth from "@server/services/auth/AuthService";
+import { ClusteringService } from "@server/services/ClusterigService";
 import { moderationService } from "@server/services/ModerationService";
 import { notificationService } from "@server/services/NotificationService";
 import { pulseService } from "@server/services/PulseService";
@@ -10,6 +11,7 @@ import { responseService } from "@server/services/ResponseService";
 import { handleError } from "@server/utils/handleError";
 import { PulseStatusEnum } from "@shared/types";
 import { acceptHelpParamsSchema } from "@shared/validators/pulses/isAcceptHelpParamsValid";
+import { clusterRetrieveQuerySchema } from "@shared/validators/pulses/isClusterRetrieveValid";
 import { confirmPulseParamsSchema } from "@shared/validators/pulses/isConfirmPulseValid";
 import { offerHelpBodySchema } from "@shared/validators/pulses/isOfferHelpValid";
 import {
@@ -22,6 +24,37 @@ import { upgradeWebSocket } from "hono/bun";
 export const pulseController = new Hono()
 	.basePath("/pulse")
 	.use(authMiddleware)
+	.get(
+		"/clusters",
+		zValidator("query", clusterRetrieveQuerySchema),
+		async (c) => {
+			try {
+				const query = c.req.valid("query");
+				const clusteringService = new ClusteringService();
+				const clusters = await clusteringService.getActiveClusters({
+					x: query.lng,
+					y: query.lat,
+					radiusMeters: query.radius,
+				});
+
+				return c.json({
+					success: true,
+					message: "Active clusters retrieved",
+					data: clusters,
+				});
+			} catch (error) {
+				handleError(error);
+				return c.json(
+					{
+						success: false,
+						message: "Failed to retrieve clusters",
+						data: null,
+					},
+					500,
+				);
+			}
+		},
+	)
 	.get("/:id", zValidator("param", pulseIdParamSchema), async (c) => {
 		const session = await auth.api.getSession({
 			headers: c.req.raw.headers,

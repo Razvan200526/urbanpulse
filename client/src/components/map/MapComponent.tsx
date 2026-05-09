@@ -16,7 +16,7 @@ export interface MapProps {
 export const MapComponent = ({
 	children,
 	center = [0, 0],
-	zoom = 9,
+	zoom = 5,
 	className = "w-full h-full relative",
 	style,
 	fallback,

@@ -51,8 +51,6 @@ export function useGetGeolocation(
 
 		const onSuccess = (position: GeolocationPosition) => {
 			if (!mountedRef.current) return;
-			// biome-ignore lint/suspicious/noConsole: essential for debugging browser-specific location issues
-			console.log("Geolocation success:", position.coords);
 			setCoords({
 				lat: position.coords.latitude,
 				long: position.coords.longitude,

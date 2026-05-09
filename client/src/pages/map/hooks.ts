@@ -6,6 +6,7 @@ export {
 	useUpdatePulse,
 } from "./hooks/mutations";
 export {
+	useRetrieveClusters,
 	useRetrieveMapPulses,
 	useRetrievePulseById,
 	useRetrievePulses,

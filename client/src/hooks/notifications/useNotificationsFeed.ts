@@ -1,6 +1,8 @@
 import { hono, queryClient } from "@client/lib/api/client";
 import { parseApiData, parseValueWithSchema } from "@client/lib/api/parse";
+import { useCrisisStore } from "@client/stores/crisisStore";
 import { useHelpOfferUiStore } from "@client/stores/helpOfferUiStore";
+import { clientClusterSchema } from "@client/utils/clusterTypes";
 import {
 	getPetMatchNotificationPayload,
 	type NotificationListItem,
@@ -147,6 +149,19 @@ export const useNotifications = (userId: string) => {
 
 				if (response.channelName === "notifications:pulse_updated") {
 					syncPulseNotification(response.data);
+					return;
+				}
+
+				if (response.type === "CRISIS_MODE_ACTIVATED") {
+					try {
+						const clusterData = (response as any).cluster;
+						const parsed = clientClusterSchema.parse(clusterData);
+						useCrisisStore.getState().addCrisis(parsed);
+						Toast.toast.warning("CRISIS MODE ACTIVATED NEAR YOU!");
+					} catch (error) {
+						// biome-ignore lint/suspicious/noConsole: essential for debugging live crisis notifications
+						console.error("Failed to process crisis notification", error);
+					}
 					return;
 				}
 

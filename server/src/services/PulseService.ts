@@ -13,6 +13,7 @@ import type {
 	PulseConditionOptions,
 	PulseSearchOptions,
 } from "@server/repositories/types";
+import { ClusteringService } from "@server/services/ClusterigService";
 import { cacheManager } from "@server/services/cache/CacheManager";
 import { notificationService } from "@server/services/NotificationService";
 import { requestMatchingAIService } from "@server/services/RequestMatchingAIService";
@@ -29,7 +30,6 @@ import {
 	pulseSocketMessageSchema,
 } from "@shared/validators/pulses/isPulseSocketMessageValid";
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
-import {ClusteringService} from "@server/services/ClusterigService";
 import { incidentTypeService } from "./IncidentTypeService";
 
 type PulseSocketResponse = {

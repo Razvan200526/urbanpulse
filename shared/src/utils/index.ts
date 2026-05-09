@@ -10,3 +10,5 @@ export const dataURLtoFile = (dataurl: string, filename: string) => {
 	}
 	return new File([u8arr], filename, { type: mime });
 };
+
+export * from "./geo";

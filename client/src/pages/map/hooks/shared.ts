@@ -4,6 +4,7 @@ import {
 	parseSocketData,
 	parseValueWithSchema,
 } from "@client/lib/api/parse";
+import { clusterArraySchema } from "@client/utils/clusterTypes";
 import {
 	heroAlertNotificationPayloadSchema,
 	pulseUpdatedNotificationPayloadSchema,
@@ -81,6 +82,28 @@ export const fetchPulseById = async (pulseId: string) => {
 		response,
 		clientPulseSchema,
 		"Failed to retrieve pulse",
+	);
+
+	return parsed.data;
+};
+
+export const fetchClusters = async (params: {
+	lat: number;
+	lng: number;
+	radius: number;
+}) => {
+	const response = await hono.api.pulse.clusters.$get({
+		query: {
+			lat: params.lat.toString(),
+			lng: params.lng.toString(),
+			radius: params.radius.toString(),
+		},
+	});
+
+	const parsed = await parseApiData(
+		response,
+		clusterArraySchema,
+		"Failed to retrieve clusters",
 	);
 
 	return parsed.data;

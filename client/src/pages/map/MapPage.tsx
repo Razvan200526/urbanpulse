@@ -1,7 +1,9 @@
 import { Button } from "@client/components/Button/Button";
+import { Dropdown } from "@client/components/Dropdown";
 import { Header } from "@client/components/Header";
 import { SignalIcon } from "@client/components/icons/SignalIcon";
 import type { ModalRefType } from "@client/components/Modal";
+import { ClusterMarker } from "@client/components/map/ClusterMarker";
 import { MapComponent } from "@client/components/map/MapComponent";
 import { PulseHeatmapLayer } from "@client/components/map/PulseHeatmapLayer";
 import { PageLoader } from "@client/components/PageLoader";
@@ -9,13 +11,21 @@ import { PulseMarker } from "@client/components/PulseMarker";
 import { useAuth } from "@client/hooks/useAuth";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { useUserProfile } from "@client/hooks/useProfileSettings";
+import type { ClientClusterType } from "@client/utils/clusterTypes";
 import type { ClientPulseType } from "@client/utils/types";
-import { Card, Separator, Toast } from "@heroui/react";
-import { PlusSquare } from "lucide-react";
+import {
+	Card,
+	Dropdown as HeroDropdown,
+	Separator,
+	Toast,
+} from "@heroui/react";
+import { Filter, Layers, PlusSquare, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { CreatePulseModal } from "./components/CreatePulseModal";
-import { useRetrieveMapPulses } from "./hooks";
+import { useRetrieveClusters, useRetrieveMapPulses } from "./hooks";
+
+type ViewFilter = "ALL" | "PULSES_ONLY" | "CRISIS_ONLY";
 
 export const MapPage = () => {
 	const {
@@ -57,6 +67,17 @@ export const MapPage = () => {
 		hasCoords && Boolean(user?.user.id),
 	);
 
+	const { data: clusterList = [] } = useRetrieveClusters(
+		{
+			lat: coords?.lat ?? 0,
+			lng: coords?.long ?? 0,
+			radius: mapPulseRadius,
+		},
+		hasCoords && Boolean(user?.user.id),
+	);
+
+	const [viewFilter, setViewFilter] = useState<ViewFilter>("ALL");
+
 	useEffect(() => {
 		const state = location.state as {
 			safetyCheckin?: boolean;
@@ -97,7 +118,7 @@ export const MapPage = () => {
 				{hasCoords && (
 					<MapComponent
 						center={[coords?.long ?? 0, coords?.lat ?? 0]}
-						zoom={17}
+						zoom={15}
 						onUnavailableChange={setIsMapUnavailable}
 						fallback={
 							<div className="flex h-full items-center justify-center p-4">
@@ -141,13 +162,58 @@ export const MapPage = () => {
 							</div>
 						}
 					>
-						<PulseHeatmapLayer pulses={pulseList} />
-						{pulseList.map((pulse: ClientPulseType) => (
-							<PulseMarker key={pulse.id} pulse={pulse} />
-						))}
+						{(viewFilter === "ALL" || viewFilter === "PULSES_ONLY") && (
+							<>
+								<PulseHeatmapLayer pulses={pulseList} />
+								{pulseList.map((pulse: ClientPulseType) => (
+									<PulseMarker key={pulse.id} pulse={pulse} />
+								))}
+							</>
+						)}
+						{(viewFilter === "ALL" || viewFilter === "CRISIS_ONLY") &&
+							clusterList.map((cluster: ClientClusterType) => (
+								<ClusterMarker key={cluster.id} cluster={cluster} />
+							))}
 					</MapComponent>
 				)}
-				<div className="absolute inset-x-4 bottom-4 z-50 flex flex-col gap-1 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-4">
+				<div className="absolute inset-x-4 bottom-4 z-50 flex flex-col gap-2 sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-4">
+					<Dropdown
+						placement="bottom end"
+						className="text-accent"
+						trigger={
+							<HeroDropdown.Trigger className="flex h-9 items-center justify-center gap-2 rounded border border-accent bg-surface px-4 text-sm font-medium text-accent shadow-sm hover:bg-surface-secondary sm:w-auto">
+								<Filter className="size-4" />
+								<span>
+									{viewFilter === "ALL"
+										? "All View"
+										: viewFilter === "PULSES_ONLY"
+											? "Only Pulses"
+											: "Only Crisis"}
+								</span>
+							</HeroDropdown.Trigger>
+						}
+						onAction={(key) => setViewFilter(key as ViewFilter)}
+						items={[
+							{
+								key: "ALL",
+								label: "All (Pulses + Crisis)",
+								labelClassName: "text-accent",
+								icon: <Layers className="size-4" />,
+							},
+							{
+								key: "PULSES_ONLY",
+								label: "Only Pulses",
+								labelClassName: "text-accent",
+								icon: <PlusSquare className="size-4" />,
+							},
+							{
+								key: "CRISIS_ONLY",
+								label: "Only Crisis",
+								labelClassName: "text-accent",
+								icon: <Zap className="size-4" />,
+							},
+						]}
+					/>
 					<Button
 						variant="primary"
 						className="w-full border border-accent sm:w-auto"

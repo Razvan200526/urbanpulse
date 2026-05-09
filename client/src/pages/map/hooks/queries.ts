@@ -1,9 +1,12 @@
 import { useNotificationSocketOpen } from "@client/hooks/notifications/useNotificationsFeed";
+import { useCrisisStore } from "@client/stores/crisisStore";
+import { calculateDistance } from "@shared/utils";
 import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import { useQuery } from "@tanstack/react-query";
 import { backend } from "client/sdk/backend";
 import { useEffect } from "react";
 import {
+	fetchClusters,
 	fetchPulseById,
 	pulseArraySchema,
 	sendPulseSocketMessage,
@@ -38,6 +41,51 @@ export const useRetrievePulseById = (
 		refetchInterval: enabled ? 3000 : false,
 		refetchIntervalInBackground: true,
 	});
+};
+
+export const useRetrieveClusters = (
+	data: { lat: number; lng: number; radius: number },
+	enabled = true,
+) => {
+	const setActiveCrises = useCrisisStore((state) => state.setActiveCrises);
+	const query = useQuery({
+		queryKey: ["pulse", "clusters", data],
+		enabled,
+		queryFn: async () => {
+			try {
+				return await fetchClusters(data);
+			} catch (err) {
+				// biome-ignore lint/suspicious/noConsole: debugging
+				console.error("useRetrieveClusters Error:", err);
+				throw err;
+			}
+		},
+		refetchInterval: enabled ? 30000 : false,
+		refetchIntervalInBackground: true,
+	});
+
+	useEffect(() => {
+		if (query.data) {
+			const nearbyCrises = query.data.filter((cluster) => {
+				if (cluster.status !== "crisis") return false;
+
+				const distance = calculateDistance(
+					{ lat: data.lat, lng: data.lng },
+					{ lat: cluster.centerLat, lng: cluster.centerLng },
+				);
+
+				// biome-ignore lint/suspicious/noConsole: debugging proximity
+				console.log(
+					`Cluster ${cluster.id} distance: ${distance}m (Radius: ${data.radius}m)`,
+				);
+
+				return distance <= data.radius;
+			});
+			setActiveCrises(nearbyCrises);
+		}
+	}, [query.data, data.lat, data.lng, data.radius, setActiveCrises]);
+
+	return query;
 };
 
 export const useRetrieveMapPulses = (
