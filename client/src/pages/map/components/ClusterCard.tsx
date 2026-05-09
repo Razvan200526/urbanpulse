@@ -1,5 +1,5 @@
 import { H3, P } from "@client/components/typography";
-import { Card, Chip, Separator } from "@heroui/react";
+import { Card, Separator } from "@heroui/react";
 import { PulseEnum } from "@shared/types";
 import {
 	AlertCircle,

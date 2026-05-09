@@ -102,7 +102,8 @@ export class ClusteringService {
 		}
 
 		// Verifică dacă se declanșează Crisis Mode (Folosim snake_case din DB)
-		const reportCount = clusterData.report_count ?? clusterData.reportCount ?? 0;
+		const reportCount =
+			clusterData.report_count ?? clusterData.reportCount ?? 0;
 		const crisisTriggered =
 			clusterData.crisis_triggered ?? clusterData.crisisTriggered ?? false;
 
