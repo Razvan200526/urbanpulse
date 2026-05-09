@@ -1,12 +1,11 @@
 import { ApiError } from "@google/genai";
 import { BaseAIService } from "@server/services/BaseAIService";
 import { logger } from "@server/utils/Logger";
-import { LostDocumentTypeEnum } from "@shared/types";
 import {
 	type DocumentAnalysisType,
 	documentAnalysisSchema,
 } from "@shared/validators/lost-documents/isLostDocumentValid";
-
+import { jsonrepair } from "jsonrepair";
 const detectImageMimeType = (imageBuffer: Buffer): string => {
 	if (
 		imageBuffer.length >= 3 &&
@@ -43,6 +42,7 @@ const detectImageMimeType = (imageBuffer: Buffer): string => {
  */
 export class LostDocumentAIService extends BaseAIService {
 	private embeddingModel = "text-embedding-004";
+	private extractionModel = "gemini-2.5-flash-lite";
 
 	/**
 	 * Analyze a document image and extract only minimal matching metadata + sensitive regions.
@@ -54,47 +54,19 @@ export class LostDocumentAIService extends BaseAIService {
 			const base64Image = imageBuffer.toString("base64");
 			const mimeType = detectImageMimeType(imageBuffer);
 
-			const prompt = `Analyze this document image and extract the requested information.
+			const prompt = `Extract visible identity-document text details from this image.
 
-CRITICAL RULE: The face photo and the person's name (First and Last) MUST REMAIN VISIBLE. Do NOT include coordinates for the face or the name in sensitiveRegions.
+Return JSON with:
+- documentType (ID_CARD, PASSPORT, DRIVING_LICENSE, STUDENT_CARD, HEALTH_CARD, OTHER)
+- extractedName (full name if visible, else null)
+- extractedFirstName (first name only if visible, else null)
+- extractedBirthYear (number YYYY if visible, else null)
+- extractedCity (city/location if visible, else null)
 
-Extract:
-1. Document type (ID_CARD, PASSPORT, DRIVING_LICENSE, STUDENT_CARD, HEALTH_CARD, OTHER)
-2. Extracted full name
-3. Extracted first name
-4. Extracted birth year (YYYY)
-5. Extracted city/location
-6. Detect if a face/photo region is visible (true/false)
-7. Whether the document is already blurred (true/false)
-
-SENSITIVE REGIONS:
-Return only sensitive fields as x, y, w, h relative to original image.
-Include Romanian ID sensitive fields: CNP(the 10 digit number in the top portion), series+number(e.g IZ , 6 digit number), domicile/address, issuing identifiers, MRZ (if present).
-Do NOT include non-sensitive fields.
-
-Use only kind values:
-- CNP
-- SERIES_NUMBER
-- ADDRESS
-- MRZ
-- SENSITIVE_TEXT
-- FACE
-
-Return EXACTLY this JSON shape:
-{
-  "documentType": "${LostDocumentTypeEnum.IdCard}",
-  "extractedName": "John Doe",
-  "extractedFirstName": "John",
-  "extractedBirthYear": 1990,
-  "extractedCity": "Bucuresti",
-  "faceRegionDetected": true,
-  "alreadyBlurred": false,
-  "sensitiveRegions": [
-    {"x": 10, "y": 50, "w": 200, "h": 30, "kind": "CNP"},
-    {"x": 220, "y": 50, "w": 150, "h": 30, "kind": "SERIES_NUMBER"},
-    {"x": 10, "y": 150, "w": 300, "h": 60, "kind": "ADDRESS"}
-  ]
-}`;
+Rules:
+- Use only text that is clearly visible.
+- Do not invent missing values.
+- If uncertain, return null for that field.`;
 
 			const client = this.getClient();
 			if (!client) {
@@ -103,7 +75,7 @@ Return EXACTLY this JSON shape:
 			}
 
 			const response = await client.models.generateContent({
-				model: this.model,
+				model: this.extractionModel,
 				contents: [
 					{
 						role: "user",
@@ -123,45 +95,28 @@ Return EXACTLY this JSON shape:
 							extractedFirstName: { type: "string", nullable: true },
 							extractedBirthYear: { type: "number", nullable: true },
 							extractedCity: { type: "string", nullable: true },
-							faceRegionDetected: { type: "boolean" },
-							alreadyBlurred: { type: "boolean" },
-							sensitiveRegions: {
-								type: "array",
-								items: {
-									type: "object",
-									properties: {
-										x: { type: "number" },
-										y: { type: "number" },
-										w: { type: "number" },
-										h: { type: "number" },
-										kind: {
-											type: "string",
-											enum: [
-												"CNP",
-												"SERIES_NUMBER",
-												"ADDRESS",
-												"MRZ",
-												"SENSITIVE_TEXT",
-												"FACE",
-											],
-										},
-									},
-									required: ["x", "y", "w", "h", "kind"],
-								},
-							},
 						},
-						required: ["documentType", "sensitiveRegions", "alreadyBlurred"],
+						required: ["documentType"],
 					},
 				},
 			});
 
 			const text = response.text?.trim();
-			if (!text) {
-				logger.error("Empty response from Gemini");
-				return null;
+			if (!text) return null;
+
+			const cleaned = text
+				.replace(/^```json\s*/i, "")
+				.replace(/```$/, "")
+				.trim();
+
+			let rawJson: unknown;
+			try {
+				rawJson = JSON.parse(cleaned);
+			} catch {
+				const repaired = jsonrepair(cleaned);
+				rawJson = JSON.parse(repaired);
 			}
 
-			const rawJson = JSON.parse(text);
 			const parsed = documentAnalysisSchema.safeParse(rawJson);
 			if (!parsed.success) {
 				logger.error(
@@ -171,9 +126,6 @@ Return EXACTLY this JSON shape:
 			}
 
 			const analysis = parsed.data as DocumentAnalysisType;
-			analysis.faceRegionDetected =
-				analysis.faceRegionDetected ||
-				analysis.sensitiveRegions.some((region) => region.kind === "FACE");
 			return analysis;
 		} catch (error) {
 			if (error instanceof ApiError) {

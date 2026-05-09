@@ -1,10 +1,7 @@
 import type { LostDocumentType, UserType } from "@server/db/schema";
 import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
 import { userRepository } from "@server/repositories/UserRepository";
-import {
-	type AppliedMaskRegion,
-	documentImageService,
-} from "@server/services/DocumentImageService";
+import { documentImageService } from "@server/services/DocumentImageService";
 import { lostDocumentAIService } from "@server/services/LostDocumentAIService";
 import { notificationService } from "@server/services/NotificationService";
 import { logger } from "@server/utils/Logger";
@@ -44,12 +41,6 @@ interface UploadResult {
 	error?: string;
 }
 
-export interface AdminDebugMaskResult {
-	overlayUrl: string;
-	orientation: "landscape" | "portrait-cw" | "portrait-ccw";
-	appliedMasks: AppliedMaskRegion[];
-}
-
 /**
  * Service for managing lost document uploads, analysis, and matching
  */
@@ -80,22 +71,18 @@ export class LostDocumentService {
 				};
 			}
 
-			// Analyze document
-			const analysis = await this.aiService.analyzeDocument(imageBuffer);
+			// Process image (Nano Banana redaction + upload)
+			const { originalKey, blurredUrl, blurredBuffer } =
+				await this.imageService.processDocument(imageBuffer);
+
+			// Analyze blurred document with lightweight extraction model
+			const analysis = await this.aiService.analyzeDocument(blurredBuffer);
 			if (!analysis) {
 				return {
 					success: false,
 					error: "Failed to analyze document",
 				};
 			}
-
-			// Process image (blur + upload)
-			const { originalKey, blurredUrl } =
-				await this.imageService.processDocument(
-					imageBuffer,
-					analysis.sensitiveRegions,
-					analysis.documentType,
-				);
 
 			// Generate embedding
 			const embeddingText = this.buildEmbeddingText(
@@ -123,7 +110,7 @@ export class LostDocumentService {
 					? LostDocumentEmbeddingStatusEnum.Ready
 					: LostDocumentEmbeddingStatusEnum.Failed,
 				embeddingUpdatedAt: embedding ? new Date() : undefined,
-				sensitiveRegions: analysis.sensitiveRegions,
+				sensitiveRegions: [],
 			});
 
 			if (!document) {
@@ -314,33 +301,6 @@ export class LostDocumentService {
 		} catch (error) {
 			logger.exception(
 				error instanceof Error ? error : new Error("Failed to get signed URL"),
-			);
-			return null;
-		}
-	}
-
-	/**
-	 * Generate admin-only debug overlay with applied mask metadata.
-	 */
-	async getDebugMaskForAdmin(
-		documentId: string,
-	): Promise<AdminDebugMaskResult | null> {
-		try {
-			const document = await this.repo.getOne(documentId);
-			if (!document) {
-				return null;
-			}
-
-			return await this.imageService.createDebugMaskOverlay(
-				document.originalImageKey,
-				document.sensitiveRegions ?? [],
-				document.documentType as any,
-			);
-		} catch (error) {
-			logger.exception(
-				error instanceof Error
-					? error
-					: new Error("Failed to generate debug mask overlay"),
 			);
 			return null;
 		}
@@ -588,14 +548,6 @@ export class LostDocumentService {
 	}
 
 	private documentHasFaceRegion(document: LostDocumentType): boolean {
-		const regions = Array.isArray(document.sensitiveRegions)
-			? document.sensitiveRegions
-			: [];
-		const hasFaceRegion = regions.some((region) => region?.kind === "FACE");
-		if (hasFaceRegion) {
-			return true;
-		}
-
 		return [
 			LostDocumentTypeEnum.IdCard,
 			LostDocumentTypeEnum.Passport,

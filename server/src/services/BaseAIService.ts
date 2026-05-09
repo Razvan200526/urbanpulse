@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { logger } from "@server/utils/Logger";
 
 export abstract class BaseAIService {
-	protected readonly model = "gemini-3-flash-preview";
+	protected readonly model = "gemini-3.1-pro-preview";
 	private client: GoogleGenAI | null | undefined;
 
 	protected getClient(): GoogleGenAI | null {

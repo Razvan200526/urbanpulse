@@ -1,104 +1,55 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 import { DocumentImageService } from "@server/services/DocumentImageService";
-import { LostDocumentTypeEnum } from "@shared/types";
-import Sharp from "sharp";
 
-const buildImageBuffer = async (
-	width: number,
-	height: number,
-): Promise<Buffer> => {
-	return await Sharp({
-		create: {
-			width,
-			height,
-			channels: 3,
-			background: { r: 245, g: 245, b: 245 },
-		},
-	})
-		.jpeg()
-		.toBuffer();
-};
+describe("DocumentImageService nano banana redaction", () => {
+	test("returns original image when AI client is unavailable", async () => {
+		const service = new DocumentImageService() as any;
+		service.aiClient = null;
 
-describe("DocumentImageService deterministic masking", () => {
-	test("applies all mandatory Romanian ID masks in landscape", async () => {
-		const service = new DocumentImageService();
-		const imageBuffer = await buildImageBuffer(1000, 620);
+		const input = Buffer.from("raw-image-bytes");
+		const output = await service.blurSensitiveContentWithNanoBanana(input);
 
-		const plan = await (service as any).buildMaskPlan(
-			imageBuffer,
-			[],
-			LostDocumentTypeEnum.IdCard,
-		);
-
-		expect(plan.orientation).toBe("landscape");
-		expect(plan.mandatoryMasks.map((mask: any) => mask.kind).sort()).toEqual([
-			"ADDRESS",
-			"CNP",
-			"SERIES_NUMBER",
-		]);
+		expect(output).toEqual(input);
 	});
 
-	test("maps mandatory masks for portrait Romanian ID inputs", async () => {
-		const service = new DocumentImageService();
-		const imageBuffer = await buildImageBuffer(620, 1000);
-
-		const plan = await (service as any).buildMaskPlan(
-			imageBuffer,
-			[],
-			LostDocumentTypeEnum.IdCard,
-		);
-
-		expect(plan.orientation).toBe("portrait-cw");
-		const cnpMask = plan.mandatoryMasks.find(
-			(mask: any) => mask.kind === "CNP",
-		);
-		expect(cnpMask).toBeTruthy();
-		expect(cnpMask.h).toBeGreaterThan(cnpMask.w);
-		expect(cnpMask.x).toBeGreaterThan(250);
-		expect(cnpMask.x).toBeLessThan(420);
-	});
-
-	test("keeps mandatory CNP mask even when AI misses it", async () => {
-		const service = new DocumentImageService();
-		const imageBuffer = await buildImageBuffer(1000, 620);
-
-		const plan = await (service as any).buildMaskPlan(
-			imageBuffer,
-			[
+	test("uses a prompt-based redaction request without coordinate masks", async () => {
+		const service = new DocumentImageService() as any;
+		const generateContent = mock(async () => ({
+			candidates: [
 				{
-					x: 0.47,
-					y: 0.6,
-					w: 0.42,
-					h: 0.23,
-					kind: "ADDRESS",
+					content: {
+						parts: [
+							{
+								inlineData: {
+									data: Buffer.from("blurred-result").toString("base64"),
+								},
+							},
+						],
+					},
 				},
 			],
-			LostDocumentTypeEnum.IdCard,
+		}));
+
+		service.aiClient = {
+			models: {
+				generateContent,
+			},
+		};
+
+		const input = Buffer.from("raw-image-bytes");
+		const output = await service.blurSensitiveContentWithNanoBanana(input);
+
+		expect(output.toString()).toBe("blurred-result");
+		expect(generateContent).toHaveBeenCalledTimes(1);
+
+		const request = generateContent.mock.calls[0]?.[0] as any;
+		expect(request.model).toBe("gemini-3.1-flash-image-preview");
+		expect(request.config?.responseModalities).toEqual(["TEXT", "IMAGE"]);
+		expect(request.contents?.[0]?.text).toContain(
+			"Blur or obscure sensitive fields",
 		);
-
-		expect(plan.mandatoryMasks.some((mask: any) => mask.kind === "CNP")).toBe(
-			true,
-		);
-	});
-
-	test("rejects overbroad AI masks that overlap protected face/name zones", async () => {
-		const service = new DocumentImageService();
-		const imageBuffer = await buildImageBuffer(1000, 620);
-
-		const plan = await (service as any).buildMaskPlan(
-			imageBuffer,
-			[
-				{
-					x: 0.02,
-					y: 0.18,
-					w: 0.62,
-					h: 0.53,
-					kind: "SENSITIVE_TEXT",
-				},
-			],
-			LostDocumentTypeEnum.IdCard,
-		);
-
-		expect(plan.aiMasks.length).toBe(0);
+		expect(request.contents?.[0]?.text).not.toContain("x=");
+		expect(request.contents?.[0]?.text).not.toContain("y=");
+		expect(request.contents?.[1]?.inlineData?.data).toBeTruthy();
 	});
 });

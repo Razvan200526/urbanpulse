@@ -184,8 +184,6 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			const user = c.get("user");
 			const isAdmin = user?.role === "admin";
 			const isOwner = document.userId === session.userId;
-			const debugMaskRequested = c.req.query("debugMask") === "true";
-
 			let imageUrl = normalizePublicAssetUrl(document.blurredImageUrl);
 			if (isAdmin) {
 				imageUrl =
@@ -199,35 +197,6 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 					)) || normalizePublicAssetUrl(document.blurredImageUrl);
 			}
 
-			let debugMask:
-				| {
-						overlayUrl: string;
-						orientation: "landscape" | "portrait-cw" | "portrait-ccw";
-						appliedMasks: Array<{
-							x: number;
-							y: number;
-							w: number;
-							h: number;
-							kind:
-								| "SENSITIVE_TEXT"
-								| "FACE"
-								| "CNP"
-								| "SERIES_NUMBER"
-								| "ADDRESS"
-								| "MRZ";
-							source: "mandatory" | "ai";
-						}>;
-				  }
-				| undefined;
-
-			if (isAdmin && debugMaskRequested) {
-				const debugOverlay =
-					await lostDocumentService.getDebugMaskForAdmin(documentId);
-				if (debugOverlay) {
-					debugMask = debugOverlay;
-				}
-			}
-
 			return c.json({
 				success: true,
 				data: {
@@ -239,7 +208,6 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 					extractedCity: document.extractedCity,
 					imageUrl,
 					createdAt: document.createdAt,
-					...(debugMask ? { debugMask } : {}),
 				},
 			});
 		} catch (error) {
