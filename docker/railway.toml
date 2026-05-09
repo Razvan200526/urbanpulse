@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "postgres/Dockerfile"
  
 [deploy]
 startCommand = "docker-entrypoint.sh postgres"
