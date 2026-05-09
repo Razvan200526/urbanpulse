@@ -26,8 +26,6 @@ CREATE TABLE "conversation_member" (
 	"conversationId" uuid NOT NULL,
 	"userId" text NOT NULL,
 	"hiddenAt" timestamp
-<<<<<<<< HEAD:server/drizzle/0000_next_terrax.sql
-========
 );
 --> statement-breakpoint
 CREATE TABLE "incident_type" (
@@ -40,7 +38,6 @@ CREATE TABLE "incident_type" (
 	"sortOrder" integer DEFAULT 0 NOT NULL,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
 	"updatedAt" timestamp DEFAULT now() NOT NULL
->>>>>>>> 75eb20d99cfaaf0173c48057a61c1df1e714434c:server/drizzle/0000_dashing_matthew_murdock.sql
 );
 --> statement-breakpoint
 CREATE TABLE "message" (

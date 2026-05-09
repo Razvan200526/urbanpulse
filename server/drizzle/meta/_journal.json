@@ -1,35 +1,13 @@
 {
-<<<<<<< HEAD
   "version": "7",
   "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
       "version": "7",
-      "when": 1778325412760,
-      "tag": "0000_next_terrax",
+      "when": 1778336056403,
+      "tag": "0000_tricky_robbie_robertson",
       "breakpoints": true
     }
   ]
 }
-=======
-	"version": "7",
-	"dialect": "postgresql",
-	"entries": [
-		{
-			"idx": 0,
-			"version": "7",
-			"when": 1778320803697,
-			"tag": "0000_dashing_matthew_murdock",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1778325903567,
-			"tag": "0001_many_bloodstrike",
-			"breakpoints": true
-		}
-	]
-}
->>>>>>> 75eb20d99cfaaf0173c48057a61c1df1e714434c
