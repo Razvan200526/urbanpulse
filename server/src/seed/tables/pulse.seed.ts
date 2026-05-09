@@ -81,4 +81,23 @@ export const pulseSeeds: PulseInsert[] = [
 		isVerified: true,
 		createdAt: new Date("2026-03-30T15:05:00.000Z"),
 	},
+	{
+		id: seedIds.pulses.foundDog,
+		type: PulseEnum.Emergency,
+		incidentTypeId: seedIds.incidentTypes.other,
+		userId: seedIds.users.irina,
+		urgency: UrgencyEnum.Urgent,
+		title: "Found Golden Retriever",
+		description: "Found a friendly golden retriever near Izvor station.",
+		position: { x: 26.0854, y: 44.4338 },
+		status: PulseStatusEnum.Active,
+		pulseUploadState: PulseUploadStateEnum.Completed,
+		audioUrl: null,
+		imageUrls: [
+			"https://images.unsplash.com/photo-1552053831-71594a27632d?w=1200",
+		],
+		isResolved: false,
+		isVerified: false,
+		createdAt: new Date("2026-03-31T10:05:00.000Z"),
+	},
 ];

@@ -12,7 +12,7 @@ import type { TabItemType } from "@client/components/tabs/Tabs";
 import { H3, Label } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
 import { useIncidentTypes } from "@client/hooks/useIncidentTypes";
-import { Select, Toast, Tooltip } from "@heroui/react";
+import { ListBox, ListBoxItem, Select, Toast, Tooltip } from "@heroui/react";
 import {
 	DefaultIncidentTypeSlugEnum,
 	PulseEnum,
@@ -50,13 +50,13 @@ export const CreatePulseModal = ({
 }) => {
 	const { data: user } = useAuth();
 	const { mutateAsync: createPulse, isPending } = useCreatePulse();
-	const { data: incidentTypes = [], isPending: isIncidentTypesPending } =
-		useIncidentTypes();
+	const { data: incidentTypes = [] } = useIncidentTypes();
 
 	const titleRef = useRef<InputNameRefType>(null);
 	const descriptionRef = useRef<TextAreaRefType>(null);
 	const audioUrlRef = useRef<string>("");
 	const audioRef = useRef<HTMLAudioElement>(null);
+	const incidentRef = useRef<typeof incidentTypes | null>(null);
 
 	const [pulseType, setPulseType] = useState<PulseEnum>(
 		() => PulseEnum.Emergency,
@@ -179,39 +179,34 @@ export const CreatePulseModal = ({
 					}}
 				/>
 
-				{showIncidentTypePicker ? (
-					<div className="flex w-full min-w-0 flex-col gap-2">
-						<label
-							className="text-accent text-sm font-semibold"
-							htmlFor="incident-type"
-						>
-							Incident type
-						</label>
-						<select
-							id="incident-type"
-							value={incidentTypeId}
-							disabled={isIncidentTypesPending || incidentTypes.length === 0}
-							onChange={(event) => setIncidentTypeId(event.target.value)}
-							className="h-10 w-full rounded border border-accent bg-surface px-3 text-sm text-foreground outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
-						>
-							{incidentTypes.length === 0 ? (
-								<option value="">
-									{isIncidentTypesPending
-										? "Loading incident types..."
-										: "No active incident types"}
-								</option>
-							) : (
-								incidentTypes.map((incidentType) => (
-									<option key={incidentType.id} value={incidentType.id}>
-										{incidentType.label}
-									</option>
-								))
-							)}
-						</select>
-					</div>
-				) : (
+				{showIncidentTypePicker && (
 					<Select>
-						<Label></Label>
+						<Label className="text-accent">Incident type</Label>
+						<Select.Trigger className="text-accent border border-accent rounded">
+							<Select.Value />
+							<Select.Indicator />
+						</Select.Trigger>
+						<Select.Popover className="border border-accent">
+							<ListBox
+								className="rounded"
+								items={incidentTypes}
+								onSelectionChange={(keys) => {
+									const key = Array.from(keys)[0];
+									if (key) setIncidentTypeId(key.toString());
+								}}
+							>
+								{(item) => (
+									<ListBoxItem
+										className="text-muted bg-surface hover:text-accent-hover"
+										key={item.id}
+										id={item.id}
+										textValue={item.label}
+									>
+										{item.label}
+									</ListBoxItem>
+								)}
+							</ListBox>
+						</Select.Popover>
 					</Select>
 				)}
 

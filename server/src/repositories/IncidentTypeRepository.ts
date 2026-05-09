@@ -33,7 +33,6 @@ export class IncidentTypeRepository implements IRepository<IncidentTypeType> {
 		return await db
 			.select()
 			.from(incidentType)
-			.where(eq(incidentType.isActive, true))
 			.orderBy(asc(incidentType.sortOrder), asc(incidentType.label));
 	}
 

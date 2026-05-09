@@ -91,7 +91,7 @@ export const DEFAULT_INCIDENT_TYPES = [
 	},
 	{
 		slug: DefaultIncidentTypeSlugEnum.Other,
-		label: "Other",
+		label: "Other admin-defined emergency types",
 		description: "Emergency incident that does not match another type.",
 		sortOrder: 80,
 	},
