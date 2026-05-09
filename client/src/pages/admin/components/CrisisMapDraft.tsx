@@ -4,6 +4,11 @@ import { useEffect, useRef } from "react";
 
 export type DraftPoint = { lat: number; lng: number };
 
+const isValidDraftPoint = (point: DraftPoint | null): point is DraftPoint => {
+	if (!point) return false;
+	return Number.isFinite(point.lat) && Number.isFinite(point.lng);
+};
+
 const createGeoJSONCircle = (
 	center: [number, number],
 	radiusInMeters: number,
@@ -89,7 +94,7 @@ export const AdminDraftCrisisOverlay = ({
 			return;
 		}
 
-		if (!draftPoint) {
+		if (!isValidDraftPoint(draftPoint)) {
 			markerRef.current?.remove();
 			markerRef.current = null;
 
@@ -106,9 +111,12 @@ export const AdminDraftCrisisOverlay = ({
 		}
 
 		if (!markerRef.current) {
-			markerRef.current = new mapboxgl.Marker({ color: "#ef4444" }).addTo(map);
+			markerRef.current = new mapboxgl.Marker({ color: "#ef4444" })
+				.setLngLat([draftPoint.lng, draftPoint.lat])
+				.addTo(map);
+		} else {
+			markerRef.current.setLngLat([draftPoint.lng, draftPoint.lat]);
 		}
-		markerRef.current.setLngLat([draftPoint.lng, draftPoint.lat]);
 
 		const circleData = createGeoJSONCircle(
 			[draftPoint.lng, draftPoint.lat],
