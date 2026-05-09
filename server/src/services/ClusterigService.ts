@@ -25,8 +25,8 @@ export class ClusteringService {
         AND c.status != 'resolved'
         AND c.expires_at > NOW()
         AND ST_DWithin(
-          ST_MakePoint(c.center_lng, c.center_lat)::geography,
-          ${pulseRecord.position}::geography,
+          ST_SetSRID(ST_MakePoint(c.center_lng, c.center_lat), 4326)::geography,
+          ST_SetSRID(ST_MakePoint(${pulseRecord.position.x}, ${pulseRecord.position.y}), 4326)::geography,
           ${CLUSTER_CONFIG.radiusMeters}
         )
       ORDER BY c.report_count DESC
