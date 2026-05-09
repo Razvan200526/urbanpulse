@@ -117,6 +117,22 @@ export const verification = pgTable("verification", {
 	updatedAt: timestamp("updatedAt"),
 });
 
+export const incidentType = pgTable(
+	"incident_type",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		slug: text("slug").notNull(),
+		label: varchar("label", { length: 80 }).notNull(),
+		description: text("description"),
+		isActive: boolean("isActive").notNull().default(true),
+		isSystem: boolean("isSystem").notNull().default(false),
+		sortOrder: integer("sortOrder").notNull().default(0),
+		createdAt: timestamp("createdAt").notNull().defaultNow(),
+		updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+	},
+	(t) => [uniqueIndex("incident_type_slug_unique").on(t.slug)],
+);
+
 export const pulse = pgTable(
 	"pulse",
 	{
@@ -125,6 +141,9 @@ export const pulse = pgTable(
 			.$type<PulseEnum>()
 			.notNull()
 			.default(PulseEnum.Emergency),
+		incidentTypeId: uuid("incidentTypeId").references(() => incidentType.id, {
+			onDelete: "set null",
+		}),
 		userId: text("userId")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
@@ -443,8 +462,16 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 export const verificationRelations = relations(verification, () => ({}));
 
+export const incidentTypeRelations = relations(incidentType, ({ many }) => ({
+	pulses: many(pulse),
+}));
+
 export const pulseRelations = relations(pulse, ({ one, many }) => ({
 	user: one(user, { fields: [pulse.userId], references: [user.id] }),
+	incidentType: one(incidentType, {
+		fields: [pulse.incidentTypeId],
+		references: [incidentType.id],
+	}),
 	conversations: many(conversation),
 	alerts: many(petAlert),
 	confirmations: many(pulseConfirmation),
@@ -620,6 +647,7 @@ export type UserType = InferSelectModel<typeof user>;
 export type SessionType = InferSelectModel<typeof session>;
 export type AccountType = InferSelectModel<typeof account>;
 export type VerificationType = InferSelectModel<typeof verification>;
+export type IncidentTypeType = InferSelectModel<typeof incidentType>;
 export type PulseType = InferSelectModel<typeof pulse>;
 export type ConversationType = InferSelectModel<typeof conversation>;
 export type ConversationMemberType = InferSelectModel<

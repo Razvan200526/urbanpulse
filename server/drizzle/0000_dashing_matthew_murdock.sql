@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS vector;
-
 CREATE TABLE "account" (
 	"id" text PRIMARY KEY NOT NULL,
 	"accountId" text NOT NULL,
@@ -26,7 +24,20 @@ CREATE TABLE "conversation" (
 CREATE TABLE "conversation_member" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"conversationId" uuid NOT NULL,
-	"userId" text NOT NULL
+	"userId" text NOT NULL,
+	"hiddenAt" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "incident_type" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"slug" text NOT NULL,
+	"label" varchar(80) NOT NULL,
+	"description" text,
+	"isActive" boolean DEFAULT true NOT NULL,
+	"isSystem" boolean DEFAULT false NOT NULL,
+	"sortOrder" integer DEFAULT 0 NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "message" (
@@ -84,6 +95,7 @@ CREATE TABLE "pet_match" (
 CREATE TABLE "pulse" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"type" text DEFAULT 'Emergency' NOT NULL,
+	"incidentTypeId" uuid,
 	"userId" text NOT NULL,
 	"urgency" text NOT NULL,
 	"title" varchar(100) NOT NULL,
@@ -201,6 +213,7 @@ CREATE TABLE "user" (
 	"bio" text,
 	"trustScore" double precision DEFAULT 0,
 	"successfulInteractions" integer DEFAULT 0,
+	"failedInteractions" integer DEFAULT 0,
 	"isVerified" boolean DEFAULT false,
 	"rememberMe" boolean DEFAULT false,
 	"banned" boolean DEFAULT false,
@@ -234,6 +247,7 @@ ALTER TABLE "notification" ADD CONSTRAINT "notification_userId_user_id_fk" FOREI
 ALTER TABLE "pet_alert" ADD CONSTRAINT "pet_alert_pulseId_pulse_id_fk" FOREIGN KEY ("pulseId") REFERENCES "public"."pulse"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pet_match" ADD CONSTRAINT "pet_match_lostAlertId_pet_alert_id_fk" FOREIGN KEY ("lostAlertId") REFERENCES "public"."pet_alert"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pet_match" ADD CONSTRAINT "pet_match_foundAlertId_pet_alert_id_fk" FOREIGN KEY ("foundAlertId") REFERENCES "public"."pet_alert"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "pulse" ADD CONSTRAINT "pulse_incidentTypeId_incident_type_id_fk" FOREIGN KEY ("incidentTypeId") REFERENCES "public"."incident_type"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pulse" ADD CONSTRAINT "pulse_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pulse_confirmation" ADD CONSTRAINT "pulse_confirmation_pulseId_pulse_id_fk" FOREIGN KEY ("pulseId") REFERENCES "public"."pulse"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pulse_confirmation" ADD CONSTRAINT "pulse_confirmation_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -253,6 +267,7 @@ ALTER TABLE "skill" ADD CONSTRAINT "skill_userId_user_id_fk" FOREIGN KEY ("userI
 ALTER TABLE "transaction" ADD CONSTRAINT "transaction_resourceId_resources_id_fk" FOREIGN KEY ("resourceId") REFERENCES "public"."resources"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transaction" ADD CONSTRAINT "transaction_borrowerId_user_id_fk" FOREIGN KEY ("borrowerId") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transaction" ADD CONSTRAINT "transaction_lenderId_user_id_fk" FOREIGN KEY ("lenderId") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "incident_type_slug_unique" ON "incident_type" USING btree ("slug");--> statement-breakpoint
 CREATE UNIQUE INDEX "message_receipt_message_user_unique" ON "message_receipt" USING btree ("messageId","userId");--> statement-breakpoint
 CREATE INDEX "message_receipt_user_message_index" ON "message_receipt" USING btree ("userId","messageId");--> statement-breakpoint
 CREATE UNIQUE INDEX "pet_alert_pulse_id_unique" ON "pet_alert" USING btree ("pulseId");--> statement-breakpoint

@@ -29,9 +29,25 @@ export const clientUserSchema = z.object({
 
 export type ClientUserType = z.infer<typeof clientUserSchema>;
 
+export const clientIncidentTypeSchema = z.object({
+	id: z.string(),
+	slug: z.string(),
+	label: z.string(),
+	description: z.string().nullable(),
+	isActive: z.boolean(),
+	isSystem: z.boolean(),
+	sortOrder: z.number(),
+	createdAt: z.string(),
+	updatedAt: z.string(),
+});
+
+export type ClientIncidentType = z.infer<typeof clientIncidentTypeSchema>;
+
 export const clientPulseSchema = z.object({
 	id: z.string(),
 	type: z.nativeEnum(PulseEnum),
+	incidentTypeId: z.string().nullable().optional().default(null),
+	incidentType: clientIncidentTypeSchema.nullable().optional().default(null),
 	userId: z.string(),
 	urgency: z.nativeEnum(UrgencyEnum),
 	title: z.string(),

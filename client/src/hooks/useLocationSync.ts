@@ -4,12 +4,14 @@ import type { GeolocationCoords } from "./useGetGeolocation";
 import { useGetGeolocation } from "./useGetGeolocation";
 
 const THROTTLE_MS = 30_000;
+const GEO_SYNC_OPTIONS: PositionOptions = {
+	enableHighAccuracy: true,
+	timeout: 30000,
+	maximumAge: 300000,
+};
 
 export const useLocationSync = () => {
-	const { coords } = useGetGeolocation(
-		{ enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-		true,
-	);
+	const { coords } = useGetGeolocation(GEO_SYNC_OPTIONS, true);
 	const latestCoordsRef = useRef<GeolocationCoords | null>(null);
 	const lastSyncRef = useRef<number>(0);
 

@@ -17,6 +17,7 @@ type CacheNamespace =
 
 	// Core Features
 	| "pulse"
+	| "incidentType"
 	| "resource"
 	| "transaction"
 	| "skill"

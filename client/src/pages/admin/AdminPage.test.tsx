@@ -26,6 +26,17 @@ const adminState = {
 				id: "pulse-1",
 				title: "Need water",
 				type: "Emergency",
+				incidentType: {
+					id: "incident-1",
+					slug: "fire",
+					label: "Fire",
+					description: null,
+					isActive: true,
+					isSystem: true,
+					sortOrder: 20,
+					createdAt: "2026-03-31T09:00:00.000Z",
+					updatedAt: "2026-03-31T09:00:00.000Z",
+				},
 				status: "ACTIVE",
 				createdAt: "2026-03-31T09:00:00.000Z",
 			},
@@ -62,6 +73,17 @@ const adminState = {
 				title: "Road blocked",
 				status: "ACTIVE",
 				type: "Emergency",
+				incidentType: {
+					id: "incident-2",
+					slug: "road-blockage",
+					label: "Road blockage",
+					description: null,
+					isActive: true,
+					isSystem: true,
+					sortOrder: 60,
+					createdAt: "2026-03-31T09:00:00.000Z",
+					updatedAt: "2026-03-31T09:00:00.000Z",
+				},
 				isVerified: true,
 			},
 		},
@@ -94,6 +116,32 @@ mock.module("@client/hooks/useAdminOverview", () => ({
 		data: adminState.data,
 		isPending: adminState.isPending,
 		error: adminState.error,
+	}),
+}));
+
+mock.module("@client/hooks/useIncidentTypes", () => ({
+	useAdminIncidentTypes: () => ({
+		data: [
+			{
+				id: "incident-1",
+				slug: "fire",
+				label: "Fire",
+				description: "Active fire",
+				isActive: true,
+				isSystem: true,
+				sortOrder: 20,
+				createdAt: "2026-03-31T09:00:00.000Z",
+				updatedAt: "2026-03-31T09:00:00.000Z",
+			},
+		],
+	}),
+	useCreateIncidentType: () => ({
+		isPending: false,
+		mutate: () => {},
+	}),
+	useUpdateIncidentType: () => ({
+		isPending: false,
+		mutate: () => {},
 	}),
 }));
 
@@ -233,9 +281,11 @@ describe("AdminPage", () => {
 		expect(markup).toContain(">10<");
 		expect(markup).toContain("Spam pulse");
 		expect(markup).toContain("Need water");
+		expect(markup).toContain("Fire");
 		expect(markup).toContain("Toolbox");
 		expect(markup).toContain("Moderation Queue");
 		expect(markup).toContain("Misleading location");
+		expect(markup).toContain("Incident Types");
 		expect(markup).toContain("Verified pulse");
 		expect(markup).toContain("This report has already been reviewed.");
 	});

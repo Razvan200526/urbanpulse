@@ -7,6 +7,7 @@ export const pulseRequestSchema = z.object({
 	urgency: z.enum(UrgencyEnum),
 	title: createSafePlainTextSchema(1, 100),
 	description: createSafePlainTextSchema(0, 500),
+	incidentTypeId: z.string().uuid().optional(),
 	position: z.object({
 		x: z.number().min(-180).max(180),
 		y: z.number().min(-90).max(90),

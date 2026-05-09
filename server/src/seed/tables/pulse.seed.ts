@@ -13,6 +13,7 @@ export const pulseSeeds: PulseInsert[] = [
 	{
 		id: seedIds.pulses.lostDog,
 		type: PulseEnum.Emergency,
+		incidentTypeId: seedIds.incidentTypes.other,
 		userId: seedIds.users.maria,
 		urgency: UrgencyEnum.Immediate,
 		title: "Lost golden retriever",

@@ -41,7 +41,7 @@ class PetAlertBase(BaseModel):
     pulseId: uuid.UUID
     alertType: AlertType
     petType: str = Field(min_length=1, max_length=255)
-    color: str | None = Field(default=None, min_length=1, max_length=255)
+    color: str = Field(min_length=1, max_length=255)
     breed: str | None = Field(default=None, max_length=255)
     imageUrl: str | None = None
 

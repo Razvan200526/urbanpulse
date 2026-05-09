@@ -14,7 +14,9 @@ const typeOrder: Record<string, number> = {
 	[PulseEnum.Item]: 2,
 };
 
-export function sortPulsesForFeed(pulses: PulseType[]): PulseType[] {
+export function sortPulsesForFeed<
+	T extends Pick<PulseType, "urgency" | "type" | "createdAt">,
+>(pulses: T[]): T[] {
 	return [...pulses].sort((a, b) => {
 		const ua = urgencyOrder[a.urgency] ?? 9;
 		const ub = urgencyOrder[b.urgency] ?? 9;

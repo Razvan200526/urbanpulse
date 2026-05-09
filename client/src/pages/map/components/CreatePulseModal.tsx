@@ -9,14 +9,19 @@ import { ResponsiveChoiceField } from "@client/components/input/ResponsiveChoice
 import { Modal, type ModalRefType } from "@client/components/Modal";
 import { TextArea, type TextAreaRefType } from "@client/components/TextArea";
 import type { TabItemType } from "@client/components/tabs/Tabs";
-import { H3 } from "@client/components/typography";
+import { H3, Label } from "@client/components/typography";
 import { useAuth } from "@client/hooks/useAuth";
-import { Toast, Tooltip } from "@heroui/react";
-import { PulseEnum, UrgencyEnum } from "@shared/types";
+import { useIncidentTypes } from "@client/hooks/useIncidentTypes";
+import { Select, Toast, Tooltip } from "@heroui/react";
+import {
+	DefaultIncidentTypeSlugEnum,
+	PulseEnum,
+	UrgencyEnum,
+} from "@shared/types";
 import { isBioValid } from "@shared/validators/isBioValid";
 import { isNameValid } from "@shared/validators/isNameValid";
 import { PaperclipIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCreatePulse } from "../hooks";
 import { ImageList } from "./ImageList";
 
@@ -45,6 +50,8 @@ export const CreatePulseModal = ({
 }) => {
 	const { data: user } = useAuth();
 	const { mutateAsync: createPulse, isPending } = useCreatePulse();
+	const { data: incidentTypes = [], isPending: isIncidentTypesPending } =
+		useIncidentTypes();
 
 	const titleRef = useRef<InputNameRefType>(null);
 	const descriptionRef = useRef<TextAreaRefType>(null);
@@ -57,7 +64,16 @@ export const CreatePulseModal = ({
 	const [urgency, setUrgency] = useState<UrgencyEnum>(() =>
 		safetyCheckinLaunch ? UrgencyEnum.NotUrgent : UrgencyEnum.Immediate,
 	);
+	const [incidentTypeId, setIncidentTypeId] = useState("");
 	const [imageUrls, setImageUrls] = useState<string[]>([]);
+	const fallbackIncidentType = useMemo(
+		() =>
+			incidentTypes.find(
+				(item) => item.slug === DefaultIncidentTypeSlugEnum.Other,
+			) ?? incidentTypes[0],
+		[incidentTypes],
+	);
+	const showIncidentTypePicker = pulseType === PulseEnum.Emergency;
 	const defaultTitle = safetyCheckinLaunch
 		? "Safety check-in"
 		: emergencyLaunch
@@ -66,6 +82,22 @@ export const CreatePulseModal = ({
 	const defaultDescription = safetyCheckinLaunch
 		? "Checking in during the weather alert. I'm safe right now and can coordinate with neighbours if needed."
 		: "";
+
+	useEffect(() => {
+		if (!showIncidentTypePicker || incidentTypes.length === 0) {
+			return;
+		}
+
+		const selected = incidentTypes.find((item) => item.id === incidentTypeId);
+		if (!selected && fallbackIncidentType) {
+			setIncidentTypeId(fallbackIncidentType.id);
+		}
+	}, [
+		fallbackIncidentType,
+		incidentTypeId,
+		incidentTypes,
+		showIncidentTypePicker,
+	]);
 
 	const handleCreate = async () => {
 		const title = titleRef.current?.getValue() ?? "";
@@ -92,6 +124,9 @@ export const CreatePulseModal = ({
 			title,
 			description,
 			type: pulseType,
+			...(pulseType === PulseEnum.Emergency && incidentTypeId
+				? { incidentTypeId }
+				: {}),
 			urgency,
 			position: { x: coords.long, y: coords.lat },
 			imageUrls,
@@ -136,8 +171,49 @@ export const CreatePulseModal = ({
 					label="Pulse Type"
 					items={pulseTypeItems}
 					selectedKey={pulseType}
-					onSelectionChange={(key) => setPulseType(key as PulseEnum)}
+					onSelectionChange={(key) => {
+						setPulseType(key as PulseEnum);
+						if (key !== PulseEnum.Emergency) {
+							setIncidentTypeId("");
+						}
+					}}
 				/>
+
+				{showIncidentTypePicker ? (
+					<div className="flex w-full min-w-0 flex-col gap-2">
+						<label
+							className="text-accent text-sm font-semibold"
+							htmlFor="incident-type"
+						>
+							Incident type
+						</label>
+						<select
+							id="incident-type"
+							value={incidentTypeId}
+							disabled={isIncidentTypesPending || incidentTypes.length === 0}
+							onChange={(event) => setIncidentTypeId(event.target.value)}
+							className="h-10 w-full rounded border border-accent bg-surface px-3 text-sm text-foreground outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
+						>
+							{incidentTypes.length === 0 ? (
+								<option value="">
+									{isIncidentTypesPending
+										? "Loading incident types..."
+										: "No active incident types"}
+								</option>
+							) : (
+								incidentTypes.map((incidentType) => (
+									<option key={incidentType.id} value={incidentType.id}>
+										{incidentType.label}
+									</option>
+								))
+							)}
+						</select>
+					</div>
+				) : (
+					<Select>
+						<Label></Label>
+					</Select>
+				)}
 
 				<ResponsiveChoiceField
 					label="Urgency"

@@ -1,4 +1,4 @@
-import type { PulseType, UserType } from "@server/db/schema";
+import type { IncidentTypeType, PulseType, UserType } from "@server/db/schema";
 import { notificationRepository } from "@server/repositories/NotificationRepository";
 import {
 	type PulseRepository,
@@ -18,13 +18,18 @@ import { notificationService } from "@server/services/NotificationService";
 import { requestMatchingAIService } from "@server/services/RequestMatchingAIService";
 import type { Last7DaysPulseCounts } from "@server/services/types";
 import { handleError } from "@server/utils/handleError";
-import { PulseStatusEnum, PulseUploadStateEnum } from "@shared/types";
+import {
+	PulseEnum,
+	PulseStatusEnum,
+	PulseUploadStateEnum,
+} from "@shared/types";
 import type { PulseRetrievePayloadType } from "@shared/validators/pulses/isPulseRetrieveValid";
 import {
 	type PulseSocketMessageType,
 	pulseSocketMessageSchema,
 } from "@shared/validators/pulses/isPulseSocketMessageValid";
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
+import { incidentTypeService } from "./IncidentTypeService";
 
 type PulseSocketResponse = {
 	success: boolean;
@@ -35,6 +40,7 @@ type PulseSocketResponse = {
 type PulseViewerContext = Pick<UserType, "id" | "role"> | null;
 export type SerializedPulse = PulseType & {
 	locationPrecision: "exact" | "approximate";
+	incidentType: IncidentTypeType | null;
 };
 
 /**
@@ -100,19 +106,30 @@ export class PulseService {
 		};
 	}
 
+	private async getPulseIncidentType(pulse: PulseType) {
+		if (!pulse.incidentTypeId) {
+			return null;
+		}
+
+		return await incidentTypeService.getIncidentTypeById(pulse.incidentTypeId);
+	}
+
 	async serializePulseForViewer(
 		pulse: PulseType,
 		viewer: PulseViewerContext,
 	): Promise<SerializedPulse> {
+		const incidentType = await this.getPulseIncidentType(pulse);
 		if (this.canViewExactPulseLocation(pulse, viewer)) {
 			return {
 				...pulse,
+				incidentType,
 				locationPrecision: "exact",
 			};
 		}
 
 		return {
 			...pulse,
+			incidentType,
 			position: this.toApproximatePosition(pulse.position),
 			locationPrecision: "approximate",
 		};
@@ -243,6 +260,16 @@ export class PulseService {
 			const description = data.description?.trim() ?? "";
 			let requestedSkillTags = data.requestedSkillTags ?? [];
 			let matchMetadata = data.matchMetadata ?? {};
+			const resolvedIncidentType =
+				await incidentTypeService.resolveIncidentTypeIdForPulse(
+					data.type ?? PulseEnum.Emergency,
+					data.incidentTypeId,
+				);
+
+			if (!resolvedIncidentType.ok) {
+				handleError(new Error(resolvedIncidentType.message));
+				return null;
+			}
 
 			if (title) {
 				const allowedTags = await skillRepository.getDistinctTags();
@@ -263,6 +290,7 @@ export class PulseService {
 
 			const created = await this.pulseRepository.create({
 				...data,
+				incidentTypeId: resolvedIncidentType.data.incidentTypeId,
 				requestedSkillTags,
 				matchMetadata,
 				isVerified: false,

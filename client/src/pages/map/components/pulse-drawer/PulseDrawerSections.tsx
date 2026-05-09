@@ -115,6 +115,11 @@ export const PulseDrawerHeader = ({
 						<TypeIcon className={cn("size-4", typeConfig.icon)} />
 						<p className={typeConfig.label}>{typeConfig.label}</p>
 					</Chip>
+					{pulse.incidentType ? (
+						<span className="rounded border border-accent/25 bg-surface px-2 py-1 text-xs font-medium text-accent">
+							{pulse.incidentType.label}
+						</span>
+					) : null}
 					{renderVerificationBadges(pulse)}
 				</div>
 
@@ -182,6 +187,10 @@ export const PulseDrawerSummary = ({
 						{typeConfig.label}
 					</span>
 				</MetaRow>
+
+				{pulse.incidentType ? (
+					<MetaRow label="Incident type">{pulse.incidentType.label}</MetaRow>
+				) : null}
 
 				<MetaRow label="Upload">
 					<ProgressChip status={pulse.pulseUploadState} />
