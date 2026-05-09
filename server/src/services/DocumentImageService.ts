@@ -255,15 +255,24 @@ export class DocumentImageService {
 				regions,
 				documentType,
 			);
-			const effectiveRegions = [...maskPlan.mandatoryMasks, ...maskPlan.aiMasks];
+			const effectiveRegions = [
+				...maskPlan.mandatoryMasks,
+				...maskPlan.aiMasks,
+			];
 			if (effectiveRegions.length === 0) {
 				return imageBuffer;
 			}
 
 			const overlays: Array<{ input: Buffer; top: number; left: number }> = [];
 			for (const region of effectiveRegions) {
-				const x = Math.max(0, Math.min(region.x, maskPlan.width - MIN_TEXT_REGION_SIZE));
-				const y = Math.max(0, Math.min(region.y, maskPlan.height - MIN_TEXT_REGION_SIZE));
+				const x = Math.max(
+					0,
+					Math.min(region.x, maskPlan.width - MIN_TEXT_REGION_SIZE),
+				);
+				const y = Math.max(
+					0,
+					Math.min(region.y, maskPlan.height - MIN_TEXT_REGION_SIZE),
+				);
 				const w = Math.max(
 					MIN_TEXT_REGION_SIZE,
 					Math.min(region.w, maskPlan.width - x),
@@ -300,7 +309,11 @@ export class DocumentImageService {
 		const metadata = await Sharp(imageBuffer).metadata();
 		const width = metadata.width || 800;
 		const height = metadata.height || 600;
-		const normalizedAiRegions = this.normalizeAndExpandRegions(regions, width, height);
+		const normalizedAiRegions = this.normalizeAndExpandRegions(
+			regions,
+			width,
+			height,
+		);
 
 		if (documentType !== LostDocumentTypeEnum.IdCard) {
 			return {
@@ -434,7 +447,8 @@ export class DocumentImageService {
 				if (overlap > bestOverlap) {
 					bestOverlap = overlap;
 					bestKindBonus =
-						mandatoryMask.kind === aiRegion.kind || aiRegion.kind === "SENSITIVE_TEXT"
+						mandatoryMask.kind === aiRegion.kind ||
+						aiRegion.kind === "SENSITIVE_TEXT"
 							? 0.2
 							: 0;
 				}
@@ -452,7 +466,12 @@ export class DocumentImageService {
 		orientation: RomanianIdOrientation,
 	): RegionWithSource[] {
 		return ROMANIAN_ID_MANDATORY_TEMPLATES.map((template) => {
-			const region = this.projectTemplateToImage(template, width, height, orientation);
+			const region = this.projectTemplateToImage(
+				template,
+				width,
+				height,
+				orientation,
+			);
 			return {
 				...region,
 				source: "mandatory",
@@ -552,7 +571,8 @@ export class DocumentImageService {
 
 				const overlapsFace = faceZones.some(
 					(faceRegion) =>
-						this.calculateOverlapRatio(clamped, faceRegion) > MAX_FACE_OVERLAP_RATIO,
+						this.calculateOverlapRatio(clamped, faceRegion) >
+						MAX_FACE_OVERLAP_RATIO,
 				);
 				if (overlapsFace) {
 					return false;
@@ -568,7 +588,8 @@ export class DocumentImageService {
 				}
 
 				const coveredByMandatory = mandatoryMasks.some(
-					(mandatoryMask) => this.calculateOverlapRatio(clamped, mandatoryMask) > 0.96,
+					(mandatoryMask) =>
+						this.calculateOverlapRatio(clamped, mandatoryMask) > 0.96,
 				);
 				if (coveredByMandatory) {
 					return false;
@@ -578,7 +599,8 @@ export class DocumentImageService {
 			})
 			.map((region) => this.clampRegion(region, width, height))
 			.sort((a, b) => {
-				const priorityDiff = getRegionPriority(b.kind) - getRegionPriority(a.kind);
+				const priorityDiff =
+					getRegionPriority(b.kind) - getRegionPriority(a.kind);
 				if (priorityDiff !== 0) {
 					return priorityDiff;
 				}
@@ -632,7 +654,10 @@ export class DocumentImageService {
 			.map((mask) => {
 				const color = mask.source === "mandatory" ? "#ef4444" : "#f59e0b";
 				const label = `${mask.source.toUpperCase()}:${mask.kind || "SENSITIVE_TEXT"}`;
-				const fontSize = Math.max(12, Math.round(Math.min(width, height) * 0.016));
+				const fontSize = Math.max(
+					12,
+					Math.round(Math.min(width, height) * 0.016),
+				);
 				return [
 					`<rect x="${mask.x}" y="${mask.y}" width="${mask.w}" height="${mask.h}" fill="none" stroke="${color}" stroke-width="3" />`,
 					`<rect x="${mask.x}" y="${Math.max(0, mask.y - fontSize - 6)}" width="${Math.max(70, Math.min(mask.w, 220))}" height="${fontSize + 4}" fill="${color}" fill-opacity="0.82" />`,

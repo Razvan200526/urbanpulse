@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
-import { Hono } from "hono";
 import type { Variables } from "@server/app";
 import { lostDocumentController } from "@server/controllers/LostDocumentController";
 import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
 import { lostDocumentService } from "@server/services/LostDocumentService";
+import { Hono } from "hono";
 
 const buildDocument = () => ({
 	id: "doc-1",
@@ -106,7 +106,9 @@ describe("LostDocumentController debugMask", () => {
 		);
 
 		const app = createTestApp("admin", "admin-1");
-		const response = await app.request("http://localhost/api/lost-documents/doc-1");
+		const response = await app.request(
+			"http://localhost/api/lost-documents/doc-1",
+		);
 		const payload = await response.json();
 
 		expect(response.status).toBe(200);

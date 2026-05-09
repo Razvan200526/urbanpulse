@@ -3,7 +3,10 @@ import { DocumentImageService } from "@server/services/DocumentImageService";
 import { LostDocumentTypeEnum } from "@shared/types";
 import Sharp from "sharp";
 
-const buildImageBuffer = async (width: number, height: number): Promise<Buffer> => {
+const buildImageBuffer = async (
+	width: number,
+	height: number,
+): Promise<Buffer> => {
 	return await Sharp({
 		create: {
 			width,
@@ -46,7 +49,9 @@ describe("DocumentImageService deterministic masking", () => {
 		);
 
 		expect(plan.orientation).toBe("portrait-cw");
-		const cnpMask = plan.mandatoryMasks.find((mask: any) => mask.kind === "CNP");
+		const cnpMask = plan.mandatoryMasks.find(
+			(mask: any) => mask.kind === "CNP",
+		);
 		expect(cnpMask).toBeTruthy();
 		expect(cnpMask.h).toBeGreaterThan(cnpMask.w);
 		expect(cnpMask.x).toBeGreaterThan(250);
@@ -71,7 +76,9 @@ describe("DocumentImageService deterministic masking", () => {
 			LostDocumentTypeEnum.IdCard,
 		);
 
-		expect(plan.mandatoryMasks.some((mask: any) => mask.kind === "CNP")).toBe(true);
+		expect(plan.mandatoryMasks.some((mask: any) => mask.kind === "CNP")).toBe(
+			true,
+		);
 	});
 
 	test("rejects overbroad AI masks that overlap protected face/name zones", async () => {

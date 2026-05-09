@@ -221,9 +221,8 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 				| undefined;
 
 			if (isAdmin && debugMaskRequested) {
-				const debugOverlay = await lostDocumentService.getDebugMaskForAdmin(
-					documentId,
-				);
+				const debugOverlay =
+					await lostDocumentService.getDebugMaskForAdmin(documentId);
 				if (debugOverlay) {
 					debugMask = debugOverlay;
 				}
