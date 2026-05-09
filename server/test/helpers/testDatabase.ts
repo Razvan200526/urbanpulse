@@ -26,6 +26,7 @@ const APP_TABLES = [
 	'"resources"',
 	'"conversation"',
 	'"pulse"',
+	'"incident_type"',
 	'"user"',
 ] as const;
 

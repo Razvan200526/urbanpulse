@@ -35,6 +35,68 @@ export enum PulseEnum {
 	PetAlert = "Pet Alert",
 }
 
+export enum DefaultIncidentTypeSlugEnum {
+	BlackoutPowerOutage = "blackout-power-outage",
+	Fire = "fire",
+	Flood = "flood",
+	Earthquake = "earthquake",
+	SevereStorm = "severe-storm",
+	RoadBlockage = "road-blockage",
+	InfrastructureDamage = "infrastructure-damage",
+	Other = "other",
+}
+
+export const DEFAULT_INCIDENT_TYPES = [
+	{
+		slug: DefaultIncidentTypeSlugEnum.BlackoutPowerOutage,
+		label: "Blackout / power outage",
+		description: "Loss of electricity or power infrastructure failure.",
+		sortOrder: 10,
+	},
+	{
+		slug: DefaultIncidentTypeSlugEnum.Fire,
+		label: "Fire",
+		description: "Active fire, smoke, or fire-related danger.",
+		sortOrder: 20,
+	},
+	{
+		slug: DefaultIncidentTypeSlugEnum.Flood,
+		label: "Flood",
+		description: "Flooding, burst pipes, or dangerous water accumulation.",
+		sortOrder: 30,
+	},
+	{
+		slug: DefaultIncidentTypeSlugEnum.Earthquake,
+		label: "Earthquake",
+		description: "Earthquake event or related structural danger.",
+		sortOrder: 40,
+	},
+	{
+		slug: DefaultIncidentTypeSlugEnum.SevereStorm,
+		label: "Severe storm",
+		description: "High winds, hail, lightning, or storm damage.",
+		sortOrder: 50,
+	},
+	{
+		slug: DefaultIncidentTypeSlugEnum.RoadBlockage,
+		label: "Road blockage",
+		description: "Blocked road, fallen tree, crash, or access obstruction.",
+		sortOrder: 60,
+	},
+	{
+		slug: DefaultIncidentTypeSlugEnum.InfrastructureDamage,
+		label: "Infrastructure damage",
+		description: "Damage to utilities, buildings, bridges, or public assets.",
+		sortOrder: 70,
+	},
+	{
+		slug: DefaultIncidentTypeSlugEnum.Other,
+		label: "Other admin-defined emergency types",
+		description: "Emergency incident that does not match another type.",
+		sortOrder: 80,
+	},
+] as const;
+
 export enum PetAlertTypeEnum {
 	Lost = "lost",
 	Found = "found",

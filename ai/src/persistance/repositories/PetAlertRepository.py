@@ -31,6 +31,9 @@ class PetAlertRepository:
             select(Pulse).where(Pulse.id == pulse_id, Pulse.userId == user_id)
         )
 
+    def pulse_exists(self, pulse_id: uuid.UUID) -> bool:
+        return self.db.scalar(select(Pulse.id).where(Pulse.id == pulse_id)) is not None
+
     def create(self, payload: dict, *, commit: bool = True) -> PetAlert:
         entity = PetAlert(**payload)
         self.db.add(entity)

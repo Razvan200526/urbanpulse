@@ -7,12 +7,18 @@ import { reportRepository } from "@server/repositories/ReportRepository";
 import { resourceRepository } from "@server/repositories/ResourceRepository";
 import { transactionRepository } from "@server/repositories/TransactionRepository";
 import { userRepository } from "@server/repositories/UserRepository";
+import { incidentTypeService } from "@server/services/IncidentTypeService";
 import { moderationService } from "@server/services/ModerationService";
 import { mergePulseSchema } from "@shared/validators/admin/isMergePulseValid";
 import {
 	moderatePulseParamsSchema,
 	moderatePulseSchema,
 } from "@shared/validators/admin/isModeratePulseValid";
+import {
+	createIncidentTypeSchema,
+	incidentTypeIdParamSchema,
+	updateIncidentTypeSchema,
+} from "@shared/validators/incident-types/isIncidentTypeValid";
 import {
 	reviewReportParamsSchema,
 	reviewReportSchema,
@@ -47,6 +53,19 @@ export const adminController = new Hono()
 		const sortedResources = resources.sort(
 			(a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
 		);
+		const recentPulses = await Promise.all(
+			pulses
+				.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+				.slice(0, 5)
+				.map(async (pulse) => ({
+					...pulse,
+					incidentType: pulse.incidentTypeId
+						? await incidentTypeService.getIncidentTypeById(
+								pulse.incidentTypeId,
+							)
+						: null,
+				})),
+		);
 
 		return c.json({
 			success: true,
@@ -61,9 +80,7 @@ export const adminController = new Hono()
 					notifications: notifications.length,
 				},
 				recentReports: sortedReports.slice(0, 5),
-				recentPulses: pulses
-					.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-					.slice(0, 5),
+				recentPulses,
 				recentResources: sortedResources.slice(0, 5),
 			},
 		});
@@ -106,6 +123,67 @@ export const adminController = new Hono()
 			},
 		});
 	})
+	.get("/incident-types", async (c) => {
+		const incidentTypes = await incidentTypeService.listAllIncidentTypes();
+
+		return c.json({
+			success: true,
+			message: "Admin incident types retrieved",
+			data: incidentTypes,
+		});
+	})
+	.post(
+		"/incident-types",
+		zValidator("json", createIncidentTypeSchema),
+		async (c) => {
+			const result = await incidentTypeService.createIncidentType(
+				c.req.valid("json"),
+			);
+
+			if (!result.ok) {
+				const status = result.code === "CONFLICT" ? 409 : 400;
+				return c.json(
+					{ success: false, message: result.message, data: null },
+					status,
+				);
+			}
+
+			return c.json(
+				{
+					success: true,
+					message: "Incident type created",
+					data: result.data.incidentType,
+				},
+				201,
+			);
+		},
+	)
+	.patch(
+		"/incident-types/:id",
+		zValidator("param", incidentTypeIdParamSchema),
+		zValidator("json", updateIncidentTypeSchema),
+		async (c) => {
+			const { id } = c.req.valid("param");
+			const result = await incidentTypeService.updateIncidentType(
+				id,
+				c.req.valid("json"),
+			);
+
+			if (!result.ok) {
+				const status = result.code === "NOT_FOUND" ? 404 : 400;
+				return c.json(
+					{ success: false, message: result.message, data: null },
+					status,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message: "Incident type updated",
+				data: result.data.incidentType,
+			});
+		},
+	)
 	.patch(
 		"/reports/:id",
 		zValidator("param", reviewReportParamsSchema),

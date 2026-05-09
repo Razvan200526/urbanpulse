@@ -117,6 +117,22 @@ export const verification = pgTable("verification", {
 	updatedAt: timestamp("updatedAt"),
 });
 
+export const incidentType = pgTable(
+	"incident_type",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		slug: text("slug").notNull(),
+		label: varchar("label", { length: 80 }).notNull(),
+		description: text("description"),
+		isActive: boolean("isActive").notNull().default(true),
+		isSystem: boolean("isSystem").notNull().default(false),
+		sortOrder: integer("sortOrder").notNull().default(0),
+		createdAt: timestamp("createdAt").notNull().defaultNow(),
+		updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+	},
+	(t) => [uniqueIndex("incident_type_slug_unique").on(t.slug)],
+);
+
 export const pulse = pgTable(
 	"pulse",
 	{
@@ -125,6 +141,9 @@ export const pulse = pgTable(
 			.$type<PulseEnum>()
 			.notNull()
 			.default(PulseEnum.Emergency),
+		incidentTypeId: uuid("incidentTypeId").references(() => incidentType.id, {
+			onDelete: "set null",
+		}),
 		userId: text("userId")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
@@ -443,8 +462,16 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 export const verificationRelations = relations(verification, () => ({}));
 
+export const incidentTypeRelations = relations(incidentType, ({ many }) => ({
+	pulses: many(pulse),
+}));
+
 export const pulseRelations = relations(pulse, ({ one, many }) => ({
 	user: one(user, { fields: [pulse.userId], references: [user.id] }),
+	incidentType: one(incidentType, {
+		fields: [pulse.incidentTypeId],
+		references: [incidentType.id],
+	}),
 	conversations: many(conversation),
 	alerts: many(petAlert),
 	confirmations: many(pulseConfirmation),
@@ -615,11 +642,42 @@ export const resourceReviewRelations = relations(resourceReview, ({ one }) => ({
 		relationName: "reviewsReceived",
 	}),
 }));
+// Tabel pentru clustere
+export const pulseClusters = pgTable(
+	"pulse_clusters",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		pulseType: text("pulse_type").notNull(), // "POWER_OUTAGE", "FLOOD", etc.
+		centerLat: doublePrecision("center_lat").notNull(),
+		centerLng: doublePrecision("center_lng").notNull(),
+		radiusMeters: integer("radius_meters").notNull(),
+		reportCount: integer("report_count").default(1),
+		confidenceScore: doublePrecision("confidence_score").default(0),
+		status: text("status").default("active"), // "active" | "crisis" | "resolved"
+		crisisTriggered: boolean("crisis_triggered").default(false),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+		expiresAt: timestamp("expires_at"), // time window
+	},
+	(t) => [
+		index("idx_clusters_location").using(
+			"gist",
+			sql`ST_MakePoint(${t.centerLng}, ${t.centerLat})`,
+		),
+	],
+);
+
+// Relatie pulse -> cluster
+export const pulseClusterMembers = pgTable("pulse_cluster_members", {
+  pulseId: uuid("pulse_id").references(() => pulse.id),
+  clusterId: uuid("cluster_id").references(() => pulseClusters.id),
+});
 
 export type UserType = InferSelectModel<typeof user>;
 export type SessionType = InferSelectModel<typeof session>;
 export type AccountType = InferSelectModel<typeof account>;
 export type VerificationType = InferSelectModel<typeof verification>;
+export type IncidentTypeType = InferSelectModel<typeof incidentType>;
 export type PulseType = InferSelectModel<typeof pulse>;
 export type ConversationType = InferSelectModel<typeof conversation>;
 export type ConversationMemberType = InferSelectModel<
@@ -638,3 +696,7 @@ export type ResourceType = InferSelectModel<typeof resource>;
 export type ResourceReviewType = InferSelectModel<typeof resourceReview>;
 export type SkillType = InferSelectModel<typeof skill>;
 export type TransactionType = InferSelectModel<typeof transaction>;
+export type PulseClusterType = InferSelectModel<typeof pulseClusters>;
+export type PulseClusterMembersType = InferSelectModel<
+	typeof pulseClusterMembers
+>;

@@ -1,4 +1,5 @@
 import { hono } from "@client/lib/api/client";
+import type { ClientIncidentType } from "@client/utils/types";
 import { useQuery } from "@tanstack/react-query";
 
 type AdminOverviewData = {
@@ -23,6 +24,7 @@ type AdminOverviewData = {
 		title: string;
 		status: string;
 		type: string;
+		incidentType: ClientIncidentType | null;
 		createdAt: string;
 	}>;
 	recentResources: Array<{

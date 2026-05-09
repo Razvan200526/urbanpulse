@@ -1,6 +1,7 @@
 export { accountSeeds } from "./account.seed";
 export { conversationSeeds } from "./conversation.seed";
 export { conversationMemberSeeds } from "./conversation-member.seed";
+export { incidentTypeSeeds } from "./incident-type.seed";
 export { messageSeeds } from "./message.seed";
 export { notificationSeeds } from "./notification.seed";
 export { petAlertSeeds } from "./pet-alert.seed";

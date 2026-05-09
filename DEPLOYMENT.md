@@ -34,7 +34,8 @@ Use the PostGIS public TCP proxy URL only for manual debugging from outside Rail
 
 Local Docker Postgres must match production expectations:
 
-- image base: `postgis/postgis`
+- image base: `postgres:16-bookworm`
+- PostGIS support: installed through `postgresql-16-postgis-3`
 - vector support: installed through `postgresql-16-pgvector`
 
 Those requirements live in:

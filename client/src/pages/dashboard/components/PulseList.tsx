@@ -1,4 +1,4 @@
-import type { PulseType } from "@server/db/schema";
+import type { ClientPulseType } from "@client/utils/types";
 import { PulseEnum, PulseStatusEnum, UrgencyEnum } from "@shared/types";
 import { formatDate } from "@shared/utils/formatDate";
 import { AlertTriangle, PackageIcon, Wrench } from "lucide-react";
@@ -17,8 +17,13 @@ function TypeIcon({ type }: { type: PulseEnum }) {
 		return <Wrench className="size-4 text-accent" />;
 	return <PackageIcon className="size-4 text-primary" />;
 }
-export const PulseList = ({ pulses }: { pulses: PulseType[] }) => {
-	return pulses.map((pulse: PulseType) => (
+
+type PulseListItem = Omit<ClientPulseType, "createdAt"> & {
+	createdAt: string | Date;
+};
+
+export const PulseList = ({ pulses }: { pulses: PulseListItem[] }) => {
+	return pulses.map((pulse: PulseListItem) => (
 		<Link
 			key={pulse.id}
 			to="/map"
@@ -53,6 +58,7 @@ export const PulseList = ({ pulses }: { pulses: PulseType[] }) => {
 				) : null}
 				<p className="text-[11px] text-muted mt-1.5">
 					{formatDate(pulse.createdAt)} · {pulse.type}
+					{pulse.incidentType ? ` · ${pulse.incidentType.label}` : ""}
 				</p>
 			</div>
 		</Link>

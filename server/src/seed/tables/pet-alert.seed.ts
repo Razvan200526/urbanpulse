@@ -18,7 +18,7 @@ export const petAlertSeeds: PetAlertInsert[] = [
 	},
 	{
 		id: seedIds.petAlerts.foundDog,
-		pulseId: seedIds.pulses.lostDog,
+		pulseId: seedIds.pulses.foundDog,
 		alertType: PetAlertTypeEnum.Found,
 		petType: "Dog",
 		color: "Golden",

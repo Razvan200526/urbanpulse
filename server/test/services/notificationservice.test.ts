@@ -18,6 +18,7 @@ function buildPulse(overrides: Partial<PulseType> = {}): PulseType {
 		id: "11111111-1111-1111-1111-111111111111",
 		userId: "owner-1",
 		type: PulseEnum.Skill,
+		incidentTypeId: null,
 		urgency: UrgencyEnum.Urgent,
 		title: "Need help",
 		description: "Nearby assistance needed",

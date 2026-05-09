@@ -5,6 +5,7 @@ import {
 	accountSeeds,
 	conversationMemberSeeds,
 	conversationSeeds,
+	incidentTypeSeeds,
 	messageSeeds,
 	notificationSeeds,
 	petAlertSeeds,
@@ -32,6 +33,7 @@ export async function seedDatabase(db: SeedDatabase) {
 		await tx.insert(schema.account).values(accountSeeds);
 		await tx.insert(schema.session).values(sessionSeeds);
 		await tx.insert(schema.verification).values(verificationSeeds);
+		await tx.insert(schema.incidentType).values(incidentTypeSeeds);
 
 		await tx.insert(schema.pulse).values(pulseSeeds);
 		await tx.insert(schema.conversation).values(conversationSeeds);

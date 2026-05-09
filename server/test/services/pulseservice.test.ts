@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
 import type { PulseType } from "@server/db/schema";
 import { cacheManager } from "@server/services/cache/CacheManager";
+import { incidentTypeService } from "@server/services/IncidentTypeService";
 import { notificationService } from "@server/services/NotificationService";
 import { PulseService } from "@server/services/PulseService";
 import {
@@ -15,6 +16,7 @@ function buildPulse(overrides: Partial<PulseType> = {}): PulseType {
 		id: "11111111-1111-1111-1111-111111111111",
 		userId: "user-1",
 		type: PulseEnum.Emergency,
+		incidentTypeId: null,
 		urgency: UrgencyEnum.Urgent,
 		title: "Need help",
 		description: "Nearby assistance needed",
@@ -74,6 +76,13 @@ describe("PulseService", () => {
 
 	test("returns null when pulse creation fails", async () => {
 		const { service, repo } = createServiceWithRepo();
+		spyOn(
+			incidentTypeService,
+			"resolveIncidentTypeIdForPulse",
+		).mockResolvedValue({
+			ok: true,
+			data: { incidentTypeId: null },
+		});
 		repo.create = mock(async () => {
 			throw new Error("db down");
 		});
@@ -246,6 +255,7 @@ describe("PulseService", () => {
 		const pulses = [buildPulse()];
 		const serializedPulses = pulses.map((pulse) => ({
 			...pulse,
+			incidentType: null,
 			locationPrecision: "exact" as const,
 		}));
 		const { service } = createServiceWithRepo();
@@ -384,6 +394,7 @@ describe("PulseService", () => {
 		});
 		const serializedUploadedPulse = {
 			...uploadedPulse,
+			incidentType: null,
 			locationPrecision: "exact" as const,
 		};
 		const { service } = createServiceWithRepo();
@@ -456,6 +467,7 @@ describe("PulseService", () => {
 			} as any),
 		).resolves.toEqual({
 			...pulse,
+			incidentType: null,
 			locationPrecision: "exact",
 		});
 	});
@@ -476,6 +488,7 @@ describe("PulseService", () => {
 			} as any),
 		).resolves.toEqual({
 			...pulse,
+			incidentType: null,
 			position: {
 				x: 27.574,
 				y: 47.154,

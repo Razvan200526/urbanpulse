@@ -21,7 +21,11 @@ export function NeighborhoodPulseFeed() {
 	const [statusFilter, setStatusFilter] = useState<PulseStatusEnum | "ALL">(
 		PulseStatusEnum.Active,
 	);
-	const { coords, isError: geoError } = useGetGeolocation();
+	const {
+		coords,
+		isError: geoError,
+		refresh: refreshGeo,
+	} = useGetGeolocation();
 
 	const enabled = !!user?.user.id && coords != null && !geoError;
 	const retrievePayload = useMemo(
@@ -146,9 +150,18 @@ export function NeighborhoodPulseFeed() {
 					</div>
 				</div>
 				{geoError && (
-					<p className="text-sm text-danger">
-						Turn on location to load pulses within ~500m of you.
-					</p>
+					<div className="space-y-1">
+						<div className="flex items-center justify-between gap-2">
+							<p className="text-sm text-danger">{geoError}</p>
+							<Button size="sm" variant="secondary" onPress={refreshGeo}>
+								Retry
+							</Button>
+						</div>
+						<p className="text-[10px] text-muted italic">
+							Check browser permissions or ensure you're using a secure (HTTPS)
+							connection.
+						</p>
+					</div>
 				)}
 				{enabled && !isPending && sorted.length === 0 && (
 					<p className="text-sm text-muted">

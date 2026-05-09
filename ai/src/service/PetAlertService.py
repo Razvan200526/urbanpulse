@@ -99,7 +99,6 @@ class PetAlertService:
     def create_pet_alert_record(
         self, payload: PetAlertCreateRequest
     ) -> PetAlertUploadRequestResult:
-        self._ensure_owned_pulse(payload.pulseId, payload.userId)
         request_id = payload.requestId
         values = payload.model_dump(exclude={"requestId", "userId"})
 
@@ -114,8 +113,15 @@ class PetAlertService:
                     }
                 )
             except IntegrityError as exc:
+                logger.error(
+                    "IntegrityError creating pet alert: %s | payload keys=%s pulseId=%s",
+                    exc.orig,
+                    list(values.keys()),
+                    payload.pulseId,
+                )
+                self.repository.rollback()
                 raise PetAlertValidationError(
-                    "Unable to create pet alert with the provided data."
+                    f"Unable to create pet alert: {exc.orig}"
                 ) from exc
 
             return PetAlertUploadRequestResult(
