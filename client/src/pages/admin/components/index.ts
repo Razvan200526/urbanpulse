@@ -1,9 +1,9 @@
 export { ActivityList } from "./ActivityList";
+export type { DraftPoint } from "./CrisisMapDraft";
 export {
 	AdminCrisisMapClickCapture,
 	AdminDraftCrisisOverlay,
 } from "./CrisisMapDraft";
-export type { DraftPoint } from "./CrisisMapDraft";
 export { EmptyState } from "./EmptyState";
 export { IncidentTypeRow } from "./IncidentTypeRow";
 export { IncidentTypeSelect } from "./IncidentTypeSelect";

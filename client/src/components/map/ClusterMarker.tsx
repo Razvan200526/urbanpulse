@@ -1,7 +1,7 @@
 import { ClusterDrawer } from "@client/pages/map/components/ClusterDrawer";
 import type { ClientClusterType } from "@client/utils/clusterTypes";
-import { GLOBAL_CRISIS_RADIUS_THRESHOLD_METERS } from "@shared/utils/crisis";
 import { PulseEnum } from "@shared/types";
+import { GLOBAL_CRISIS_RADIUS_THRESHOLD_METERS } from "@shared/utils/crisis";
 import { AlertCircle, Package, PawPrint, Zap } from "lucide-react";
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";

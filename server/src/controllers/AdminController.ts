@@ -7,9 +7,9 @@ import { reportRepository } from "@server/repositories/ReportRepository";
 import { resourceRepository } from "@server/repositories/ResourceRepository";
 import { transactionRepository } from "@server/repositories/TransactionRepository";
 import { userRepository } from "@server/repositories/UserRepository";
+import { clusteringService } from "@server/services/ClusterigService";
 import { incidentTypeService } from "@server/services/IncidentTypeService";
 import { moderationService } from "@server/services/ModerationService";
-import { clusteringService } from "@server/services/ClusterigService";
 import { createCrisisSchema } from "@shared/validators/admin/isCreateCrisisValid";
 import { mergePulseSchema } from "@shared/validators/admin/isMergePulseValid";
 import {

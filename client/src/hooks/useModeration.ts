@@ -7,8 +7,8 @@ import {
 	useAdminUsers,
 } from "./moderation/adminUsers";
 import {
-	useAdminDuplicatePulses,
 	useAdminCreateCrisis,
+	useAdminDuplicatePulses,
 	useAdminReports,
 	useConfirmPulse,
 	useCreateReport,
