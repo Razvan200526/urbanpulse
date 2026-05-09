@@ -188,7 +188,7 @@ export const CreatePulseModal = ({
 						<Select.Popover className="border border-accent">
 							<ListBox
 								className="rounded"
-								items={incidentTypes}
+								items={incidentTypes.filter((item) => item.isActive)}
 								onSelectionChange={(keys) => {
 									const key = Array.from(keys)[0];
 									if (key) setIncidentTypeId(key.toString());
