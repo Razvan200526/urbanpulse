@@ -25,7 +25,7 @@ import {
 	pulseSocketMessageSchema,
 } from "@shared/validators/pulses/isPulseSocketMessageValid";
 import type { PulseUpdateBody } from "@shared/validators/pulses/isPulseUpdateValid";
-
+import {ClusteringService} from "@server/services/ClusterigService";
 type PulseSocketResponse = {
 	success: boolean;
 	message: string;
@@ -271,6 +271,10 @@ export class PulseService {
 			});
 			if (created) {
 				await this.invalidatePulseCaches(created.id);
+
+				//adding the cluster creation
+				const clusteringService = new ClusteringService();
+  await clusteringService.findOrCreateCluster(created);
 			}
 
 			return created;

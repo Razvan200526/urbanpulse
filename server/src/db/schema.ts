@@ -615,6 +615,36 @@ export const resourceReviewRelations = relations(resourceReview, ({ one }) => ({
 		relationName: "reviewsReceived",
 	}),
 }));
+// Tabel pentru clustere
+export const pulseClusters = pgTable(
+	"pulse_clusters",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		pulseType: text("pulse_type").notNull(), // "POWER_OUTAGE", "FLOOD", etc.
+		centerLat: doublePrecision("center_lat").notNull(),
+		centerLng: doublePrecision("center_lng").notNull(),
+		radiusMeters: integer("radius_meters").notNull(),
+		reportCount: integer("report_count").default(1),
+		confidenceScore: doublePrecision("confidence_score").default(0),
+		status: text("status").default("active"), // "active" | "crisis" | "resolved"
+		crisisTriggered: boolean("crisis_triggered").default(false),
+		createdAt: timestamp("created_at").defaultNow(),
+		updatedAt: timestamp("updated_at").defaultNow(),
+		expiresAt: timestamp("expires_at"), // time window
+	},
+	(t) => [
+		index("idx_clusters_location").using(
+			"gist",
+			sql`ST_MakePoint(${t.centerLng}, ${t.centerLat})`,
+		),
+	],
+);
+
+// Relatie pulse -> cluster
+export const pulseClusterMembers = pgTable("pulse_cluster_members", {
+  pulseId: uuid("pulse_id").references(() => pulse.id),
+  clusterId: uuid("cluster_id").references(() => pulseClusters.id),
+});
 
 export type UserType = InferSelectModel<typeof user>;
 export type SessionType = InferSelectModel<typeof session>;
@@ -638,3 +668,7 @@ export type ResourceType = InferSelectModel<typeof resource>;
 export type ResourceReviewType = InferSelectModel<typeof resourceReview>;
 export type SkillType = InferSelectModel<typeof skill>;
 export type TransactionType = InferSelectModel<typeof transaction>;
+export type PulseClusterType = InferSelectModel<typeof pulseClusters>;
+export type PulseClusterMembersType = InferSelectModel<
+	typeof pulseClusterMembers
+>;
