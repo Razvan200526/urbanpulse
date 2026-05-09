@@ -1,6 +1,11 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "docker/Dockerfile"
+dockerfilePath = "Dockerfile"
  
 [deploy]
-startCommand = ""
+startCommand = "docker-entrypoint.sh postgres"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+ 
+
+
