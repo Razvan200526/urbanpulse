@@ -1,5 +1,7 @@
 import {
 	type ConversationTypeEnum,
+	type LostDocumentEmbeddingStatusEnum,
+	type LostDocumentTypeEnum,
 	type PetAlertEmbeddingStatusEnum,
 	type PetAlertTypeEnum,
 	type PetMatchStatusEnum,
@@ -13,8 +15,6 @@ import {
 	type NotificationType as SharedNotificationType,
 	type TransactionStatusEnum,
 	type UrgencyEnum,
-	type LostDocumentTypeEnum,
-	type LostDocumentEmbeddingStatusEnum,
 } from "@shared/types";
 import { type InferSelectModel, relations, sql } from "drizzle-orm";
 import {
@@ -686,9 +686,7 @@ export const lostDocument = pgTable(
 		userId: text("userId")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
-		documentType: text("documentType")
-			.$type<LostDocumentTypeEnum>()
-			.notNull(),
+		documentType: text("documentType").$type<LostDocumentTypeEnum>().notNull(),
 		extractedName: text("extractedName"),
 		extractedFirstName: text("extractedFirstName"),
 		extractedBirthYear: integer("extractedBirthYear"),
@@ -703,7 +701,15 @@ export const lostDocument = pgTable(
 			.default("pending" as LostDocumentEmbeddingStatusEnum),
 		embeddingUpdatedAt: timestamp("embeddingUpdatedAt"),
 		sensitiveRegions: jsonb("sensitiveRegions")
-			.$type<{ x: number; y: number; w: number; h: number }[]>()
+			.$type<
+				{
+					x: number;
+					y: number;
+					w: number;
+					h: number;
+					kind?: "SENSITIVE_TEXT" | "FACE";
+				}[]
+			>()
 			.notNull()
 			.default(sql`'[]'::jsonb`),
 		createdAt: timestamp("createdAt").notNull().defaultNow(),

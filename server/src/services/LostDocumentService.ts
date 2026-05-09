@@ -1,20 +1,39 @@
-import type {
-	LostDocumentType,
-	LostDocumentMatchType,
-} from "@server/db/schema";
+import type { LostDocumentType, UserType } from "@server/db/schema";
 import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
-import { lostDocumentAIService } from "@server/services/LostDocumentAIService";
-import { documentImageService } from "@server/services/DocumentImageService";
-import { notificationService } from "@server/services/NotificationService";
 import { userRepository } from "@server/repositories/UserRepository";
+import { documentImageService } from "@server/services/DocumentImageService";
+import { lostDocumentAIService } from "@server/services/LostDocumentAIService";
+import { notificationService } from "@server/services/NotificationService";
 import { logger } from "@server/utils/Logger";
+import {
+	LostDocumentEmbeddingStatusEnum,
+	LostDocumentTypeEnum,
+} from "@shared/types";
 
 const MAX_DOCUMENTS_PER_USER = 3;
-const MATCHING_THRESHOLD = 0.75;
-const EMBEDDING_SIMILARITY_WEIGHT = 0.6;
-const BIRTH_YEAR_BONUS = 0.2;
-const CITY_MATCH_BONUS = 0.15;
-const DOCUMENT_TYPE_BONUS = 0.05;
+const MATCHING_THRESHOLD = 0.62;
+
+const SCORE_WEIGHTS = {
+	embedding: 0.35,
+	name: 0.25,
+	birthYear: 0.15,
+	city: 0.1,
+	documentType: 0.07,
+	faceRegionPresence: 0.03,
+	visibleFieldSimilarity: 0.05,
+} as const;
+
+type CandidateSignal = {
+	similarityScore: number;
+	nameScore: number;
+	nameMatch: boolean;
+	birthYearMatch: boolean;
+	cityMatch: boolean;
+	documentTypeScore: number;
+	faceRegionScore: number;
+	visibleFieldSimilarity: number;
+	compositeScore: number;
+};
 
 interface UploadResult {
 	success: boolean;
@@ -38,7 +57,10 @@ export class LostDocumentService {
 	 * @param imageBuffer Document image buffer
 	 * @returns Upload result with document ID
 	 */
-	async uploadDocument(userId: string, imageBuffer: Buffer): Promise<UploadResult> {
+	async uploadDocument(
+		userId: string,
+		imageBuffer: Buffer,
+	): Promise<UploadResult> {
 		try {
 			// Check document limit
 			const count = await this.repo.countByUserId(userId);
@@ -59,10 +81,11 @@ export class LostDocumentService {
 			}
 
 			// Process image (blur + upload)
-			const { originalKey, blurredUrl } = await this.imageService.processDocument(
-				imageBuffer,
-				analysis.sensitiveRegions,
-			);
+			const { originalKey, blurredUrl } =
+				await this.imageService.processDocument(
+					imageBuffer,
+					analysis.sensitiveRegions,
+				);
 
 			// Generate embedding
 			const embeddingText = this.buildEmbeddingText(
@@ -86,7 +109,9 @@ export class LostDocumentService {
 				blurredImageUrl: blurredUrl,
 				embeddingVector: embedding || undefined,
 				embeddingModel: embedding ? "text-embedding-004" : undefined,
-				embeddingStatus: embedding ? ("ready" as any) : ("failed" as any),
+				embeddingStatus: embedding
+					? LostDocumentEmbeddingStatusEnum.Ready
+					: LostDocumentEmbeddingStatusEnum.Failed,
 				embeddingUpdatedAt: embedding ? new Date() : undefined,
 				sensitiveRegions: analysis.sensitiveRegions,
 			});
@@ -98,9 +123,10 @@ export class LostDocumentService {
 				};
 			}
 
-			// Trigger async matching
 			this.matchDocument(document.id).catch((err) => {
-				logger.exception(err instanceof Error ? err : new Error("Matching failed"));
+				logger.exception(
+					err instanceof Error ? err : new Error("Matching failed"),
+				);
 			});
 
 			return {
@@ -125,72 +151,61 @@ export class LostDocumentService {
 	async matchDocument(documentId: string): Promise<void> {
 		try {
 			const document = await this.repo.getOne(documentId);
-			if (!document || !document.embeddingVector) {
-				logger.error(`Document ${documentId} not found or has no embedding`);
+			if (!document) {
+				logger.error(`Document ${documentId} not found`);
 				return;
 			}
 
-			// Find similar documents by embedding
-			const similarDocuments = await this.repo.findSimilarByEmbedding(
-				document.embeddingVector as any,
-				0.6, // Lower threshold for initial search
-				50,
-			);
+			const similarDocuments = document.embeddingVector
+				? await this.repo.findSimilarByEmbedding(
+						document.embeddingVector,
+						0.2,
+						100,
+						document.id,
+					)
+				: [];
+			const similarDocsByUser = this.groupDocumentsByUser(similarDocuments);
+			const users = await this.userRepository.getAll();
 
-			// Build set of unique user IDs to check
-			const userIdsToCheck = new Set<string>();
-
-			// Add users from similar documents
-			for (const doc of similarDocuments) {
-				if (doc.userId !== document.userId) {
-					userIdsToCheck.add(doc.userId);
+			for (const user of users) {
+				if (user.id === document.userId) {
+					continue;
 				}
-			}
 
-			// Also check users with matching name/birth year/city
-			if (
-				document.extractedFirstName ||
-				document.extractedName ||
-				document.extractedBirthYear ||
-				document.extractedCity
-			) {
-				// Query users with matching criteria would go here if we had a dedicated search
-				// For now, we rely on the embedding-based search
-			}
+				const candidateSignal = this.calculateCandidateSignal(
+					document,
+					user,
+					similarDocsByUser.get(user.id) ?? [],
+				);
+				if (!this.isCandidateStrongEnough(candidateSignal)) {
+					continue;
+				}
 
-			// Generate matches
-			for (const userId of userIdsToCheck) {
-				const user = await this.userRepository.getOne(userId);
-				if (!user) continue;
+				if (candidateSignal.compositeScore < MATCHING_THRESHOLD) {
+					continue;
+				}
 
-				// Calculate composite score
-				const compositeScore = this.calculateCompositeScore(document, user);
+				const existing = await this.repo.getExistingMatch(documentId, user.id);
+				if (existing) {
+					continue;
+				}
 
-				if (compositeScore >= MATCHING_THRESHOLD) {
-					// Check if match already exists
-					const existing = await this.repo.getExistingMatch(documentId, userId);
+				const match = await this.repo.createMatch({
+					documentId,
+					potentialOwnerId: user.id,
+					similarityScore: candidateSignal.similarityScore,
+					compositeScore: candidateSignal.compositeScore,
+					nameMatch: candidateSignal.nameMatch,
+					birthYearMatch: candidateSignal.birthYearMatch,
+					cityMatch: candidateSignal.cityMatch,
+				});
 
-					if (!existing) {
-						// Create match
-						const match = await this.repo.createMatch({
-							documentId: documentId as any,
-							potentialOwnerId: userId,
-							similarityScore:
-								similarDocuments.find((d) => d.userId === userId)?.similarity || 0,
-							compositeScore,
-							nameMatch: this.checkNameMatch(document, user),
-							birthYearMatch: document.extractedBirthYear === user.birthYear,
-							cityMatch:
-								document.extractedCity?.toLowerCase() ===
-								user.homeCity?.toLowerCase(),
-						});
-
-						if (match) {
-							logger.info(
-								`Created match between document ${documentId} and user ${userId}`,
-							);
-						}
-					}
+				if (match) {
+					logger.info(
+						`Created match between document ${documentId} and user ${user.id} (${Math.round(
+							candidateSignal.compositeScore * 100,
+						)}%)`,
+					);
 				}
 			}
 
@@ -295,6 +310,13 @@ export class LostDocumentService {
 	}
 
 	/**
+	 * List public feed documents (blurred previews only)
+	 */
+	async getPublicFeed(userId: string): Promise<LostDocumentType[]> {
+		return this.repo.getPublicFeed(userId);
+	}
+
+	/**
 	 * Build embedding text from extracted fields
 	 */
 	private buildEmbeddingText(
@@ -311,48 +333,269 @@ export class LostDocumentService {
 		return parts.join(" ");
 	}
 
-	/**
-	 * Check if names match
-	 */
-	private checkNameMatch(document: LostDocumentType, user: any): boolean {
-		const docName = `${document.extractedFirstName || ""} ${document.extractedName || ""}`.toLowerCase().trim();
-		const userName = `${user.firstName || ""} ${user.lastName || ""} ${user.name || ""}`.toLowerCase().trim();
-
-		return docName.length > 0 && userName.includes(docName);
+	private groupDocumentsByUser(
+		documents: Array<LostDocumentType & { similarity: number }>,
+	): Map<string, Array<LostDocumentType & { similarity: number }>> {
+		const grouped = new Map<
+			string,
+			Array<LostDocumentType & { similarity: number }>
+		>();
+		for (const document of documents) {
+			const existing = grouped.get(document.userId) ?? [];
+			existing.push(document);
+			grouped.set(document.userId, existing);
+		}
+		return grouped;
 	}
 
-	/**
-	 * Calculate composite matching score
-	 */
-	private calculateCompositeScore(document: LostDocumentType, user: any): number {
-		let score = 0;
+	private calculateCandidateSignal(
+		document: LostDocumentType,
+		user: UserType,
+		similarDocs: Array<LostDocumentType & { similarity: number }>,
+	): CandidateSignal {
+		const similarityScore = this.getHighestSimilarity(similarDocs);
+		const nameScore = this.calculateNameScore(document, user);
+		const nameMatch = nameScore >= 0.5;
+		const birthYearMatch = this.isBirthYearMatch(document, user);
+		const cityMatch = this.isCityMatch(document, user);
+		const documentTypeScore = this.calculateDocumentTypeScore(
+			document,
+			similarDocs,
+		);
+		const faceRegionScore = this.calculateFaceRegionScore(
+			document,
+			similarDocs,
+		);
+		const visibleFieldSimilarity = this.calculateVisibleFieldSimilarity(
+			document,
+			{
+				nameScore,
+				birthYearMatch,
+				cityMatch,
+				documentTypeScore,
+			},
+		);
 
-		// Embedding similarity: 60% weight
-		// (This would use actual similarity if we have it - for now using base)
-		score += EMBEDDING_SIMILARITY_WEIGHT;
+		const compositeScore =
+			SCORE_WEIGHTS.embedding * similarityScore +
+			SCORE_WEIGHTS.name * nameScore +
+			SCORE_WEIGHTS.birthYear * Number(birthYearMatch) +
+			SCORE_WEIGHTS.city * Number(cityMatch) +
+			SCORE_WEIGHTS.documentType * documentTypeScore +
+			SCORE_WEIGHTS.faceRegionPresence * faceRegionScore +
+			SCORE_WEIGHTS.visibleFieldSimilarity * visibleFieldSimilarity;
 
-		// Birth year exact match: +20% bonus
-		if (
-			document.extractedBirthYear &&
-			user.birthYear &&
+		return {
+			similarityScore,
+			nameScore,
+			nameMatch,
+			birthYearMatch,
+			cityMatch,
+			documentTypeScore,
+			faceRegionScore,
+			visibleFieldSimilarity,
+			compositeScore: Math.max(0, Math.min(1, compositeScore)),
+		};
+	}
+
+	private isCandidateStrongEnough(signal: CandidateSignal): boolean {
+		return (
+			signal.similarityScore >= 0.22 ||
+			signal.nameScore >= 0.45 ||
+			signal.birthYearMatch ||
+			signal.cityMatch
+		);
+	}
+
+	private getHighestSimilarity(
+		documents: Array<LostDocumentType & { similarity: number }>,
+	): number {
+		if (documents.length === 0) {
+			return 0;
+		}
+
+		return documents.reduce(
+			(highest, item) => Math.max(highest, Number(item.similarity) || 0),
+			0,
+		);
+	}
+
+	private calculateNameScore(
+		document: LostDocumentType,
+		user: UserType,
+	): number {
+		const firstName = this.normalizeToken(document.extractedFirstName);
+		const extractedName = this.normalizeToken(document.extractedName);
+		const userTokens = this.extractUserNameTokens(user);
+		if (userTokens.length === 0) {
+			return 0;
+		}
+
+		const userInitials = this.extractInitials(userTokens);
+		const docNameParts = extractedName.split(" ").filter(Boolean);
+		const lastNameFragment = this.getLastSignificantPart(docNameParts);
+
+		const firstNameScore = this.matchFragmentScore(firstName, userTokens);
+		const lastNameScore = this.matchFragmentScore(lastNameFragment, userTokens);
+		const docInitials = this.extractInitials(
+			[firstName, lastNameFragment].filter(Boolean),
+		);
+		const initialsMatch =
+			docInitials.length > 0 && userInitials.startsWith(docInitials) ? 1 : 0;
+
+		return Math.min(
+			1,
+			firstNameScore * 0.4 + lastNameScore * 0.4 + initialsMatch * 0.2,
+		);
+	}
+
+	private extractUserNameTokens(user: UserType): string[] {
+		const parts = [
+			this.normalizeToken(user.firstName),
+			this.normalizeToken(user.lastName),
+			this.normalizeToken(user.name),
+		]
+			.join(" ")
+			.split(" ")
+			.filter(Boolean);
+		return [...new Set(parts)];
+	}
+
+	private extractInitials(tokens: string[]): string {
+		return tokens
+			.filter((token) => token.length > 0)
+			.map((token) => token[0])
+			.join("");
+	}
+
+	private matchFragmentScore(fragment: string, userTokens: string[]): number {
+		if (fragment.length < 2) {
+			return 0;
+		}
+
+		const normalizedFragment = fragment.toLowerCase();
+		return userTokens.some((token) => {
+			const value = token.toLowerCase();
+			return (
+				value.includes(normalizedFragment) ||
+				normalizedFragment.includes(value) ||
+				value.startsWith(normalizedFragment.slice(0, 3))
+			);
+		})
+			? 1
+			: 0;
+	}
+
+	private getLastSignificantPart(parts: string[]): string {
+		for (let index = parts.length - 1; index >= 0; index -= 1) {
+			const part = parts[index];
+			if (part && part.length > 1) {
+				return part;
+			}
+		}
+		return "";
+	}
+
+	private isBirthYearMatch(
+		document: LostDocumentType,
+		user: UserType,
+	): boolean {
+		return (
+			typeof document.extractedBirthYear === "number" &&
+			typeof user.birthYear === "number" &&
 			document.extractedBirthYear === user.birthYear
-		) {
-			score += BIRTH_YEAR_BONUS;
+		);
+	}
+
+	private isCityMatch(document: LostDocumentType, user: UserType): boolean {
+		const extractedCity = this.normalizeToken(document.extractedCity);
+		const homeCity = this.normalizeToken(user.homeCity);
+		if (!extractedCity || !homeCity) {
+			return false;
+		}
+		return (
+			extractedCity === homeCity ||
+			extractedCity.includes(homeCity) ||
+			homeCity.includes(extractedCity)
+		);
+	}
+
+	private calculateDocumentTypeScore(
+		document: LostDocumentType,
+		similarDocs: Array<LostDocumentType>,
+	): number {
+		if (similarDocs.length === 0) {
+			return 0.4;
+		}
+		return similarDocs.some(
+			(item) => item.documentType === document.documentType,
+		)
+			? 1
+			: 0;
+	}
+
+	private calculateFaceRegionScore(
+		document: LostDocumentType,
+		similarDocs: Array<LostDocumentType>,
+	): number {
+		const currentHasFace = this.documentHasFaceRegion(document);
+		if (!currentHasFace) {
+			return 0.5;
 		}
 
-		// City match: +15% bonus
-		if (
-			document.extractedCity &&
-			user.homeCity &&
-			document.extractedCity.toLowerCase() === user.homeCity.toLowerCase()
-		) {
-			score += CITY_MATCH_BONUS;
+		if (similarDocs.length === 0) {
+			return 0.3;
 		}
 
-		// Document type consistency: +5% bonus (if user profile has similar document type info)
-		score += DOCUMENT_TYPE_BONUS;
+		return similarDocs.some((item) => this.documentHasFaceRegion(item)) ? 1 : 0;
+	}
 
-		return Math.min(score, 1.0);
+	private documentHasFaceRegion(document: LostDocumentType): boolean {
+		const regions = Array.isArray(document.sensitiveRegions)
+			? document.sensitiveRegions
+			: [];
+		const hasFaceRegion = regions.some((region) => region?.kind === "FACE");
+		if (hasFaceRegion) {
+			return true;
+		}
+
+		return [
+			LostDocumentTypeEnum.IdCard,
+			LostDocumentTypeEnum.Passport,
+			LostDocumentTypeEnum.DrivingLicense,
+			LostDocumentTypeEnum.StudentCard,
+		].includes(document.documentType as LostDocumentTypeEnum);
+	}
+
+	private calculateVisibleFieldSimilarity(
+		document: LostDocumentType,
+		fields: {
+			nameScore: number;
+			birthYearMatch: boolean;
+			cityMatch: boolean;
+			documentTypeScore: number;
+		},
+	): number {
+		const values: number[] = [];
+		if (document.extractedFirstName || document.extractedName) {
+			values.push(fields.nameScore);
+		}
+		if (document.extractedBirthYear) {
+			values.push(Number(fields.birthYearMatch));
+		}
+		if (document.extractedCity) {
+			values.push(Number(fields.cityMatch));
+		}
+		values.push(fields.documentTypeScore);
+
+		if (values.length === 0) {
+			return 0;
+		}
+		return values.reduce((sum, value) => sum + value, 0) / values.length;
+	}
+
+	private normalizeToken(value: string | null | undefined): string {
+		return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 	}
 }
 

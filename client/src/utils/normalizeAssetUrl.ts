@@ -17,7 +17,8 @@ export const normalizeAssetUrl = (url: string) => {
 	}
 
 	const [, origin, rawPathname = "", search = ""] = match;
-	const encodedPathname = rawPathname
+	const collapsedPathname = rawPathname.replace(/\/{2,}/g, "/");
+	const encodedPathname = collapsedPathname
 		.split("/")
 		.map((segment, index) =>
 			index === 0 ? segment : encodeURIComponent(decodePathSegment(segment)),

@@ -1,18 +1,35 @@
 import { zValidator } from "@hono/zod-validator";
+import type { Variables } from "@server/app";
+import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
+import { lostDocumentService } from "@server/services/LostDocumentService";
+import { logger } from "@server/utils/Logger";
 import { Hono } from "hono";
 import { z } from "zod";
-import type { Variables } from "@server/app";
-import { lostDocumentService } from "@server/services/LostDocumentService";
-import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
-import { logger } from "@server/utils/Logger";
 
 const fileSchema = z.object({
 	document: z.instanceof(File),
 });
 
+const normalizePublicAssetUrl = (url: string) => {
+	return url.replace(/^(https?:\/\/[^/]+)\/+/, "$1/");
+};
+
+type LostDocumentMatchResponse = {
+	matchId: string;
+	documentId: string;
+	matchScore: number;
+	potentialOwner: {
+		id: string;
+		name: string;
+		email: string;
+	};
+	nameMatch: boolean | null;
+	birthYearMatch: boolean | null;
+	cityMatch: boolean | null;
+};
+
 export const lostDocumentController = new Hono<{ Variables: Variables }>()
 	.basePath("/lost-documents")
-	// POST /api/lost-documents - Upload document
 	.post("/", zValidator("form", fileSchema), async (c) => {
 		const session = c.get("session");
 		if (!session) {
@@ -29,10 +46,7 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			);
 
 			if (!result.success) {
-				return c.json(
-					{ success: false, error: result.error },
-					400,
-				);
+				return c.json({ success: false, error: result.error }, 400);
 			}
 
 			return c.json({
@@ -46,10 +60,7 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			logger.exception(
 				error instanceof Error ? error : new Error("Upload failed"),
 			);
-			return c.json(
-				{ success: false, error: "Upload failed" },
-				500,
-			);
+			return c.json({ success: false, error: "Upload failed" }, 500);
 		}
 	})
 	// GET /api/lost-documents - List user's documents
@@ -60,7 +71,9 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 		}
 
 		try {
-			const documents = await lostDocumentRepository.getByUserId(session.userId);
+			const documents = await lostDocumentRepository.getByUserId(
+				session.userId,
+			);
 
 			return c.json({
 				success: true,
@@ -68,7 +81,7 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 					id: doc.id,
 					documentType: doc.documentType,
 					extractedCity: doc.extractedCity,
-					blurredImageUrl: doc.blurredImageUrl,
+					blurredImageUrl: normalizePublicAssetUrl(doc.blurredImageUrl),
 					createdAt: doc.createdAt,
 				})),
 			});
@@ -76,10 +89,7 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			logger.exception(
 				error instanceof Error ? error : new Error("Fetch failed"),
 			);
-			return c.json(
-				{ success: false, error: "Fetch failed" },
-				500,
-			);
+			return c.json({ success: false, error: "Fetch failed" }, 500);
 		}
 	})
 	// GET /api/lost-documents/matches - Get matches for user
@@ -91,11 +101,15 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 
 		try {
 			// Get all user's documents with matches above threshold
-			const userDocuments = await lostDocumentRepository.getByUserId(session.userId);
-			const allMatches: any[] = [];
+			const userDocuments = await lostDocumentRepository.getByUserId(
+				session.userId,
+			);
+			const allMatches: LostDocumentMatchResponse[] = [];
 
 			for (const doc of userDocuments) {
-				const matches = await lostDocumentRepository.getMatchesWithUserInfo(doc.id);
+				const matches = await lostDocumentRepository.getMatchesWithUserInfo(
+					doc.id,
+				);
 				allMatches.push(
 					...matches.map((m) => ({
 						matchId: m.id,
@@ -121,10 +135,34 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			logger.exception(
 				error instanceof Error ? error : new Error("Fetch failed"),
 			);
-			return c.json(
-				{ success: false, error: "Fetch failed" },
-				500,
+			return c.json({ success: false, error: "Fetch failed" }, 500);
+		}
+	})
+	// GET /api/lost-documents/public - List blurred documents from other users
+	.get("/public", async (c) => {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ success: false, error: "Unauthorized" }, 401);
+		}
+
+		try {
+			const documents = await lostDocumentService.getPublicFeed(session.userId);
+
+			return c.json({
+				success: true,
+				data: documents.map((doc) => ({
+					id: doc.id,
+					documentType: doc.documentType,
+					extractedCity: doc.extractedCity,
+					blurredImageUrl: normalizePublicAssetUrl(doc.blurredImageUrl),
+					createdAt: doc.createdAt,
+				})),
+			});
+		} catch (error) {
+			logger.exception(
+				error instanceof Error ? error : new Error("Public feed fetch failed"),
 			);
+			return c.json({ success: false, error: "Fetch failed" }, 500);
 		}
 	})
 	// GET /api/lost-documents/:id - Get document details
@@ -139,10 +177,7 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			const document = await lostDocumentRepository.getOne(documentId);
 
 			if (!document) {
-				return c.json(
-					{ success: false, error: "Document not found" },
-					404,
-				);
+				return c.json({ success: false, error: "Document not found" }, 404);
 			}
 
 			// Check permissions
@@ -150,13 +185,17 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			const isAdmin = user?.role === "admin";
 			const isOwner = document.userId === session.userId;
 
-			let imageUrl = document.blurredImageUrl;
-			if (isAdmin || isOwner) {
-				// Get signed URL for original
-				imageUrl = (await lostDocumentService.getDocumentForOwner(
-					documentId,
-					session.userId,
-				)) || document.blurredImageUrl;
+			let imageUrl = normalizePublicAssetUrl(document.blurredImageUrl);
+			if (isAdmin) {
+				imageUrl =
+					(await lostDocumentService.getDocumentForAdmin(documentId)) ||
+					normalizePublicAssetUrl(document.blurredImageUrl);
+			} else if (isOwner) {
+				imageUrl =
+					(await lostDocumentService.getDocumentForOwner(
+						documentId,
+						session.userId,
+					)) || normalizePublicAssetUrl(document.blurredImageUrl);
 			}
 
 			return c.json({
@@ -176,10 +215,7 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			logger.exception(
 				error instanceof Error ? error : new Error("Fetch failed"),
 			);
-			return c.json(
-				{ success: false, error: "Fetch failed" },
-				500,
-			);
+			return c.json({ success: false, error: "Fetch failed" }, 500);
 		}
 	})
 	// DELETE /api/lost-documents/:id - Delete document
@@ -194,10 +230,7 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			const document = await lostDocumentRepository.getOne(documentId);
 
 			if (!document) {
-				return c.json(
-					{ success: false, error: "Document not found" },
-					404,
-				);
+				return c.json({ success: false, error: "Document not found" }, 404);
 			}
 
 			// Check permissions
@@ -206,19 +239,13 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			const isOwner = document.userId === session.userId;
 
 			if (!isAdmin && !isOwner) {
-				return c.json(
-					{ success: false, error: "Forbidden" },
-					403,
-				);
+				return c.json({ success: false, error: "Forbidden" }, 403);
 			}
 
 			const deleted = await lostDocumentRepository.delete(documentId);
 
 			if (!deleted) {
-				return c.json(
-					{ success: false, error: "Failed to delete" },
-					500,
-				);
+				return c.json({ success: false, error: "Failed to delete" }, 500);
 			}
 
 			return c.json({
@@ -229,9 +256,6 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			logger.exception(
 				error instanceof Error ? error : new Error("Delete failed"),
 			);
-			return c.json(
-				{ success: false, error: "Delete failed" },
-				500,
-			);
+			return c.json({ success: false, error: "Delete failed" }, 500);
 		}
 	});

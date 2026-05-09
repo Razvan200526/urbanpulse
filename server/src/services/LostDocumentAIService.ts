@@ -1,6 +1,10 @@
 import { BaseAIService } from "@server/services/BaseAIService";
-import type { DocumentAnalysisType } from "@shared/validators/lost-documents/isLostDocumentValid";
+import { handleError } from "@server/utils/handleError";
 import { logger } from "@server/utils/Logger";
+import {
+	type DocumentAnalysisType,
+	documentAnalysisSchema,
+} from "@shared/validators/lost-documents/isLostDocumentValid";
 
 /**
  * Service for AI-powered lost document analysis and embedding generation
@@ -13,7 +17,9 @@ export class LostDocumentAIService extends BaseAIService {
 	 * @param imageBuffer Buffer containing the image
 	 * @returns Document analysis with extracted data and sensitive regions
 	 */
-	async analyzeDocument(imageBuffer: Buffer): Promise<DocumentAnalysisType | null> {
+	async analyzeDocument(
+		imageBuffer: Buffer,
+	): Promise<DocumentAnalysisType | null> {
 		try {
 			const base64Image = imageBuffer.toString("base64");
 			const mimeType = "image/webp";
@@ -25,7 +31,8 @@ export class LostDocumentAIService extends BaseAIService {
 4. Extracted birth year (format: YYYY)
 5. Extracted city/location
 6. Identify sensitive regions that should be blurred (coordinates as x, y, width, height in pixels)
-7. Whether the document is already blurred
+7. Detect if a face/photo region is visible (without identifying the person)
+8. Whether the document is already blurred
 
 Return a JSON object with these fields:
 {
@@ -35,13 +42,16 @@ Return a JSON object with these fields:
   "extractedBirthYear": 1990,
   "extractedCity": "Bucharest",
   "sensitiveRegions": [
-    {"x": 10, "y": 50, "w": 200, "h": 30},
-    {"x": 220, "y": 50, "w": 200, "h": 30}
+    {"x": 10, "y": 50, "w": 200, "h": 30, "kind": "SENSITIVE_TEXT"},
+    {"x": 220, "y": 50, "w": 200, "h": 30, "kind": "SENSITIVE_TEXT"},
+    {"x": 40, "y": 100, "w": 120, "h": 150, "kind": "FACE"}
   ],
+  "faceRegionDetected": true,
   "alreadyBlurred": false
 }
 
-Focus on identifying CNP number, series, and identification numbers as sensitive regions.`;
+Focus on identifying CNP number, series, and identification numbers as sensitive regions.
+If the image is partially damaged (wet, torn, blurry), still extract any fragments you can read.`;
 
 			const client = this.getClient();
 			if (!client) {
@@ -78,13 +88,19 @@ Focus on identifying CNP number, series, and identification numbers as sensitive
 				return null;
 			}
 
-			const analysis = JSON.parse(text) as DocumentAnalysisType;
+			const parsed = documentAnalysisSchema.safeParse(JSON.parse(text));
+			if (!parsed.success) {
+				logger.error("Invalid document analysis payload from AI");
+				return null;
+			}
+			const analysis = parsed.data as DocumentAnalysisType;
+			analysis.faceRegionDetected =
+				analysis.faceRegionDetected ||
+				analysis.sensitiveRegions.some((region) => region.kind === "FACE");
 			logger.info(`Document analyzed: ${analysis.documentType}`);
 			return analysis;
 		} catch (error) {
-			logger.exception(
-				error instanceof Error ? error : new Error("Document analysis failed"),
-			);
+			handleError(error);
 			return null;
 		}
 	}
@@ -118,7 +134,7 @@ Focus on identifying CNP number, series, and identification numbers as sensitive
 				},
 			});
 
-			const embeddings = (response as any).embedding?.values;
+			const embeddings = response.embeddings?.[0]?.values;
 			if (!embeddings || embeddings.length !== 768) {
 				logger.error(
 					`Invalid embedding dimensions: ${embeddings?.length || 0}`,
@@ -126,11 +142,15 @@ Focus on identifying CNP number, series, and identification numbers as sensitive
 				return null;
 			}
 
-			logger.info(`Generated embedding for text: "${text.substring(0, 50)}..."`);
+			logger.info(
+				`Generated embedding for text: "${text.substring(0, 50)}..."`,
+			);
 			return embeddings;
 		} catch (error) {
 			logger.exception(
-				error instanceof Error ? error : new Error("Embedding generation failed"),
+				error instanceof Error
+					? error
+					: new Error("Embedding generation failed"),
 			);
 			return null;
 		}

@@ -1,21 +1,16 @@
 import { db } from "@server/db";
 import {
-	type LostDocumentType,
 	type LostDocumentMatchType,
+	type LostDocumentType,
 	lostDocument,
 	lostDocumentMatch,
 	user,
 } from "@server/db/schema";
-import {
-	eq,
-	and,
-	desc,
-	sql,
-	asc,
-	count,
-} from "drizzle-orm";
-import type { IRepository } from "./IRepository";
 import { logger } from "@server/utils/Logger";
+import { and, count, desc, eq, sql } from "drizzle-orm";
+import type { IRepository } from "./IRepository";
+
+const DEFAULT_FEED_LIMIT = 100;
 
 export class LostDocumentRepository implements IRepository<LostDocumentType> {
 	async getOne(id: string): Promise<LostDocumentType | null> {
@@ -33,7 +28,9 @@ export class LostDocumentRepository implements IRepository<LostDocumentType> {
 			.orderBy(desc(lostDocument.createdAt));
 	}
 
-	async create(data: Partial<LostDocumentType>): Promise<LostDocumentType | null> {
+	async create(
+		data: Partial<LostDocumentType>,
+	): Promise<LostDocumentType | null> {
 		const [result] = await db
 			.insert(lostDocument)
 			.values(data as any)
@@ -41,7 +38,10 @@ export class LostDocumentRepository implements IRepository<LostDocumentType> {
 		return result ?? null;
 	}
 
-	async update(id: string, data: Partial<LostDocumentType>): Promise<LostDocumentType> {
+	async update(
+		id: string,
+		data: Partial<LostDocumentType>,
+	): Promise<LostDocumentType> {
 		const [result] = await db
 			.update(lostDocument)
 			.set(data as any)
@@ -75,6 +75,21 @@ export class LostDocumentRepository implements IRepository<LostDocumentType> {
 	}
 
 	/**
+	 * Find public lost documents uploaded by other users
+	 */
+	async getPublicFeed(
+		excludeUserId: string,
+		limit = DEFAULT_FEED_LIMIT,
+	): Promise<LostDocumentType[]> {
+		return await db
+			.select()
+			.from(lostDocument)
+			.where(sql`${lostDocument.userId} != ${excludeUserId}`)
+			.orderBy(desc(lostDocument.createdAt))
+			.limit(limit);
+	}
+
+	/**
 	 * Count documents uploaded by a user
 	 * @param userId User ID
 	 * @returns Count of documents
@@ -98,22 +113,31 @@ export class LostDocumentRepository implements IRepository<LostDocumentType> {
 		vector: number[],
 		threshold = 0.7,
 		limit = 10,
+		excludeDocumentId?: string,
 	): Promise<Array<LostDocumentType & { similarity: number }>> {
 		try {
-			const vectorStr = `[${vector.join(",")}]`;
+			if (vector.length === 0 || !vector.every(Number.isFinite)) {
+				return [];
+			}
+
+			const vectorStr = `[${vector.map((value) => Number(value).toFixed(8)).join(",")}]`;
+			const excludeClause = excludeDocumentId
+				? sql`AND ld."id" != ${excludeDocumentId}`
+				: sql``;
 
 			const results = await db.execute(sql`
-				SELECT 
+				SELECT
 					ld.*,
 					(1 - (ld."embeddingVector" <=> ${sql.raw(`'${vectorStr}'::vector`)})) as similarity
 				FROM "lost_document" ld
 				WHERE ld."embeddingVector" IS NOT NULL
+				${excludeClause}
 				AND (1 - (ld."embeddingVector" <=> ${sql.raw(`'${vectorStr}'::vector`)})) > ${threshold}
 				ORDER BY similarity DESC
 				LIMIT ${limit}
 			`);
 
-			return results as any;
+			return results.rows as Array<LostDocumentType & { similarity: number }>;
 		} catch (error) {
 			logger.exception(
 				error instanceof Error ? error : new Error("Similarity search failed"),
@@ -240,7 +264,9 @@ export class LostDocumentRepository implements IRepository<LostDocumentType> {
 	 * @param documentId Document ID
 	 * @returns Array of unnotified matches
 	 */
-	async getUnnotifiedMatches(documentId: string): Promise<LostDocumentMatchType[]> {
+	async getUnnotifiedMatches(
+		documentId: string,
+	): Promise<LostDocumentMatchType[]> {
 		return await db
 			.select()
 			.from(lostDocumentMatch)

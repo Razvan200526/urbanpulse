@@ -1,9 +1,12 @@
-import Sharp from "sharp";
-import type { SensitiveRegionType } from "@shared/validators/lost-documents/isLostDocumentValid";
-import { StorageService, storageService } from "@server/services/S3Service";
-import { logger } from "@server/utils/Logger";
-import { PutObjectCommand, S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+	GetObjectCommand,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl as getS3SignedUrl } from "@aws-sdk/s3-request-presigner";
+import { logger } from "@server/utils/Logger";
+import type { SensitiveRegionType } from "@shared/validators/lost-documents/isLostDocumentValid";
+import Sharp from "sharp";
 
 interface ProcessedDocument {
 	originalKey: string;
@@ -11,12 +14,17 @@ interface ProcessedDocument {
 	blurredKey: string;
 }
 
+const buildPublicAssetUrl = (domain: string, key: string) => {
+	const normalizedDomain = domain.replace(/\/+$/, "");
+	const normalizedKey = key.replace(/^\/+/, "");
+	return `${normalizedDomain}/${normalizedKey}`;
+};
+
 /**
  * Service for processing and storing document images
  * Handles blurring of sensitive regions and uploading to R2
  */
 export class DocumentImageService {
-	private storageService: StorageService;
 	private s3Client: any;
 	private bucketName: string;
 	private endpoint: string;
@@ -24,7 +32,6 @@ export class DocumentImageService {
 	private secretKey: string;
 
 	constructor() {
-		this.storageService = storageService;
 		this.bucketName = Bun.env.R2_BUCKET_NAME || "urbanpulse";
 		this.endpoint = Bun.env.R2_ENDPOINT || "";
 		this.accessKey = Bun.env.R2_ACCESS_KEY || "";
@@ -86,7 +93,9 @@ export class DocumentImageService {
 			};
 		} catch (error) {
 			logger.exception(
-				error instanceof Error ? error : new Error("Document processing failed"),
+				error instanceof Error
+					? error
+					: new Error("Document processing failed"),
 			);
 			throw error;
 		}
@@ -111,10 +120,13 @@ export class DocumentImageService {
 			const height = metadata.height || 600;
 
 			// Create blur layers for each region
-			const overlays: Array<{ input: Buffer; top: number; left: number }> =
-				[];
+			const overlays: Array<{ input: Buffer; top: number; left: number }> = [];
 
 			for (const region of regions) {
+				if (region.kind === "FACE") {
+					continue;
+				}
+
 				// Clamp region coordinates to image bounds
 				const x = Math.max(0, Math.min(region.x, width - 1));
 				const y = Math.max(0, Math.min(region.y, height - 1));
@@ -143,9 +155,7 @@ export class DocumentImageService {
 			return await image.webp({ quality: 90 }).toBuffer();
 		} catch (error) {
 			logger.exception(
-				error instanceof Error
-					? error
-					: new Error("Region blurring failed"),
+				error instanceof Error ? error : new Error("Region blurring failed"),
 			);
 			throw error;
 		}
@@ -156,7 +166,10 @@ export class DocumentImageService {
 	 * @param buffer Image buffer
 	 * @param key S3 key
 	 */
-	private async uploadToPrivateBucket(buffer: Buffer, key: string): Promise<void> {
+	private async uploadToPrivateBucket(
+		buffer: Buffer,
+		key: string,
+	): Promise<void> {
 		const command = new PutObjectCommand({
 			Bucket: this.bucketName,
 			Key: key,
@@ -173,7 +186,10 @@ export class DocumentImageService {
 	 * @param key S3 key
 	 * @returns Public URL
 	 */
-	private async uploadToPublicBucket(buffer: Buffer, key: string): Promise<string> {
+	private async uploadToPublicBucket(
+		buffer: Buffer,
+		key: string,
+	): Promise<string> {
 		const command = new PutObjectCommand({
 			Bucket: this.bucketName,
 			Key: key,
@@ -185,8 +201,10 @@ export class DocumentImageService {
 		await this.s3Client.send(command);
 
 		// Build public URL
-		const domain = Bun.env.R2_DOMAIN || `https://${this.bucketName}.r2.cloudflarestorage.com`;
-		return `${domain}/${key}`;
+		const domain =
+			Bun.env.R2_DOMAIN ||
+			`https://${this.bucketName}.r2.cloudflarestorage.com`;
+		return buildPublicAssetUrl(domain, key);
 	}
 
 	/**

@@ -1,5 +1,5 @@
-import * as z from "zod";
 import { LostDocumentTypeEnum } from "@shared/types";
+import * as z from "zod";
 
 export const lostDocumentUploadSchema = z.object({
 	documentType: z.enum([
@@ -17,15 +17,24 @@ export const sensitiveRegionSchema = z.object({
 	y: z.number().min(0),
 	w: z.number().min(1),
 	h: z.number().min(1),
+	kind: z.enum(["SENSITIVE_TEXT", "FACE"]).optional(),
 });
 
 export const documentAnalysisSchema = z.object({
-	documentType: z.string(),
+	documentType: z.enum([
+		LostDocumentTypeEnum.IdCard,
+		LostDocumentTypeEnum.Passport,
+		LostDocumentTypeEnum.DrivingLicense,
+		LostDocumentTypeEnum.StudentCard,
+		LostDocumentTypeEnum.HealthCard,
+		LostDocumentTypeEnum.Other,
+	]),
 	extractedName: z.string().optional().nullable(),
 	extractedFirstName: z.string().optional().nullable(),
 	extractedBirthYear: z.number().optional().nullable(),
 	extractedCity: z.string().optional().nullable(),
 	sensitiveRegions: z.array(sensitiveRegionSchema),
+	faceRegionDetected: z.boolean().optional().default(false),
 	alreadyBlurred: z.boolean(),
 });
 
