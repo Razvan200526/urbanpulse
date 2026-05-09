@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS vector;
-
 CREATE TABLE "account" (
 	"id" text PRIMARY KEY NOT NULL,
 	"accountId" text NOT NULL,
@@ -26,7 +24,8 @@ CREATE TABLE "conversation" (
 CREATE TABLE "conversation_member" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"conversationId" uuid NOT NULL,
-	"userId" text NOT NULL
+	"userId" text NOT NULL,
+	"hiddenAt" timestamp
 );
 --> statement-breakpoint
 CREATE TABLE "message" (
@@ -100,6 +99,26 @@ CREATE TABLE "pulse" (
 	"mergedIntoPulseId" uuid,
 	"moderationNote" text,
 	"createdAt" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "pulse_cluster_members" (
+	"pulse_id" uuid,
+	"cluster_id" uuid
+);
+--> statement-breakpoint
+CREATE TABLE "pulse_clusters" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"pulse_type" text NOT NULL,
+	"center_lat" double precision NOT NULL,
+	"center_lng" double precision NOT NULL,
+	"radius_meters" integer NOT NULL,
+	"report_count" integer DEFAULT 1,
+	"confidence_score" double precision DEFAULT 0,
+	"status" text DEFAULT 'active',
+	"crisis_triggered" boolean DEFAULT false,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	"expires_at" timestamp
 );
 --> statement-breakpoint
 CREATE TABLE "pulse_confirmation" (
@@ -201,6 +220,7 @@ CREATE TABLE "user" (
 	"bio" text,
 	"trustScore" double precision DEFAULT 0,
 	"successfulInteractions" integer DEFAULT 0,
+	"failedInteractions" integer DEFAULT 0,
 	"isVerified" boolean DEFAULT false,
 	"rememberMe" boolean DEFAULT false,
 	"banned" boolean DEFAULT false,
@@ -235,6 +255,8 @@ ALTER TABLE "pet_alert" ADD CONSTRAINT "pet_alert_pulseId_pulse_id_fk" FOREIGN K
 ALTER TABLE "pet_match" ADD CONSTRAINT "pet_match_lostAlertId_pet_alert_id_fk" FOREIGN KEY ("lostAlertId") REFERENCES "public"."pet_alert"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pet_match" ADD CONSTRAINT "pet_match_foundAlertId_pet_alert_id_fk" FOREIGN KEY ("foundAlertId") REFERENCES "public"."pet_alert"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pulse" ADD CONSTRAINT "pulse_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "pulse_cluster_members" ADD CONSTRAINT "pulse_cluster_members_pulse_id_pulse_id_fk" FOREIGN KEY ("pulse_id") REFERENCES "public"."pulse"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "pulse_cluster_members" ADD CONSTRAINT "pulse_cluster_members_cluster_id_pulse_clusters_id_fk" FOREIGN KEY ("cluster_id") REFERENCES "public"."pulse_clusters"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pulse_confirmation" ADD CONSTRAINT "pulse_confirmation_pulseId_pulse_id_fk" FOREIGN KEY ("pulseId") REFERENCES "public"."pulse"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pulse_confirmation" ADD CONSTRAINT "pulse_confirmation_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "response" ADD CONSTRAINT "response_pulseId_pulse_id_fk" FOREIGN KEY ("pulseId") REFERENCES "public"."pulse"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -259,6 +281,7 @@ CREATE UNIQUE INDEX "pet_alert_pulse_id_unique" ON "pet_alert" USING btree ("pul
 CREATE INDEX "pet_alert_image_embedding_cosine_idx" ON "pet_alert" USING hnsw ("imageEmbedding" vector_cosine_ops);--> statement-breakpoint
 CREATE UNIQUE INDEX "pet_match_lost_found_unique" ON "pet_match" USING btree ("lostAlertId","foundAlertId");--> statement-breakpoint
 CREATE INDEX "spatial_index" ON "pulse" USING gist ("location");--> statement-breakpoint
+CREATE INDEX "idx_clusters_location" ON "pulse_clusters" USING gist (ST_MakePoint("center_lng", "center_lat"));--> statement-breakpoint
 CREATE INDEX "resource_spatial_index" ON "resources" USING gist ("location");--> statement-breakpoint
 CREATE INDEX "user_home_location_spatial_index" ON "user" USING gist ("homeLocation");--> statement-breakpoint
 CREATE INDEX "user_last_known_location_spatial_index" ON "user" USING gist ("lastKnownLocation");
