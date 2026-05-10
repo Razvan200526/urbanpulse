@@ -95,6 +95,24 @@ export type PetMatchNotificationPayload = z.infer<
 	typeof petMatchNotificationPayloadSchema
 >;
 
+export const documentMatchNotificationPayloadSchema = z.object({
+	matchId: z.string().uuid(),
+	documentId: z.string().uuid(),
+	documentType: z.string(),
+	matchScore: z.number(),
+	locationHint: z.string().nullable().optional(),
+	uploaderUser: z.object({
+		id: z.string(),
+		name: z.string().nullable().optional(),
+		email: z.string().nullable().optional(),
+		image: z.string().nullable().optional(),
+	}),
+	conversationId: z.string().uuid().nullable().optional(),
+});
+export type DocumentMatchNotificationPayload = z.infer<
+	typeof documentMatchNotificationPayloadSchema
+>;
+
 export const notificationListItemSchema = z.object({
 	notification: z
 		.object({
@@ -137,6 +155,8 @@ export function labelForNotificationType(type: string): string {
 			return "Match declined";
 		case "PULSE_CONFIRMED":
 			return "Pulse confirmed";
+		case "DOCUMENT_MATCH":
+			return "Document match";
 		case "MESSAGE":
 			return "Message";
 		case "TRANSACTION":
@@ -240,6 +260,26 @@ export function summarizeNotificationPayload(
 		return `${counterpartName} declined this pet-match request.`;
 	}
 
+	if (type === "DOCUMENT_MATCH") {
+		const documentMatchPayload = getDocumentMatchNotificationPayload(
+			type,
+			payload,
+		);
+		if (!documentMatchPayload) {
+			return "";
+		}
+
+		const uploaderName =
+			documentMatchPayload.uploaderUser.name ||
+			documentMatchPayload.uploaderUser.email ||
+			"Someone";
+		const cityText = documentMatchPayload.locationHint
+			? ` near ${documentMatchPayload.locationHint}`
+			: "";
+
+		return `${uploaderName} uploaded a potentially matching document${cityText}.`;
+	}
+
 	if (type === "TRANSACTION") {
 		const action =
 			typeof payload.action === "string" ? payload.action : undefined;
@@ -308,6 +348,18 @@ export function getPetMatchNotificationPayload(
 	return parsed.success ? parsed.data : null;
 }
 
+export function getDocumentMatchNotificationPayload(
+	type: string,
+	payload: NotificationPayload,
+): DocumentMatchNotificationPayload | null {
+	if (type !== "DOCUMENT_MATCH") {
+		return null;
+	}
+
+	const parsed = documentMatchNotificationPayloadSchema.safeParse(payload);
+	return parsed.success ? parsed.data : null;
+}
+
 export function isActionableNotification(
 	type: string,
 	payload: NotificationPayload,
@@ -326,6 +378,10 @@ export function isActionableNotification(
 		return Boolean(
 			getPetMatchNotificationPayload(type, payload)?.conversationId,
 		);
+	}
+
+	if (type === "DOCUMENT_MATCH") {
+		return Boolean(getDocumentMatchNotificationPayload(type, payload));
 	}
 
 	return false;

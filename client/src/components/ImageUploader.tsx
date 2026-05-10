@@ -1,5 +1,5 @@
 import { useUploadImage } from "@client/hooks/uploadHooks";
-import { Toast } from "@heroui/react";
+import { cn, Toast } from "@heroui/react";
 import { PlusSquareIcon, UploadCloud, XIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "./Button/Button";
@@ -103,11 +103,6 @@ export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 				if (!open) handleClose();
 			}}
 			footer={footer}
-			header={
-				<div className="flex items-center justify-start">
-					<H4 className="text-accent">Upload Image</H4>
-				</div>
-			}
 			trigger={
 				trigger ? (
 					trigger(openModal)
@@ -122,7 +117,12 @@ export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 			<div className="p-4 flex flex-col items-center justify-center gap-4">
 				<button
 					type="button"
-					className="flex-col h-48 border-2 border-dashed border-border rounded-lg flex items-center justify-center bg-surface hover:bg-light transition-colors cursor-pointer relative overflow-hidden"
+					className={cn(
+						"flex-col rounded flex items-center justify-center bg-surface cursor-pointer relative w-full h-48",
+						previewUrl
+							? "p-2"
+							: "border border-dashed border-border hover:bg-surface-secondary transition-colors duration-150 ease-in",
+					)}
 					onDragOver={onDragOver}
 					onDrop={onDrop}
 					onClick={() => !previewUrl && inputRef.current?.click()}
@@ -133,27 +133,11 @@ export const ImageUploader = ({ onSave, trigger }: ImageUploaderPropsType) => {
 					}}
 				>
 					{previewUrl ? (
-						<>
-							<img
-								src={previewUrl}
-								alt="Preview"
-								className="w-full h-full object-contain"
-							/>
-							<Button
-								isIconOnly
-								variant="danger"
-								size="sm"
-								className="absolute top-2 right-2 rounded-full z-10"
-								onPress={() => {
-									setSelectedFile(null);
-									if (previewUrl) URL.revokeObjectURL(previewUrl);
-									setPreviewUrl(null);
-									if (inputRef.current) inputRef.current.value = "";
-								}}
-							>
-								<XIcon className="size-4" />
-							</Button>
-						</>
+						<img
+							src={previewUrl}
+							alt="Preview"
+							className="w-full h-full object-contain rounded"
+						/>
 					) : (
 						<div className="flex flex-col items-center gap-2 text-muted">
 							<UploadCloud className="size-8 text-accent" />

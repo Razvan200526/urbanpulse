@@ -278,6 +278,14 @@ export class LostDocumentRepository implements IRepository<LostDocumentType> {
 			);
 	}
 
+	async getMatchById(matchId: string): Promise<LostDocumentMatchType | null> {
+		const [result] = await db
+			.select()
+			.from(lostDocumentMatch)
+			.where(eq(lostDocumentMatch.id, matchId as any));
+		return result ?? null;
+	}
+
 	/**
 	 * Mark matches as notified
 	 * @param matchIds Array of match IDs
@@ -292,6 +300,20 @@ export class LostDocumentRepository implements IRepository<LostDocumentType> {
 				notifiedAt: new Date(),
 			})
 			.where(sql`${lostDocumentMatch.id} IN (${sql.join(matchIds, sql`,`)})`);
+	}
+
+	async resetNotifiedMatches(documentId: string): Promise<number> {
+		const updated = await db
+			.update(lostDocumentMatch)
+			.set({
+				notified: false,
+				notifiedAt: null,
+				updatedAt: new Date(),
+			})
+			.where(eq(lostDocumentMatch.documentId, documentId as any))
+			.returning({ id: lostDocumentMatch.id });
+
+		return updated.length;
 	}
 }
 

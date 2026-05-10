@@ -4,7 +4,11 @@ import {
 	S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl as getS3SignedUrl } from "@aws-sdk/s3-request-presigner";
-import { GoogleGenAI, Modality, type GenerateContentResponse } from "@google/genai";
+import {
+	type GenerateContentResponse,
+	GoogleGenAI,
+	Modality,
+} from "@google/genai";
 import { logger } from "@server/utils/Logger";
 
 interface ProcessedDocument {

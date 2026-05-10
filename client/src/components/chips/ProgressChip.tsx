@@ -14,13 +14,13 @@ export const ProgrssChipClassNames: Record<
 		className: "text-blue-400 bg-blue-900/20 border-blue-400",
 	},
 	[PulseUploadStateEnum.Completed]: {
-		className: "text-green-400 bg-green-900/20 border-green-400",
+		className: "text-green-400 bg-green-900/40 border-green-400",
 	},
 	[PulseUploadStateEnum.Failed]: {
 		className: "text-red-400 bg-red-900/60 border-red-400",
 	},
 	[PetAlertUploadStatusEnum.Pending]: {
-		className: "text-accent bg-primary border-accent",
+		className: "text-accent bg-primary/80 border-accent",
 		icon: (
 			<ProgressCircle isIndeterminate size="sm" className="size-3.5">
 				<ProgressCircle.Track strokeWidth={2}>
@@ -42,7 +42,7 @@ export const ProgrssChipClassNames: Record<
 		),
 	},
 	[PetAlertUploadStatusEnum.Success]: {
-		className: "text-green-400 bg-green-900/20 border-green-400",
+		className: "text-green-400 bg-green-900/80 border-green-400",
 	},
 };
 

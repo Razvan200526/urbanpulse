@@ -6,6 +6,7 @@ import {
 	documentAnalysisSchema,
 } from "@shared/validators/lost-documents/isLostDocumentValid";
 import { jsonrepair } from "jsonrepair";
+
 const detectImageMimeType = (imageBuffer: Buffer): string => {
 	if (
 		imageBuffer.length >= 3 &&

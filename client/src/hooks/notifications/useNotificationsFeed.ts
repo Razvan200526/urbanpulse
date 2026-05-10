@@ -4,6 +4,7 @@ import { useCrisisStore } from "@client/stores/crisisStore";
 import { useHelpOfferUiStore } from "@client/stores/helpOfferUiStore";
 import { clientClusterSchema } from "@client/utils/clusterTypes";
 import {
+	documentMatchNotificationPayloadSchema,
 	getPetMatchNotificationPayload,
 	type NotificationListItem,
 	type NotificationPayload,
@@ -227,6 +228,34 @@ export const useNotifications = (userId: string) => {
 								?.conversationId
 								? "Pet match chat ready"
 								: "Possible pet match update"),
+					);
+					return;
+				}
+
+				if (response.channelName === "notifications:document_match") {
+					const parsed = parseValueWithSchema(
+						response.data,
+						notificationSocketDataSchema,
+						"Failed to process document match notification",
+					);
+					const documentMatchPayload = parseValueWithSchema(
+						parsed.payload,
+						documentMatchNotificationPayloadSchema,
+						"Failed to process document match notification",
+					);
+
+					prependSocketNotification(userId, parsed);
+					queryClient.invalidateQueries({
+						queryKey: ["lost-documents", "matches"],
+					});
+					queryClient.invalidateQueries({
+						queryKey: ["dashboard", "overview"],
+					});
+					Toast.toast.success(
+						response.message ||
+							`Potential document match found (${Math.round(
+								documentMatchPayload.matchScore,
+							)}% confidence)`,
 					);
 					return;
 				}

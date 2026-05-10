@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import type { Variables } from "@server/app";
 import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
+import { documentMatchingService } from "@server/services/DocumentMatchingService";
 import { lostDocumentService } from "@server/services/LostDocumentService";
 import { logger } from "@server/utils/Logger";
 import { Hono } from "hono";
@@ -27,6 +28,9 @@ type LostDocumentMatchResponse = {
 	birthYearMatch: boolean | null;
 	cityMatch: boolean | null;
 };
+
+const getInternalSecret = () =>
+	Bun.env.LOST_DOCUMENT_INTERNAL_SECRET || "dev-lost-document-secret";
 
 export const lostDocumentController = new Hono<{ Variables: Variables }>()
 	.basePath("/lost-documents")
@@ -165,6 +169,42 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			return c.json({ success: false, error: "Fetch failed" }, 500);
 		}
 	})
+	.post(
+		"/matches/:matchId/open-chat",
+		zValidator("param", z.object({ matchId: z.string().uuid() })),
+		async (c) => {
+			const session = c.get("session");
+			if (!session) {
+				return c.json({ success: false, error: "Unauthorized" }, 401);
+			}
+
+			const { matchId } = c.req.valid("param");
+			const result = await documentMatchingService.openMatchConversation({
+				matchId,
+				requesterUserId: session.userId,
+			});
+
+			if (!result.success) {
+				const status =
+					result.error === "Forbidden"
+						? 403
+						: result.error === "Match not found" ||
+								result.error === "Document not found"
+							? 404
+							: 400;
+				return c.json({ success: false, error: result.error }, status);
+			}
+
+			return c.json({
+				success: true,
+				message: "Conversation ready",
+				data: {
+					conversationId: result.conversationId,
+					counterpartUserId: result.counterpartUserId,
+				},
+			});
+		},
+	)
 	// GET /api/lost-documents/:id - Get document details
 	.get("/:id", async (c) => {
 		const session = c.get("session");
@@ -258,3 +298,39 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			return c.json({ success: false, error: "Delete failed" }, 500);
 		}
 	});
+
+export const internalLostDocumentController = new Hono<{
+	Variables: Variables;
+}>()
+	.basePath("/internal/lost-documents")
+	.post(
+		"/rematch-all",
+		zValidator(
+			"query",
+			z
+				.object({
+					renotifyExisting: z.enum(["true", "false"]).optional(),
+				})
+				.optional(),
+		),
+		async (c) => {
+			const secret = c.req.header("x-lost-document-secret");
+			if (!secret || secret !== getInternalSecret()) {
+				return c.json(
+					{ success: false as const, message: "Forbidden", data: null },
+					403,
+				);
+			}
+
+			const query = c.req.valid("query");
+			const result = await documentMatchingService.rematchAllDocumentsAsAdmin({
+				renotifyExisting: query?.renotifyExisting === "true",
+			});
+
+			return c.json({
+				success: true,
+				message: "Lost-document rematch completed",
+				data: result,
+			});
+		},
+	);
