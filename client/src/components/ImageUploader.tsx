@@ -1,10 +1,9 @@
 import { useUploadImage } from "@client/hooks/uploadHooks";
 import { cn, Toast } from "@heroui/react";
-import { PlusSquareIcon, UploadCloud, XIcon } from "lucide-react";
+import { PlusSquareIcon, UploadCloud } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "./Button/Button";
 import { Modal, type ModalRefType } from "./Modal";
-import { H4 } from "./typography";
 
 export type ImageUploaderPropsType = {
 	onSave: (url: string) => void;
