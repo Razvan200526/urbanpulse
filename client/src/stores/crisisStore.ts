@@ -1,5 +1,6 @@
 import type { ClientClusterType } from "@client/utils/clusterTypes";
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface CrisisStore {
 	/** List of clusters that are currently in 'crisis' status */
@@ -16,44 +17,51 @@ interface CrisisStore {
 	clearCrises: () => void;
 }
 
-export const useCrisisStore = create<CrisisStore>((set) => ({
-	activeCrises: [],
-	isCrisisModeActive: false,
+export const useCrisisStore = create<CrisisStore>()(
+	persist(
+		(set) => ({
+			activeCrises: [],
+			isCrisisModeActive: false,
 
-	setActiveCrises: (crises) => {
-		const filtered = crises.filter(
-			(c) => c.status === "crisis" || c.status === "active",
-		);
-		set({
-			activeCrises: filtered,
-			isCrisisModeActive: filtered.length > 0,
-		});
-	},
+			setActiveCrises: (crises) => {
+				const filtered = crises.filter(
+					(c) => c.status === "crisis" || c.status === "active",
+				);
+				set({
+					activeCrises: filtered,
+					isCrisisModeActive: filtered.length > 0,
+				});
+			},
 
-	addCrisis: (crisis) => {
-		if (crisis.status !== "crisis") return;
+			addCrisis: (crisis) => {
+				if (crisis.status !== "crisis") return;
 
-		set((state) => {
-			const exists = state.activeCrises.some((c) => c.id === crisis.id);
-			if (exists) return state;
+				set((state) => {
+					const exists = state.activeCrises.some((c) => c.id === crisis.id);
+					if (exists) return state;
 
-			const newCrises = [...state.activeCrises, crisis];
-			return {
-				activeCrises: newCrises,
-				isCrisisModeActive: true,
-			};
-		});
-	},
+					const newCrises = [...state.activeCrises, crisis];
+					return {
+						activeCrises: newCrises,
+						isCrisisModeActive: true,
+					};
+				});
+			},
 
-	removeCrisis: (id) => {
-		set((state) => {
-			const newCrises = state.activeCrises.filter((c) => c.id !== id);
-			return {
-				activeCrises: newCrises,
-				isCrisisModeActive: newCrises.length > 0,
-			};
-		});
-	},
+			removeCrisis: (id) => {
+				set((state) => {
+					const newCrises = state.activeCrises.filter((c) => c.id !== id);
+					return {
+						activeCrises: newCrises,
+						isCrisisModeActive: newCrises.length > 0,
+					};
+				});
+			},
 
-	clearCrises: () => set({ activeCrises: [], isCrisisModeActive: false }),
-}));
+			clearCrises: () => set({ activeCrises: [], isCrisisModeActive: false }),
+		}),
+		{
+			name: "crisis-storage",
+		},
+	),
+);
