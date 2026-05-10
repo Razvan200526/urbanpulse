@@ -1,0 +1,11 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+ 
+[deploy]
+startCommand = "/usr/local/bin/backup.sh"
+restartPolicyType = "NEVER"
+ 
+[[cronjobs]]
+schedule = "0 2 */2 * *"
+command = "/usr/local/bin/backup.sh"

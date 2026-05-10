@@ -5,8 +5,10 @@ import { RefreshIcon } from "@client/components/icons/RefreshIcon";
 import { useDashboardOverview } from "@client/hooks/useDashboardOverview";
 import { useGetGeolocation } from "@client/hooks/useGetGeolocation";
 import { queryClient } from "@client/lib/api/client";
+import { useRetrieveClusters } from "@client/pages/map/hooks";
 import { Card, Separator } from "@heroui/react";
 import { Chart } from "./components/Chart";
+import { CrisisSafetyPanel } from "./components/CrisisSafetyPanel";
 import { getDashboardStats } from "./components/dashboardStats";
 import { NeighborhoodPulseFeed } from "./components/NeighborhoodPulseFeed";
 import { SafetyCheckInBanner } from "./components/SafetyCheckInBanner";
@@ -21,6 +23,16 @@ export const DashboardPages = () => {
 	} = useGetGeolocation();
 	const geoReady = !!coords && !geoError && !geoLoading;
 	const stats = getDashboardStats(overview);
+	const dashboardClusterRadius = 5000;
+
+	useRetrieveClusters(
+		{
+			lat: coords?.lat ?? 0,
+			lng: coords?.long ?? 0,
+			radius: dashboardClusterRadius,
+		},
+		geoReady,
+	);
 
 	const onRefresh = () => {
 		queryClient.invalidateQueries({ queryKey: ["dashboard", "overview"] });
@@ -35,6 +47,11 @@ export const DashboardPages = () => {
 			<div className="min-h-0 flex-1 overflow-y-auto">
 				<div className="space-y-6 p-4 pb-24 sm:space-y-8 sm:p-6 sm:pb-10">
 					<SafetyCheckInBanner
+						lat={coords?.lat}
+						lon={coords?.long}
+						geoReady={geoReady}
+					/>
+					<CrisisSafetyPanel
 						lat={coords?.lat}
 						lon={coords?.long}
 						geoReady={geoReady}
