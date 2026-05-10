@@ -26,6 +26,11 @@ export const AuthLayout = () => {
 			"data-theme",
 			isCrisisModeActive ? "dark" : theme,
 		);
+		if (isCrisisModeActive) {
+			document.body.setAttribute("data-crisis-mode", "true");
+		} else {
+			document.body.removeAttribute("data-crisis-mode");
+		}
 	}, [isCrisisModeActive, theme]);
 
 	if (isPending) {

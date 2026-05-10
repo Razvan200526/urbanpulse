@@ -9,14 +9,14 @@ import {
 	responseRepository,
 } from "@server/repositories/ResponseRepository";
 import { skillRepository } from "@server/repositories/SkillRepository";
-import {
-	type UserRepository,
-	userRepository,
-} from "@server/repositories/UserRepository";
 import type {
 	PulseConditionOptions,
 	PulseSearchOptions,
 } from "@server/repositories/types";
+import {
+	type UserRepository,
+	userRepository,
+} from "@server/repositories/UserRepository";
 import { ClusteringService } from "@server/services/ClusterigService";
 import { cacheManager } from "@server/services/cache/CacheManager";
 import { notificationService } from "@server/services/NotificationService";

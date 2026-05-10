@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
-import { renderToStaticMarkup } from "react-dom/server";
 import {
 	PulseEnum,
 	PulseStatusEnum,
 	PulseUploadStateEnum,
 	UrgencyEnum,
 } from "@shared/types";
+import { renderToStaticMarkup } from "react-dom/server";
 
 const feedState = {
 	isCrisisModeActive: false,

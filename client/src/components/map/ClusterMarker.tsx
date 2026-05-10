@@ -275,6 +275,11 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 					let opacity = 0.5;
 					let direction = -0.01;
 					let destroyed = false;
+
+					// Read from document body to check if we are in energy saving mode
+					const isEnergySavingMode =
+						document.body.getAttribute("data-crisis-mode") === "true";
+
 					const animate = () => {
 						if (
 							destroyed ||
@@ -283,10 +288,20 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 							!map.getLayer(borderLayerId)
 						)
 							return;
-						opacity += direction;
-						if (opacity <= 0.1 || opacity >= 0.8) direction *= -1;
-						map.setPaintProperty(borderLayerId, "line-opacity", opacity);
-						requestAnimationFrame(animate);
+
+						if (!isEnergySavingMode) {
+							opacity += direction;
+							if (opacity <= 0.1 || opacity >= 0.8) direction *= -1;
+							map.setPaintProperty(borderLayerId, "line-opacity", opacity);
+						}
+
+						// If in energy saving, run much less frequently, or just hold static
+						if (!isEnergySavingMode) {
+							requestAnimationFrame(animate);
+						} else {
+							// Just set static opacity and stop animating
+							map.setPaintProperty(borderLayerId, "line-opacity", 0.5);
+						}
 					};
 					animate();
 

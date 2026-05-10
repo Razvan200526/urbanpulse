@@ -1,6 +1,7 @@
 import mapboxgl from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { useCrisisStore } from "@client/stores/crisisStore";
 import { MapContext } from "./MapContext";
 
 export interface MapProps {
@@ -26,6 +27,7 @@ export const MapComponent = ({
 	const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
 	const [isUnavailable, setIsUnavailable] = useState(false);
 	const hasInitialized = useRef(false);
+	const { isCrisisModeActive } = useCrisisStore();
 
 	useEffect(() => {
 		const token = import.meta.env.VITE_MAPBOX_GL_ACCESS_TOKEN as string;
@@ -77,8 +79,9 @@ export const MapComponent = ({
 			center: [centerLng, centerLat],
 			zoom,
 			essential: true,
+			animate: !isCrisisModeActive, // save energy by skipping animations during crisis
 		});
-	}, [centerLng, centerLat, zoom, mapInstance]);
+	}, [centerLng, centerLat, zoom, mapInstance, isCrisisModeActive]);
 
 	return (
 		<div ref={mapContainerRef} className={className} style={style}>
