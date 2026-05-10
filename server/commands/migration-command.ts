@@ -23,6 +23,7 @@ try {
 } catch (error) {
 	if (error instanceof Error) {
 		console.error(pe.render(error));
+		console.log(error.stack);
 	}
 	process.exit(1);
 }
