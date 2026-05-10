@@ -27,11 +27,16 @@ echo "🕐 Backup pornit la ${TIMESTAMP}..."
 
 # ── pg_dump + compresie gzip ───────────────────────────────────────────────────
 echo "📦 Creare dump PostgreSQL..."
-pg_dump "${DATABASE_URL}" | gzip > "${BACKUP_PATH}"
+pg_dump \
+  --dbname="${DATABASE_URL}" \
+  --format=plain \
+  --no-owner \
+  --no-acl \
+  | gzip > "${BACKUP_PATH}"
 echo "✅ Dump creat: ${BACKUP_FILENAME} ($(du -sh "${BACKUP_PATH}" | cut -f1))"
 
-# ── Upload în Cloudflare R2 via AWS CLI ────────────────────────────────────────
-echo "☁️  Upload în R2..."
+# ── Upload în S3 via AWS CLI ───────────────────────────────────────────────────
+echo "☁️  Upload în S3..."
 AWS_ACCESS_KEY_ID="${R2_ACCESS_KEY}" \
 AWS_SECRET_ACCESS_KEY="${R2_SECRET_ACCESS_KEY}" \
 aws s3 cp "${BACKUP_PATH}" \
