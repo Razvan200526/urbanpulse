@@ -1,4 +1,4 @@
-import type { CookieOptions } from "better-call";
+import type { CookieOptions } from "better-auth";
 
 export const getAuthCookieAttributes = (
 	nodeEnv: string | undefined,

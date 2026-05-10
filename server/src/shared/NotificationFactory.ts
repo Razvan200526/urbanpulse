@@ -14,6 +14,7 @@ export class NotificationFactory {
 		TRANSACTION: "notifications:transaction",
 		FEEDBACK: "notifications:feedback",
 		PULSE_UPDATED: "notifications:pulse_updated",
+		DOCUMENT_MATCH: "notifications:document_match",
 	};
 
 	/**

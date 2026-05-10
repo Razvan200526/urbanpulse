@@ -13,6 +13,7 @@ export const notificationTypeSchema = z.enum([
 	"TRANSACTION",
 	"FEEDBACK",
 	"PULSE_UPDATED",
+	"DOCUMENT_MATCH",
 ]);
 
 export const notificationCreateSchema = z.object({

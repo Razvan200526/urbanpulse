@@ -9,6 +9,10 @@ import { conversationController } from "./controllers/ConversationController";
 import { dashboardController } from "./controllers/DashboardController";
 import { healthController } from "./controllers/HealthController";
 import { incidentTypeController } from "./controllers/IncidentTypeController";
+import {
+	internalLostDocumentController,
+	lostDocumentController,
+} from "./controllers/LostDocumentController";
 import { messageController } from "./controllers/MessageController";
 import { notificationController } from "./controllers/NotificationController";
 import {
@@ -71,11 +75,13 @@ export const app = new Hono<{ Variables: Variables }>()
 	.route("/", notificationController)
 	.route("/", petMatchController)
 	.route("/", internalPetMatchController)
+	.route("/", internalLostDocumentController)
 	.route("/", reportController)
 	.route("/", resourceController)
 	.route("/", safetyCheckinController)
 	.route("/", dashboardController)
 	.route("/", uploadController)
+	.route("/", lostDocumentController)
 	.route("/", adminController)
 	.route("/", weatherController);
 

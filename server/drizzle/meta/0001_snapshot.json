@@ -1,5 +1,5 @@
 {
-	"id": "6e8d76cd-a750-44fa-a1d5-2b3c3265e9c2",
+	"id": "5ec55d67-779a-41c0-a6da-554a4983e611",
 	"prevId": "aeb694e6-c0bc-48fe-85a3-0ad2cc45be8c",
 	"version": "7",
 	"dialect": "postgresql",
@@ -294,6 +294,304 @@
 				}
 			},
 			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.lost_document": {
+			"name": "lost_document",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"userId": {
+					"name": "userId",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"documentType": {
+					"name": "documentType",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"extractedName": {
+					"name": "extractedName",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"extractedFirstName": {
+					"name": "extractedFirstName",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"extractedBirthYear": {
+					"name": "extractedBirthYear",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"extractedCity": {
+					"name": "extractedCity",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"originalImageKey": {
+					"name": "originalImageKey",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"blurredImageUrl": {
+					"name": "blurredImageUrl",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"embeddingVector": {
+					"name": "embeddingVector",
+					"type": "vector(768)",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"embeddingModel": {
+					"name": "embeddingModel",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"embeddingStatus": {
+					"name": "embeddingStatus",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'pending'"
+				},
+				"embeddingUpdatedAt": {
+					"name": "embeddingUpdatedAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"sensitiveRegions": {
+					"name": "sensitiveRegions",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "'[]'::jsonb"
+				},
+				"createdAt": {
+					"name": "createdAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updatedAt": {
+					"name": "updatedAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"lost_document_user_id_index": {
+					"name": "lost_document_user_id_index",
+					"columns": [
+						{
+							"expression": "userId",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"lost_document_embedding_cosine_idx": {
+					"name": "lost_document_embedding_cosine_idx",
+					"columns": [
+						{
+							"expression": "embeddingVector",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last",
+							"opclass": "vector_cosine_ops"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "hnsw",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"lost_document_userId_user_id_fk": {
+					"name": "lost_document_userId_user_id_fk",
+					"tableFrom": "lost_document",
+					"tableTo": "user",
+					"columnsFrom": ["userId"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.lost_document_match": {
+			"name": "lost_document_match",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"documentId": {
+					"name": "documentId",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"potentialOwnerId": {
+					"name": "potentialOwnerId",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"similarityScore": {
+					"name": "similarityScore",
+					"type": "double precision",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"compositeScore": {
+					"name": "compositeScore",
+					"type": "double precision",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"nameMatch": {
+					"name": "nameMatch",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": false,
+					"default": false
+				},
+				"birthYearMatch": {
+					"name": "birthYearMatch",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": false,
+					"default": false
+				},
+				"cityMatch": {
+					"name": "cityMatch",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": false,
+					"default": false
+				},
+				"notified": {
+					"name": "notified",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": false,
+					"default": false
+				},
+				"notifiedAt": {
+					"name": "notifiedAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"createdAt": {
+					"name": "createdAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updatedAt": {
+					"name": "updatedAt",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"lost_document_match_document_id_index": {
+					"name": "lost_document_match_document_id_index",
+					"columns": [
+						{
+							"expression": "documentId",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"lost_document_match_owner_id_index": {
+					"name": "lost_document_match_owner_id_index",
+					"columns": [
+						{
+							"expression": "potentialOwnerId",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"lost_document_match_documentId_lost_document_id_fk": {
+					"name": "lost_document_match_documentId_lost_document_id_fk",
+					"tableFrom": "lost_document_match",
+					"tableTo": "lost_document",
+					"columnsFrom": ["documentId"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				},
+				"lost_document_match_potentialOwnerId_user_id_fk": {
+					"name": "lost_document_match_potentialOwnerId_user_id_fk",
+					"tableFrom": "lost_document_match",
+					"tableTo": "user",
+					"columnsFrom": ["potentialOwnerId"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				}
+			},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
 			"policies": {},
@@ -1567,105 +1865,6 @@
 			"checkConstraints": {},
 			"isRLSEnabled": false
 		},
-		"public.safety_checkin": {
-			"name": "safety_checkin",
-			"schema": "",
-			"columns": {
-				"id": {
-					"name": "id",
-					"type": "uuid",
-					"primaryKey": true,
-					"notNull": true,
-					"default": "gen_random_uuid()"
-				},
-				"user_id": {
-					"name": "user_id",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"status": {
-					"name": "status",
-					"type": "text",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"location": {
-					"name": "location",
-					"type": "geometry(point)",
-					"primaryKey": false,
-					"notNull": true
-				},
-				"created_at": {
-					"name": "created_at",
-					"type": "timestamp",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"updated_at": {
-					"name": "updated_at",
-					"type": "timestamp",
-					"primaryKey": false,
-					"notNull": true,
-					"default": "now()"
-				},
-				"expires_at": {
-					"name": "expires_at",
-					"type": "timestamp",
-					"primaryKey": false,
-					"notNull": true
-				}
-			},
-			"indexes": {
-				"safety_checkin_user_unique": {
-					"name": "safety_checkin_user_unique",
-					"columns": [
-						{
-							"expression": "user_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": true,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
-				},
-				"safety_checkin_spatial_index": {
-					"name": "safety_checkin_spatial_index",
-					"columns": [
-						{
-							"expression": "location",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "gist",
-					"with": {}
-				}
-			},
-			"foreignKeys": {
-				"safety_checkin_user_id_user_id_fk": {
-					"name": "safety_checkin_user_id_user_id_fk",
-					"tableFrom": "safety_checkin",
-					"tableTo": "user",
-					"columnsFrom": ["user_id"],
-					"columnsTo": ["id"],
-					"onDelete": "cascade",
-					"onUpdate": "no action"
-				}
-			},
-			"compositePrimaryKeys": {},
-			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
-		},
 		"public.session": {
 			"name": "session",
 			"schema": "",
@@ -2012,6 +2211,30 @@
 					"primaryKey": false,
 					"notNull": true,
 					"default": 500
+				},
+				"firstName": {
+					"name": "firstName",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"lastName": {
+					"name": "lastName",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"birthYear": {
+					"name": "birthYear",
+					"type": "integer",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"homeCity": {
+					"name": "homeCity",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
 				}
 			},
 			"indexes": {

@@ -8,6 +8,7 @@ import { resourceRepository } from "@server/repositories/ResourceRepository";
 import { transactionRepository } from "@server/repositories/TransactionRepository";
 import { userRepository } from "@server/repositories/UserRepository";
 import { clusteringService } from "@server/services/ClusterigService";
+import { documentMatchingService } from "@server/services/DocumentMatchingService";
 import { incidentTypeService } from "@server/services/IncidentTypeService";
 import { moderationService } from "@server/services/ModerationService";
 import { createCrisisSchema } from "@shared/validators/admin/isCreateCrisisValid";
@@ -26,6 +27,17 @@ import {
 	reviewReportSchema,
 } from "@shared/validators/reports/isReviewReportValid";
 import { Hono } from "hono";
+import { z } from "zod";
+
+const lostDocumentIdParamSchema = z.object({
+	documentId: z.string().uuid(),
+});
+
+const rematchDocumentQuerySchema = z
+	.object({
+		renotifyExisting: z.enum(["true", "false"]).optional(),
+	})
+	.optional();
 
 export const adminController = new Hono()
 	.basePath("/admin")
@@ -297,4 +309,34 @@ export const adminController = new Hono()
 			},
 			201,
 		);
-	});
+	})
+	.post(
+		"/lost-documents/:documentId/rematch",
+		zValidator("param", lostDocumentIdParamSchema),
+		zValidator("query", rematchDocumentQuerySchema),
+		async (c) => {
+			const { documentId } = c.req.valid("param");
+			const query = c.req.valid("query");
+			const result = await documentMatchingService.rematchDocumentAsAdmin({
+				documentId,
+				renotifyExisting: query?.renotifyExisting !== "false",
+			});
+
+			if (!result.success) {
+				return c.json(
+					{
+						success: false,
+						message: result.error,
+						data: null,
+					},
+					result.error === "Document not found" ? 404 : 400,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message: "Document rematch completed",
+				data: result,
+			});
+		},
+	);

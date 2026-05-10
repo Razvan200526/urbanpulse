@@ -41,7 +41,6 @@ pnpm-debug.log*
 *.sw?
 
 # Bun
-bun.lock
 .turbo
 
 # Python
@@ -60,3 +59,6 @@ data
 .codex
 .agents
 postman
+
+LOST_DOCUMENTS_API.md
+LOST_DOCUMENTS_IMPLEMENTATION.md

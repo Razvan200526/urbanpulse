@@ -1,6 +1,7 @@
 import { Button } from "@client/components/Button/Button";
 import { HelpIcon } from "@client/components/icons/HelpIcon";
 import { Avatar } from "@client/components/user/Avatar";
+import { useOpenDocumentMatchChat } from "@client/hooks/documentMatches";
 import {
 	useAcceptPetMatchAsFinder,
 	useDeclinePetMatchAsFinder,
@@ -13,6 +14,7 @@ import {
 } from "@client/pages/map/hooks";
 import { useEnsureDirectConversation } from "@client/pages/messages/hooks";
 import {
+	getDocumentMatchNotificationPayload,
 	getPetMatchNotificationPayload,
 	getPulseResponseActionPayload,
 	labelForNotificationType,
@@ -50,6 +52,10 @@ export const AlertCard = ({
 		mutateAsync: ensureDirectConversation,
 		isPending: isEnsureDirectPending,
 	} = useEnsureDirectConversation();
+	const {
+		mutateAsync: openDocumentMatchChat,
+		isPending: isDocumentChatPending,
+	} = useOpenDocumentMatchChat();
 
 	const notificationType = notificationItem.notification?.type || "";
 	const payload = notificationItem.notification?.payload ?? null;
@@ -63,6 +69,10 @@ export const AlertCard = ({
 		notificationType,
 		payload,
 	);
+	const documentMatchPayload = getDocumentMatchNotificationPayload(
+		notificationType,
+		payload,
+	);
 
 	const isActionPending =
 		isAcceptPending ||
@@ -71,7 +81,8 @@ export const AlertCard = ({
 		isDismissPending ||
 		isAcceptAsFinderPending ||
 		isDeclineAsFinderPending ||
-		isEnsureDirectPending;
+		isEnsureDirectPending ||
+		isDocumentChatPending;
 
 	const alertType =
 		typeof payload?.type === "string"
@@ -269,6 +280,26 @@ export const AlertCard = ({
 							);
 							if (conversation) {
 								navigate(`/messages/${conversation.id}`);
+							}
+						}}
+					>
+						Open chat
+					</Button>
+				</div>
+			) : notificationType === "DOCUMENT_MATCH" && documentMatchPayload ? (
+				<div className="mt-4 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:justify-end">
+					<Button
+						radius="md"
+						size="sm"
+						isDisabled={isActionPending}
+						startContent={<MessagesSquareIcon className="size-4" />}
+						className="border border-accent bg-accent text-accent-foreground"
+						onPress={async () => {
+							const result = await openDocumentMatchChat(
+								documentMatchPayload.matchId,
+							);
+							if (result?.conversationId) {
+								navigate(`/messages/${result.conversationId}`);
 							}
 						}}
 					>

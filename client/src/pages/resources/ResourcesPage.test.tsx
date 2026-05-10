@@ -316,6 +316,10 @@ mock.module("./components/NetworkTab", () => ({
 	NetworkTab: () => <div>Network Tab</div>,
 }));
 
+mock.module("./components/DocumentsTab", () => ({
+	DocumentsTab: () => <div>Documents Tab</div>,
+}));
+
 const { UploadResourceModal: ActualUploadResourceModal } = await import(
 	"./components/UploadResourceModal"
 );
@@ -409,7 +413,7 @@ describe("ResourcesPage", () => {
 	test("renders the resources tab by default", () => {
 		const markup = renderToStaticMarkup(<ResourcesPage />);
 
-		expect(markup).toContain("Skills &amp; Resources");
+		expect(markup).toContain("Skills, Resources &amp; Documents");
 		expect(markup).toContain("Active Tab: resources");
 		expect(markup).toContain("All Resources Tab");
 		expect(markup).toContain("Upload Resource Modal");
@@ -430,6 +434,15 @@ describe("ResourcesPage", () => {
 		const markup = renderToStaticMarkup(<ResourcesPage />);
 
 		expect(markup).toContain("Network Tab");
+	});
+
+	test("renders the documents tab", () => {
+		resourceState.activeTab = "documents";
+
+		const markup = renderToStaticMarkup(<ResourcesPage />);
+
+		expect(markup).toContain("Documents Tab");
+		expect(markup).not.toContain(">Upload<");
 	});
 
 	test("falls back to the resources tab for unknown query state", () => {
