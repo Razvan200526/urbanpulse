@@ -7,6 +7,7 @@ import { AlertsPage } from "./pages/alerts/AlertsPage";
 import { DashboardPages } from "./pages/dashboard/DashboardPage";
 import { ForgotPasswordPage } from "./pages/forgot-password/ForgotPasswordPage";
 import { LandingPage } from "./pages/landing-page/LandingPage";
+import { PrivacyPolicyPage } from "./pages/legal/PrivacyPolicyPage";
 import { MapPage } from "./pages/map/MapPage";
 import { MessagesPage } from "./pages/messages/MessagesPage";
 import { PetAlertsPage } from "./pages/pet-alerts/PetAlertsPage";
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
 			{
 				path: "/forgot-password",
 				element: <ForgotPasswordPage />,
+			},
+			{
+				path: "/privacy-policy",
+				element: <PrivacyPolicyPage />,
 			},
 			{
 				element: <AuthLayout />,

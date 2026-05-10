@@ -104,7 +104,6 @@ export const documentMatchNotificationPayloadSchema = z.object({
 	uploaderUser: z.object({
 		id: z.string(),
 		name: z.string().nullable().optional(),
-		email: z.string().nullable().optional(),
 		image: z.string().nullable().optional(),
 	}),
 	conversationId: z.string().uuid().nullable().optional(),
@@ -270,9 +269,7 @@ export function summarizeNotificationPayload(
 		}
 
 		const uploaderName =
-			documentMatchPayload.uploaderUser.name ||
-			documentMatchPayload.uploaderUser.email ||
-			"Someone";
+			documentMatchPayload.uploaderUser.name || "Someone";
 		const cityText = documentMatchPayload.locationHint
 			? ` near ${documentMatchPayload.locationHint}`
 			: "";

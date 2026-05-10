@@ -3,6 +3,7 @@ import {
 	type PulseClusterType,
 	type PulseType,
 	pulse,
+	pulseConfirmation,
 	pulseClusterMembers,
 	pulseClusters,
 } from "@server/db/schema";
@@ -14,17 +15,27 @@ import {
 	GLOBAL_CRISIS_RADIUS_METERS,
 	MANUAL_CRISIS_EXPIRATION_HOURS,
 } from "@shared/utils/crisis";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 const CLUSTER_CONFIG = {
 	radiusMeters: 700,
 	timeWindowMinutes: 60,
-	crisisThreshold: 2, // număr de rapoarte INDEPENDENTE pentru Crisis Mode
+	crisisThreshold: 2, // prag pentru semnal combinat: rapoarte independente + confirmări
 	confidencePerReport: 15, // Scorul crește semnificativ per raport nou
+	confidencePerConfirmation: 8,
+	confirmationWeight: 0.5,
 	maxConfidence: 100,
 };
 
 export class ClusteringService {
+	private getClusterIncidentTypeId(pulseRecord: PulseType) {
+		if (pulseRecord.type !== PulseEnum.Emergency) {
+			return null;
+		}
+
+		return pulseRecord.incidentTypeId ?? null;
+	}
+
 	async createAdminCrisisCluster(params: {
 		scope: "local" | "global";
 		incidentTypeId: string;
@@ -50,6 +61,7 @@ export class ClusteringService {
 			.insert(pulseClusters)
 			.values({
 				pulseType: PulseEnum.Emergency,
+				incidentTypeId: params.incidentTypeId,
 				centerLat,
 				centerLng,
 				radiusMeters,
@@ -101,20 +113,37 @@ export class ClusteringService {
 	}
 
 	async findOrCreateCluster(pulseRecord: PulseType): Promise<PulseClusterType> {
+		const clusterIncidentTypeId = this.getClusterIncidentTypeId(pulseRecord);
+
 		// 1. Caută clustere existente de același tip, în raza de 700m, în fereastra de timp
-		const existing = await db.execute(sql`
-      SELECT c.* FROM pulse_clusters c
-      WHERE c.pulse_type = ${pulseRecord.type}
-        AND c.status != 'resolved'
-        AND c.expires_at > NOW()
-        AND ST_DWithin(
-          ST_SetSRID(ST_MakePoint(c.center_lng, c.center_lat), 4326)::geography,
-          ST_SetSRID(ST_MakePoint(${pulseRecord.position.x}, ${pulseRecord.position.y}), 4326)::geography,
-          ${CLUSTER_CONFIG.radiusMeters}
-        )
-      ORDER BY c.report_count DESC
-      LIMIT 1
-    `);
+		const existing = clusterIncidentTypeId
+			? await db.execute(sql`
+        SELECT c.* FROM pulse_clusters c
+        WHERE c.incident_type_id = ${clusterIncidentTypeId}
+          AND c.status != 'resolved'
+          AND c.expires_at > NOW()
+          AND ST_DWithin(
+            ST_SetSRID(ST_MakePoint(c.center_lng, c.center_lat), 4326)::geography,
+            ST_SetSRID(ST_MakePoint(${pulseRecord.position.x}, ${pulseRecord.position.y}), 4326)::geography,
+            ${CLUSTER_CONFIG.radiusMeters}
+          )
+        ORDER BY c.report_count DESC
+        LIMIT 1
+      `)
+			: await db.execute(sql`
+        SELECT c.* FROM pulse_clusters c
+        WHERE c.pulse_type = ${pulseRecord.type}
+          AND c.incident_type_id IS NULL
+          AND c.status != 'resolved'
+          AND c.expires_at > NOW()
+          AND ST_DWithin(
+            ST_SetSRID(ST_MakePoint(c.center_lng, c.center_lat), 4326)::geography,
+            ST_SetSRID(ST_MakePoint(${pulseRecord.position.x}, ${pulseRecord.position.y}), 4326)::geography,
+            ${CLUSTER_CONFIG.radiusMeters}
+          )
+        ORDER BY c.report_count DESC
+        LIMIT 1
+      `);
 
 		if (existing.rows.length > 0) {
 			const clusterId = (existing.rows[0] as Record<string, unknown>)
@@ -125,54 +154,54 @@ export class ClusteringService {
 		return this.createCluster(pulseRecord);
 	}
 
+	async recalculateClustersForPulse(pulseId: string): Promise<void> {
+		const memberships = await db
+			.select({ clusterId: pulseClusterMembers.clusterId })
+			.from(pulseClusterMembers)
+			.where(eq(pulseClusterMembers.pulseId, pulseId));
+		const clusterIds = Array.from(
+			new Set(
+				memberships
+					.map((membership) => membership.clusterId)
+					.filter((clusterId): clusterId is string => Boolean(clusterId)),
+			),
+		);
+
+		for (const clusterId of clusterIds) {
+			const { cluster, confirmationCount } =
+				await this.refreshClusterMetrics(clusterId);
+			if (
+				this.shouldTriggerCrisis(cluster.reportCount ?? 0, confirmationCount) &&
+				!cluster.crisisTriggered
+			) {
+				await this.triggerCrisisMode(cluster);
+			}
+		}
+	}
+
 	private async addToCluster(
 		clusterId: string,
 		pulseRecord: PulseType,
 	): Promise<PulseClusterType> {
-		// Recalculează centrul geografic (centroid al tuturor pulse-urilor din cluster)
-		const updated = await db.execute(sql`
-      UPDATE pulse_clusters SET
-        report_count = report_count + 1,
-        confidence_score = LEAST(99, confidence_score + ${CLUSTER_CONFIG.confidencePerReport}),
-        center_lat = (
-          SELECT AVG(ST_Y(location::geometry)) FROM ${pulse} p
-          JOIN ${pulseClusterMembers} m ON m.pulse_id = p.id
-          WHERE m.cluster_id = ${clusterId}
-        ),
-        center_lng = (
-          SELECT AVG(ST_X(location::geometry)) FROM ${pulse} p
-          JOIN ${pulseClusterMembers} m ON m.pulse_id = p.id
-          WHERE m.cluster_id = ${clusterId}
-        ),
-        updated_at = NOW()
-      WHERE id = ${clusterId}
-      RETURNING *
-    `);
-
 		await db.insert(pulseClusterMembers).values({
 			pulseId: pulseRecord.id,
 			clusterId,
 		});
 
-		const clusterData = updated.rows[0] as any;
-		if (!clusterData) {
-			throw new Error("Failed to update cluster");
-		}
+		const { cluster: clusterData, confirmationCount } =
+			await this.refreshClusterMetrics(clusterId);
+		const reportCount = clusterData.reportCount ?? 0;
 
-		// Verifică dacă se declanșează Crisis Mode (Folosim snake_case din DB)
-		const reportCount =
-			clusterData.report_count ?? clusterData.reportCount ?? 0;
-		const crisisTriggered =
-			clusterData.crisis_triggered ?? clusterData.crisisTriggered ?? false;
-
-		if (reportCount >= CLUSTER_CONFIG.crisisThreshold && !crisisTriggered) {
+		if (
+			this.shouldTriggerCrisis(reportCount, confirmationCount) &&
+			!clusterData.crisisTriggered
+		) {
 			await this.triggerCrisisMode(clusterData);
-			// Update local object so the response reflects the crisis immediately
 			clusterData.status = "crisis";
-			clusterData.crisis_triggered = true;
+			clusterData.crisisTriggered = true;
 		}
 
-		return clusterData as PulseClusterType;
+		return clusterData;
 	}
 
 	private async triggerCrisisMode(cluster: PulseClusterType): Promise<void> {
@@ -200,6 +229,10 @@ export class ClusteringService {
 		const pulseType =
 			(cluster.pulseType as string | null | undefined) ??
 			((cluster as any).pulse_type as string);
+		const incidentTypeId =
+			(cluster.incidentTypeId as string | null | undefined) ??
+			((cluster as any).incident_type_id as string | null) ??
+			null;
 		const reportCount =
 			(cluster.reportCount as number | null | undefined) ??
 			((cluster as any).report_count as number | null) ??
@@ -218,6 +251,7 @@ export class ClusteringService {
 			cluster: {
 				id: cluster.id,
 				pulse_type: pulseType,
+				incident_type_id: incidentTypeId,
 				report_count: reportCount,
 				confidence_score: confidenceScore,
 				radius_meters: radiusMeters,
@@ -239,6 +273,8 @@ export class ClusteringService {
 	private async createCluster(
 		pulseRecord: PulseType,
 	): Promise<PulseClusterType> {
+		const clusterIncidentTypeId = this.getClusterIncidentTypeId(pulseRecord);
+
 		// Extract coordinates from position geometry
 		const positionCoords = pulseRecord.position as { x: number; y: number };
 
@@ -246,6 +282,7 @@ export class ClusteringService {
 			.insert(pulseClusters)
 			.values({
 				pulseType: pulseRecord.type,
+				incidentTypeId: clusterIncidentTypeId,
 				centerLat: positionCoords.y,
 				centerLng: positionCoords.x,
 				radiusMeters: CLUSTER_CONFIG.radiusMeters,
@@ -264,22 +301,83 @@ export class ClusteringService {
 			throw new Error("Failed to create cluster");
 		}
 
-		// Check if threshold is 1 (unlikely but for consistency)
-		if (
-			(cluster.reportCount ?? 0) >= CLUSTER_CONFIG.crisisThreshold &&
-			!cluster.crisisTriggered
-		) {
-			await this.triggerCrisisMode(cluster);
-			cluster.status = "crisis";
-			cluster.crisisTriggered = true;
-		}
-
 		await db.insert(pulseClusterMembers).values({
 			pulseId: pulseRecord.id,
 			clusterId: cluster.id,
 		});
 
-		return cluster;
+		const { cluster: refreshed, confirmationCount } =
+			await this.refreshClusterMetrics(cluster.id);
+		if (
+			this.shouldTriggerCrisis(refreshed.reportCount ?? 0, confirmationCount) &&
+			!refreshed.crisisTriggered
+		) {
+			await this.triggerCrisisMode(refreshed);
+			refreshed.status = "crisis";
+			refreshed.crisisTriggered = true;
+		}
+
+		return refreshed;
+	}
+
+	private shouldTriggerCrisis(
+		independentReportCount: number,
+		confirmationCount: number,
+	) {
+		const effectiveSignal =
+			independentReportCount +
+			confirmationCount * CLUSTER_CONFIG.confirmationWeight;
+		return effectiveSignal >= CLUSTER_CONFIG.crisisThreshold;
+	}
+
+	private async refreshClusterMetrics(clusterId: string): Promise<{
+		cluster: PulseClusterType;
+		confirmationCount: number;
+	}> {
+		const [metrics] = await db
+			.select({
+				independentReportCount:
+					sql<number>`COALESCE(COUNT(DISTINCT ${pulse.userId}), 0)`,
+				confirmationCount:
+					sql<number>`COALESCE(COUNT(DISTINCT ${pulseConfirmation.userId}), 0)`,
+				centerLat: sql<number>`COALESCE(AVG(ST_Y(${pulse.position}::geometry)), 0)`,
+				centerLng: sql<number>`COALESCE(AVG(ST_X(${pulse.position}::geometry)), 0)`,
+			})
+			.from(pulseClusterMembers)
+			.innerJoin(pulse, eq(pulseClusterMembers.pulseId, pulse.id))
+			.leftJoin(pulseConfirmation, eq(pulseConfirmation.pulseId, pulse.id))
+			.where(eq(pulseClusterMembers.clusterId, clusterId));
+
+		if (!metrics) {
+			throw new Error("Failed to compute cluster metrics");
+		}
+
+		const confidenceScore = Math.min(
+			CLUSTER_CONFIG.maxConfidence,
+			metrics.independentReportCount * CLUSTER_CONFIG.confidencePerReport +
+				metrics.confirmationCount * CLUSTER_CONFIG.confidencePerConfirmation,
+		);
+
+		const [updatedCluster] = await db
+			.update(pulseClusters)
+			.set({
+				reportCount: metrics.independentReportCount,
+				confidenceScore,
+				centerLat: metrics.centerLat,
+				centerLng: metrics.centerLng,
+				updatedAt: new Date(),
+			})
+			.where(eq(pulseClusters.id, clusterId))
+			.returning();
+
+		if (!updatedCluster) {
+			throw new Error("Failed to update cluster metrics");
+		}
+
+		return {
+			cluster: updatedCluster,
+			confirmationCount: metrics.confirmationCount,
+		};
 	}
 }
 

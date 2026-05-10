@@ -6,7 +6,7 @@ import {
 	type LostDocumentTypeEnum,
 	PetAlertUploadStatusEnum,
 } from "@shared/types";
-import { BadgeCheck, CalendarDays, MapPin } from "lucide-react";
+import { BadgeCheck, CalendarDays, MapPin, ShieldAlert } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
 	type LostDocumentPreview,
@@ -264,7 +264,16 @@ export const DocumentsTab = () => {
 									>
 										<div className="relative h-44 w-full overflow-hidden bg-surface-secondary/50">
 											{isTransient ? (
-												<div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0.08))]" />
+												card.status === PetAlertUploadStatusEnum.Failed ? (
+													<div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0.08))] text-muted">
+														<ShieldAlert className="size-6 text-warning" />
+														<span className="text-xs font-medium">
+															Privacy-safe placeholder
+														</span>
+													</div>
+												) : (
+													<div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0.08))]" />
+												)
 											) : (
 												<img
 													src={normalizeAssetUrl(card.blurredImageUrl)}

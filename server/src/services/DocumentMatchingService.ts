@@ -240,13 +240,11 @@ export class DocumentMatchingService {
 						? {
 								id: uploader.id,
 								name: uploader.name,
-								email: uploader.email,
 								image: uploader.image,
 							}
 						: {
 								id: document.userId,
 								name: "Document uploader",
-								email: null,
 								image: null,
 							},
 					conversationId: null,

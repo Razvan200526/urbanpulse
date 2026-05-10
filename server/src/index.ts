@@ -1,6 +1,7 @@
 import "./utils/PrettyError";
 import { cacheManager } from "@server/services/cache/CacheManager";
 import { documentRematchCronService } from "@server/services/DocumentRematchCronService";
+import { failedLostDocumentCleanupCronService } from "@server/services/FailedLostDocumentCleanupCronService";
 import { websocket } from "hono/bun";
 import app from "./app";
 import { parseEnv } from "./env";
@@ -9,6 +10,7 @@ import { logger } from "./utils/Logger";
 async function shutdown(signal: string) {
 	logger.info(`Received ${signal}, shutting down backend`);
 	documentRematchCronService.stop();
+	failedLostDocumentCleanupCronService.stop();
 	await cacheManager.shutdown();
 	process.exit(0);
 }
@@ -27,6 +29,10 @@ async function bootstrap() {
 	const internalSecret =
 		env.LOST_DOCUMENT_INTERNAL_SECRET || "dev-lost-document-secret";
 	documentRematchCronService.start(
+		`http://127.0.0.1:${server.port}`,
+		internalSecret,
+	);
+	failedLostDocumentCleanupCronService.start(
 		`http://127.0.0.1:${server.port}`,
 		internalSecret,
 	);

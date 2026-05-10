@@ -1,4 +1,5 @@
 import {
+	DeleteObjectCommand,
 	GetObjectCommand,
 	PutObjectCommand,
 	S3Client,
@@ -16,6 +17,13 @@ interface ProcessedDocument {
 	blurredUrl: string;
 	blurredKey: string;
 	blurredBuffer: Buffer;
+}
+
+export class DocumentMaskingError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "DocumentMaskingError";
+	}
 }
 
 const IMAGE_EDIT_MODEL = "gemini-3.1-flash-image-preview";
@@ -106,11 +114,9 @@ export class DocumentImageService {
 			const randomSuffix = Math.random().toString(36).substring(7);
 			const originalKey = `lost-documents/original/${timestamp}-${randomSuffix}.webp`;
 			const blurredKey = `lost-documents/blurred/${timestamp}-${randomSuffix}.webp`;
-
-			await this.uploadToPrivateBucket(imageBuffer, originalKey);
-
 			const blurredBuffer =
 				await this.blurSensitiveContentWithNanoBanana(imageBuffer);
+			await this.uploadToPrivateBucket(imageBuffer, originalKey);
 			const blurredUrl = await this.uploadToPublicBucket(
 				blurredBuffer,
 				blurredKey,
@@ -130,10 +136,9 @@ export class DocumentImageService {
 		imageBuffer: Buffer,
 	): Promise<Buffer> {
 		if (!this.aiClient) {
-			logger.info(
-				"Gemini API key missing; returning original image without edit",
+			throw new DocumentMaskingError(
+				"Document masking is unavailable right now. Please try again later.",
 			);
-			return imageBuffer;
 		}
 
 		const prompt = `Edit this document image.
@@ -164,17 +169,25 @@ Do not crop, rotate, or restyle the image.`;
 				return Buffer.from(generatedImage, "base64");
 			}
 
-			logger.info(
-				`Nano Banana did not return an edited image; using original. model=${response.modelVersion || IMAGE_EDIT_MODEL} text=${JSON.stringify(response.text || "")} promptFeedback=${JSON.stringify(response.promptFeedback || null)}`,
+			logger.error(
+				`Nano Banana did not return an edited image. model=${response.modelVersion || IMAGE_EDIT_MODEL} text=${JSON.stringify(response.text || "")} promptFeedback=${JSON.stringify(response.promptFeedback || null)}`,
 			);
-			return imageBuffer;
+			throw new DocumentMaskingError(
+				"Failed to mask sensitive data in the uploaded document.",
+			);
 		} catch (error) {
+			if (error instanceof DocumentMaskingError) {
+				throw error;
+			}
+
 			logger.exception(
 				error instanceof Error
 					? error
 					: new Error("Nano Banana image editing failed"),
 			);
-			return imageBuffer;
+			throw new DocumentMaskingError(
+				"Failed to mask sensitive data in the uploaded document.",
+			);
 		}
 	}
 
@@ -220,6 +233,29 @@ Do not crop, rotate, or restyle the image.`;
 		return await getS3SignedUrl(this.s3Client as any, command as any, {
 			expiresIn: expirationSeconds,
 		});
+	}
+
+	async deleteObject(key: string): Promise<void> {
+		if (!key) {
+			return;
+		}
+
+		await this.s3Client.send(
+			new DeleteObjectCommand({
+				Bucket: this.bucketName,
+				Key: key,
+			}),
+		);
+	}
+
+	extractKeyFromPublicUrl(url: string): string | null {
+		try {
+			const parsed = new URL(url);
+			const key = parsed.pathname.replace(/^\/+/, "");
+			return key.length > 0 ? key : null;
+		} catch {
+			return null;
+		}
 	}
 }
 

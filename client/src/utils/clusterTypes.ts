@@ -4,6 +4,7 @@ export const clientClusterSchema = z
 	.object({
 		id: z.string(),
 		pulse_type: z.string(),
+		incident_type_id: z.string().uuid().nullish(),
 		center_lat: z.coerce.number(),
 		center_lng: z.coerce.number(),
 		radius_meters: z.coerce.number(),
@@ -18,6 +19,7 @@ export const clientClusterSchema = z
 	.transform((val) => ({
 		id: val.id,
 		pulseType: val.pulse_type,
+		incidentTypeId: val.incident_type_id ?? null,
 		centerLat: val.center_lat,
 		centerLng: val.center_lng,
 		radiusMeters: val.radius_meters,
@@ -33,6 +35,7 @@ export const clientClusterSchema = z
 export type ClientClusterType = {
 	id: string;
 	pulseType: string;
+	incidentTypeId: string | null;
 	centerLat: number;
 	centerLng: number;
 	radiusMeters: number;

@@ -1,5 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import type { Variables } from "@server/app";
+import { adminMiddleware } from "@server/middleware/adminMiddleware";
 import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
 import { documentMatchingService } from "@server/services/DocumentMatchingService";
 import { lostDocumentService } from "@server/services/LostDocumentService";
@@ -22,7 +23,6 @@ type LostDocumentMatchResponse = {
 	potentialOwner: {
 		id: string;
 		name: string;
-		email: string;
 	};
 	nameMatch: boolean | null;
 	birthYearMatch: boolean | null;
@@ -122,7 +122,6 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 						potentialOwner: {
 							id: m.potentialOwner.id,
 							name: m.potentialOwner.name,
-							email: m.potentialOwner.email,
 						},
 						nameMatch: m.nameMatch,
 						birthYearMatch: m.birthYearMatch,
@@ -206,7 +205,7 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 		},
 	)
 	// GET /api/lost-documents/:id - Get document details
-	.get("/:id", async (c) => {
+	.get("/:id", adminMiddleware, async (c) => {
 		const session = c.get("session");
 		if (!session) {
 			return c.json({ success: false, error: "Unauthorized" }, 401);
@@ -330,6 +329,39 @@ export const internalLostDocumentController = new Hono<{
 			return c.json({
 				success: true,
 				message: "Lost-document rematch completed",
+				data: result,
+			});
+		},
+	)
+	.post(
+		"/cleanup-failed",
+		zValidator(
+			"query",
+			z
+				.object({
+					olderThanHours: z.coerce.number().int().min(1).max(720).optional(),
+					limit: z.coerce.number().int().min(1).max(500).optional(),
+				})
+				.optional(),
+		),
+		async (c) => {
+			const secret = c.req.header("x-lost-document-secret");
+			if (!secret || secret !== getInternalSecret()) {
+				return c.json(
+					{ success: false as const, message: "Forbidden", data: null },
+					403,
+				);
+			}
+
+			const query = c.req.valid("query");
+			const result = await lostDocumentService.cleanupFailedUploads({
+				olderThanHours: query?.olderThanHours,
+				limit: query?.limit,
+			});
+
+			return c.json({
+				success: true,
+				message: "Failed lost-document cleanup completed",
 				data: result,
 			});
 		},

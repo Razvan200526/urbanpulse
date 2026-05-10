@@ -286,6 +286,7 @@ export const adminController = new Hono()
 		const serializedCluster = {
 			id: cluster.id,
 			pulse_type: cluster.pulseType,
+			incident_type_id: cluster.incidentTypeId,
 			center_lat: cluster.centerLat,
 			center_lng: cluster.centerLng,
 			radius_meters: cluster.radiusMeters,

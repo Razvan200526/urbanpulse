@@ -1,5 +1,8 @@
 import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
-import { documentImageService } from "@server/services/DocumentImageService";
+import {
+	documentImageService,
+	DocumentMaskingError,
+} from "@server/services/DocumentImageService";
 import { documentMatchingService } from "@server/services/DocumentMatchingService";
 import { lostDocumentAIService } from "@server/services/LostDocumentAIService";
 import { logger } from "@server/utils/Logger";
@@ -96,6 +99,13 @@ export class LostDocumentService {
 				documentId: document.id,
 			};
 		} catch (error) {
+			if (error instanceof DocumentMaskingError) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
 			logger.exception(
 				error instanceof Error ? error : new Error("Document upload failed"),
 			);
@@ -153,6 +163,60 @@ export class LostDocumentService {
 	 */
 	async getPublicFeed(userId: string) {
 		return this.repo.getPublicFeed(userId);
+	}
+
+	async cleanupFailedUploads(params?: {
+		olderThanHours?: number;
+		limit?: number;
+	}) {
+		const olderThanHours = Math.max(1, params?.olderThanHours ?? 24);
+		const limit = Math.max(1, Math.min(500, params?.limit ?? 200));
+		const olderThan = new Date(Date.now() - olderThanHours * 60 * 60 * 1000);
+		const failedDocuments = await this.repo.getFailedOlderThan(olderThan, limit);
+		let deletedCount = 0;
+		let storageCleanupErrors = 0;
+
+		for (const document of failedDocuments) {
+			try {
+				await this.imageService.deleteObject(document.originalImageKey);
+			} catch (error) {
+				storageCleanupErrors += 1;
+				logger.exception(
+					error instanceof Error
+						? error
+						: new Error("Failed to delete original lost-document image"),
+				);
+			}
+
+			const blurredKey = this.imageService.extractKeyFromPublicUrl(
+				document.blurredImageUrl,
+			);
+			if (blurredKey) {
+				try {
+					await this.imageService.deleteObject(blurredKey);
+				} catch (error) {
+					storageCleanupErrors += 1;
+					logger.exception(
+						error instanceof Error
+							? error
+							: new Error("Failed to delete blurred lost-document image"),
+					);
+				}
+			}
+
+			const deleted = await this.repo.delete(document.id);
+			if (deleted) {
+				deletedCount += 1;
+			}
+		}
+
+		return {
+			scannedCount: failedDocuments.length,
+			deletedCount,
+			storageCleanupErrors,
+			olderThanHours,
+			limit,
+		};
 	}
 
 	/**

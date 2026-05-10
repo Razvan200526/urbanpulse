@@ -128,11 +128,11 @@ export const useNotifications = (userId: string) => {
 		const unsubscribe = backend.notifications.on<unknown>(
 			"message",
 			(response) => {
-				if (!response.success) {
-					return;
-				}
-
 				if (response.channelName === "notifications:broadcast") {
+					if (response.success === false) {
+						return;
+					}
+
 					const parsed = parseValueWithSchema(
 						response.data,
 						notificationSocketDataSchema,
@@ -149,6 +149,10 @@ export const useNotifications = (userId: string) => {
 				}
 
 				if (response.channelName === "notifications:pulse_updated") {
+					if (response.success === false) {
+						return;
+					}
+
 					syncPulseNotification(response.data);
 					return;
 				}
@@ -158,6 +162,12 @@ export const useNotifications = (userId: string) => {
 						const clusterData = (response as any).cluster;
 						const parsed = clientClusterSchema.parse(clusterData);
 						useCrisisStore.getState().addCrisis(parsed);
+						queryClient.invalidateQueries({
+							queryKey: ["pulse", "clusters"],
+						});
+						queryClient.invalidateQueries({
+							queryKey: ["dashboard", "overview"],
+						});
 						Toast.toast.warning("CRISIS MODE ACTIVATED NEAR YOU!");
 					} catch (error) {
 						// biome-ignore lint/suspicious/noConsole: essential for debugging live crisis notifications
@@ -167,6 +177,10 @@ export const useNotifications = (userId: string) => {
 				}
 
 				if (response.channelName === "notifications:pulse_response") {
+					if (response.success === false) {
+						return;
+					}
+
 					invalidatePulseQueries();
 
 					const parsed = parseValueWithSchema(
@@ -199,6 +213,10 @@ export const useNotifications = (userId: string) => {
 					response.channelName === "notifications:pet_alert_match_accepted" ||
 					response.channelName === "notifications:pet_alert_match_declined"
 				) {
+					if (response.success === false) {
+						return;
+					}
+
 					const parsed = parseValueWithSchema(
 						response.data,
 						notificationSocketDataSchema,
@@ -233,6 +251,10 @@ export const useNotifications = (userId: string) => {
 				}
 
 				if (response.channelName === "notifications:document_match") {
+					if (response.success === false) {
+						return;
+					}
+
 					const parsed = parseValueWithSchema(
 						response.data,
 						notificationSocketDataSchema,
@@ -261,6 +283,10 @@ export const useNotifications = (userId: string) => {
 				}
 
 				if (response.channelName === "notifications:help_accepted") {
+					if (response.success === false) {
+						return;
+					}
+
 					const parsed = parseValueWithSchema(
 						response.data,
 						notificationSocketDataSchema,
@@ -279,6 +305,10 @@ export const useNotifications = (userId: string) => {
 				}
 
 				if (response.channelName === "notifications:pulse_confirmed") {
+					if (response.success === false) {
+						return;
+					}
+
 					const parsed = parseValueWithSchema(
 						response.data,
 						notificationSocketDataSchema,
@@ -297,6 +327,10 @@ export const useNotifications = (userId: string) => {
 				}
 
 				if (response.channelName === "notifications:message") {
+					if (response.success === false) {
+						return;
+					}
+
 					const parsed = parseValueWithSchema(
 						response.data,
 						notificationSocketDataSchema,
@@ -315,6 +349,10 @@ export const useNotifications = (userId: string) => {
 				}
 
 				if (response.channelName === "notifications:transaction") {
+					if (response.success === false) {
+						return;
+					}
+
 					const parsed = parseValueWithSchema(
 						response.data,
 						notificationSocketDataSchema,

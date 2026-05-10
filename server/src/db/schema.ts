@@ -683,6 +683,9 @@ export const pulseClusters = pgTable(
 	{
 		id: uuid("id").defaultRandom().primaryKey(),
 		pulseType: text("pulse_type").notNull(), // "POWER_OUTAGE", "FLOOD", etc.
+		incidentTypeId: uuid("incident_type_id").references(() => incidentType.id, {
+			onDelete: "set null",
+		}),
 		centerLat: doublePrecision("center_lat").notNull(),
 		centerLng: doublePrecision("center_lng").notNull(),
 		radiusMeters: integer("radius_meters").notNull(),

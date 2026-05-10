@@ -153,10 +153,6 @@ export const ClusterCard = ({
 						</div>
 					</div>
 				)}
-
-				<P className="text-xs text-default-500">
-					Click to view cluster details and respond to incidents
-				</P>
 			</div>
 		</Card>
 	);

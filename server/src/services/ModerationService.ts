@@ -37,6 +37,7 @@ import type { ReviewReportType } from "@shared/validators/reports/isReviewReport
 import { eq } from "drizzle-orm";
 import { incidentTypeService } from "./IncidentTypeService";
 import { notificationService } from "./NotificationService";
+import { clusteringService } from "./ClusterigService";
 
 const AUTO_VERIFY_CONFIRMATION_THRESHOLD = 3;
 
@@ -277,6 +278,7 @@ export class ModerationService {
 			}
 
 			await this.pulseConfirmationRepo.create({ pulseId, userId });
+			await clusteringService.recalculateClustersForPulse(pulseId);
 
 			const confirmationCount =
 				await this.getIndependentConfirmationCount(pulseId);

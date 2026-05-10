@@ -7,6 +7,7 @@ import {
 	user,
 } from "@server/db/schema";
 import { logger } from "@server/utils/Logger";
+import { LostDocumentEmbeddingStatusEnum } from "@shared/types";
 import { and, count, desc, eq, sql } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
@@ -85,7 +86,7 @@ export class LostDocumentRepository implements IRepository<LostDocumentType> {
 			.select()
 			.from(lostDocument)
 			.where(sql`${lostDocument.userId} != ${excludeUserId}`)
-			.orderBy(desc(lostDocument.createdAt))
+			.orderBy(lostDocument.createdAt)
 			.limit(limit);
 	}
 
@@ -100,6 +101,26 @@ export class LostDocumentRepository implements IRepository<LostDocumentType> {
 			.from(lostDocument)
 			.where(eq(lostDocument.userId, userId));
 		return result?.count || 0;
+	}
+
+	async getFailedOlderThan(
+		olderThan: Date,
+		limit = 200,
+	): Promise<LostDocumentType[]> {
+		return await db
+			.select()
+			.from(lostDocument)
+			.where(
+				and(
+					eq(
+						lostDocument.embeddingStatus,
+						LostDocumentEmbeddingStatusEnum.Failed,
+					),
+					sql`${lostDocument.createdAt} <= ${olderThan}`,
+				),
+			)
+			.orderBy(desc(lostDocument.createdAt))
+			.limit(limit);
 	}
 
 	/**

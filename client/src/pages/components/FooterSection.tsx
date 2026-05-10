@@ -39,23 +39,23 @@ const projectLinks = [
 const legalLinks = [
 	{
 		label: "Terms of Service",
-		href: "https://example.com/terms-of-service",
+		href: "/privacy-policy#terms-of-service",
 	},
 	{
 		label: "Privacy Notice",
-		href: "https://example.com/privacy-notice",
+		href: "/privacy-policy",
 	},
 	{
 		label: "Cookie Notice",
-		href: "https://example.com/cookie-notice",
+		href: "/privacy-policy#cookie-notice",
 	},
 	{
 		label: "Data Rights Request",
-		href: "https://example.com/data-rights-request",
+		href: "/privacy-policy#data-rights",
 	},
 	{
 		label: "Privacy Contact",
-		href: "mailto:privacy@urbanpulse.example",
+		href: "mailto:privacy@urbanpulse.app",
 	},
 ];
 
@@ -74,10 +74,9 @@ export const FooterSection = () => {
 							in one place.
 						</p>
 						<p className="max-w-xl text-sm leading-7 text-white/64">
-							The legal links below are placeholders for the pages users expect
-							to find quickly: terms, privacy details, cookie information, and a
-							clear path to request access, correction, deletion, or objection
-							rights.
+							We process only the minimum personal data required for community
+							safety workflows and document matching, with strict redaction and
+							limited retention rules.
 						</p>
 					</div>
 
@@ -123,9 +122,7 @@ export const FooterSection = () => {
 
 				<div className="mt-12 flex flex-col gap-3 border-t border-white/12 pt-6 text-sm text-white/58 sm:flex-row sm:items-center sm:justify-between">
 					<p>UrbanPulse 2026. Built for communities, by communities.</p>
-					<p>
-						Replace placeholder URLs with production legal pages before launch.
-					</p>
+					<p>Review legal policy sections before using document uploads.</p>
 				</div>
 			</div>
 		</footer>

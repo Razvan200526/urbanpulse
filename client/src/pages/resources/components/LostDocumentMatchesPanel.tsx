@@ -5,7 +5,6 @@ type LostDocumentMatch = {
 	potentialOwner: {
 		id: string;
 		name: string;
-		email: string;
 	};
 	nameMatch: boolean;
 	birthYearMatch: boolean;
@@ -51,7 +50,6 @@ export const LostDocumentMatchesPanel = ({
 									{Math.round(match.matchScore * 100)}% confidence
 								</p>
 							</div>
-							<p className="text-xs text-muted">{match.potentialOwner.email}</p>
 							<div className="mt-3 flex flex-wrap gap-2 text-xs">
 								<span className="rounded bg-surface-secondary px-2 py-1">
 									Name: {match.nameMatch ? "yes" : "no"}

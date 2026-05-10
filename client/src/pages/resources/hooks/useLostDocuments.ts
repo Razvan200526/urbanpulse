@@ -22,7 +22,6 @@ type LostDocumentMatchApi = {
 	potentialOwner: {
 		id: string;
 		name: string;
-		email: string;
 	};
 	nameMatch: boolean;
 	birthYearMatch: boolean;

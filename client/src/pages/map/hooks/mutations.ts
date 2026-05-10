@@ -41,6 +41,8 @@ export const useCreatePulse = () => {
 
 				syncPulseInCache(response.data);
 				queryClient.invalidateQueries({ queryKey: ["pulse", "retrieve"] });
+				queryClient.invalidateQueries({ queryKey: ["pulse", "clusters"] });
+				queryClient.invalidateQueries({ queryKey: ["dashboard", "overview"] });
 				Toast.toast.success("Pulse created successfully!");
 				posthog.capture("pulse_created", {
 					pulse_type: pulseData.type,
