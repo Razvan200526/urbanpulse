@@ -104,6 +104,48 @@ export const adminCreateCrisisResultSchema = z.object({
 	cluster: clientClusterSchema,
 });
 
+export const adminCrisisListSchema = z.object({
+	clusters: z.array(clientClusterSchema),
+});
+
+export const adminToggleCrisisResultSchema = z.object({
+	cluster: clientClusterSchema,
+});
+
+export const adminLostDocumentSchema = z.object({
+	id: z.string(),
+	userId: z.string(),
+	documentType: z.string(),
+	extractedName: z.string().nullable(),
+	extractedFirstName: z.string().nullable(),
+	extractedBirthYear: z.number().nullable(),
+	extractedCity: z.string().nullable(),
+	embeddingStatus: z.string(),
+	embeddingUpdatedAt: z.string().nullable(),
+	createdAt: z.string(),
+	updatedAt: z.string(),
+	matchCount: z.number(),
+});
+
+export const adminLostDocumentsListSchema = z.object({
+	documents: z.array(adminLostDocumentSchema),
+});
+
+export const adminRematchDocumentResultSchema = z.object({
+	success: z.literal(true),
+	documentId: z.string(),
+	totalMatches: z.number(),
+	resetNotifiedCount: z.number(),
+});
+
+export const adminRematchAllDocumentsResultSchema = z.object({
+	success: z.literal(true),
+	processedDocuments: z.number(),
+	rematchedCount: z.number(),
+	totalMatches: z.number(),
+	resetNotifiedCount: z.number(),
+});
+
 export const adminUserListItemSchema = z.object({
 	id: z.string(),
 	name: z.string(),

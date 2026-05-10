@@ -181,6 +181,25 @@ export const useNotifications = (userId: string) => {
 						return;
 					}
 
+					if (response.type === "CRISIS_MODE_DEACTIVATED") {
+						try {
+							const clusterData = (response as any).cluster;
+							const parsed = clientClusterSchema.parse(clusterData);
+							useCrisisStore.getState().removeCrisis(parsed.id);
+							queryClient.invalidateQueries({
+								queryKey: ["pulse", "clusters"],
+							});
+							queryClient.invalidateQueries({
+								queryKey: ["dashboard", "overview"],
+							});
+							Toast.toast.success("CRISIS MODE DEACTIVATED");
+						} catch (error) {
+							// biome-ignore lint/suspicious/noConsole: essential for debugging live crisis notifications
+							console.error("Failed to process crisis notification", error);
+						}
+						return;
+					}
+
 					invalidatePulseQueries();
 
 					const parsed = parseValueWithSchema(

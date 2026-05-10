@@ -17,10 +17,15 @@ import {
 	type AdminUserListItem,
 	useAdminBanUser,
 	useAdminCreateCrisis,
+	useAdminCrisisClusters,
 	useAdminDuplicatePulses,
+	useAdminLostDocuments,
+	useAdminRematchAllLostDocuments,
+	useAdminRematchLostDocument,
 	useAdminReports,
 	useAdminRevokeUserSession,
 	useAdminSetRole,
+	useAdminToggleCrisis,
 	useAdminUnbanUser,
 	useAdminUserSessions,
 	useAdminUsers,
@@ -35,6 +40,7 @@ import { PulseStatusEnum, ReportStatusEnum } from "@shared/types";
 import {
 	DEFAULT_CITY_CENTER,
 	DEFAULT_LOCAL_CRISIS_RADIUS_METERS,
+	GLOBAL_CRISIS_RADIUS_METERS,
 } from "@shared/utils/crisis";
 import { formatDate } from "@shared/utils/formatDate";
 import {
@@ -42,9 +48,12 @@ import {
 	ArrowRightLeft,
 	Bell,
 	ClipboardList,
+	FileSearch,
 	MapPin,
 	MapPinned,
 	Plus,
+	Power,
+	RefreshCw,
 	Search,
 	ShieldAlert,
 	Users,
@@ -124,6 +133,8 @@ export const AdminPage = () => {
 	const { data, isPending, error } = useAdminOverview();
 	const { data: reports = [] } = useAdminReports();
 	const { data: duplicates = [] } = useAdminDuplicatePulses();
+	const { data: activeCrisisClusters = [] } = useAdminCrisisClusters();
+	const { data: adminLostDocuments = [] } = useAdminLostDocuments();
 	const { data: incidentTypes = [] } = useAdminIncidentTypes();
 	const [userSearch, setUserSearch] = useState("");
 	const deferredUserSearch = useDeferredValue(userSearch);
@@ -138,6 +149,9 @@ export const AdminPage = () => {
 	const mergePulse = useMergePulse();
 	const { coords } = useGetGeolocation();
 	const createCrisis = useAdminCreateCrisis();
+	const toggleCrisis = useAdminToggleCrisis();
+	const rematchDocument = useAdminRematchLostDocument();
+	const rematchAllDocuments = useAdminRematchAllLostDocuments();
 	const createIncidentType = useCreateIncidentType();
 	const updateIncidentType = useUpdateIncidentType();
 	const setRole = useAdminSetRole();
@@ -183,6 +197,21 @@ export const AdminPage = () => {
 	}, [localRadiusInput]);
 	const hasDraftPoint =
 		typeof draftPoint?.lat === "number" && typeof draftPoint?.lng === "number";
+	const globalCrisisClusters = useMemo(
+		() =>
+			activeCrisisClusters.filter(
+				(cluster) => cluster.radiusMeters >= GLOBAL_CRISIS_RADIUS_METERS,
+			),
+		[activeCrisisClusters],
+	);
+	const localCrisisClusters = useMemo(
+		() =>
+			activeCrisisClusters.filter(
+				(cluster) => cluster.radiusMeters < GLOBAL_CRISIS_RADIUS_METERS,
+			),
+		[activeCrisisClusters],
+	);
+	const hasGlobalCrisisActive = globalCrisisClusters.length > 0;
 
 	useEffect(() => {
 		if (globalIncidentTypes.length === 0) {
@@ -386,6 +415,23 @@ export const AdminPage = () => {
 		setLocalModalOpen(true);
 	};
 
+	const onDeactivateCrisis = (cluster: ClientClusterType) => {
+		toggleCrisis.mutate(
+			{
+				clusterId: cluster.id,
+				isActive: false,
+			},
+			{
+				onError: (error) =>
+					Toast.toast.danger(
+						error instanceof Error
+							? error.message
+							: "Could not deactivate crisis mode",
+					),
+			},
+		);
+	};
+
 	if (isPending) {
 		return <PageLoader />;
 	}
@@ -452,19 +498,60 @@ export const AdminPage = () => {
 						<div className="space-y-6">
 							<SectionCard
 								title="Crisis Management"
-								description="Trigger city-wide crisis mode or create a local crisis directly from the map."
+								description="Toggle city-wide and local crisis mode manually from admin controls."
 								action={
-									<Button
-										size="sm"
-										variant="danger"
-										startContent={<ShieldAlert className="size-4" />}
-										onPress={() => setGlobalModalOpen(true)}
-									>
-										Trigger Global Crisis
-									</Button>
+									hasGlobalCrisisActive ? (
+										<Button
+											size="sm"
+											variant="outline"
+											startContent={<Power className="size-4" />}
+											isPending={toggleCrisis.isPending}
+											onPress={() =>
+												onDeactivateCrisis(
+													globalCrisisClusters[0] as ClientClusterType,
+												)
+											}
+										>
+											Stop Global Crisis
+										</Button>
+									) : (
+										<Button
+											size="sm"
+											variant="danger"
+											startContent={<ShieldAlert className="size-4" />}
+											onPress={() => setGlobalModalOpen(true)}
+										>
+											Trigger Global Crisis
+										</Button>
+									)
 								}
 								contentClassName="space-y-4"
 							>
+								<div className="rounded border border-accent-soft-hover bg-surface-secondary/10 p-3">
+									<div className="flex flex-wrap items-center justify-between gap-2">
+										<div>
+											<p className="text-sm font-medium text-accent">
+												Global crisis status
+											</p>
+											<p className="mt-1 text-xs text-muted">
+												{hasGlobalCrisisActive
+													? "Global crisis mode is active. You can stop it manually at any time."
+													: "Global crisis mode is currently inactive."}
+											</p>
+										</div>
+										<span
+											className={cn(
+												"rounded-full border px-2 py-1 text-[11px] font-medium",
+												hasGlobalCrisisActive
+													? "border-danger/30 bg-danger/10 text-danger"
+													: "border-success/30 bg-success/10 text-success",
+											)}
+										>
+											{hasGlobalCrisisActive ? "ACTIVE" : "INACTIVE"}
+										</span>
+									</div>
+								</div>
+
 								<div className="space-y-3 rounded border border-accent-soft-hover bg-surface-secondary/10 p-3">
 									<div className="flex items-start justify-between gap-3">
 										<div>
@@ -480,7 +567,7 @@ export const AdminPage = () => {
 											size="sm"
 											variant="outline"
 											startContent={<MapPin className="size-4" />}
-											isDisabled={!hasDraftPoint}
+											isDisabled={!hasDraftPoint || createCrisis.isPending}
 											onPress={() => setLocalModalOpen(true)}
 										>
 											Configure local crisis
@@ -519,6 +606,41 @@ export const AdminPage = () => {
 										</div>
 									</div>
 								</div>
+
+								<div className="rounded border border-accent-soft-hover bg-surface-secondary/10 p-3">
+									<p className="text-sm font-medium text-accent">
+										Active local crises
+									</p>
+									{localCrisisClusters.length > 0 ? (
+										<div className="mt-3 space-y-2">
+											{localCrisisClusters.map((cluster) => (
+												<div
+													key={cluster.id}
+													className="flex flex-col gap-2 rounded border border-accent/20 bg-surface px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+												>
+													<div className="text-xs text-muted">
+														Cluster {cluster.id.slice(0, 8)} · radius{" "}
+														{cluster.radiusMeters}m · confidence{" "}
+														{Math.round(cluster.confidenceScore ?? 0)}
+													</div>
+													<Button
+														size="sm"
+														variant="outline"
+														startContent={<Power className="size-4" />}
+														isPending={toggleCrisis.isPending}
+														onPress={() => onDeactivateCrisis(cluster)}
+													>
+														Stop local crisis
+													</Button>
+												</div>
+											))}
+										</div>
+									) : (
+										<p className="mt-2 text-xs text-muted">
+											No local crisis clusters are active right now.
+										</p>
+									)}
+								</div>
 								<Modal
 									isOpen={isGlobalModalOpen}
 									onOpenChange={setGlobalModalOpen}
@@ -536,7 +658,9 @@ export const AdminPage = () => {
 											<Button
 												variant="danger"
 												startContent={<ShieldAlert className="size-4" />}
-												isPending={createCrisis.isPending}
+												isPending={
+													createCrisis.isPending || toggleCrisis.isPending
+												}
 												onPress={onTriggerGlobalCrisis}
 											>
 												Confirm Global Crisis
@@ -576,7 +700,9 @@ export const AdminPage = () => {
 											<Button
 												variant="danger"
 												startContent={<ShieldAlert className="size-4" />}
-												isPending={createCrisis.isPending}
+												isPending={
+													createCrisis.isPending || toggleCrisis.isPending
+												}
 												onPress={onTriggerLocalCrisis}
 											>
 												Activate Local Crisis
@@ -825,6 +951,90 @@ export const AdminPage = () => {
 									</div>
 								) : (
 									<EmptyState message="No reports are waiting in the moderation queue." />
+								)}
+							</SectionCard>
+
+							<SectionCard
+								title="Document Analysis"
+								description="Admin controls for lost-document analysis and matching."
+								action={
+									<Button
+										size="sm"
+										variant="outline"
+										startContent={<RefreshCw className="size-4" />}
+										isPending={rematchAllDocuments.isPending}
+										onPress={() =>
+											rematchAllDocuments.mutate(
+												{ renotifyExisting: false },
+												{
+													onError: (error) =>
+														Toast.toast.danger(
+															error instanceof Error
+																? error.message
+																: "Could not rematch all documents",
+														),
+												},
+											)
+										}
+									>
+										Rematch all uploads
+									</Button>
+								}
+							>
+								{adminLostDocuments.length > 0 ? (
+									<div className="space-y-3">
+										{adminLostDocuments.map((document) => (
+											<div
+												key={document.id}
+												className="rounded border border-accent/20 bg-surface-secondary/10 p-4"
+											>
+												<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+													<div className="space-y-1">
+														<p className="font-medium text-foreground">
+															{document.documentType} ·{" "}
+															{document.extractedFirstName || "-"}{" "}
+															{document.extractedName || ""}
+														</p>
+														<p className="text-xs text-muted">
+															Status: {document.embeddingStatus} · Matches:{" "}
+															{document.matchCount} ·{" "}
+															{formatDate(new Date(document.createdAt))}
+														</p>
+														<p className="text-xs text-muted">
+															City: {document.extractedCity || "Unknown"} ·
+															User: {document.userId}
+														</p>
+													</div>
+													<Button
+														size="sm"
+														variant="primary"
+														startContent={<FileSearch className="size-4" />}
+														isPending={rematchDocument.isPending}
+														onPress={() =>
+															rematchDocument.mutate(
+																{
+																	documentId: document.id,
+																	renotifyExisting: true,
+																},
+																{
+																	onError: (error) =>
+																		Toast.toast.danger(
+																			error instanceof Error
+																				? error.message
+																				: "Could not rematch document",
+																		),
+																},
+															)
+														}
+													>
+														Rematch analysis
+													</Button>
+												</div>
+											</div>
+										))}
+									</div>
+								) : (
+									<EmptyState message="No lost-document uploads are available yet." />
 								)}
 							</SectionCard>
 

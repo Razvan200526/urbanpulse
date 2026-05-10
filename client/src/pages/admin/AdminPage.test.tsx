@@ -152,6 +152,24 @@ mock.module("@client/hooks/useModeration", () => ({
 	useAdminDuplicatePulses: () => ({
 		data: [],
 	}),
+	useAdminCrisisClusters: () => ({
+		data: [],
+	}),
+	useAdminToggleCrisis: () => ({
+		isPending: false,
+		mutate: () => {},
+	}),
+	useAdminLostDocuments: () => ({
+		data: [],
+	}),
+	useAdminRematchLostDocument: () => ({
+		isPending: false,
+		mutate: () => {},
+	}),
+	useAdminRematchAllLostDocuments: () => ({
+		isPending: false,
+		mutate: () => {},
+	}),
 	useAdminCreateCrisis: () => ({
 		isPending: false,
 		mutate: (_payload: unknown, options?: { onSuccess?: () => void }) => {

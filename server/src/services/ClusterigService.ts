@@ -27,7 +27,58 @@ const CLUSTER_CONFIG = {
 	maxConfidence: 100,
 };
 
+type ClusterSnakeCaseRow = {
+	center_lng: number;
+	center_lat: number;
+	radius_meters?: number | null;
+	pulse_type: string;
+	incident_type_id?: string | null;
+	report_count?: number | null;
+	confidence_score?: number | null;
+};
+
+type ClusterLike = PulseClusterType | ClusterSnakeCaseRow;
+
+type NormalizedCluster = {
+	centerLng: number;
+	centerLat: number;
+	radiusMeters: number;
+	pulseType: string;
+	incidentTypeId: string | null;
+	reportCount: number | null;
+	confidenceScore: number;
+};
+
 export class ClusteringService {
+	private normalizeCluster(cluster: ClusterLike): NormalizedCluster {
+		if ("centerLng" in cluster) {
+			return {
+				centerLng: cluster.centerLng,
+				centerLat: cluster.centerLat,
+				radiusMeters: cluster.radiusMeters ?? CLUSTER_CONFIG.radiusMeters,
+				pulseType: cluster.pulseType,
+				incidentTypeId: cluster.incidentTypeId ?? null,
+				reportCount: cluster.reportCount ?? null,
+				confidenceScore: cluster.confidenceScore ?? 100,
+			};
+		}
+
+		return {
+			centerLng: cluster.center_lng,
+			centerLat: cluster.center_lat,
+			radiusMeters: cluster.radius_meters ?? CLUSTER_CONFIG.radiusMeters,
+			pulseType: cluster.pulse_type,
+			incidentTypeId: cluster.incident_type_id ?? null,
+			reportCount: cluster.report_count ?? null,
+			confidenceScore: cluster.confidence_score ?? 100,
+		};
+	}
+
+	private isGlobalCluster(cluster: PulseClusterType) {
+		const normalized = this.normalizeCluster(cluster);
+		return normalized.radiusMeters >= GLOBAL_CRISIS_RADIUS_METERS;
+	}
+
 	private getClusterIncidentTypeId(pulseRecord: PulseType) {
 		if (pulseRecord.type !== PulseEnum.Emergency) {
 			return null;
@@ -110,6 +161,51 @@ export class ClusteringService {
     `);
 
 		return results.rows as unknown as PulseClusterType[];
+	}
+
+	async getActiveCrisisClusters(): Promise<PulseClusterType[]> {
+		const results = await db.execute(sql`
+			SELECT * FROM pulse_clusters
+			WHERE status = 'crisis'
+			  AND expires_at > NOW()
+			  AND pulse_type = ${PulseEnum.Emergency}
+			ORDER BY updated_at DESC
+		`);
+
+		return results.rows as unknown as PulseClusterType[];
+	}
+
+	async deactivateCrisisCluster(clusterId: string): Promise<{
+		cluster: PulseClusterType;
+		scope: "global" | "local";
+	} | null> {
+		const [cluster] = await db
+			.select()
+			.from(pulseClusters)
+			.where(eq(pulseClusters.id, clusterId))
+			.limit(1);
+		if (!cluster || cluster.status !== "crisis") {
+			return null;
+		}
+
+		const [updatedCluster] = await db
+			.update(pulseClusters)
+			.set({
+				status: "resolved",
+				updatedAt: new Date(),
+			})
+			.where(eq(pulseClusters.id, clusterId))
+			.returning();
+		if (!updatedCluster) {
+			return null;
+		}
+
+		const isGlobal = this.isGlobalCluster(updatedCluster);
+		this.broadcastCrisisModeDeactivated(updatedCluster, isGlobal);
+		return {
+			cluster: updatedCluster,
+			scope: isGlobal ? "global" : "local",
+		};
 	}
 
 	async findOrCreateCluster(pulseRecord: PulseType): Promise<PulseClusterType> {
@@ -216,48 +312,57 @@ export class ClusteringService {
 
 	private broadcastCrisisMode(cluster: PulseClusterType, isGlobal: boolean) {
 		// Notifică prin WebSocket utilizatorii afectați
-		const centerLng =
-			(cluster.centerLng as number | null | undefined) ??
-			((cluster as any).center_lng as number);
-		const centerLat =
-			(cluster.centerLat as number | null | undefined) ??
-			((cluster as any).center_lat as number);
-		const radiusMeters =
-			(cluster.radiusMeters as number | null | undefined) ??
-			((cluster as any).radius_meters as number) ??
-			CLUSTER_CONFIG.radiusMeters;
-		const pulseType =
-			(cluster.pulseType as string | null | undefined) ??
-			((cluster as any).pulse_type as string);
-		const incidentTypeId =
-			(cluster.incidentTypeId as string | null | undefined) ??
-			((cluster as any).incident_type_id as string | null) ??
-			null;
-		const reportCount =
-			(cluster.reportCount as number | null | undefined) ??
-			((cluster as any).report_count as number | null) ??
-			null;
-		const confidenceScore =
-			(cluster.confidenceScore as number | null | undefined) ??
-			((cluster as any).confidence_score as number | null) ??
-			100;
+		const normalized = this.normalizeCluster(cluster);
 
-		const center = { x: centerLng, y: centerLat };
+		const center = { x: normalized.centerLng, y: normalized.centerLat };
 		const connections = isGlobal
 			? socketManager.getAllConnections()
-			: socketManager.getConnectionsInRange(center, radiusMeters);
+			: socketManager.getConnectionsInRange(center, normalized.radiusMeters);
 		const message = {
 			type: "CRISIS_MODE_ACTIVATED",
 			cluster: {
 				id: cluster.id,
-				pulse_type: pulseType,
-				incident_type_id: incidentTypeId,
-				report_count: reportCount,
-				confidence_score: confidenceScore,
-				radius_meters: radiusMeters,
-				center_lat: centerLat,
-				center_lng: centerLng,
+				pulse_type: normalized.pulseType,
+				incident_type_id: normalized.incidentTypeId,
+				report_count: normalized.reportCount,
+				confidence_score: normalized.confidenceScore,
+				radius_meters: normalized.radiusMeters,
+				center_lat: normalized.centerLat,
+				center_lng: normalized.centerLng,
 				status: "crisis",
+			},
+		};
+
+		for (const conn of connections) {
+			try {
+				conn.ws.send(JSON.stringify(message));
+			} catch (error) {
+				logger.error(`Failed to send message to user ${conn.userId}: ${error}`);
+			}
+		}
+	}
+
+	private broadcastCrisisModeDeactivated(
+		cluster: PulseClusterType,
+		isGlobal: boolean,
+	) {
+		const normalized = this.normalizeCluster(cluster);
+		const center = { x: normalized.centerLng, y: normalized.centerLat };
+		const connections = isGlobal
+			? socketManager.getAllConnections()
+			: socketManager.getConnectionsInRange(center, normalized.radiusMeters);
+		const message = {
+			type: "CRISIS_MODE_DEACTIVATED",
+			cluster: {
+				id: cluster.id,
+				pulse_type: normalized.pulseType,
+				incident_type_id: normalized.incidentTypeId,
+				report_count: normalized.reportCount,
+				confidence_score: normalized.confidenceScore,
+				radius_meters: normalized.radiusMeters,
+				center_lat: normalized.centerLat,
+				center_lng: normalized.centerLng,
+				status: "resolved",
 			},
 		};
 

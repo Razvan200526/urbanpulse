@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { adminMiddleware } from "@server/middleware/adminMiddleware";
 import { authMiddleware } from "@server/middleware/authMiddleware";
+import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
 import { notificationRepository } from "@server/repositories/NotificationRepository";
 import { pulseRepository } from "@server/repositories/PulseRepository";
 import { reportRepository } from "@server/repositories/ReportRepository";
@@ -11,6 +12,7 @@ import { clusteringService } from "@server/services/ClusterigService";
 import { documentMatchingService } from "@server/services/DocumentMatchingService";
 import { incidentTypeService } from "@server/services/IncidentTypeService";
 import { moderationService } from "@server/services/ModerationService";
+import { LostDocumentEmbeddingStatusEnum } from "@shared/types";
 import { createCrisisSchema } from "@shared/validators/admin/isCreateCrisisValid";
 import { mergePulseSchema } from "@shared/validators/admin/isMergePulseValid";
 import {
@@ -38,6 +40,68 @@ const rematchDocumentQuerySchema = z
 		renotifyExisting: z.enum(["true", "false"]).optional(),
 	})
 	.optional();
+
+const rematchAllDocumentsQuerySchema = z
+	.object({
+		renotifyExisting: z.enum(["true", "false"]).optional(),
+	})
+	.optional();
+
+const crisisClusterIdParamSchema = z.object({
+	clusterId: z.string().uuid(),
+});
+
+const toggleCrisisSchema = z.object({
+	isActive: z.boolean(),
+});
+
+const listLostDocumentsQuerySchema = z
+	.object({
+		limit: z.coerce.number().int().min(1).max(100).optional(),
+		embeddingStatus: z.nativeEnum(LostDocumentEmbeddingStatusEnum).optional(),
+	})
+	.optional();
+
+const serializeCluster = (cluster: {
+	id: string;
+	pulseType?: string | null;
+	pulse_type?: string | null;
+	incidentTypeId?: string | null;
+	incident_type_id?: string | null;
+	centerLat?: number | null;
+	center_lat?: number | null;
+	centerLng?: number | null;
+	center_lng?: number | null;
+	radiusMeters?: number | null;
+	radius_meters?: number | null;
+	reportCount?: number | null;
+	report_count?: number | null;
+	confidenceScore?: number | null;
+	confidence_score?: number | null;
+	status?: string | null;
+	crisisTriggered?: boolean | null;
+	crisis_triggered?: boolean | null;
+	createdAt?: Date | null;
+	created_at?: Date | null;
+	updatedAt?: Date | null;
+	updated_at?: Date | null;
+	expiresAt?: Date | null;
+	expires_at?: Date | null;
+}) => ({
+	id: cluster.id,
+	pulse_type: cluster.pulseType ?? cluster.pulse_type ?? null,
+	incident_type_id: cluster.incidentTypeId ?? cluster.incident_type_id ?? null,
+	center_lat: cluster.centerLat ?? cluster.center_lat ?? null,
+	center_lng: cluster.centerLng ?? cluster.center_lng ?? null,
+	radius_meters: cluster.radiusMeters ?? cluster.radius_meters ?? null,
+	report_count: cluster.reportCount ?? cluster.report_count ?? null,
+	confidence_score: cluster.confidenceScore ?? cluster.confidence_score ?? null,
+	status: cluster.status,
+	crisis_triggered: cluster.crisisTriggered ?? cluster.crisis_triggered ?? null,
+	created_at: cluster.createdAt ?? cluster.created_at ?? null,
+	updated_at: cluster.updatedAt ?? cluster.updated_at ?? null,
+	expires_at: cluster.expiresAt ?? cluster.expires_at ?? null,
+});
 
 export const adminController = new Hono()
 	.basePath("/admin")
@@ -283,21 +347,7 @@ export const adminController = new Hono()
 			);
 		}
 		const cluster = await clusteringService.createAdminCrisisCluster(payload);
-		const serializedCluster = {
-			id: cluster.id,
-			pulse_type: cluster.pulseType,
-			incident_type_id: cluster.incidentTypeId,
-			center_lat: cluster.centerLat,
-			center_lng: cluster.centerLng,
-			radius_meters: cluster.radiusMeters,
-			report_count: cluster.reportCount,
-			confidence_score: cluster.confidenceScore,
-			status: cluster.status,
-			crisis_triggered: cluster.crisisTriggered,
-			created_at: cluster.createdAt,
-			updated_at: cluster.updatedAt,
-			expires_at: cluster.expiresAt,
-		};
+		const serializedCluster = serializeCluster(cluster);
 
 		return c.json(
 			{
@@ -311,6 +361,109 @@ export const adminController = new Hono()
 			201,
 		);
 	})
+	.get("/crisis", async (c) => {
+		const clusters = await clusteringService.getActiveCrisisClusters();
+
+		return c.json({
+			success: true,
+			message: "Active crisis clusters retrieved",
+			data: {
+				clusters: clusters.map((cluster) => serializeCluster(cluster)),
+			},
+		});
+	})
+	.patch(
+		"/crisis/:clusterId",
+		zValidator("param", crisisClusterIdParamSchema),
+		zValidator("json", toggleCrisisSchema),
+		async (c) => {
+			const { clusterId } = c.req.valid("param");
+			const payload = c.req.valid("json");
+
+			if (payload.isActive) {
+				return c.json(
+					{
+						success: false,
+						message:
+							"To activate crisis mode, use the dedicated create crisis endpoint",
+						data: null,
+					},
+					400,
+				);
+			}
+
+			const result = await clusteringService.deactivateCrisisCluster(clusterId);
+			if (!result) {
+				return c.json(
+					{
+						success: false,
+						message: "Active crisis cluster not found",
+						data: null,
+					},
+					404,
+				);
+			}
+
+			return c.json({
+				success: true,
+				message:
+					result.scope === "global"
+						? "Global crisis mode deactivated"
+						: "Local crisis mode deactivated",
+				data: {
+					cluster: serializeCluster(result.cluster),
+				},
+			});
+		},
+	)
+	.get(
+		"/lost-documents",
+		zValidator("query", listLostDocumentsQuerySchema),
+		async (c) => {
+			const query = c.req.valid("query");
+			const limit = query?.limit ?? 20;
+
+			let documents = await lostDocumentRepository.getAll();
+			if (query?.embeddingStatus) {
+				documents = documents.filter(
+					(document) => document.embeddingStatus === query.embeddingStatus,
+				);
+			}
+
+			const limited = documents.slice(0, limit);
+			const documentsWithMatches = await Promise.all(
+				limited.map(async (document) => {
+					const matches = await lostDocumentRepository.getMatchesWithUserInfo(
+						document.id,
+						0,
+					);
+
+					return {
+						id: document.id,
+						userId: document.userId,
+						documentType: document.documentType,
+						extractedName: document.extractedName,
+						extractedFirstName: document.extractedFirstName,
+						extractedBirthYear: document.extractedBirthYear,
+						extractedCity: document.extractedCity,
+						embeddingStatus: document.embeddingStatus,
+						embeddingUpdatedAt: document.embeddingUpdatedAt,
+						createdAt: document.createdAt,
+						updatedAt: document.updatedAt,
+						matchCount: matches.length,
+					};
+				}),
+			);
+
+			return c.json({
+				success: true,
+				message: "Admin lost documents retrieved",
+				data: {
+					documents: documentsWithMatches,
+				},
+			});
+		},
+	)
 	.post(
 		"/lost-documents/:documentId/rematch",
 		zValidator("param", lostDocumentIdParamSchema),
@@ -337,6 +490,22 @@ export const adminController = new Hono()
 			return c.json({
 				success: true,
 				message: "Document rematch completed",
+				data: result,
+			});
+		},
+	)
+	.post(
+		"/lost-documents/rematch-all",
+		zValidator("query", rematchAllDocumentsQuerySchema),
+		async (c) => {
+			const query = c.req.valid("query");
+			const result = await documentMatchingService.rematchAllDocumentsAsAdmin({
+				renotifyExisting: query?.renotifyExisting === "true",
+			});
+
+			return c.json({
+				success: true,
+				message: "Document rematch completed for all uploads",
 				data: result,
 			});
 		},
