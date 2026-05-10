@@ -1,7 +1,7 @@
 import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
 import {
-	documentImageService,
 	DocumentMaskingError,
+	documentImageService,
 } from "@server/services/DocumentImageService";
 import { documentMatchingService } from "@server/services/DocumentMatchingService";
 import { lostDocumentAIService } from "@server/services/LostDocumentAIService";
@@ -172,7 +172,10 @@ export class LostDocumentService {
 		const olderThanHours = Math.max(1, params?.olderThanHours ?? 24);
 		const limit = Math.max(1, Math.min(500, params?.limit ?? 200));
 		const olderThan = new Date(Date.now() - olderThanHours * 60 * 60 * 1000);
-		const failedDocuments = await this.repo.getFailedOlderThan(olderThan, limit);
+		const failedDocuments = await this.repo.getFailedOlderThan(
+			olderThan,
+			limit,
+		);
 		let deletedCount = 0;
 		let storageCleanupErrors = 0;
 

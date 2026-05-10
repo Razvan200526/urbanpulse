@@ -2,7 +2,7 @@ import { db } from "@server/db";
 import type { UserType } from "@server/db/schema";
 import { user } from "@server/db/schema";
 import type { UserConditionOptions } from "@server/repositories/types";
-import { and, eq, gte, lt, ne, or, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lt, ne, or, sql } from "drizzle-orm";
 import type { IRepository } from "./IRepository";
 
 export class UserRepository implements IRepository<UserType> {
@@ -43,6 +43,15 @@ export class UserRepository implements IRepository<UserType> {
 	async findByEmail(email: string): Promise<UserType | null> {
 		const [result] = await db.select().from(user).where(eq(user.email, email));
 		return result || null;
+	}
+
+	async getByIds(userIds: string[]): Promise<UserType[]> {
+		const uniqueUserIds = Array.from(new Set(userIds.filter(Boolean)));
+		if (uniqueUserIds.length === 0) {
+			return [];
+		}
+
+		return await db.select().from(user).where(inArray(user.id, uniqueUserIds));
 	}
 
 	/**

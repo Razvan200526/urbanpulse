@@ -268,8 +268,7 @@ export function summarizeNotificationPayload(
 			return "";
 		}
 
-		const uploaderName =
-			documentMatchPayload.uploaderUser.name || "Someone";
+		const uploaderName = documentMatchPayload.uploaderUser.name || "Someone";
 		const cityText = documentMatchPayload.locationHint
 			? ` near ${documentMatchPayload.locationHint}`
 			: "";

@@ -61,6 +61,9 @@ export const clientPulseSchema = z.object({
 	matchMetadata: z.record(z.string(), z.unknown()),
 	isResolved: z.boolean(),
 	isVerified: z.boolean().nullable(),
+	authorRole: z.string().nullable().optional().default(null),
+	authorTrustScore: z.number().nullable().optional().default(null),
+	authorIsVerified: z.boolean().nullable().optional().default(null),
 	mergedIntoPulseId: z.string().nullable(),
 	moderationNote: z.string().nullable(),
 	locationPrecision: z

@@ -35,9 +35,9 @@ import type { ModeratePulseType } from "@shared/validators/admin/isModeratePulse
 import type { CreateReportType } from "@shared/validators/reports/isCreateReportValid";
 import type { ReviewReportType } from "@shared/validators/reports/isReviewReportValid";
 import { eq } from "drizzle-orm";
+import { clusteringService } from "./ClusterigService";
 import { incidentTypeService } from "./IncidentTypeService";
 import { notificationService } from "./NotificationService";
-import { clusteringService } from "./ClusterigService";
 
 const AUTO_VERIFY_CONFIRMATION_THRESHOLD = 3;
 

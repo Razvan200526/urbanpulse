@@ -9,6 +9,10 @@ import {
 	responseRepository,
 } from "@server/repositories/ResponseRepository";
 import { skillRepository } from "@server/repositories/SkillRepository";
+import {
+	type UserRepository,
+	userRepository,
+} from "@server/repositories/UserRepository";
 import type {
 	PulseConditionOptions,
 	PulseSearchOptions,
@@ -39,9 +43,16 @@ type PulseSocketResponse = {
 };
 
 type PulseViewerContext = Pick<UserType, "id" | "role"> | null;
+type PulseAuthorPriority = Pick<
+	UserType,
+	"id" | "role" | "trustScore" | "isVerified"
+>;
 export type SerializedPulse = PulseType & {
 	locationPrecision: "exact" | "approximate";
 	incidentType: IncidentTypeType | null;
+	authorRole: string | null;
+	authorTrustScore: number | null;
+	authorIsVerified: boolean | null;
 };
 
 /**
@@ -50,11 +61,13 @@ export type SerializedPulse = PulseType & {
 export class PulseService {
 	private pulseRepository: PulseRepository;
 	responseRepository: ResponseRepository;
+	private userRepository: UserRepository;
 	private cache = cacheManager;
 
 	constructor() {
 		this.pulseRepository = pulseRepository;
 		this.responseRepository = responseRepository;
+		this.userRepository = userRepository;
 	}
 
 	private async invalidatePulseCaches(pulseId?: string) {
@@ -115,16 +128,28 @@ export class PulseService {
 		return await incidentTypeService.getIncidentTypeById(pulse.incidentTypeId);
 	}
 
-	async serializePulseForViewer(
-		pulse: PulseType,
-		viewer: PulseViewerContext,
-	): Promise<SerializedPulse> {
-		const incidentType = await this.getPulseIncidentType(pulse);
+	private toAuthorPriorityFields(author: PulseAuthorPriority | null) {
+		return {
+			authorRole: author?.role ?? null,
+			authorTrustScore: author?.trustScore ?? null,
+			authorIsVerified: author?.isVerified ?? null,
+		};
+	}
+
+	private buildSerializedPulse(params: {
+		pulse: PulseType;
+		viewer: PulseViewerContext;
+		incidentType: IncidentTypeType | null;
+		author: PulseAuthorPriority | null;
+	}): SerializedPulse {
+		const { pulse, viewer, incidentType, author } = params;
+		const authorFields = this.toAuthorPriorityFields(author);
 		if (this.canViewExactPulseLocation(pulse, viewer)) {
 			return {
 				...pulse,
 				incidentType,
 				locationPrecision: "exact",
+				...authorFields,
 			};
 		}
 
@@ -133,15 +158,50 @@ export class PulseService {
 			incidentType,
 			position: this.toApproximatePosition(pulse.position),
 			locationPrecision: "approximate",
+			...authorFields,
 		};
+	}
+
+	private async getPulseAuthorMap(pulses: PulseType[]) {
+		const authors = await this.userRepository.getByIds(
+			pulses.map((pulse) => pulse.userId),
+		);
+
+		return new Map(authors.map((author) => [author.id, author] as const));
+	}
+
+	async serializePulseForViewer(
+		pulse: PulseType,
+		viewer: PulseViewerContext,
+	): Promise<SerializedPulse> {
+		const [incidentType, author] = await Promise.all([
+			this.getPulseIncidentType(pulse),
+			this.userRepository.getOne(pulse.userId),
+		]);
+
+		return this.buildSerializedPulse({
+			pulse,
+			viewer,
+			incidentType,
+			author,
+		});
 	}
 
 	async serializePulsesForViewer(
 		pulses: PulseType[],
 		viewer: PulseViewerContext,
 	): Promise<SerializedPulse[]> {
+		const authorMap = await this.getPulseAuthorMap(pulses);
+
 		return Promise.all(
-			pulses.map((pulse) => this.serializePulseForViewer(pulse, viewer)),
+			pulses.map(async (pulse) =>
+				this.buildSerializedPulse({
+					pulse,
+					viewer,
+					incidentType: await this.getPulseIncidentType(pulse),
+					author: authorMap.get(pulse.userId) ?? null,
+				}),
+			),
 		);
 	}
 

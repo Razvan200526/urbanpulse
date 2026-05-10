@@ -28,6 +28,9 @@ function buildPulse(overrides: Partial<ClientPulseType> = {}): ClientPulseType {
 		matchMetadata: {},
 		isResolved: false,
 		isVerified: false,
+		authorRole: "user",
+		authorTrustScore: 72,
+		authorIsVerified: false,
 		mergedIntoPulseId: null,
 		moderationNote: null,
 		locationPrecision: "exact",
@@ -125,5 +128,47 @@ describe("pulse cache helpers", () => {
 				payload,
 			])?.data,
 		).toEqual([]);
+	});
+
+	test("preserves author priority metadata when live updates omit it", () => {
+		const payload = {
+			position: { x: 26.1, y: 44.4 },
+			radius: 500,
+			status: PulseStatusEnum.Active,
+		};
+		const cachedPulse = buildPulse({
+			title: "Verified responder",
+			authorRole: "admin",
+			authorTrustScore: 98,
+			authorIsVerified: true,
+		});
+		const livePulse = buildPulse({
+			title: "Verified responder updated",
+			authorRole: null,
+			authorTrustScore: null,
+			authorIsVerified: null,
+		});
+
+		queryClient.setQueryData(["pulse", "detail", cachedPulse.id], cachedPulse);
+		queryClient.setQueryData(["pulse", "map", payload], [cachedPulse]);
+		queryClient.setQueryData(["pulse", "retrieve", payload], {
+			message: "Pulses retrieved",
+			data: [cachedPulse],
+		});
+
+		syncPulseInCache(livePulse);
+
+		expect(
+			queryClient.getQueryData<ClientPulseType>([
+				"pulse",
+				"detail",
+				cachedPulse.id,
+			]),
+		).toMatchObject({
+			title: "Verified responder updated",
+			authorRole: "admin",
+			authorTrustScore: 98,
+			authorIsVerified: true,
+		});
 	});
 });

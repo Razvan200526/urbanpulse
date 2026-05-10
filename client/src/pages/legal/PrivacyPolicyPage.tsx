@@ -27,9 +27,9 @@ export const PrivacyPolicyPage = () => {
 			<section id="terms-of-service" className="mt-8 space-y-3">
 				<h2 className="text-xl font-semibold">Terms of Service</h2>
 				<p className="text-sm leading-7 text-muted">
-					Users must submit lawful, accurate reports and avoid harassment, doxxing,
-					or misuse of emergency features. We may suspend abusive accounts and
-					remove malicious content.
+					Users must submit lawful, accurate reports and avoid harassment,
+					doxxing, or misuse of emergency features. We may suspend abusive
+					accounts and remove malicious content.
 				</p>
 			</section>
 
@@ -44,8 +44,12 @@ export const PrivacyPolicyPage = () => {
 			<section id="data-rights" className="mt-8 space-y-3">
 				<h2 className="text-xl font-semibold">Data Rights Request</h2>
 				<p className="text-sm leading-7 text-muted">
-					You may request access, correction, deletion, or objection by contacting{" "}
-					<a className="text-accent underline" href="mailto:privacy@urbanpulse.app">
+					You may request access, correction, deletion, or objection by
+					contacting{" "}
+					<a
+						className="text-accent underline"
+						href="mailto:privacy@urbanpulse.app"
+					>
 						privacy@urbanpulse.app
 					</a>
 					. We verify identity before processing requests.

@@ -5,6 +5,7 @@ import {
 } from "@server/repositories/NotificationRepository";
 import { responseRepository } from "@server/repositories/ResponseRepository";
 import type { NotificationConditionOptions } from "@server/repositories/types";
+import { userRepository } from "@server/repositories/UserRepository";
 import { cacheManager } from "@server/services/cache/CacheManager";
 import {
 	socketManager,
@@ -112,8 +113,14 @@ export class NotificationService {
 		);
 	}
 
-	private toSocketSafePulse(pulse: PulseType) {
-		return JSON.parse(JSON.stringify(pulse)) as Record<string, unknown>;
+	private async toSocketSafePulse(pulse: PulseType) {
+		const author = await userRepository.getOne(pulse.userId);
+		return {
+			...(JSON.parse(JSON.stringify(pulse)) as Record<string, unknown>),
+			authorRole: author?.role ?? null,
+			authorTrustScore: author?.trustScore ?? null,
+			authorIsVerified: author?.isVerified ?? null,
+		};
 	}
 
 	private withPersistedNotification<T>(
@@ -375,7 +382,7 @@ export class NotificationService {
 	 */
 	async broadcastToNearbyUsers(pulseData: PulseType) {
 		const matches = await heroAlertMatchingService.matchPulse(pulseData);
-		const serializedPulse = this.toSocketSafePulse(pulseData);
+		const serializedPulse = await this.toSocketSafePulse(pulseData);
 
 		for (const match of matches) {
 			if (match.user.id === pulseData.userId) {
@@ -507,7 +514,7 @@ export class NotificationService {
 	 */
 	async broadcastPulseUpdated(pulse: PulseType) {
 		const { position, id, status, isResolved, title, type: pulseKind } = pulse;
-		const serializedPulse = this.toSocketSafePulse(pulse);
+		const serializedPulse = await this.toSocketSafePulse(pulse);
 		const recipients = await this.getPulseLiveRecipients(pulse);
 
 		const broadcastData = this.notificationFactory.create({

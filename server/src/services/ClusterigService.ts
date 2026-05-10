@@ -3,9 +3,9 @@ import {
 	type PulseClusterType,
 	type PulseType,
 	pulse,
-	pulseConfirmation,
 	pulseClusterMembers,
 	pulseClusters,
+	pulseConfirmation,
 } from "@server/db/schema";
 import { socketManager } from "@server/services/SocketManager";
 import { logger } from "@server/utils/Logger";
@@ -336,10 +336,8 @@ export class ClusteringService {
 	}> {
 		const [metrics] = await db
 			.select({
-				independentReportCount:
-					sql<number>`COALESCE(COUNT(DISTINCT ${pulse.userId}), 0)`,
-				confirmationCount:
-					sql<number>`COALESCE(COUNT(DISTINCT ${pulseConfirmation.userId}), 0)`,
+				independentReportCount: sql<number>`COALESCE(COUNT(DISTINCT ${pulse.userId}), 0)`,
+				confirmationCount: sql<number>`COALESCE(COUNT(DISTINCT ${pulseConfirmation.userId}), 0)`,
 				centerLat: sql<number>`COALESCE(AVG(ST_Y(${pulse.position}::geometry)), 0)`,
 				centerLng: sql<number>`COALESCE(AVG(ST_X(${pulse.position}::geometry)), 0)`,
 			})

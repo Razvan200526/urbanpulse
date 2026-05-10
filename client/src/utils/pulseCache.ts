@@ -39,6 +39,27 @@ function parseRetrievePayload(queryKey: QueryKey) {
 	return parsed.success ? parsed.data : null;
 }
 
+function mergePulseRecord(
+	existing: ClientPulseType | undefined,
+	incoming: ClientPulseType,
+): ClientPulseType {
+	if (!existing) {
+		return incoming;
+	}
+
+	return {
+		...existing,
+		...incoming,
+		incidentTypeId: incoming.incidentTypeId ?? existing.incidentTypeId ?? null,
+		incidentType: incoming.incidentType ?? existing.incidentType ?? null,
+		authorRole: incoming.authorRole ?? existing.authorRole ?? null,
+		authorTrustScore:
+			incoming.authorTrustScore ?? existing.authorTrustScore ?? null,
+		authorIsVerified:
+			incoming.authorIsVerified ?? existing.authorIsVerified ?? null,
+	};
+}
+
 export function doesPulseMatchRetrievePayload(
 	pulse: ClientPulseType,
 	payload: PulseRetrievePayloadType,
@@ -80,14 +101,14 @@ export function upsertPulseForPayload(
 		return Array.from(next.values());
 	}
 
-	next.set(pulse.id, pulse);
+	next.set(pulse.id, mergePulseRecord(next.get(pulse.id), pulse));
 	return Array.from(next.values());
 }
 
 export const syncPulseInCache = (pulse: ClientPulseType) => {
 	queryClient.setQueryData<ClientPulseType>(
 		["pulse", "detail", pulse.id],
-		pulse,
+		(oldPulse) => mergePulseRecord(oldPulse, pulse),
 	);
 
 	const mapQueries = queryClient
