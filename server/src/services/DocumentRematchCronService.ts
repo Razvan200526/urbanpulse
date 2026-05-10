@@ -51,7 +51,7 @@ class DocumentRematchCronService {
 				}
 
 				logger.info(
-					`Document rematch cron processed ${body.data?.processedDocuments ?? 0} documents`,
+					`Document rematch cron processed ${body.data?.processedDocuments ?? 0} documents and rematch ${body.data?.rematchedCount ?? 0} documents`,
 				);
 			} catch (error) {
 				logger.exception(
