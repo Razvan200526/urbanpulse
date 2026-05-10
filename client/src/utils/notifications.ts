@@ -239,9 +239,7 @@ export function summarizeNotificationPayload(
 		}
 
 		const counterpartName =
-			petMatchPayload.counterpartUser.name ||
-			petMatchPayload.counterpartUser.email ||
-			"Someone";
+			petMatchPayload.counterpartUser.name || "Someone";
 		const petLabel = `${petMatchPayload.matchedAlert.color} ${petMatchPayload.matchedAlert.petType}`;
 
 		if (type === "PET_ALERT_MATCH") {

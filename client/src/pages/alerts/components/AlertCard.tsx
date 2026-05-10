@@ -102,7 +102,7 @@ export const AlertCard = ({
 						? {
 								id: petMatchPayload.counterpartUser.id,
 								name: actorName,
-								email: petMatchPayload.counterpartUser.email || "",
+
 								image: petMatchPayload.counterpartUser.image,
 							}
 						: notificationItem.user

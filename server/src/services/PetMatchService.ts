@@ -49,7 +49,6 @@ const toCounterpartUser = (
 	id: entry?.id ?? fallbackId,
 	name: entry?.name ?? null,
 	image: entry?.image ?? null,
-	email: entry?.email ?? null,
 });
 
 const serializeMatchRecord = (match: PetMatchType): PetMatchRecord => ({

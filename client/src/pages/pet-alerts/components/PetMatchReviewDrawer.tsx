@@ -78,9 +78,7 @@ const ReviewCard = ({
 								{item.matchedAlert.color} {item.matchedAlert.petType}
 							</h3>
 							<p className="text-sm text-muted">
-								{item.counterpartUser.name ||
-									item.counterpartUser.email ||
-									"Neighbor"}
+									{item.counterpartUser.name || "Neighbor"}
 								{" · "}
 								{item.matchedAlert.alertType}
 							</p>

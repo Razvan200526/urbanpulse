@@ -204,8 +204,8 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			});
 		},
 	)
-	// GET /api/lost-documents/:id - Get document details
-	.get("/:id", adminMiddleware, async (c) => {
+	// GET /api/lost-documents/:id - Get document details (admin or owner only)
+	.get("/:id", async (c) => {
 		const session = c.get("session");
 		if (!session) {
 			return c.json({ success: false, error: "Unauthorized" }, 401);
@@ -223,6 +223,11 @@ export const lostDocumentController = new Hono<{ Variables: Variables }>()
 			const user = c.get("user");
 			const isAdmin = user?.role === "admin";
 			const isOwner = document.userId === session.userId;
+
+			if (!isAdmin && !isOwner) {
+				return c.json({ success: false, error: "Forbidden" }, 403);
+			}
+
 			let imageUrl = normalizePublicAssetUrl(document.blurredImageUrl);
 			if (isAdmin) {
 				imageUrl =

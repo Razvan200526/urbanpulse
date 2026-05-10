@@ -184,7 +184,7 @@ export const AlertDetailsDrawer = ({
 								? {
 										id: petMatchPayload.counterpartUser.id,
 										name: actorName,
-										email: petMatchPayload.counterpartUser.email || "",
+
 										image: petMatchPayload.counterpartUser.image,
 									}
 								: selectedItem.user

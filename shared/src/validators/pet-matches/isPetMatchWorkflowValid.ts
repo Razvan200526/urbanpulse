@@ -11,7 +11,6 @@ export const petMatchActorSchema = z.object({
 	id: z.string(),
 	name: z.string().nullable(),
 	image: z.string().nullable(),
-	email: z.string().nullable().optional(),
 });
 
 export const petMatchAlertSchema = z.object({
