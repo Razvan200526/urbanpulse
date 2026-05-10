@@ -295,7 +295,6 @@
 
 	/* CRISIS MODE: Low-energy / battery-saving mode */
 	[data-crisis-mode="true"] {
-		/* Pure black for maximum OLED power saving */
 		--background: oklch(0% 0 0) !important;
 		--surface: oklch(15% 0 0) !important;
 		--surface-secondary: oklch(20% 0 0) !important;
@@ -303,30 +302,12 @@
 		--border: oklch(25% 0 0) !important;
 	}
 
-	[data-crisis-mode="true"] * {
-		/* Reduced animations: kill all CSS animations and transitions */
-		animation-duration: 0.01ms !important;
-		animation-iteration-count: 1 !important;
-		transition-duration: 0.01ms !important;
-
-		/* Remove backdrop filters which are GPU intensive */
-		backdrop-filter: none !important;
-		-webkit-backdrop-filter: none !important;
-
-		/* Remove box shadows which are GPU intensive */
-		box-shadow: none !important;
+	[data-crisis-mode="true"] .animate-marker-ripple,
+	[data-crisis-mode="true"] .animate-marker-ripple-delayed,
+	[data-crisis-mode="true"] .animate-marquee {
+		animation: none !important;
 	}
 
-	/* Large buttons for accessibility during crisis */
-	[data-crisis-mode="true"] button {
-		padding: 1.25rem 2rem !important;
-		font-size: 1.25rem !important;
-		font-weight: bold !important;
-		border-radius: 0 !important;
-		min-height: 3.5rem !important;
-	}
-
-	/* Simplified icons: remove unnecessary decorations, increase stroke width */
 	[data-crisis-mode="true"] svg.lucide {
 		stroke-width: 2.5px !important;
 	}
