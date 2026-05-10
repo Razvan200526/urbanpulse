@@ -1,6 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
 import type { Variables } from "@server/app";
-import { adminMiddleware } from "@server/middleware/adminMiddleware";
 import { lostDocumentRepository } from "@server/repositories/LostDocumentRepository";
 import { documentMatchingService } from "@server/services/DocumentMatchingService";
 import { lostDocumentService } from "@server/services/LostDocumentService";
