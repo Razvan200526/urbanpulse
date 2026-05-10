@@ -9,6 +9,7 @@ import { resourceRepository } from "@server/repositories/ResourceRepository";
 import { transactionRepository } from "@server/repositories/TransactionRepository";
 import { userRepository } from "@server/repositories/UserRepository";
 import { clusteringService } from "@server/services/ClusterigService";
+import { documentImageService } from "@server/services/DocumentImageService";
 import { documentMatchingService } from "@server/services/DocumentMatchingService";
 import { incidentTypeService } from "@server/services/IncidentTypeService";
 import { moderationService } from "@server/services/ModerationService";
@@ -437,6 +438,9 @@ export const adminController = new Hono()
 						document.id,
 						0,
 					);
+					const originalImageUrl = await documentImageService
+						.getSignedUrl(document.originalImageKey)
+						.catch(() => null);
 
 					return {
 						id: document.id,
@@ -446,11 +450,14 @@ export const adminController = new Hono()
 						extractedFirstName: document.extractedFirstName,
 						extractedBirthYear: document.extractedBirthYear,
 						extractedCity: document.extractedCity,
+						originalImageKey: document.originalImageKey,
+						blurredImageUrl: document.blurredImageUrl,
 						embeddingStatus: document.embeddingStatus,
 						embeddingUpdatedAt: document.embeddingUpdatedAt,
 						createdAt: document.createdAt,
 						updatedAt: document.updatedAt,
 						matchCount: matches.length,
+						originalImageUrl,
 					};
 				}),
 			);

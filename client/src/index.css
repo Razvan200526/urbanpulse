@@ -302,10 +302,17 @@
 		--border: oklch(25% 0 0) !important;
 	}
 
-	[data-crisis-mode="true"] .animate-marker-ripple,
-	[data-crisis-mode="true"] .animate-marker-ripple-delayed,
-	[data-crisis-mode="true"] .animate-marquee {
-		animation: none !important;
+	/* Force stop all CSS animations and transitions */
+	[data-crisis-mode="true"] *,
+	[data-crisis-mode="true"] *::before,
+	[data-crisis-mode="true"] *::after {
+		animation-duration: 0s !important;
+		animation-delay: 0s !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0s !important;
+		transition-delay: 0s !important;
+		transition-property: none !important;
+		animation-name: none !important;
 	}
 
 	[data-crisis-mode="true"] svg.lucide {

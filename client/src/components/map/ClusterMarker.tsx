@@ -1,5 +1,6 @@
 import { ClusterDrawer } from "@client/pages/map/components/ClusterDrawer";
 import type { ClientClusterType } from "@client/utils/clusterTypes";
+import { useCrisisStore } from "@client/stores/crisisStore";
 import { PulseEnum } from "@shared/types";
 import { GLOBAL_CRISIS_RADIUS_THRESHOLD_METERS } from "@shared/utils/crisis";
 import { AlertCircle, Package, PawPrint, Zap } from "lucide-react";
@@ -188,6 +189,7 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 	const isGlobalCrisis =
 		isCrisis && radiusMeters >= GLOBAL_CRISIS_RADIUS_THRESHOLD_METERS;
 
+	const { isCrisisModeActive } = useCrisisStore();
 	const map = useMap();
 	const markerRef = useRef<mapboxgl.Marker | null>(null);
 	const el = useRef(document.createElement("div"));
@@ -276,10 +278,6 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 					let direction = -0.01;
 					let destroyed = false;
 
-					// Read from document body to check if we are in energy saving mode
-					const isEnergySavingMode =
-						document.body.getAttribute("data-crisis-mode") === "true";
-
 					const animate = () => {
 						if (
 							destroyed ||
@@ -289,14 +287,10 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 						)
 							return;
 
-						if (!isEnergySavingMode) {
+						if (!isCrisisModeActive) {
 							opacity += direction;
 							if (opacity <= 0.1 || opacity >= 0.8) direction *= -1;
 							map.setPaintProperty(borderLayerId, "line-opacity", opacity);
-						}
-
-						// If in energy saving, run much less frequently, or just hold static
-						if (!isEnergySavingMode) {
 							requestAnimationFrame(animate);
 						} else {
 							// Just set static opacity and stop animating
@@ -346,6 +340,7 @@ export const ClusterMarker = ({ cluster }: ClusterMarkerProps) => {
 		sourceId,
 		layerId,
 		borderLayerId,
+		isCrisisModeActive,
 	]);
 	const { Icon } = config;
 

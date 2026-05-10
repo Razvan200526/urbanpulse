@@ -989,21 +989,42 @@ export const AdminPage = () => {
 												className="rounded border border-accent/20 bg-surface-secondary/10 p-4"
 											>
 												<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-													<div className="space-y-1">
-														<p className="font-medium text-foreground">
-															{document.documentType} ·{" "}
-															{document.extractedFirstName || "-"}{" "}
-															{document.extractedName || ""}
-														</p>
-														<p className="text-xs text-muted">
-															Status: {document.embeddingStatus} · Matches:{" "}
-															{document.matchCount} ·{" "}
-															{formatDate(new Date(document.createdAt))}
-														</p>
-														<p className="text-xs text-muted">
-															City: {document.extractedCity || "Unknown"} ·
-															User: {document.userId}
-														</p>
+													<div className="flex min-w-0 flex-1 gap-3">
+														<div className="h-28 w-40 shrink-0 overflow-hidden rounded border border-accent/20 bg-surface">
+															{document.originalImageUrl ||
+															document.blurredImageUrl ? (
+																<img
+																	src={
+																		document.originalImageUrl ||
+																		document.blurredImageUrl
+																	}
+																	alt={`${document.documentType} original`}
+																	className="h-full w-full object-cover"
+																	loading="lazy"
+																	referrerPolicy="no-referrer"
+																/>
+															) : (
+																<div className="flex h-full w-full items-center justify-center px-2 text-center text-[11px] text-muted">
+																	Image unavailable
+																</div>
+															)}
+														</div>
+														<div className="min-w-0 space-y-1">
+															<p className="font-medium text-foreground">
+																{document.documentType} ·{" "}
+																{document.extractedFirstName || "-"}{" "}
+																{document.extractedName || ""}
+															</p>
+															<p className="text-xs text-muted">
+																Status: {document.embeddingStatus} · Matches:{" "}
+																{document.matchCount} ·{" "}
+																{formatDate(new Date(document.createdAt))}
+															</p>
+															<p className="text-xs text-muted">
+																City: {document.extractedCity || "Unknown"} ·
+																User: {document.userId}
+															</p>
+														</div>
 													</div>
 													<Button
 														size="sm"

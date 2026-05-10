@@ -120,11 +120,14 @@ export const adminLostDocumentSchema = z.object({
 	extractedFirstName: z.string().nullable(),
 	extractedBirthYear: z.number().nullable(),
 	extractedCity: z.string().nullable(),
+	originalImageKey: z.string(),
+	blurredImageUrl: z.string(),
 	embeddingStatus: z.string(),
 	embeddingUpdatedAt: z.string().nullable(),
 	createdAt: z.string(),
 	updatedAt: z.string(),
 	matchCount: z.number(),
+	originalImageUrl: z.string().nullable(),
 });
 
 export const adminLostDocumentsListSchema = z.object({

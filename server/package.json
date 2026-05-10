@@ -20,6 +20,7 @@
 		"start:prod": "NODE_ENV=production bun run dist/index.js",
 		"start:railway": "NODE_ENV=production bun run dist/index.js",
 		"db:seed": "bun run ./commands/seed-command.ts",
+		"users:bootstrap": "bun run ./commands/bootstrap-users-command.ts",
 		"db:generate": "bunx --bun drizzle-kit generate --config=drizzle.config.ts",
 		"db:push": "bunx --bun drizzle-kit push",
 		"db:migrate": "bun run ./commands/migration-command.ts",
