@@ -17,6 +17,7 @@ import { parseAsString, useQueryState } from "nuqs";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
 import { AllResourcesTab } from "./components/AllResourcesTab";
+import { DocumentsTab } from "./components/DocumentsTab";
 import { MySkillsTab } from "./components/MySkillsTab";
 import { NetworkTab } from "./components/NetworkTab";
 import { UploadResourceModal } from "./components/UploadResourceModal";
@@ -29,6 +30,7 @@ const tabItems: TabItemType[] = [
 	},
 	{ key: "my-skills", label: "My Skills", className: "text-accent" },
 	{ key: "network", label: "Network", className: "text-accent" },
+	{ key: "documents", label: "Documents", className: "text-accent" },
 ];
 
 export const ResourcesPage = () => {
@@ -40,13 +42,17 @@ export const ResourcesPage = () => {
 	);
 
 	const mobileActionItems: DropdownItemDataType[] = [
-		{
-			key: "upload",
-			label: "Upload",
-			icon: <PlusSquareIcon className="size-4 text-accent" />,
-			labelClassName: "text-foreground",
-			onAction: () => uploadModalRef.current?.open(),
-		},
+		...(activeTab !== "documents"
+			? [
+					{
+						key: "upload",
+						label: "Upload listing",
+						icon: <PlusSquareIcon className="size-4 text-accent" />,
+						labelClassName: "text-foreground",
+						onAction: () => uploadModalRef.current?.open(),
+					},
+				]
+			: []),
 		{
 			key: "request",
 			label: "Request",
@@ -64,6 +70,8 @@ export const ResourcesPage = () => {
 				);
 			case "network":
 				return <NetworkTab />;
+			case "documents":
+				return <DocumentsTab />;
 			case "resources":
 				return <AllResourcesTab />;
 			default:
@@ -74,7 +82,7 @@ export const ResourcesPage = () => {
 	return (
 		<div className="relative flex h-[calc(100dvh)] min-w-0 w-full flex-col overflow-hidden bg-surface">
 			<Header
-				title="Skills & Resources"
+				title="Skills, Resources & Documents"
 				tabs={
 					<div className="w-full">
 						<div className="flex items-center justify-between gap-3 md:hidden">
@@ -117,15 +125,17 @@ export const ResourcesPage = () => {
 					</Button>
 				}
 			>
-				<Button
-					className="hidden md:inline-flex"
-					size="md"
-					variant="primary"
-					startContent={<UploadCloud className="size-4" />}
-					onPress={() => uploadModalRef.current?.open()}
-				>
-					Upload
-				</Button>
+				{activeTab !== "documents" ? (
+					<Button
+						className="hidden md:inline-flex"
+						size="md"
+						variant="primary"
+						startContent={<UploadCloud className="size-4" />}
+						onPress={() => uploadModalRef.current?.open()}
+					>
+						Upload
+					</Button>
+				) : null}
 			</Header>
 			<Separator />
 

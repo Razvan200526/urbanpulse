@@ -10,6 +10,10 @@ export const userProfileUpdateSchema = z.object({
 	name: z.string().trim().min(1).max(80),
 	bio: z.string().trim().max(500).optional().default(""),
 	image: z.string().trim().url().optional().or(z.literal("")).nullable(),
+	firstName: z.string().trim().min(1).max(80).optional().nullable(),
+	lastName: z.string().trim().min(1).max(80).optional().nullable(),
+	birthYear: z.number().int().min(1900).max(2024).optional().nullable(),
+	homeCity: z.string().trim().min(1).max(100).optional().nullable(),
 });
 
 export const quietHoursUpsertSchema = z.object({

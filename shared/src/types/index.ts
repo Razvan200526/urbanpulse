@@ -156,7 +156,8 @@ export type NotificationType =
 	| "MESSAGE"
 	| "TRANSACTION"
 	| "FEEDBACK"
-	| "PULSE_UPDATED";
+	| "PULSE_UPDATED"
+	| "DOCUMENT_MATCH";
 
 export enum ResponseStatusEnum {
 	Pending = "PENDING",
@@ -191,6 +192,22 @@ export enum PulseUploadStateEnum {
 	Pending = "pending",
 	Uploaded = "uploaded",
 	Completed = "completed",
+	Failed = "failed",
+}
+
+export enum LostDocumentTypeEnum {
+	IdCard = "ID_CARD",
+	Passport = "PASSPORT",
+	DrivingLicense = "DRIVING_LICENSE",
+	StudentCard = "STUDENT_CARD",
+	HealthCard = "HEALTH_CARD",
+	Other = "OTHER",
+}
+
+export enum LostDocumentEmbeddingStatusEnum {
+	Pending = "pending",
+	Processing = "processing",
+	Ready = "ready",
 	Failed = "failed",
 }
 

@@ -4,6 +4,7 @@ import { BellIcon } from "@client/components/icons/BellIcon";
 import { CloseIcon } from "@client/components/icons/CloseIcon";
 import { H4 } from "@client/components/typography";
 import { Avatar } from "@client/components/user/Avatar";
+import { useOpenDocumentMatchChat } from "@client/hooks/documentMatches";
 import {
 	useAcceptPetMatchAsFinder,
 	useDeclinePetMatchAsFinder,
@@ -18,6 +19,7 @@ import {
 import { useEnsureDirectConversation } from "@client/pages/messages/hooks";
 import { normalizeAssetUrl } from "@client/utils/normalizeAssetUrl";
 import {
+	getDocumentMatchNotificationPayload,
 	getPetMatchNotificationPayload,
 	getPulseResponseActionPayload,
 	labelForNotificationType,
@@ -123,10 +125,15 @@ export const AlertDetailsDrawer = ({
 	const acceptAsFinder = useAcceptPetMatchAsFinder();
 	const declineAsFinder = useDeclinePetMatchAsFinder();
 	const ensureDirectConversation = useEnsureDirectConversation();
+	const openDocumentMatchChat = useOpenDocumentMatchChat();
 
 	const notificationType = selectedItem?.notification?.type || "";
 	const payload = selectedItem?.notification?.payload ?? null;
 	const petMatchPayload = getPetMatchNotificationPayload(
+		notificationType,
+		payload,
+	);
+	const documentMatchPayload = getDocumentMatchNotificationPayload(
 		notificationType,
 		payload,
 	);
@@ -434,6 +441,24 @@ export const AlertDetailsDrawer = ({
 							);
 						}}
 						isDisabled={!petMatchPayload.counterpartUser.id}
+					>
+						Open Chat
+					</Button>
+				) : notificationType === "DOCUMENT_MATCH" && documentMatchPayload ? (
+					<Button
+						radius="md"
+						className="border border-accent/60 bg-accent text-accent-foreground"
+						startContent={<MessagesSquareIcon className="size-4" />}
+						onPress={() => {
+							openDocumentMatchChat.mutate(documentMatchPayload.matchId, {
+								onSuccess: (result) => {
+									if (result?.conversationId) {
+										navigate(`/messages/${result.conversationId}`);
+									}
+								},
+							});
+						}}
+						isDisabled={openDocumentMatchChat.isPending}
 					>
 						Open Chat
 					</Button>

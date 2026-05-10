@@ -1,5 +1,7 @@
 import {
 	type ConversationTypeEnum,
+	type LostDocumentEmbeddingStatusEnum,
+	type LostDocumentTypeEnum,
 	type PetAlertEmbeddingStatusEnum,
 	type PetAlertTypeEnum,
 	type PetMatchStatusEnum,
@@ -67,6 +69,10 @@ export const user = pgTable(
 		heroAlertRadiusMeters: integer("heroAlertRadiusMeters")
 			.notNull()
 			.default(500),
+		firstName: text("firstName"),
+		lastName: text("lastName"),
+		birthYear: integer("birthYear"),
+		homeCity: text("homeCity"),
 	},
 	(t) => [
 		index("user_home_location_spatial_index").using("gist", t.homeLocation),
@@ -702,6 +708,83 @@ export const pulseClusterMembers = pgTable("pulse_cluster_members", {
 	clusterId: uuid("cluster_id").references(() => pulseClusters.id),
 });
 
+export const lostDocument = pgTable(
+	"lost_document",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: text("userId")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		documentType: text("documentType").$type<LostDocumentTypeEnum>().notNull(),
+		extractedName: text("extractedName"),
+		extractedFirstName: text("extractedFirstName"),
+		extractedBirthYear: integer("extractedBirthYear"),
+		extractedCity: text("extractedCity"),
+		originalImageKey: text("originalImageKey").notNull(),
+		blurredImageUrl: text("blurredImageUrl").notNull(),
+		embeddingVector: vector("embeddingVector", { dimensions: 768 }),
+		embeddingModel: text("embeddingModel"),
+		embeddingStatus: text("embeddingStatus")
+			.$type<LostDocumentEmbeddingStatusEnum>()
+			.notNull()
+			.default("pending" as LostDocumentEmbeddingStatusEnum),
+		embeddingUpdatedAt: timestamp("embeddingUpdatedAt"),
+		sensitiveRegions: jsonb("sensitiveRegions")
+			.$type<
+				{
+					x: number;
+					y: number;
+					w: number;
+					h: number;
+					kind?:
+						| "SENSITIVE_TEXT"
+						| "FACE"
+						| "CNP"
+						| "SERIES_NUMBER"
+						| "ADDRESS"
+						| "MRZ";
+				}[]
+			>()
+			.notNull()
+			.default(sql`'[]'::jsonb`),
+		createdAt: timestamp("createdAt").notNull().defaultNow(),
+		updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+	},
+	(t) => [
+		index("lost_document_user_id_index").on(t.userId),
+		index("lost_document_embedding_cosine_idx").using(
+			"hnsw",
+			t.embeddingVector.op("vector_cosine_ops"),
+		),
+	],
+);
+
+export const lostDocumentMatch = pgTable(
+	"lost_document_match",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		documentId: uuid("documentId")
+			.notNull()
+			.references(() => lostDocument.id, { onDelete: "cascade" }),
+		potentialOwnerId: text("potentialOwnerId")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		similarityScore: doublePrecision("similarityScore").notNull(),
+		compositeScore: doublePrecision("compositeScore").notNull(),
+		nameMatch: boolean("nameMatch").default(false),
+		birthYearMatch: boolean("birthYearMatch").default(false),
+		cityMatch: boolean("cityMatch").default(false),
+		notified: boolean("notified").default(false),
+		notifiedAt: timestamp("notifiedAt"),
+		createdAt: timestamp("createdAt").notNull().defaultNow(),
+		updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+	},
+	(t) => [
+		index("lost_document_match_document_id_index").on(t.documentId),
+		index("lost_document_match_owner_id_index").on(t.potentialOwnerId),
+	],
+);
+
 export type UserType = InferSelectModel<typeof user>;
 export type SessionType = InferSelectModel<typeof session>;
 export type AccountType = InferSelectModel<typeof account>;
@@ -730,3 +813,5 @@ export type PulseClusterType = InferSelectModel<typeof pulseClusters>;
 export type PulseClusterMembersType = InferSelectModel<
 	typeof pulseClusterMembers
 >;
+export type LostDocumentType = InferSelectModel<typeof lostDocument>;
+export type LostDocumentMatchType = InferSelectModel<typeof lostDocumentMatch>;
