@@ -41,7 +41,6 @@ pnpm-debug.log*
 *.sw?
 
 # Bun
-bun.lock
 .turbo
 
 # Python
