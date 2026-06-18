@@ -29,6 +29,13 @@
 			"when": 1778387202155,
 			"tag": "0003_sloppy_master_mold",
 			"breakpoints": true
+		},
+		{
+			"idx": 11,
+			"version": "7",
+			"when": 1775950000000,
+			"tag": "0011_fix_image_similarity_column",
+			"breakpoints": true
 		}
 	]
 }
